@@ -1,0 +1,208 @@
+import re
+
+
+def box_center(box):
+    xs = [p[0] for p in box]
+    ys = [p[1] for p in box]
+    return sum(xs) / len(xs), sum(ys) / len(ys)
+
+
+def clean_power(text):
+    match = re.search(r"\d[\d,\.\s-]{6,}\d", text)
+    if not match:
+        return None
+
+    digits = re.sub(r"\D", "", match.group(0))
+
+    if len(digits) < 7:
+        return None
+
+    return int(digits)
+
+
+def is_power(text):
+    return clean_power(text) is not None
+
+
+def is_noise(text):
+    upper = text.upper()
+    noise_words = [
+        "ALLIANCE POWER",
+        "TOTAL HERO POWER",
+        "RANKING",
+        "ALLIANCE NAME",
+        "COMMANDER",
+        "POWER",
+        "NOTE:",
+        "LEADERBOARD",
+        "UPDATES",
+        "IMPORTANT",
+        "PRESIDENT",
+    ]
+    return any(word in upper for word in noise_words)
+
+
+def is_warzone(text):
+    return re.search(
+        r"[WQ][a-zA-Z0-9,\.\s]*z[oa][nmg][a-zA-Z0-9,\.\s]*[#\{\}]?\s*\d{3,4}",
+        text,
+        re.IGNORECASE
+    ) is not None or re.search(
+        r"Warzone\s*[#\{\}]?\s*\d{3,4}",
+        text,
+        re.IGNORECASE
+    ) is not None
+
+
+def is_rank(text):
+    text = text.strip()
+    return re.fullmatch(r"\d{1,2}", text) is not None
+
+
+def clean_name_part(text):
+    text = text.strip()
+
+    if not text:
+        return ""
+
+    if is_noise(text):
+        return ""
+
+    if is_warzone(text):
+        return ""
+
+    if is_rank(text):
+        return ""
+
+    if is_power(text):
+        return ""
+
+    return text
+
+
+def cluster_ocr_by_rows(ocr_results, y_tolerance=28):
+    items = []
+
+    for box, text, confidence in ocr_results:
+        x, y = box_center(box)
+
+        if y < 90:
+            continue
+
+        if is_noise(text):
+            continue
+
+        items.append({
+            "x": x,
+            "y": y,
+            "text": text,
+            "confidence": confidence,
+        })
+
+    items.sort(key=lambda item: item["y"])
+
+    rows = []
+
+    for item in items:
+        placed = False
+
+        for row in rows:
+            if abs(row["y"] - item["y"]) <= y_tolerance:
+                row["items"].append(item)
+                row["y"] = sum(i["y"] for i in row["items"]) / len(row["items"])
+                placed = True
+                break
+
+        if not placed:
+            rows.append({
+                "y": item["y"],
+                "items": [item]
+            })
+
+    for row in rows:
+        row["items"].sort(key=lambda item: item["x"])
+
+    return rows
+
+
+def parse_ranking_rows(ocr_results):
+    clustered_rows = cluster_ocr_by_rows(ocr_results)
+
+    parsed = []
+
+    for row in clustered_rows:
+        texts = [item["text"] for item in row["items"]]
+
+        power_items = [
+            item for item in row["items"]
+            if is_power(item["text"])
+        ]
+
+        if not power_items:
+            continue
+
+        power_item = max(power_items, key=lambda item: item["x"])
+        power = clean_power(power_item["text"])
+
+        name_parts = []
+
+        for item in row["items"]:
+            # Name steht links vom Powerwert
+            if item["x"] >= power_item["x"]:
+                continue
+
+            part = clean_name_part(item["text"])
+
+            if part:
+                name_parts.append(part)
+
+        name = " ".join(name_parts).strip()
+
+        parsed.append({
+            "name": name,
+            "power": power,
+            "raw_text": " | ".join(texts),
+            "y": row["y"],
+            "confidence": min(item["confidence"] for item in row["items"]),
+        })
+
+    parsed.sort(key=lambda row: row["power"], reverse=True)
+
+    return parsed
+
+
+def merge_rows_by_power(items, limit=10, tolerance=0.003):
+    merged = []
+
+    for item in sorted(items, key=lambda row: row["power"], reverse=True):
+        power = item.get("power")
+        if not power:
+            continue
+
+        duplicate = None
+
+        for existing in merged:
+            existing_power = existing["power"]
+            diff = abs(existing_power - power) / max(existing_power, power)
+
+            if diff <= tolerance:
+                duplicate = existing
+                break
+
+        if duplicate:
+            old_name = duplicate.get("name", "")
+            new_name = item.get("name", "")
+
+            if len(new_name) > len(old_name):
+                duplicate["name"] = new_name
+
+            duplicate["power"] = max(duplicate["power"], power)
+        else:
+            merged.append(item)
+
+    merged.sort(key=lambda row: row["power"], reverse=True)
+
+    for idx, row in enumerate(merged[:limit], start=1):
+        row["rank"] = idx
+
+    return merged[:limit]

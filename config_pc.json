@@ -1,0 +1,15 @@
+{
+  "target_width": 600,
+  "target_height": 1064,
+  "rows": {
+    "first_y": 100,
+    "row_height": 91,
+    "visible_rows": 8
+  },
+  "columns": {
+    "name_x1": 80,
+    "name_x2": 435,
+    "power_x1": 440,
+    "power_x2": 595
+  }
+}
