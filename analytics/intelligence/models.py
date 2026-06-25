@@ -1,137 +1,83 @@
 """
 LastWarIntel
-Intelligence Models
-Version: 1.3
+Strategic Intelligence Models
+Version: 1.0
 
-Shared models for rule-based intelligence, insights, topics and briefings.
+Domain models for strategic reasoning.
+
+These models represent conclusions derived from analytics,
+not raw observations.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
-
-from analytics.events.models import Severity
 
 
-class InsightCategory(Enum):
-    RISK = "Risk"
-    OPPORTUNITY = "Opportunity"
+class IntelligencePriority(Enum):
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
+
+
+class HypothesisCategory(Enum):
+    COLLAPSE = "Collapse"
+    RECOVERY = "Recovery"
+    MERGER = "Merger"
     RECRUITMENT = "Recruitment"
-    DIPLOMACY = "Diplomacy"
     GROWTH = "Growth"
-    STABILITY = "Stability"
-    COMPETITION = "Competition"
-    GENERAL = "General"
+    DIPLOMACY = "Diplomacy"
+    LEADERSHIP = "Leadership"
+    UNKNOWN = "Unknown"
 
 
-class InsightPriority(Enum):
-    CRITICAL = 100
-    HIGH = 75
-    MEDIUM = 50
-    LOW = 25
-
-
-@dataclass(slots=True)
-class RuleContext:
+@dataclass(slots=True, frozen=True)
+class Hypothesis:
     """
-    Shared context passed into rules.
+    Strategic conclusion derived from multiple signals.
     """
 
-    server: int
-    events: list[Any] = field(default_factory=list)
-    scores: dict[str, float] = field(default_factory=dict)
-    raw: dict[str, Any] = field(default_factory=dict)
+    title: str
+    summary: str
 
+    confidence: float
 
-@dataclass(slots=True)
-class RuleResult:
-    """
-    Result of one evaluated rule.
-    """
+    priority: IntelligencePriority
 
-    name: str
-    matched: bool
-    points: int
-    explanation: str
+    category: HypothesisCategory
+
     evidence: list[str] = field(default_factory=list)
-    priority: int = 100
 
 
-@dataclass(slots=True)
-class Rule:
+@dataclass(slots=True, frozen=True)
+class Recommendation:
     """
-    One explainable intelligence rule.
+    Action recommended to the president.
     """
 
-    name: str
+    title: str
+
     description: str
-    points: int
-    priority: int
-    evaluator: Callable[[RuleContext], RuleResult]
+
+    priority: IntelligencePriority
+
+    confidence: float
+
+    rationale: list[str] = field(default_factory=list)
 
 
-@dataclass(slots=True)
-class IntelligenceReport:
+@dataclass(slots=True, frozen=True)
+class StrategicAssessment:
     """
-    Final result of a rule-based intelligence analysis.
+    Complete strategic assessment for one alliance.
     """
 
     server: int
-    total_score: int
-    confidence: float
-    recommendation: str
-    results: list[RuleResult] = field(default_factory=list)
 
-    @property
-    def matched_results(self) -> list[RuleResult]:
-        return [result for result in self.results if result.matched]
+    alliance: str
 
-    @property
-    def evidence_count(self) -> int:
-        return sum(len(result.evidence) for result in self.matched_results)
+    hypotheses: list[Hypothesis] = field(default_factory=list)
 
-
-@dataclass(slots=True)
-class Insight:
-    """
-    High-level interpretation generated from facts, events, scores,
-    assessments or recruitment targets.
-    """
-
-    title: str
-    summary: str
-    confidence: float
-    severity: Severity
-    evidence: list[str] = field(default_factory=list)
-    recommendation: str | None = None
-    category: InsightCategory = InsightCategory.GENERAL
-    priority: InsightPriority = InsightPriority.MEDIUM
-
-
-@dataclass(slots=True)
-class IntelligenceTopic:
-    """
-    Groups related insights into one strategic topic.
-
-    A topic is not a raw insight. It is a consolidated briefing unit.
-    """
-
-    title: str
-    category: InsightCategory
-    priority: InsightPriority
-    severity: Severity
-    summary: str
-    confidence: float
-    insights: list[Insight] = field(default_factory=list)
-    evidence: list[str] = field(default_factory=list)
-    recommendation: str | None = None
-
-    @property
-    def insight_count(self) -> int:
-        return len(self.insights)
-
-    @property
-    def evidence_count(self) -> int:
-        return len(self.evidence)
+    recommendations: list[Recommendation] = field(default_factory=list)
