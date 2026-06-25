@@ -1,15 +1,18 @@
-from database.sqlite import Database
 from analytics.scoring.base import BaseScore, ScoreResult
+from services.server_repository import ServerRepository
 
 
 def normalize_power_score(power: int) -> float:
-    # 250B+ = absoluter Spitzenbereich
-    if power >= 250_000_000_000:
-        return 100.0
+    """
+    50B  -> 0 Punkte
+    250B -> 100 Punkte
+    """
 
-    # 50B oder weniger = schwach
     if power <= 50_000_000_000:
         return 0.0
+
+    if power >= 250_000_000_000:
+        return 100.0
 
     return round(((power - 50_000_000_000) / 200_000_000_000) * 100, 2)
 
@@ -19,48 +22,44 @@ class PowerScore(BaseScore):
     weight = 0.35
 
     def __init__(self):
-        self.db = Database()
-
-    def get_latest_top10_power(self, server: int):
-        rows = self.db.execute(
-            """
-            SELECT
-                c.name AS collection,
-                SUM(re.value) AS total_power
-            FROM ranking_entries re
-            JOIN snapshots s ON s.id = re.snapshot_id
-            JOIN collections c ON c.id = s.collection_id
-            JOIN ranking_types rt ON rt.id = re.ranking_type_id
-            WHERE
-                s.server = ?
-                AND rt.name = 'alliance_power'
-                AND re.rank <= 10
-                AND c.name = 'S6 Preseason Alliances'
-            GROUP BY c.name
-            """,
-            (server,),
-        )
-
-        return rows[0] if rows else None
+        self.repo = ServerRepository()
 
     def calculate(self, server: int) -> ScoreResult:
-        row = self.get_latest_top10_power(server)
 
-        if not row:
+        alliances = self.repo.get_latest_top10_alliances(server)
+
+        if not alliances:
             return ScoreResult(
                 name=self.name,
                 server=server,
                 score=0.0,
-                explanation="No latest alliance power data found.",
+                explanation="No alliance power data available."
             )
 
-        power = row["total_power"]
-        score = normalize_power_score(power)
+        total_power = sum(a["value"] for a in alliances)
+
+        score = normalize_power_score(total_power)
 
         return ScoreResult(
             name=self.name,
             server=server,
             score=score,
-            raw_value=power,
-            explanation=f"Latest Top10 alliance power is {power}.",
+            raw_value=total_power,
+            explanation=f"Latest Top10 alliance power is {total_power:,}."
         )
+
+    def detailed(self, server: int):
+
+        alliances = self.repo.get_latest_top10_alliances(server)
+
+        if not alliances:
+            return None
+
+        total_power = sum(a["value"] for a in alliances)
+
+        return {
+            "server": server,
+            "score": normalize_power_score(total_power),
+            "total_power": total_power,
+            "alliances": alliances
+        }
