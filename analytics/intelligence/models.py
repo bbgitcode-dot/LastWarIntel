@@ -1,9 +1,9 @@
 """
 LastWarIntel
 Intelligence Models
-Version: 1.2
+Version: 1.3
 
-Shared models for rule-based intelligence, insights and executive briefings.
+Shared models for rule-based intelligence, insights, topics and briefings.
 """
 
 from __future__ import annotations
@@ -108,3 +108,30 @@ class Insight:
     recommendation: str | None = None
     category: InsightCategory = InsightCategory.GENERAL
     priority: InsightPriority = InsightPriority.MEDIUM
+
+
+@dataclass(slots=True)
+class IntelligenceTopic:
+    """
+    Groups related insights into one strategic topic.
+
+    A topic is not a raw insight. It is a consolidated briefing unit.
+    """
+
+    title: str
+    category: InsightCategory
+    priority: InsightPriority
+    severity: Severity
+    summary: str
+    confidence: float
+    insights: list[Insight] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
+    recommendation: str | None = None
+
+    @property
+    def insight_count(self) -> int:
+        return len(self.insights)
+
+    @property
+    def evidence_count(self) -> int:
+        return len(self.evidence)
