@@ -1,23 +1,27 @@
 """
 LastWarIntel
 President View Builder
-Version: 2.0
+Version: 3.0
 
-Builds a strategic intelligence view for alliance leadership.
+Builds the President Intelligence View.
 
-This version consumes IntelligenceTopic objects directly.
+Rendering of intelligence topics is delegated to TopicRenderer.
 """
 
 from __future__ import annotations
 
 from analytics.intelligence.models import IntelligenceTopic
 from analytics.views.models import IntelligenceView
+from analytics.views.topic_renderer import TopicRenderer
 
 
 class PresidentViewBuilder:
     """
-    Creates a high-level intelligence view for alliance leadership.
+    Creates the executive intelligence dashboard.
     """
+
+    def __init__(self) -> None:
+        self._topics = TopicRenderer()
 
     def build(
         self,
@@ -31,193 +35,205 @@ class PresidentViewBuilder:
         recruitment_targets: list,
         topics: list[IntelligenceTopic],
     ) -> IntelligenceView:
+
         view = IntelligenceView(
             title=f"SERVER {server} PRESIDENT INTELLIGENCE",
             subtitle="Strategic overview",
         )
 
+        # ------------------------------------------------------------
+        # Executive Summary
+        # ------------------------------------------------------------
+
         view.add_section(
             "Executive Summary",
             5,
-            self._format_executive_summary(topics),
+            self._topics.render_executive_summary(topics),
         )
+
+        # ------------------------------------------------------------
+        # Strategic Topics
+        # ------------------------------------------------------------
 
         view.add_section(
             "Strategic Topics",
-            6,
-            self._format_topics(topics),
+            10,
+            self._topics.render_topics(topics),
         )
+
+        # ------------------------------------------------------------
+        # Recommended Actions
+        # ------------------------------------------------------------
 
         view.add_section(
             "Recommended Actions",
-            7,
-            self._format_recommendations(topics),
+            15,
+            self._topics.render_actions(topics),
         )
+
+        # ------------------------------------------------------------
+        # Current Situation
+        # ------------------------------------------------------------
 
         view.add_section(
             "Current Situation",
-            10,
+            20,
             [
                 f"Overall Score : {overall_score:.2f}/100",
                 f"Growth        : {growth:+.2f}%",
                 f"Volatility    : {volatility:.2f}%",
                 f"Events        : {len(events)} detected",
                 f"Alliances     : {len(health_assessments)} tracked",
-                self._situation_summary(overall_score, growth, volatility),
+                self._situation_summary(
+                    overall_score,
+                    growth,
+                    volatility,
+                ),
             ],
         )
 
-        weak = [item for item in health_assessments if item.score < 70]
-        view.add_section(
-            "Critical / Weak Alliances",
-            20,
-            [self._format_health(item) for item in sorted(weak, key=lambda h: h.score)],
-        )
+        # ------------------------------------------------------------
+        # Alliance Health
+        # ------------------------------------------------------------
 
-        watch = [item for item in health_assessments if 70 <= item.score < 80]
-        view.add_section(
-            "Alliances to Watch",
-            30,
-            [
-                self._format_health(item)
-                for item in sorted(watch, key=lambda h: (h.risk, h.score))
-            ],
-        )
+        weak = [
+            alliance
+            for alliance in health_assessments
+            if alliance.score < 70
+        ]
 
-        strong = [item for item in health_assessments if item.score >= 80]
-        view.add_section(
-            "Strong Alliances",
-            40,
-            [
-                self._format_health(item)
-                for item in sorted(strong, key=lambda h: h.score, reverse=True)
-            ],
-        )
+        if weak:
+            view.add_section(
+                "Critical / Weak Alliances",
+                30,
+                [
+                    self._format_health(item)
+                    for item in sorted(
+                        weak,
+                        key=lambda item: item.score,
+                    )
+                ],
+            )
 
-        actionable_targets = sorted(
-            recruitment_targets,
-            key=lambda item: item.priority,
-            reverse=True,
-        )[:10]
+        watch = [
+            alliance
+            for alliance in health_assessments
+            if 70 <= alliance.score < 80
+        ]
 
-        view.add_section(
-            "Recruitment Opportunities",
-            50,
-            [
-                (
-                    f"{target.alliance:<8} "
-                    f"{target.priority:>3}/100 "
-                    f"{target.recommendation:<20} "
-                    f"Health {target.health:>3}/100 "
-                    f"Risk {target.risk}"
-                )
-                for target in actionable_targets
-            ],
-        )
+        if watch:
+            view.add_section(
+                "Alliances to Watch",
+                40,
+                [
+                    self._format_health(item)
+                    for item in sorted(
+                        watch,
+                        key=lambda item: (item.risk, item.score),
+                    )
+                ],
+            )
 
-        high_events = [
-            event for event in events
+        strong = [
+            alliance
+            for alliance in health_assessments
+            if alliance.score >= 80
+        ]
+
+        if strong:
+            view.add_section(
+                "Strong Alliances",
+                50,
+                [
+                    self._format_health(item)
+                    for item in sorted(
+                        strong,
+                        key=lambda item: item.score,
+                        reverse=True,
+                    )
+                ],
+            )
+
+        # ------------------------------------------------------------
+        # Recruitment
+        # ------------------------------------------------------------
+
+        if recruitment_targets:
+
+            view.add_section(
+                "Recruitment Opportunities",
+                60,
+                [
+                    (
+                        f"{target.alliance:<8}"
+                        f"{target.priority:>4}/100 "
+                        f"{target.recommendation:<20}"
+                        f"Health {target.health:>3}/100 "
+                        f"Risk {target.risk}"
+                    )
+                    for target in sorted(
+                        recruitment_targets,
+                        key=lambda target: target.priority,
+                        reverse=True,
+                    )[:10]
+                ],
+            )
+
+        # ------------------------------------------------------------
+        # Events
+        # ------------------------------------------------------------
+
+        high = [
+            event
+            for event in events
             if event.severity.name in ("CRITICAL", "HIGH")
         ]
 
-        view.add_section(
-            "High Impact Events",
-            60,
-            [
-                f"[{event.severity.name}] {event.summary}"
-                for event in high_events[:10]
-            ],
-        )
+        if high:
+            view.add_section(
+                "High Impact Events",
+                70,
+                [
+                    f"[{event.severity.name}] {event.summary}"
+                    for event in high[:10]
+                ],
+            )
 
-        medium_events = [
-            event for event in events
+        medium = [
+            event
+            for event in events
             if event.severity.name == "MEDIUM"
         ]
 
-        view.add_section(
-            "Medium Impact Events",
-            70,
-            [
-                f"[{event.severity.name}] {event.summary}"
-                for event in medium_events[:10]
-            ],
-        )
+        if medium:
+            view.add_section(
+                "Medium Impact Events",
+                80,
+                [
+                    f"[{event.severity.name}] {event.summary}"
+                    for event in medium[:10]
+                ],
+            )
 
         return view
 
     @staticmethod
-    def _format_executive_summary(topics: list[IntelligenceTopic]) -> list[str]:
-        if not topics:
-            return ["No major strategic topics detected."]
-
-        items = []
-
-        for topic in topics[:4]:
-            icon = PresidentViewBuilder._severity_icon(topic.severity)
-            items.append(
-                f"{icon} {topic.summary} "
-                f"(Confidence {topic.confidence:.0f}%)"
-            )
-
-        return items
-
-    @staticmethod
-    def _format_topics(topics: list[IntelligenceTopic]) -> list[str]:
-        if not topics:
-            return ["No strategic topics available."]
-
-        items = []
-
-        for topic in topics:
-            icon = PresidentViewBuilder._severity_icon(topic.severity)
-            items.append(
-                f"{icon} {topic.title:<12} "
-                f"{topic.priority.name:<8} "
-                f"{topic.summary} "
-                f"(Confidence {topic.confidence:.0f}%)"
-            )
-
-            for insight in topic.insights:
-                items.append(f"   - {insight.summary}")
-
-        return items
-
-    @staticmethod
-    def _format_recommendations(topics: list[IntelligenceTopic]) -> list[str]:
-        recommendations = []
-
-        for topic in topics:
-            if topic.recommendation and topic.recommendation not in recommendations:
-                recommendations.append(topic.recommendation)
-
-        if not recommendations:
-            return ["No direct actions recommended."]
-
-        return [f"• {item}" for item in recommendations]
-
-    @staticmethod
     def _format_health(item) -> str:
         return (
-            f"{item.alliance:<8} "
-            f"{item.score:>3}/100 "
-            f"{item.status:<10} "
-            f"{item.trend:<10} "
+            f"{item.alliance:<8}"
+            f"{item.score:>4}/100 "
+            f"{item.status:<10}"
+            f"{item.trend:<10}"
             f"Risk {item.risk}"
         )
 
     @staticmethod
-    def _severity_icon(severity) -> str:
-        icons = {
-            "CRITICAL": "⛔",
-            "HIGH": "🔴",
-            "MEDIUM": "🟠",
-            "LOW": "🟢",
-        }
+    def _situation_summary(
+        overall_score: float,
+        growth: float,
+        volatility: float,
+    ) -> str:
 
-        return icons.get(severity.name, "•")
-
-    @staticmethod
-    def _situation_summary(overall_score: float, growth: float, volatility: float) -> str:
         if overall_score >= 70 and growth > 10 and volatility < 8:
             return "Assessment    : Strong, growing and relatively stable server."
 
