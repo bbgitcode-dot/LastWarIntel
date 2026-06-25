@@ -169,7 +169,7 @@ class Database:
         tag: Optional[str] = None,
     ) -> int:
         clean_name = name.strip() if name else "UNKNOWN"
-        clean_tag = tag.strip() if tag else None
+        clean_tag = str(tag).strip() if tag is not None and str(tag).strip() else None
 
         with self.connect() as conn:
             row = conn.execute(
