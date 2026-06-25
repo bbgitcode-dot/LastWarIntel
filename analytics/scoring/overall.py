@@ -2,6 +2,7 @@ from analytics.scoring.growth import GrowthScore
 from analytics.scoring.power import PowerScore
 from analytics.scoring.depth import DepthScore
 from analytics.scoring.player import PlayerScore
+from analytics.scoring.stability import StabilityScore
 
 
 class OverallScore:
@@ -11,18 +12,19 @@ class OverallScore:
             PowerScore(),
             DepthScore(),
             PlayerScore(),
+            StabilityScore(),
         ]
 
     def calculate(self, server: int):
         results = [scorer.calculate(server) for scorer in self.scorers]
 
         total_weight = sum(scorer.weight for scorer in self.scorers)
-        weighted_score = 0.0
 
+        weighted = 0.0
         for scorer, result in zip(self.scorers, results):
-            weighted_score += result.score * scorer.weight
+            weighted += scorer.weight * result.score
 
-        overall = round(weighted_score / total_weight, 2) if total_weight else 0.0
+        overall = round(weighted / total_weight, 2)
 
         return {
             "server": server,
