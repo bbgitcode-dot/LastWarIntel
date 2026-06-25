@@ -1,17 +1,36 @@
 """
 LastWarIntel
-Intelligence Rule Engine
-Version: 1.1
+Intelligence Models
+Version: 1.2
 
-Shared models for rule-based intelligence modules.
+Shared models for rule-based intelligence, insights and executive briefings.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Callable
 
 from analytics.events.models import Severity
+
+
+class InsightCategory(Enum):
+    RISK = "Risk"
+    OPPORTUNITY = "Opportunity"
+    RECRUITMENT = "Recruitment"
+    DIPLOMACY = "Diplomacy"
+    GROWTH = "Growth"
+    STABILITY = "Stability"
+    COMPETITION = "Competition"
+    GENERAL = "General"
+
+
+class InsightPriority(Enum):
+    CRITICAL = 100
+    HIGH = 75
+    MEDIUM = 50
+    LOW = 25
 
 
 @dataclass(slots=True)
@@ -87,3 +106,5 @@ class Insight:
     severity: Severity
     evidence: list[str] = field(default_factory=list)
     recommendation: str | None = None
+    category: InsightCategory = InsightCategory.GENERAL
+    priority: InsightPriority = InsightPriority.MEDIUM
