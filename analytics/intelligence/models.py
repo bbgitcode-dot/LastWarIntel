@@ -1,7 +1,7 @@
 """
 LastWarIntel
 Intelligence Rule Engine
-Version: 1.0
+Version: 1.1
 
 Shared models for rule-based intelligence modules.
 """
@@ -9,16 +9,15 @@ Shared models for rule-based intelligence modules.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Any
+from typing import Any, Callable
+
+from analytics.events.models import Severity
 
 
 @dataclass(slots=True)
 class RuleContext:
     """
     Shared context passed into rules.
-
-    The context contains all information a rule may need.
-    It keeps rules independent from SQL and CLI output.
     """
 
     server: int
@@ -73,3 +72,18 @@ class IntelligenceReport:
     @property
     def evidence_count(self) -> int:
         return sum(len(result.evidence) for result in self.matched_results)
+
+
+@dataclass(slots=True)
+class Insight:
+    """
+    High-level interpretation generated from facts, events, scores,
+    assessments or recruitment targets.
+    """
+
+    title: str
+    summary: str
+    confidence: float
+    severity: Severity
+    evidence: list[str] = field(default_factory=list)
+    recommendation: str | None = None
