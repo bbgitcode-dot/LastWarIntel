@@ -1,293 +1,161 @@
 """
 LastWarIntel
-Module: Recruitment Intelligence
-Version: 2.0
+Module: Recruitment Intelligence CLI
+Version: 3.0
 
-Purpose:
-    Identify servers that may be worth active recruitment attention.
+Recruitment v3 uses:
+- Alliance Events
+- Scoring Results
+- Rule Engine
 
-Important:
-    This module does not measure "best server".
-    It measures "recruitment opportunity".
+It does not directly calculate recruitment logic inside the CLI.
 """
 
-from dataclasses import dataclass
-from typing import List
+from __future__ import annotations
 
+from analytics.events.analyzer import AllianceEventAnalyzer
+from analytics.intelligence.engine import RuleEngine
+from analytics.intelligence.models import RuleContext
+from analytics.intelligence.recruitment_rules import build_recruitment_rules
 from analytics.scoring.growth import GrowthScore
-from analytics.scoring.stability import StabilityScore
 from analytics.scoring.overall import OverallScore
+from analytics.scoring.player import PlayerScore
+from analytics.scoring.stability import StabilityScore
 from services.server_repository import ServerRepository
 
 
-def format_percent(value):
-    if value is None:
-        return "-"
+def format_percent(value: float) -> str:
     sign = "+" if value >= 0 else ""
     return f"{sign}{value:.2f}%"
 
 
-@dataclass
-class RecruitmentResult:
-    server: int
-    score: float
-    opportunity: str
-    volatility: float
-    growth_percent: float
-    overall: float
-    reasons: List[str]
-    warnings: List[str]
+def classify_score(score: int) -> str:
+    if score >= 80:
+        return "★★★★★ Hot Target"
+    if score >= 60:
+        return "★★★★☆ Strong Opportunity"
+    if score >= 40:
+        return "★★★☆☆ Potential Target"
+    if score >= 20:
+        return "★★☆☆☆ Observation"
+    return "★☆☆☆☆ Low Priority"
 
 
-@dataclass
-class HistoricalDeclineResult:
-    server: int
-    growth_percent: float
-    reason: str
+def build_context(server: int) -> RuleContext:
+    events = AllianceEventAnalyzer().analyze(server)
+
+    growth = GrowthScore().calculate(server)
+    stability = StabilityScore().calculate(server)
+    player = PlayerScore().calculate(server)
+    overall = OverallScore().calculate(server)
+
+    return RuleContext(
+        server=server,
+        events=events,
+        scores={
+            "growth": growth.score,
+            "growth_raw": growth.raw_value or 0,
+            "stability": stability.score,
+            "stability_raw": stability.raw_value or 0,
+            "player": player.score,
+            "player_raw": player.raw_value or 0,
+            "overall": overall["overall"],
+        },
+    )
 
 
-class RecruitmentAnalyzer:
-    """
-    Recruitment v2.
+def analyze_server(server: int):
+    context = build_context(server)
 
-    Active targets:
-        Servers with complete current S6 data and meaningful recruitment signals.
+    engine = RuleEngine(build_recruitment_rules())
 
-    Historical watchlist:
-        Servers that declined historically but lack current S6 comparison data.
-    """
+    report = engine.evaluate(
+        context=context,
+        recommendation="Recruitment Opportunity",
+    )
 
-    def __init__(self):
-        self.repo = ServerRepository()
-        self.growth = GrowthScore()
-        self.stability = StabilityScore()
-        self.overall = OverallScore()
+    report.recommendation = classify_score(report.total_score)
 
-    def analyze_server(self, server: int) -> RecruitmentResult:
-        growth_result = self.growth.calculate(server)
-        stability_result = self.stability.calculate(server)
-        overall_result = self.overall.calculate(server)
-
-        growth_percent = growth_result.raw_value or 0.0
-        volatility = stability_result.raw_value or 0.0
-        overall_score = overall_result["overall"]
-
-        volatility_component = self._volatility_component(volatility)
-        decline_component = self._decline_component(growth_percent)
-        relevance_component = self._relevance_component(overall_score)
-
-        score = (
-            volatility_component * 0.40
-            + decline_component * 0.35
-            + relevance_component * 0.25
-        )
-
-        reasons = self._build_reasons(volatility, growth_percent, overall_score)
-        warnings = self._build_warnings(volatility, growth_percent, overall_score)
-
-        return RecruitmentResult(
-            server=server,
-            score=round(score, 2),
-            opportunity=self._classify_opportunity(score),
-            volatility=volatility,
-            growth_percent=growth_percent,
-            overall=overall_score,
-            reasons=reasons,
-            warnings=warnings,
-        )
-
-    def active_targets(self) -> List[RecruitmentResult]:
-        results = []
-
-        for row in self.repo.get_all_servers():
-            server = row["server"]
-
-            if not self.repo.has_complete_scoring_data(server):
-                continue
-
-            results.append(self.analyze_server(server))
-
-        results.sort(key=lambda item: item.score, reverse=True)
-        return results
-
-    def historical_decline_watchlist(self) -> List[HistoricalDeclineResult]:
-        results = []
-
-        for row in self.repo.get_all_servers():
-            server = row["server"]
-
-            if self.repo.has_complete_scoring_data(server):
-                continue
-
-            if not self.repo.has_growth_data(server):
-                continue
-
-            growth_result = self.growth.calculate(server)
-            growth_percent = growth_result.raw_value or 0.0
-
-            if growth_percent < -10:
-                results.append(
-                    HistoricalDeclineResult(
-                        server=server,
-                        growth_percent=growth_percent,
-                        reason=(
-                            "Historical Top10 alliance power declined strongly, "
-                            "but current S6 data is missing."
-                        ),
-                    )
-                )
-
-        results.sort(key=lambda item: item.growth_percent)
-        return results
-
-    @staticmethod
-    def _volatility_component(volatility: float) -> float:
-        if volatility <= 0:
-            return 0.0
-        if volatility >= 20:
-            return 100.0
-        return (volatility / 20) * 100
-
-    @staticmethod
-    def _decline_component(growth_percent: float) -> float:
-        if growth_percent >= 0:
-            return 0.0
-        decline = abs(growth_percent)
-        if decline >= 25:
-            return 100.0
-        return (decline / 25) * 100
-
-    @staticmethod
-    def _relevance_component(overall: float) -> float:
-        if overall <= 30:
-            return 0.0
-        if overall >= 75:
-            return 100.0
-        return ((overall - 30) / 45) * 100
-
-    @staticmethod
-    def _classify_opportunity(score: float) -> str:
-        if score >= 80:
-            return "★★★★★ Hot Target"
-        if score >= 65:
-            return "★★★★☆ Strong Opportunity"
-        if score >= 50:
-            return "★★★☆☆ Potential Target"
-        if score >= 35:
-            return "★★☆☆☆ Observation"
-        return "★☆☆☆☆ Low Priority"
-
-    @staticmethod
-    def _build_reasons(volatility: float, growth_percent: float, overall: float) -> List[str]:
-        reasons = []
-
-        if volatility >= 15:
-            reasons.append("High server volatility suggests internal movement or restructuring.")
-        elif volatility >= 8:
-            reasons.append("Moderate volatility detected; server may have active movement.")
-
-        if growth_percent < -15:
-            reasons.append("Strong negative growth may indicate frustration or alliance losses.")
-        elif growth_percent < 0:
-            reasons.append("Negative growth detected.")
-
-        if overall >= 70:
-            reasons.append("Server remains strong enough to be worth active diplomatic attention.")
-        elif overall >= 55:
-            reasons.append("Server has enough quality to be monitored.")
-
-        if not reasons:
-            reasons.append("No strong recruitment opportunity signal detected yet.")
-
-        return reasons
-
-    @staticmethod
-    def _build_warnings(volatility: float, growth_percent: float, overall: float) -> List[str]:
-        warnings = []
-
-        if overall < 40:
-            warnings.append("Low overall quality; may not be worth heavy recruiting effort.")
-
-        if growth_percent > 15 and volatility < 8:
-            warnings.append("Server is growing and relatively stable; recruitment opportunity may be limited.")
-
-        if volatility >= 18 and overall < 55:
-            warnings.append("Volatility is high, but server quality is only moderate.")
-
-        return warnings
+    return report, context
 
 
-def print_active_targets(results: List[RecruitmentResult]) -> None:
+def active_servers():
+    repo = ServerRepository()
+
+    servers = []
+
+    for row in repo.get_all_servers():
+        server = row["server"]
+
+        if repo.has_complete_scoring_data(server):
+            servers.append(server)
+
+    return servers
+
+
+def print_report():
+    reports = []
+
+    for server in active_servers():
+        report, context = analyze_server(server)
+        reports.append((report, context))
+
+    reports.sort(key=lambda item: item[0].total_score, reverse=True)
+
     print()
-    print("========== ACTIVE RECRUITMENT TARGETS ==========")
+    print("========== RECRUITMENT INTELLIGENCE v3 ==========")
     print()
     print(
         f"{'#':>2}  "
         f"{'Server':<8} "
-        f"{'Score':>7} "
-        f"{'Volatility':>11} "
+        f"{'Score':>5} "
+        f"{'Conf.':>7} "
         f"{'Growth':>9} "
+        f"{'Volatility':>11} "
         f"{'Overall':>8}  "
-        f"Opportunity"
+        f"Recommendation"
     )
-    print("-" * 95)
+    print("-" * 100)
 
-    if not results:
-        print("No active recruitment targets found.")
-        return
+    for idx, (report, context) in enumerate(reports, start=1):
+        growth = context.scores.get("growth_raw", 0)
+        volatility = context.scores.get("stability_raw", 0)
+        overall = context.scores.get("overall", 0)
 
-    for idx, item in enumerate(results, start=1):
         print(
             f"{idx:>2}. "
-            f"{item.server:<8} "
-            f"{item.score:>7.2f} "
-            f"{item.volatility:>10.2f}% "
-            f"{format_percent(item.growth_percent):>9} "
-            f"{item.overall:>8.2f}  "
-            f"{item.opportunity}"
+            f"{report.server:<8} "
+            f"{report.total_score:>5} "
+            f"{report.confidence:>6.1f}% "
+            f"{format_percent(growth):>9} "
+            f"{volatility:>10.2f}% "
+            f"{overall:>8.2f}  "
+            f"{report.recommendation}"
         )
 
-        for reason in item.reasons:
-            print(f"     + {reason}")
+        matched = report.matched_results
 
-        for warning in item.warnings:
-            print(f"     ! {warning}")
+        if matched:
+            print("     Matched rules:")
+
+            for result in matched:
+                sign = "+" if result.points >= 0 else ""
+                print(
+                    f"       {sign}{result.points:>3} "
+                    f"{result.name}: {result.explanation}"
+                )
+
+                for evidence in result.evidence[:3]:
+                    print(f"           - {evidence}")
+
+                if len(result.evidence) > 3:
+                    print(f"           - ... {len(result.evidence) - 3} more")
+
+        else:
+            print("     No recruitment rules matched.")
 
         print()
 
 
-def print_historical_watchlist(results: List[HistoricalDeclineResult], limit: int = 20) -> None:
-    print()
-    print("========== HISTORICAL DECLINE WATCHLIST ==========")
-    print()
-    print("These servers declined historically but do not have complete current S6 data.")
-    print("Treat them as leads for manual validation, not as direct active targets.")
-    print()
-    print(f"{'#':>2}  {'Server':<8} {'Historical Growth':>18}  Reason")
-    print("-" * 90)
-
-    if not results:
-        print("No historical decline candidates found.")
-        return
-
-    for idx, item in enumerate(results[:limit], start=1):
-        print(
-            f"{idx:>2}. "
-            f"{item.server:<8} "
-            f"{format_percent(item.growth_percent):>18}  "
-            f"{item.reason}"
-        )
-
-
-def main():
-    analyzer = RecruitmentAnalyzer()
-
-    active = analyzer.active_targets()
-    historical = analyzer.historical_decline_watchlist()
-
-    print_active_targets(active)
-    print_historical_watchlist(historical)
-
-
 if __name__ == "__main__":
-    main()
+    print_report()
