@@ -1,14 +1,16 @@
 """
 LastWarIntel
 President View Builder
-Version: 1.2
+Version: 2.0
 
 Builds a strategic intelligence view for alliance leadership.
+
+This version consumes IntelligenceTopic objects directly.
 """
 
 from __future__ import annotations
 
-from analytics.intelligence.models import Insight
+from analytics.intelligence.models import IntelligenceTopic
 from analytics.views.models import IntelligenceView
 
 
@@ -27,7 +29,7 @@ class PresidentViewBuilder:
         events: list,
         health_assessments: list,
         recruitment_targets: list,
-        insights: list[Insight],
+        topics: list[IntelligenceTopic],
     ) -> IntelligenceView:
         view = IntelligenceView(
             title=f"SERVER {server} PRESIDENT INTELLIGENCE",
@@ -37,7 +39,19 @@ class PresidentViewBuilder:
         view.add_section(
             "Executive Summary",
             5,
-            self._format_insights(insights),
+            self._format_executive_summary(topics),
+        )
+
+        view.add_section(
+            "Strategic Topics",
+            6,
+            self._format_topics(topics),
+        )
+
+        view.add_section(
+            "Recommended Actions",
+            7,
+            self._format_recommendations(topics),
         )
 
         view.add_section(
@@ -132,27 +146,54 @@ class PresidentViewBuilder:
         return view
 
     @staticmethod
-    def _format_insights(insights: list[Insight]) -> list[str]:
-        if not insights:
-            return ["No major strategic insights detected."]
-
-        severity_icons = {
-            "CRITICAL": "⛔",
-            "HIGH": "🔴",
-            "MEDIUM": "🟠",
-            "LOW": "🟢",
-        }
+    def _format_executive_summary(topics: list[IntelligenceTopic]) -> list[str]:
+        if not topics:
+            return ["No major strategic topics detected."]
 
         items = []
 
-        for insight in insights:
-            icon = severity_icons.get(insight.severity.name, "•")
+        for topic in topics[:4]:
+            icon = PresidentViewBuilder._severity_icon(topic.severity)
             items.append(
-                f"{icon} {insight.summary} "
-                f"(Confidence {insight.confidence:.0f}%)"
+                f"{icon} {topic.summary} "
+                f"(Confidence {topic.confidence:.0f}%)"
             )
 
         return items
+
+    @staticmethod
+    def _format_topics(topics: list[IntelligenceTopic]) -> list[str]:
+        if not topics:
+            return ["No strategic topics available."]
+
+        items = []
+
+        for topic in topics:
+            icon = PresidentViewBuilder._severity_icon(topic.severity)
+            items.append(
+                f"{icon} {topic.title:<12} "
+                f"{topic.priority.name:<8} "
+                f"{topic.summary} "
+                f"(Confidence {topic.confidence:.0f}%)"
+            )
+
+            for insight in topic.insights:
+                items.append(f"   - {insight.summary}")
+
+        return items
+
+    @staticmethod
+    def _format_recommendations(topics: list[IntelligenceTopic]) -> list[str]:
+        recommendations = []
+
+        for topic in topics:
+            if topic.recommendation and topic.recommendation not in recommendations:
+                recommendations.append(topic.recommendation)
+
+        if not recommendations:
+            return ["No direct actions recommended."]
+
+        return [f"• {item}" for item in recommendations]
 
     @staticmethod
     def _format_health(item) -> str:
@@ -163,6 +204,17 @@ class PresidentViewBuilder:
             f"{item.trend:<10} "
             f"Risk {item.risk}"
         )
+
+    @staticmethod
+    def _severity_icon(severity) -> str:
+        icons = {
+            "CRITICAL": "⛔",
+            "HIGH": "🔴",
+            "MEDIUM": "🟠",
+            "LOW": "🟢",
+        }
+
+        return icons.get(severity.name, "•")
 
     @staticmethod
     def _situation_summary(overall_score: float, growth: float, volatility: float) -> str:
