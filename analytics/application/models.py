@@ -1,12 +1,17 @@
 """
 LastWarIntel
 Application Models
-Version: 1.0
+Version: 1.2
 
 Application layer models.
 
 Reports aggregate multiple domain results but intentionally contain
 no presentation logic.
+
+Important:
+Application models must not import intelligence.facade, because the
+intelligence facade itself depends on EntityReport. This avoids circular
+imports between application and intelligence layers.
 """
 
 from __future__ import annotations
@@ -19,7 +24,7 @@ from analytics.recruitment.facade import RecruitmentResult
 from analytics.timeline.facade import TimelineResult
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class EntityReport:
     """
     Complete intelligence report for one alliance.
@@ -33,8 +38,11 @@ class EntityReport:
     recruitment: RecruitmentResult | None
     events: EventsResult | None
 
+    # Keep this generic to avoid application ↔ intelligence circular imports.
+    intelligence: object | None = None
 
-@dataclass(slots=True)
+
+@dataclass(slots=True, frozen=True)
 class PresidentReport:
     """
     Complete intelligence report for one server.
@@ -52,7 +60,7 @@ class PresidentReport:
     volatility: float
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class RecruitmentReport:
     """
     Complete recruitment report.
