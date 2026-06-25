@@ -1,17 +1,17 @@
 """
 LastWarIntel
 Module: Entity Intelligence CLI
-Version: 1.0
+Version: 1.1
 
 Creates a full intelligence file for one alliance on one server.
 
 Shows:
-- Facts
-- Timeline
+- Facts / Timeline
+- Timeline Trend
 - Events
 - Health Assessment
 - Evidence
-- Recruitment Target
+- Recruitment View
 """
 
 import argparse
@@ -20,6 +20,9 @@ from analytics.assessment.converter import AllianceHealthAssessmentConverter
 from analytics.events.analyzer import AllianceEventAnalyzer
 from analytics.health.analyzer import AllianceHealthAnalyzer
 from analytics.recruitment.analyzer import RecruitmentTargetAnalyzer
+from analytics.timeline.analyzer import TimelineAnalyzer
+from analytics.timeline.metrics import TimelineMetricsBuilder
+from analytics.timeline.trend_detector import TrendDetector
 from services.server_repository import ServerRepository
 
 
@@ -27,13 +30,16 @@ def format_power(value):
     if value is None:
         return "-"
 
+    sign = "-" if value < 0 else ""
+    value = abs(value)
+
     if value >= 1_000_000_000:
-        return f"{value / 1_000_000_000:.2f}B"
+        return f"{sign}{value / 1_000_000_000:.2f}B"
 
     if value >= 1_000_000:
-        return f"{value / 1_000_000:.2f}M"
+        return f"{sign}{value / 1_000_000:.2f}M"
 
-    return str(value)
+    return f"{sign}{value:,}".replace(",", ".")
 
 
 def print_section(title):
@@ -46,7 +52,20 @@ def find_item(items, attr, value):
     for item in items:
         if getattr(item, attr) == value:
             return item
+
     return None
+
+
+def build_timeline_assessment(server: int, alliance: str):
+    timeline = TimelineAnalyzer().analyze_alliance(server, alliance)
+
+    if timeline is None:
+        return None, None
+
+    metrics = TimelineMetricsBuilder().build(timeline)
+    assessment = TrendDetector().detect(metrics)
+
+    return metrics, assessment
 
 
 def print_entity_intelligence(server: int, alliance: str):
@@ -73,6 +92,11 @@ def print_entity_intelligence(server: int, alliance: str):
     if health:
         assessment = AllianceHealthAssessmentConverter().convert(health)
 
+    timeline_metrics, timeline_assessment = build_timeline_assessment(
+        server=server,
+        alliance=alliance,
+    )
+
     recruitment_targets = RecruitmentTargetAnalyzer().analyze_server(server)
     recruitment = find_item(recruitment_targets, "alliance", alliance)
 
@@ -93,6 +117,37 @@ def print_entity_intelligence(server: int, alliance: str):
             f"{format_power(row['power']):>10}"
         )
 
+    print_section("TIMELINE METRICS")
+
+    if timeline_metrics is None:
+        print("No timeline metrics available.")
+    else:
+        print(f"Snapshots:       {timeline_metrics.snapshot_count}")
+        print(f"Power:           {format_power(timeline_metrics.first_power)} → {format_power(timeline_metrics.last_power)}")
+        print(f"Rank:            #{timeline_metrics.first_rank} → #{timeline_metrics.last_rank}")
+        print(f"Total Growth:    {timeline_metrics.total_growth_percent:+.2f}%")
+        print(f"Max Growth:      {timeline_metrics.max_growth_percent:+.2f}%")
+        print(f"Max Drop:        {timeline_metrics.max_drop_percent:+.2f}%")
+        print(f"Rank Gain:       {timeline_metrics.largest_rank_gain}")
+        print(f"Rank Loss:       {timeline_metrics.largest_rank_loss}")
+        print(f"Volatility:      {timeline_metrics.power_volatility:.2f}%")
+        print(f"Missing Latest:  {timeline_metrics.missing_latest_snapshot}")
+
+    print_section("TIMELINE TREND")
+
+    if timeline_assessment is None:
+        print("No timeline trend available.")
+    else:
+        print(f"Trend:      {timeline_assessment.trend.value}")
+        print(f"Confidence: {timeline_assessment.confidence:.0f}%")
+        print(f"Summary:    {timeline_assessment.summary}")
+
+        if timeline_assessment.evidence:
+            print()
+            print("Evidence:")
+            for item in timeline_assessment.evidence:
+                print(f"  - {item}")
+
     print_section("EVENTS")
 
     if not events:
@@ -112,6 +167,7 @@ def print_entity_intelligence(server: int, alliance: str):
                         value = format_power(value)
                     elif isinstance(value, float):
                         value = f"{value:.2f}"
+
                     print(f"    {key}: {value}")
 
             print()
@@ -169,8 +225,10 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Show complete intelligence file for one alliance."
     )
+
     parser.add_argument("server", type=int)
     parser.add_argument("alliance", type=str)
+
     return parser.parse_args()
 
 
