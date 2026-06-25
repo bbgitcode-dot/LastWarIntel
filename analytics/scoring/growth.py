@@ -1,5 +1,5 @@
-from database.sqlite import Database
 from analytics.scoring.base import BaseScore, ScoreResult
+from services.server_repository import ServerRepository
 
 
 def normalize_score(percent_growth: float) -> float:
@@ -16,37 +16,10 @@ class GrowthScore(BaseScore):
     weight = 0.30
 
     def __init__(self):
-        self.db = Database()
-
-    def get_top10_sum_by_collection(self, server: int):
-        rows = self.db.execute(
-            """
-            SELECT
-                c.name AS collection,
-                SUM(re.value) AS total_power
-            FROM ranking_entries re
-            JOIN snapshots s ON s.id = re.snapshot_id
-            JOIN collections c ON c.id = s.collection_id
-            JOIN ranking_types rt ON rt.id = re.ranking_type_id
-            WHERE
-                s.server = ?
-                AND rt.name = 'alliance_power'
-                AND re.rank <= 10
-            GROUP BY c.name
-            """,
-            (server,),
-        )
-
-        order = {
-            "S5 Pre Transfer": 1,
-            "S5 Post Transfer": 2,
-            "S6 Preseason Alliances": 3,
-        }
-
-        return sorted(rows, key=lambda row: order.get(row["collection"], 999))
+        self.repo = ServerRepository()
 
     def calculate(self, server: int) -> ScoreResult:
-        rows = self.get_top10_sum_by_collection(server)
+        rows = self.repo.get_alliance_power_timeline(server)
 
         if len(rows) < 2:
             return ScoreResult(
@@ -72,7 +45,7 @@ class GrowthScore(BaseScore):
         )
 
     def detailed(self, server: int):
-        rows = self.get_top10_sum_by_collection(server)
+        rows = self.repo.get_alliance_power_timeline(server)
 
         if len(rows) < 2:
             return None
@@ -84,8 +57,8 @@ class GrowthScore(BaseScore):
 
         return {
             "server": server,
-            "first_collection": rows[0]["collection"],
-            "last_collection": rows[-1]["collection"],
+            "first_collection": rows[0]["name"],
+            "last_collection": rows[-1]["name"],
             "first_power": first,
             "last_power": last,
             "diff": diff,

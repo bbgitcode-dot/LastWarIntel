@@ -22,7 +22,7 @@ def print_growth(server: int):
     print(f"\n========== SERVER {server} GROWTH SCORE ==========\n")
 
     for row in result["timeline"]:
-        print(f"{row['collection']:<28} {format_value(row['total_power'])}")
+        print(f"{row['name']:<28} {format_value(row['total_power'])}")
 
     print("\nGrowth:")
     print(f"  {format_value(result['first_power'])} → {format_value(result['last_power'])}")
