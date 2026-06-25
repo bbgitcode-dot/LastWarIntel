@@ -1,13 +1,14 @@
 """
 LastWarIntel
 President View Builder
-Version: 1.1
+Version: 1.2
 
 Builds a strategic intelligence view for alliance leadership.
 """
 
 from __future__ import annotations
 
+from analytics.intelligence.models import Insight
 from analytics.views.models import IntelligenceView
 
 
@@ -26,11 +27,17 @@ class PresidentViewBuilder:
         events: list,
         health_assessments: list,
         recruitment_targets: list,
+        insights: list[Insight],
     ) -> IntelligenceView:
-
         view = IntelligenceView(
             title=f"SERVER {server} PRESIDENT INTELLIGENCE",
             subtitle="Strategic overview",
+        )
+
+        view.add_section(
+            "Executive Summary",
+            5,
+            self._format_insights(insights),
         )
 
         view.add_section(
@@ -46,25 +53,14 @@ class PresidentViewBuilder:
             ],
         )
 
-        weak = [
-            item for item in health_assessments
-            if item.score < 70
-        ]
-
+        weak = [item for item in health_assessments if item.score < 70]
         view.add_section(
             "Critical / Weak Alliances",
             20,
-            [
-                self._format_health(item)
-                for item in sorted(weak, key=lambda h: h.score)
-            ],
+            [self._format_health(item) for item in sorted(weak, key=lambda h: h.score)],
         )
 
-        watch = [
-            item for item in health_assessments
-            if 70 <= item.score < 80
-        ]
-
+        watch = [item for item in health_assessments if 70 <= item.score < 80]
         view.add_section(
             "Alliances to Watch",
             30,
@@ -74,11 +70,7 @@ class PresidentViewBuilder:
             ],
         )
 
-        strong = [
-            item for item in health_assessments
-            if item.score >= 80
-        ]
-
+        strong = [item for item in health_assessments if item.score >= 80]
         view.add_section(
             "Strong Alliances",
             40,
@@ -138,6 +130,29 @@ class PresidentViewBuilder:
         )
 
         return view
+
+    @staticmethod
+    def _format_insights(insights: list[Insight]) -> list[str]:
+        if not insights:
+            return ["No major strategic insights detected."]
+
+        severity_icons = {
+            "CRITICAL": "⛔",
+            "HIGH": "🔴",
+            "MEDIUM": "🟠",
+            "LOW": "🟢",
+        }
+
+        items = []
+
+        for insight in insights:
+            icon = severity_icons.get(insight.severity.name, "•")
+            items.append(
+                f"{icon} {insight.summary} "
+                f"(Confidence {insight.confidence:.0f}%)"
+            )
+
+        return items
 
     @staticmethod
     def _format_health(item) -> str:

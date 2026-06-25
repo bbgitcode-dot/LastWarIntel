@@ -1,7 +1,7 @@
 """
 LastWarIntel
 President Dashboard
-Version: 1.0
+Version: 1.1
 
 High-level strategic dashboard for alliance leadership.
 """
@@ -12,6 +12,7 @@ import argparse
 
 from analytics.events.analyzer import AllianceEventAnalyzer
 from analytics.health.analyzer import AllianceHealthAnalyzer
+from analytics.intelligence.insight_engine import InsightEngine
 from analytics.recruitment.analyzer import RecruitmentTargetAnalyzer
 from analytics.scoring.growth import GrowthScore
 from analytics.scoring.overall import OverallScore
@@ -20,20 +21,15 @@ from analytics.views.formatter import ConsoleFormatter
 from analytics.views.president import PresidentViewBuilder
 
 
-def build_dashboard(server: int):
-    # ----- Scores -----
-
+def build_dashboard(server: int) -> str:
     overall = OverallScore().calculate(server)["overall"]
     growth = GrowthScore().calculate(server)
     stability = StabilityScore().calculate(server)
 
-    # ----- Intelligence -----
-
     events = AllianceEventAnalyzer().analyze(server)
     health = AllianceHealthAnalyzer().analyze(server)
     recruitment = RecruitmentTargetAnalyzer().analyze_server(server)
-
-    # ----- View -----
+    insights = InsightEngine().analyze(server)
 
     view = PresidentViewBuilder().build(
         server=server,
@@ -43,6 +39,7 @@ def build_dashboard(server: int):
         events=events,
         health_assessments=health,
         recruitment_targets=recruitment,
+        insights=insights,
     )
 
     return ConsoleFormatter().render(view)
@@ -52,9 +49,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="President strategic dashboard."
     )
-
     parser.add_argument("server", type=int)
-
     return parser.parse_args()
 
 
