@@ -1,7 +1,7 @@
 """
 LastWarIntel
 Topic Builder
-Version: 1.0
+Version: 1.1
 
 Groups related insights into strategic intelligence topics.
 """
@@ -50,15 +50,15 @@ class TopicBuilder:
         insights: list[Insight],
     ) -> IntelligenceTopic:
 
-        highest_priority = max(
+        insights = sorted(
             insights,
-            key=lambda i: i.priority.value,
+            key=lambda i: (
+                -i.priority.value,
+                -i.confidence,
+            ),
         )
 
-        highest_severity = max(
-            insights,
-            key=lambda i: i.severity.value,
-        )
+        primary = insights[0]
 
         confidence = (
             sum(i.confidence for i in insights)
@@ -70,7 +70,10 @@ class TopicBuilder:
         recommendations: list[str] = []
 
         for insight in insights:
-            evidence.extend(insight.evidence)
+
+            for item in insight.evidence:
+                if item not in evidence:
+                    evidence.append(item)
 
             if (
                 insight.recommendation
@@ -78,22 +81,16 @@ class TopicBuilder:
             ):
                 recommendations.append(insight.recommendation)
 
-        summary = self._build_summary(category, insights)
+        summary = self._build_summary(insights)
 
         return IntelligenceTopic(
             title=category.value,
             category=category,
-            priority=highest_priority.priority,
-            severity=highest_severity.severity,
+            priority=primary.priority,
+            severity=primary.severity,
             summary=summary,
             confidence=confidence,
-            insights=sorted(
-                insights,
-                key=lambda i: (
-                    -i.priority.value,
-                    -i.confidence,
-                ),
-            ),
+            insights=insights,
             evidence=evidence,
             recommendation=(
                 recommendations[0]
@@ -103,32 +100,18 @@ class TopicBuilder:
         )
 
     @staticmethod
-    def _build_summary(
-        category: InsightCategory,
-        insights: list[Insight],
-    ) -> str:
+    def _build_summary(insights: list[Insight]) -> str:
+        """
+        Create a natural-language topic summary.
 
-        count = len(insights)
+        If only one insight exists, reuse its wording.
+        Otherwise build a concise aggregation.
+        """
 
-        if category == InsightCategory.RISK:
-            return f"{count} strategic risk(s) require attention."
+        if len(insights) == 1:
+            return insights[0].summary
 
-        if category == InsightCategory.RECRUITMENT:
-            return f"{count} recruitment opportunity identified."
-
-        if category == InsightCategory.GROWTH:
-            return f"{count} growth-related observation available."
-
-        if category == InsightCategory.COMPETITION:
-            return f"{count} competitive development detected."
-
-        if category == InsightCategory.STABILITY:
-            return f"{count} stability-related observation available."
-
-        if category == InsightCategory.DIPLOMACY:
-            return f"{count} diplomacy-related observation available."
-
-        if category == InsightCategory.OPPORTUNITY:
-            return f"{count} strategic opportunity identified."
-
-        return f"{count} intelligence item(s)."
+        return (
+            f"{len(insights)} related intelligence findings "
+            f"support this topic."
+        )
