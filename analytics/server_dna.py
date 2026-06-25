@@ -31,6 +31,15 @@ def trait_from_score(name: str, score: float):
             return "🟡 Concentrated Power"
         return "🔴 One-Alliance Risk"
 
+    if name == "player":
+        if score >= 85:
+            return "👑 Elite Player Base"
+        if score >= 65:
+            return "👥 Strong Player Base"
+        if score >= 45:
+            return "🟡 Average Player Base"
+        return "🔴 Weak Player Base"
+
     return None
 
 
