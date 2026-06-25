@@ -22,6 +22,15 @@ def trait_from_score(name: str, score: float):
             return "🟡 Medium Power"
         return "🔴 Low Power"
 
+    if name == "depth":
+        if score >= 80:
+            return "🌊 Deep Alliance Structure"
+        if score >= 60:
+            return "🟢 Balanced Top10"
+        if score >= 40:
+            return "🟡 Concentrated Power"
+        return "🔴 One-Alliance Risk"
+
     return None
 
 
@@ -60,7 +69,7 @@ def print_server_dna(server: int):
     for detail in result["details"]:
         trait = trait_from_score(detail.name, detail.score)
         if trait:
-            print(f"  {trait:<25} {detail.score:.2f}/100")
+            print(f"  {trait:<30} {detail.score:.2f}/100")
 
     print("\nWhy:")
     for detail in result["details"]:

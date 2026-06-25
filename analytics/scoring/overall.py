@@ -1,6 +1,6 @@
-from analytics.scoring.base import ScoreResult
 from analytics.scoring.growth import GrowthScore
 from analytics.scoring.power import PowerScore
+from analytics.scoring.depth import DepthScore
 
 
 class OverallScore:
@@ -8,6 +8,7 @@ class OverallScore:
         self.scorers = [
             GrowthScore(),
             PowerScore(),
+            DepthScore(),
         ]
 
     def calculate(self, server: int):
