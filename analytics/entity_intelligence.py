@@ -1,12 +1,13 @@
 """
 LastWarIntel
 Module: Entity Intelligence CLI
-Version: 1.1
+Version: 1.2
 
 Creates a full intelligence file for one alliance on one server.
 
 Shows:
 - Facts / Timeline
+- Timeline Metrics
 - Timeline Trend
 - Events
 - Health Assessment
@@ -20,9 +21,7 @@ from analytics.assessment.converter import AllianceHealthAssessmentConverter
 from analytics.events.analyzer import AllianceEventAnalyzer
 from analytics.health.analyzer import AllianceHealthAnalyzer
 from analytics.recruitment.analyzer import RecruitmentTargetAnalyzer
-from analytics.timeline.analyzer import TimelineAnalyzer
-from analytics.timeline.metrics import TimelineMetricsBuilder
-from analytics.timeline.trend_detector import TrendDetector
+from analytics.timeline.facade import TimelineFacade
 from services.server_repository import ServerRepository
 
 
@@ -56,18 +55,6 @@ def find_item(items, attr, value):
     return None
 
 
-def build_timeline_assessment(server: int, alliance: str):
-    timeline = TimelineAnalyzer().analyze_alliance(server, alliance)
-
-    if timeline is None:
-        return None, None
-
-    metrics = TimelineMetricsBuilder().build(timeline)
-    assessment = TrendDetector().detect(metrics)
-
-    return metrics, assessment
-
-
 def print_entity_intelligence(server: int, alliance: str):
     repo = ServerRepository()
 
@@ -92,10 +79,14 @@ def print_entity_intelligence(server: int, alliance: str):
     if health:
         assessment = AllianceHealthAssessmentConverter().convert(health)
 
-    timeline_metrics, timeline_assessment = build_timeline_assessment(
-        server=server,
-        alliance=alliance,
-    )
+    timeline_result = TimelineFacade().analyze(server, alliance)
+
+    timeline_metrics = None
+    timeline_assessment = None
+
+    if timeline_result:
+        timeline_metrics = timeline_result.metrics
+        timeline_assessment = timeline_result.assessment
 
     recruitment_targets = RecruitmentTargetAnalyzer().analyze_server(server)
     recruitment = find_item(recruitment_targets, "alliance", alliance)
@@ -123,8 +114,16 @@ def print_entity_intelligence(server: int, alliance: str):
         print("No timeline metrics available.")
     else:
         print(f"Snapshots:       {timeline_metrics.snapshot_count}")
-        print(f"Power:           {format_power(timeline_metrics.first_power)} → {format_power(timeline_metrics.last_power)}")
-        print(f"Rank:            #{timeline_metrics.first_rank} → #{timeline_metrics.last_rank}")
+        print(
+            f"Power:           "
+            f"{format_power(timeline_metrics.first_power)} → "
+            f"{format_power(timeline_metrics.last_power)}"
+        )
+        print(
+            f"Rank:            "
+            f"#{timeline_metrics.first_rank} → "
+            f"#{timeline_metrics.last_rank}"
+        )
         print(f"Total Growth:    {timeline_metrics.total_growth_percent:+.2f}%")
         print(f"Max Growth:      {timeline_metrics.max_growth_percent:+.2f}%")
         print(f"Max Drop:        {timeline_metrics.max_drop_percent:+.2f}%")
