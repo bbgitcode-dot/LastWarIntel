@@ -13,7 +13,7 @@ def format_value(value):
 
 def print_growth(server: int):
     scorer = GrowthScore()
-    result = scorer.calculate(server)
+    result = scorer.detailed(server)
 
     if not result:
         print(f"Nicht genug Daten für Server {server}.")

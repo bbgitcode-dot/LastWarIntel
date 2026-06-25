@@ -1,4 +1,5 @@
 from database.sqlite import Database
+from analytics.scoring.base import BaseScore, ScoreResult
 
 
 def normalize_score(percent_growth: float) -> float:
@@ -10,7 +11,10 @@ def normalize_score(percent_growth: float) -> float:
     return round(((percent_growth + 10) / 40) * 100, 2)
 
 
-class GrowthScore:
+class GrowthScore(BaseScore):
+    name = "growth"
+    weight = 0.30
+
     def __init__(self):
         self.db = Database()
 
@@ -39,16 +43,18 @@ class GrowthScore:
             "S6 Preseason Alliances": 3,
         }
 
-        return sorted(
-            rows,
-            key=lambda row: order.get(row["collection"], 999),
-        )
+        return sorted(rows, key=lambda row: order.get(row["collection"], 999))
 
-    def calculate(self, server: int):
+    def calculate(self, server: int) -> ScoreResult:
         rows = self.get_top10_sum_by_collection(server)
 
         if len(rows) < 2:
-            return None
+            return ScoreResult(
+                name=self.name,
+                server=server,
+                score=0.0,
+                explanation="Not enough historical alliance data.",
+            )
 
         first = rows[0]["total_power"]
         last = rows[-1]["total_power"]
@@ -56,6 +62,25 @@ class GrowthScore:
         diff = last - first
         percent = (diff / first) * 100 if first else 0
         score = normalize_score(percent)
+
+        return ScoreResult(
+            name=self.name,
+            server=server,
+            score=score,
+            raw_value=percent,
+            explanation=f"Top10 alliance power changed by {percent:+.2f}%.",
+        )
+
+    def detailed(self, server: int):
+        rows = self.get_top10_sum_by_collection(server)
+
+        if len(rows) < 2:
+            return None
+
+        first = rows[0]["total_power"]
+        last = rows[-1]["total_power"]
+        diff = last - first
+        percent = (diff / first) * 100 if first else 0
 
         return {
             "server": server,
@@ -65,6 +90,6 @@ class GrowthScore:
             "last_power": last,
             "diff": diff,
             "percent": percent,
-            "score": score,
+            "score": normalize_score(percent),
             "timeline": rows,
         }
