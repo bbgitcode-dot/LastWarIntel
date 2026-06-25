@@ -6,8 +6,17 @@ class ServerRepository:
         self.db = Database()
 
     # ------------------------------------------------------------------
-    # Collections / Snapshots
+    # Server / Collections
     # ------------------------------------------------------------------
+
+    def get_all_servers(self):
+        return self.db.execute(
+            """
+            SELECT DISTINCT server
+            FROM snapshots
+            ORDER BY server
+            """
+        )
 
     def get_servers_with_collection(self, collection_name: str):
         return self.db.execute(
@@ -20,6 +29,23 @@ class ServerRepository:
             ORDER BY s.server
             """,
             (collection_name,),
+        )
+
+    def get_collections_for_server(self, server: int):
+        return self.db.execute(
+            """
+            SELECT DISTINCT
+                c.id,
+                c.name,
+                c.type,
+                c.created_at
+            FROM collections c
+            JOIN snapshots s
+                ON s.collection_id = c.id
+            WHERE s.server = ?
+            ORDER BY c.created_at
+            """,
+            (server,),
         )
 
     def has_collection(self, server: int, collection_name: str) -> bool:
@@ -38,7 +64,7 @@ class ServerRepository:
         return len(rows) > 0
 
     # ------------------------------------------------------------------
-    # Alliance Rankings
+    # Alliance Power
     # ------------------------------------------------------------------
 
     def get_top10_alliances(self, server: int, collection_name: str):
@@ -95,15 +121,20 @@ class ServerRepository:
         )
 
         order = {
-            "S5 Pre Transfer": 1,
-            "S5 Post Transfer": 2,
-            "S6 Preseason Alliances": 3,
+            "S4 Server Summary": 1,
+            "S5 Pre Transfer": 2,
+            "S5 Post Transfer": 3,
+            "S6 Preseason Alliances": 4,
         }
 
         return sorted(rows, key=lambda row: order.get(row["name"], 999))
 
+    def get_latest_top10_alliance_power_sum(self, server: int):
+        alliances = self.get_latest_top10_alliances(server)
+        return sum(row["value"] for row in alliances)
+
     # ------------------------------------------------------------------
-    # Player / THP Rankings
+    # Player / THP
     # ------------------------------------------------------------------
 
     def get_top10_players(self, server: int, collection_name: str = "S6 Preseason THP"):
@@ -138,43 +169,69 @@ class ServerRepository:
             collection_name="S6 Preseason THP",
         )
 
+    def get_latest_top10_player_power_sum(self, server: int):
+        players = self.get_latest_top10_players(server)
+        return sum(row["value"] for row in players)
+
     # ------------------------------------------------------------------
-    # Cities
+    # Metrics
     # ------------------------------------------------------------------
 
-    def get_cities(self, server: int):
+    def get_metrics(self, server: int):
         return self.db.execute(
             """
             SELECT
-                cs.alliance,
-                cs.city_level_1,
-                cs.city_level_2,
-                cs.city_level_3,
-                cs.influence_points
-            FROM city_stats cs
+                c.name AS collection,
+                m.metric_name,
+                m.value
+            FROM metrics m
             JOIN snapshots s
-                ON s.id = cs.snapshot_id
+                ON s.id = m.snapshot_id
+            JOIN collections c
+                ON c.id = s.collection_id
             WHERE s.server = ?
-            ORDER BY cs.influence_points DESC
+            ORDER BY c.created_at, m.metric_name
             """,
             (server,),
         )
 
-    # ------------------------------------------------------------------
-    # Influence
-    # ------------------------------------------------------------------
-
-    def get_influence(self, server: int):
-        return self.db.execute(
+    def get_metric(self, server: int, collection_name: str, metric_name: str):
+        rows = self.db.execute(
             """
             SELECT
-                alliance,
-                faction,
-                metric_name,
-                value
-            FROM influence_points
-            WHERE server = ?
-            ORDER BY alliance, metric_name
+                m.value
+            FROM metrics m
+            JOIN snapshots s
+                ON s.id = m.snapshot_id
+            JOIN collections c
+                ON c.id = s.collection_id
+            WHERE s.server = ?
+              AND c.name = ?
+              AND m.metric_name = ?
+            LIMIT 1
             """,
-            (server,),
+            (server, collection_name, metric_name),
+        )
+
+        return rows[0]["value"] if rows else None
+
+    # ------------------------------------------------------------------
+    # Data Availability
+    # ------------------------------------------------------------------
+
+    def has_latest_alliance_data(self, server: int) -> bool:
+        return self.has_collection(server, "S6 Preseason Alliances")
+
+    def has_latest_player_data(self, server: int) -> bool:
+        return self.has_collection(server, "S6 Preseason THP")
+
+    def has_growth_data(self, server: int) -> bool:
+        timeline = self.get_alliance_power_timeline(server)
+        return len(timeline) >= 2
+
+    def has_complete_scoring_data(self, server: int) -> bool:
+        return (
+            self.has_growth_data(server)
+            and self.has_latest_alliance_data(server)
+            and self.has_latest_player_data(server)
         )
