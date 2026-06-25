@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from database.sqlite import Database
 
 
@@ -23,8 +25,7 @@ class ServerRepository:
             """
             SELECT DISTINCT s.server
             FROM snapshots s
-            JOIN collections c
-                ON c.id = s.collection_id
+            JOIN collections c ON c.id = s.collection_id
             WHERE c.name = ?
             ORDER BY s.server
             """,
@@ -40,8 +41,7 @@ class ServerRepository:
                 c.type,
                 c.created_at
             FROM collections c
-            JOIN snapshots s
-                ON s.collection_id = c.id
+            JOIN snapshots s ON s.collection_id = c.id
             WHERE s.server = ?
             ORDER BY c.created_at
             """,
@@ -53,8 +53,7 @@ class ServerRepository:
             """
             SELECT 1
             FROM snapshots s
-            JOIN collections c
-                ON c.id = s.collection_id
+            JOIN collections c ON c.id = s.collection_id
             WHERE s.server = ?
               AND c.name = ?
             LIMIT 1
@@ -76,14 +75,10 @@ class ServerRepository:
                 e.name,
                 re.value
             FROM ranking_entries re
-            JOIN snapshots s
-                ON s.id = re.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
-            JOIN ranking_types rt
-                ON rt.id = re.ranking_type_id
-            JOIN entities e
-                ON e.id = re.entity_id
+            JOIN snapshots s ON s.id = re.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
+            JOIN ranking_types rt ON rt.id = re.ranking_type_id
+            JOIN entities e ON e.id = re.entity_id
             WHERE s.server = ?
               AND c.name = ?
               AND rt.name = 'alliance_power'
@@ -107,17 +102,16 @@ class ServerRepository:
         rows = self.db.execute(
             """
             SELECT
-                c.name AS name,
+                c.name AS collection,
+                re.rank,
+                e.tag,
+                e.name,
                 re.value AS power
             FROM ranking_entries re
-            JOIN snapshots s
-                ON s.id = re.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
-            JOIN ranking_types rt
-                ON rt.id = re.ranking_type_id
-            JOIN entities e
-                ON e.id = re.entity_id
+            JOIN snapshots s ON s.id = re.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
+            JOIN ranking_types rt ON rt.id = re.ranking_type_id
+            JOIN entities e ON e.id = re.entity_id
             WHERE s.server = ?
               AND rt.name = 'alliance_power'
               AND e.tag = ?
@@ -125,14 +119,41 @@ class ServerRepository:
             (server, tag),
         )
 
-        order = {
-            "S4 Server Summary": 1,
-            "S5 Pre Transfer": 2,
-            "S5 Post Transfer": 3,
-            "S6 Preseason Alliances": 4,
-        }
+        return self._sort_by_collection_order(rows)
 
-        return sorted(rows, key=lambda row: order.get(row["name"], 999))
+    def get_all_alliance_histories(self, server: int):
+        rows = self.db.execute(
+            """
+            SELECT
+                c.name AS collection,
+                re.rank,
+                e.tag,
+                e.name,
+                re.value AS power
+            FROM ranking_entries re
+            JOIN snapshots s ON s.id = re.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
+            JOIN ranking_types rt ON rt.id = re.ranking_type_id
+            JOIN entities e ON e.id = re.entity_id
+            WHERE s.server = ?
+              AND rt.name = 'alliance_power'
+              AND re.rank <= 10
+            """,
+            (server,),
+        )
+
+        grouped = defaultdict(list)
+
+        for row in rows:
+            tag = row["tag"] or row["name"]
+            grouped[tag].append(row)
+
+        result = {}
+
+        for tag, history in grouped.items():
+            result[tag] = self._sort_by_collection_order(history)
+
+        return result
 
     def get_alliance_power_timeline(self, server: int):
         rows = self.db.execute(
@@ -141,12 +162,9 @@ class ServerRepository:
                 c.name AS name,
                 SUM(re.value) AS total_power
             FROM ranking_entries re
-            JOIN snapshots s
-                ON s.id = re.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
-            JOIN ranking_types rt
-                ON rt.id = re.ranking_type_id
+            JOIN snapshots s ON s.id = re.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
+            JOIN ranking_types rt ON rt.id = re.ranking_type_id
             WHERE s.server = ?
               AND rt.name = 'alliance_power'
               AND re.rank <= 10
@@ -155,14 +173,7 @@ class ServerRepository:
             (server,),
         )
 
-        order = {
-            "S4 Server Summary": 1,
-            "S5 Pre Transfer": 2,
-            "S5 Post Transfer": 3,
-            "S6 Preseason Alliances": 4,
-        }
-
-        return sorted(rows, key=lambda row: order.get(row["name"], 999))
+        return sorted(rows, key=lambda row: self._collection_order(row["name"]))
 
     def get_latest_top10_alliance_power_sum(self, server: int):
         alliances = self.get_latest_top10_alliances(server)
@@ -181,14 +192,10 @@ class ServerRepository:
                 e.name,
                 re.value
             FROM ranking_entries re
-            JOIN snapshots s
-                ON s.id = re.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
-            JOIN ranking_types rt
-                ON rt.id = re.ranking_type_id
-            JOIN entities e
-                ON e.id = re.entity_id
+            JOIN snapshots s ON s.id = re.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
+            JOIN ranking_types rt ON rt.id = re.ranking_type_id
+            JOIN entities e ON e.id = re.entity_id
             WHERE s.server = ?
               AND c.name = ?
               AND rt.name = 'total_hero_power'
@@ -220,10 +227,8 @@ class ServerRepository:
                 m.metric_name,
                 m.value
             FROM metrics m
-            JOIN snapshots s
-                ON s.id = m.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
+            JOIN snapshots s ON s.id = m.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
             WHERE s.server = ?
             ORDER BY c.created_at, m.metric_name
             """,
@@ -233,13 +238,10 @@ class ServerRepository:
     def get_metric(self, server: int, collection_name: str, metric_name: str):
         rows = self.db.execute(
             """
-            SELECT
-                m.value
+            SELECT m.value
             FROM metrics m
-            JOIN snapshots s
-                ON s.id = m.snapshot_id
-            JOIN collections c
-                ON c.id = s.collection_id
+            JOIN snapshots s ON s.id = m.snapshot_id
+            JOIN collections c ON c.id = s.collection_id
             WHERE s.server = ?
               AND c.name = ?
               AND m.metric_name = ?
@@ -270,3 +272,21 @@ class ServerRepository:
             and self.has_latest_alliance_data(server)
             and self.has_latest_player_data(server)
         )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _collection_order(collection_name: str) -> int:
+        order = {
+            "S4 Server Summary": 1,
+            "S5 Pre Transfer": 2,
+            "S5 Post Transfer": 3,
+            "S6 Preseason Alliances": 4,
+        }
+
+        return order.get(collection_name, 999)
+
+    def _sort_by_collection_order(self, rows):
+        return sorted(rows, key=lambda row: self._collection_order(row["collection"]))
