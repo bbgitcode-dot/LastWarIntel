@@ -99,6 +99,41 @@ class ServerRepository:
             collection_name="S6 Preseason Alliances",
         )
 
+    def get_latest_top10_alliance_tags(self, server: int):
+        alliances = self.get_latest_top10_alliances(server)
+        return [row["tag"] for row in alliances if row["tag"]]
+
+    def get_alliance_history(self, server: int, tag: str):
+        rows = self.db.execute(
+            """
+            SELECT
+                c.name AS name,
+                re.value AS power
+            FROM ranking_entries re
+            JOIN snapshots s
+                ON s.id = re.snapshot_id
+            JOIN collections c
+                ON c.id = s.collection_id
+            JOIN ranking_types rt
+                ON rt.id = re.ranking_type_id
+            JOIN entities e
+                ON e.id = re.entity_id
+            WHERE s.server = ?
+              AND rt.name = 'alliance_power'
+              AND e.tag = ?
+            """,
+            (server, tag),
+        )
+
+        order = {
+            "S4 Server Summary": 1,
+            "S5 Pre Transfer": 2,
+            "S5 Post Transfer": 3,
+            "S6 Preseason Alliances": 4,
+        }
+
+        return sorted(rows, key=lambda row: order.get(row["name"], 999))
+
     def get_alliance_power_timeline(self, server: int):
         rows = self.db.execute(
             """
