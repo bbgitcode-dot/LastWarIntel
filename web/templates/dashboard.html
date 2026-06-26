@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="mb-4">
+
+LastWarIntel
+
+</h1>
+
+<h3>
+
+Server {{ dashboard.server }}
+
+</h3>
+
+<hr>
+
+<div class="row">
+
+{% for metric in dashboard.metrics %}
+
+<div class="col-md-3">
+
+<div class="card mb-3">
+
+<div class="card-body">
+
+<h6>
+
+{{ metric.title }}
+
+</h6>
+
+<h2>
+
+{{ metric.value }}
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<hr>
+
+<h3>
+
+Top Recruitment Targets
+
+</h3>
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>Alliance</th>
+
+<th>Priority</th>
+
+<th>Confidence</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for target in dashboard.top_targets %}
+
+<tr>
+
+<td>{{ target.alliance }}</td>
+
+<td>{{ target.priority }}</td>
+
+<td>{{ target.confidence }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<hr>
+
+<h3>
+
+Campaign
+
+</h3>
+
+<p>
+
+{{ dashboard.campaign.summary }}
+
+</p>
+
+<p>
+
+Phases:
+
+{{ dashboard.campaign.phase_count }}
+
+</p>
+
+<p>
+
+Targets:
+
+{{ dashboard.campaign.target_count }}
+
+</p>
+
+<hr>
+
+<h3>
+
+Strategic Outlook
+
+</h3>
+
+<p>
+
+{{ dashboard.outlook }}
+
+</p>
+
+{% endblock %}
