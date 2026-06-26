@@ -1,7 +1,7 @@
 """
 LastWarIntel
 Application Models
-Version: 1.2
+Version: 1.4
 
 Application layer models.
 
@@ -9,9 +9,8 @@ Reports aggregate multiple domain results but intentionally contain
 no presentation logic.
 
 Important:
-Application models must not import intelligence.facade, because the
-intelligence facade itself depends on EntityReport. This avoids circular
-imports between application and intelligence layers.
+Application models must not import facades that depend on EntityReport.
+This avoids circular imports between application and domain facade layers.
 """
 
 from __future__ import annotations
@@ -38,7 +37,12 @@ class EntityReport:
     recruitment: RecruitmentResult | None
     events: EventsResult | None
 
-    # Keep this generic to avoid application ↔ intelligence circular imports.
+    # Kept generic to avoid circular imports:
+    # application.models -> situation.facade -> application.models
+    situation: object | None = None
+
+    # Kept generic to avoid circular imports:
+    # application.models -> intelligence.facade -> application.models
     intelligence: object | None = None
 
 

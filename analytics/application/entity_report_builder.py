@@ -1,9 +1,9 @@
 """
 LastWarIntel
 Entity Report Builder
-Version: 1.1
+Version: 1.3
 
-Builds complete EntityReport objects.
+Builds a complete EntityReport by orchestrating all analytics domains.
 """
 
 from __future__ import annotations
@@ -13,20 +13,22 @@ from analytics.events.facade import EventsFacade
 from analytics.health.facade import HealthFacade
 from analytics.intelligence.facade import IntelligenceFacade
 from analytics.recruitment.facade import RecruitmentFacade
+from analytics.situation.facade import SituationFacade
 from analytics.timeline.facade import TimelineFacade
 
 
 class EntityReportBuilder:
     """
-    Builds complete entity reports.
+    Builds a complete alliance intelligence report.
     """
 
     def __init__(self) -> None:
 
         self._timeline = TimelineFacade()
+        self._events = EventsFacade()
         self._health = HealthFacade()
         self._recruitment = RecruitmentFacade()
-        self._events = EventsFacade()
+        self._situation = SituationFacade()
         self._intelligence = IntelligenceFacade()
 
     def build(
@@ -35,54 +37,59 @@ class EntityReportBuilder:
         alliance: str,
     ) -> EntityReport:
 
-        timeline = self._timeline.analyze(
-            server,
-            alliance,
-        )
+        timeline = self._timeline.analyze(server, alliance)
 
-        health = self._health.analyze(
-            server,
-            alliance,
-        )
+        events = self._events.analyze(server, alliance)
 
-        recruitment = self._recruitment.analyze(
-            server,
-            alliance,
-        )
+        health = self._health.analyze(server, alliance)
 
-        events = self._events.analyze(
-            server,
-            alliance,
-        )
+        recruitment = self._recruitment.analyze(server, alliance)
 
         #
-        # Build report without intelligence first.
+        # Build preliminary report
         #
 
         report = EntityReport(
             server=server,
             alliance=alliance,
             timeline=timeline,
+            events=events,
             health=health,
             recruitment=recruitment,
-            events=events,
+            situation=None,
             intelligence=None,
         )
 
         #
-        # Intelligence depends on the report itself.
+        # Situation
         #
 
-        intelligence = self._intelligence.analyze(
-            report,
+        situation = self._situation.analyze(report)
+
+        report = EntityReport(
+            server=server,
+            alliance=alliance,
+            timeline=timeline,
+            events=events,
+            health=health,
+            recruitment=recruitment,
+            situation=situation,
+            intelligence=None,
         )
+
+        #
+        # Intelligence
+        #
+
+        intelligence = self._intelligence.analyze(report)
 
         return EntityReport(
             server=server,
             alliance=alliance,
             timeline=timeline,
+            events=events,
             health=health,
             recruitment=recruitment,
-            events=events,
+            situation=situation,
             intelligence=intelligence,
         )
