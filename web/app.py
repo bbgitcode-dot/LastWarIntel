@@ -8,6 +8,7 @@ Application entry point.
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from web.routes.alliance import router as alliance_router
 from web.routes.dashboard import router as dashboard_router
 
 app = FastAPI(
@@ -22,3 +23,4 @@ app.mount(
 )
 
 app.include_router(dashboard_router)
+app.include_router(alliance_router)

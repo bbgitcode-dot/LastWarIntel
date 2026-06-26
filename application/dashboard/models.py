@@ -1,7 +1,7 @@
 """
 LastWarIntel
 Dashboard Models
-Version: 1.0
+Version: 1.1
 
 Presentation models for the web dashboard.
 """
@@ -53,6 +53,27 @@ class DashboardCampaign:
 
     target_count: int
 
+    next_action: str = ""
+
+    progress: float = 0.0
+
+    estimated_success: float = 0.0
+
+
+@dataclass(slots=True, frozen=True)
+class DashboardFeedItem:
+    """
+    One item in the intelligence feed.
+    """
+
+    title: str
+
+    summary: str
+
+    severity: str
+
+    timestamp: str
+
 
 @dataclass(slots=True, frozen=True)
 class DashboardData:
@@ -62,10 +83,16 @@ class DashboardData:
 
     server: int
 
+    status: str = "Operational"
+
+    snapshot: str = "Latest available snapshot"
+
     metrics: list[DashboardMetric] = field(default_factory=list)
 
     top_targets: list[DashboardTarget] = field(default_factory=list)
 
     campaign: DashboardCampaign | None = None
+
+    feed: list[DashboardFeedItem] = field(default_factory=list)
 
     outlook: str = ""

@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header class="command-header">
+
+    <div>
+
+        <a class="back-link" href="/">
+
+            ← Back to Strategic Command
+
+        </a>
+
+        <div class="brand">
+
+            🗂 Intelligence File
+
+        </div>
+
+        <div class="subtitle">
+
+            Alliance dossier · Server {{ report.server }}
+
+        </div>
+
+    </div>
+
+    <div class="server-status">
+
+        <div class="status-label">
+
+            Alliance
+
+        </div>
+
+        <div class="status-pill status-stable">
+
+            {{ report.alliance }}
+
+        </div>
+
+        <div class="snapshot-label">
+
+            Latest available snapshot
+
+        </div>
+
+    </div>
+
+</header>
+
+<main class="command-grid">
+
+    <section class="file-hero">
+
+        <div>
+
+            <div class="file-label">
+
+                TARGET ALLIANCE
+
+            </div>
+
+            <h1>
+
+                {{ report.alliance }}
+
+            </h1>
+
+            {% if report.situation %}
+
+            <p>
+
+                {{ report.situation.situation.summary }}
+
+            </p>
+
+            {% endif %}
+
+        </div>
+
+        <div class="file-stamp">
+
+            INTEL
+
+        </div>
+
+    </section>
+
+    <section class="metrics-grid">
+
+        {% if report.health %}
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                ❤️ Health
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ report.health.health.score }}
+
+            </div>
+
+            <div class="metric-bar">
+
+                <div
+                    class="metric-fill"
+                    style="width: {{ report.health.health.score }}%;">
+
+                </div>
+
+            </div>
+
+        </article>
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                ⚠️ Risk
+
+            </div>
+
+            <div class="metric-value small-value">
+
+                {{ report.health.health.risk }}
+
+            </div>
+
+            <div class="metric-subline">
+
+                {{ report.health.health.status }} · {{ report.health.health.trend }}
+
+            </div>
+
+        </article>
+
+        {% endif %}
+
+        {% if report.recruitment %}
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                🎯 Recruitment
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ report.recruitment.target.priority }}
+
+            </div>
+
+            <div class="metric-bar">
+
+                <div
+                    class="metric-fill"
+                    style="width: {{ report.recruitment.target.priority }}%;">
+
+                </div>
+
+            </div>
+
+        </article>
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                📡 Confidence
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ "%.0f"|format(report.recruitment.target.confidence) }}%
+
+            </div>
+
+            <div class="metric-subline">
+
+                {{ report.recruitment.target.recommendation }}
+
+            </div>
+
+        </article>
+
+        {% endif %}
+
+    </section>
+
+    <section class="content-grid">
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>Current Situation</h2>
+
+                    <p>Objective situation summary</p>
+
+                </div>
+
+                <span class="panel-badge">
+
+                    SITREP
+
+                </span>
+
+            </div>
+
+            {% if report.situation %}
+
+            <p class="brief-text compact">
+
+                {{ report.situation.situation.summary }}
+
+            </p>
+
+            <div class="finding-list">
+
+                {% for finding in report.situation.situation.findings %}
+
+                <div class="finding-card">
+
+                    <strong>{{ finding.title }}</strong>
+
+                    <p>{{ finding.description }}</p>
+
+                    <span>Confidence {{ "%.0f"|format(finding.confidence) }}%</span>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% else %}
+
+            <p class="brief-text compact">
+
+                No current situation available.
+
+            </p>
+
+            {% endif %}
+
+        </article>
+
+        <div class="right-column">
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Recommendations</h2>
+
+                        <p>Recommended leadership action</p>
+
+                    </div>
+
+                    <span class="panel-badge operation">
+
+                        ACTION
+
+                    </span>
+
+                </div>
+
+                {% if report.intelligence and report.intelligence.assessment.recommendations %}
+
+                <div class="recommendation-list">
+
+                    {% for recommendation in report.intelligence.assessment.recommendations %}
+
+                    <div class="recommendation-card">
+
+                        <div class="recommendation-priority">
+
+                            {{ recommendation.priority.value }}
+
+                        </div>
+
+                        <strong>{{ recommendation.title }}</strong>
+
+                        <p>{{ recommendation.description }}</p>
+
+                        <span>Confidence {{ "%.0f"|format(recommendation.confidence) }}%</span>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                {% else %}
+
+                <p class="brief-text compact">
+
+                    No recommendations.
+
+                </p>
+
+                {% endif %}
+
+            </article>
+
+            <article class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Strategic Outlook</h2>
+
+                        <p>Forward-looking assessment</p>
+
+                    </div>
+
+                    <span class="panel-badge">
+
+                        OUTLOOK
+
+                    </span>
+
+                </div>
+
+                {% if report.intelligence and report.intelligence.assessment.outlook %}
+
+                <p class="brief-text compact">
+
+                    {{ report.intelligence.assessment.outlook.summary }}
+
+                </p>
+
+                {% else %}
+
+                <p class="brief-text compact">
+
+                    No strategic outlook.
+
+                </p>
+
+                {% endif %}
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>Timeline</h2>
+
+                <p>Historical ranking and power snapshots</p>
+
+            </div>
+
+            <span class="panel-badge">
+
+                HISTORY
+
+            </span>
+
+        </div>
+
+        {% if report.timeline %}
+
+        <div class="timeline-table">
+
+            <div class="timeline-row timeline-head">
+
+                <div>Snapshot</div>
+
+                <div>Rank</div>
+
+                <div>Power</div>
+
+            </div>
+
+            {% for point in report.timeline.timeline.points %}
+
+            <div class="timeline-row">
+
+                <div>{{ point.collection }}</div>
+
+                <div>#{{ point.rank }}</div>
+
+                <div>{{ "{:,}".format(point.power).replace(",", ".") }}</div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>Evidence Feed</h2>
+
+                <p>Detected events and supporting facts</p>
+
+            </div>
+
+            <span class="panel-badge">
+
+                EVIDENCE
+
+            </span>
+
+        </div>
+
+        {% if report.events and report.events.events %}
+
+        <div class="feed-list">
+
+            {% for event in report.events.events %}
+
+            <div class="feed-item feed-critical">
+
+                <div class="feed-dot">
+
+                </div>
+
+                <div>
+
+                    <div class="feed-title">
+
+                        {{ event.event_type.value }}
+
+                    </div>
+
+                    <div class="feed-summary">
+
+                        {{ event.summary }}
+
+                    </div>
+
+                    {% if event.evidence %}
+
+                    <div class="feed-time">
+
+                        {{ " → ".join(event.evidence) }}
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <p class="brief-text compact">
+
+            No events detected.
+
+        </p>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+{% endblock %}

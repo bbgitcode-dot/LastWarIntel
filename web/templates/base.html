@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>LastWarIntel</title>
+    <meta charset="UTF-8">
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>LastWarIntel Strategic Command</title>
 
     <link
         href="/static/css/style.css"
@@ -17,11 +19,77 @@
 
 <body>
 
-<div class="container mt-4">
+<div class="layout-shell">
 
-{% block content %}
+    <aside class="side-nav">
 
-{% endblock %}
+        <div class="side-brand">
+
+            🐺
+
+        </div>
+
+        <nav class="nav-list">
+
+            <a class="nav-item active" href="/">
+
+                <span>🏠</span>
+
+                <strong>Command</strong>
+
+            </a>
+
+            <a class="nav-item" href="/">
+
+                <span>🗺️</span>
+
+                <strong>Servers</strong>
+
+            </a>
+
+            <a class="nav-item" href="/">
+
+                <span>🏰</span>
+
+                <strong>Alliances</strong>
+
+            </a>
+
+            <a class="nav-item" href="/">
+
+                <span>🚀</span>
+
+                <strong>Operations</strong>
+
+            </a>
+
+            <a class="nav-item" href="/">
+
+                <span>📈</span>
+
+                <strong>Rankings</strong>
+
+            </a>
+
+            <a class="nav-item" href="/">
+
+                <span>📜</span>
+
+                <strong>Intel</strong>
+
+            </a>
+
+        </nav>
+
+    </aside>
+
+    <div class="app-shell">
+
+        {% block content %}
+
+        {% endblock %}
+
+    </div>
 
 </div>
 

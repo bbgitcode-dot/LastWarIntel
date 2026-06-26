@@ -2,138 +2,370 @@
 
 {% block content %}
 
-<h1 class="mb-4">
+<header class="command-header">
 
-LastWarIntel
+    <div>
 
-</h1>
+        <div class="brand">
 
-<h3>
+            🐺 LastWarIntel
 
-Server {{ dashboard.server }}
+        </div>
 
-</h3>
+        <div class="subtitle">
 
-<hr>
+            Strategic Command · Decision Support Platform
 
-<div class="row">
+        </div>
 
-{% for metric in dashboard.metrics %}
+    </div>
 
-<div class="col-md-3">
+    <div class="server-status">
 
-<div class="card mb-3">
+        <div class="status-label">
 
-<div class="card-body">
+            Server {{ dashboard.server }}
 
-<h6>
+        </div>
 
-{{ metric.title }}
+        <div class="status-pill status-stable">
 
-</h6>
+            ● {{ dashboard.status }}
 
-<h2>
+        </div>
 
-{{ metric.value }}
+        <div class="snapshot-label">
 
-</h2>
+            {{ dashboard.snapshot }}
 
-</div>
+        </div>
 
-</div>
+    </div>
 
-</div>
+</header>
 
-{% endfor %}
+<main class="command-grid">
 
-</div>
+    <section class="metrics-grid">
 
-<hr>
+        {% for metric in dashboard.metrics %}
 
-<h3>
+        <article class="metric-card">
 
-Top Recruitment Targets
+            <div class="metric-title">
 
-</h3>
+                {% if metric.title == "Overall Health" %}
+                ❤️
+                {% elif metric.title == "Recruitment" %}
+                🎯
+                {% elif metric.title == "Growth" %}
+                📈
+                {% elif metric.title == "Strategic Risk" %}
+                ⚠️
+                {% endif %}
 
-<table class="table table-striped">
+                {{ metric.title }}
 
-<thead>
+            </div>
 
-<tr>
+            <div class="metric-value">
 
-<th>Alliance</th>
+                {{ "%.0f"|format(metric.value) }}{{ metric.unit }}
 
-<th>Priority</th>
+            </div>
 
-<th>Confidence</th>
+            <div class="metric-bar">
 
-</tr>
+                <div
+                    class="metric-fill"
+                    style="width: {{ metric.value }}%;">
 
-</thead>
+                </div>
 
-<tbody>
+            </div>
 
-{% for target in dashboard.top_targets %}
+        </article>
 
-<tr>
+        {% endfor %}
 
-<td>{{ target.alliance }}</td>
+    </section>
 
-<td>{{ target.priority }}</td>
+    <section class="content-grid">
 
-<td>{{ target.confidence }}</td>
+        <article class="panel">
 
-</tr>
+            <div class="panel-header">
 
-{% endfor %}
+                <div>
 
-</tbody>
+                    <h2>Priority Targets</h2>
 
-</table>
+                    <p>Top recruitment opportunities</p>
 
-<hr>
+                </div>
 
-<h3>
+                <span class="panel-badge">
 
-Campaign
+                    TOP {{ dashboard.top_targets|length }}
 
-</h3>
+                </span>
 
-<p>
+            </div>
 
-{{ dashboard.campaign.summary }}
+            <div class="target-list">
 
-</p>
+                {% for target in dashboard.top_targets %}
 
-<p>
+                <a
+                    class="target-card target-link"
+                    href="/alliance/{{ dashboard.server }}/{{ target.alliance }}">
 
-Phases:
+                    <div class="target-rank">
 
-{{ dashboard.campaign.phase_count }}
+                        #{{ loop.index }}
 
-</p>
+                    </div>
 
-<p>
+                    <div class="target-main">
 
-Targets:
+                        <div class="target-name">
 
-{{ dashboard.campaign.target_count }}
+                            {{ target.alliance }}
 
-</p>
+                        </div>
 
-<hr>
+                        <div class="target-summary">
 
-<h3>
+                            {{ target.summary }}
 
-Strategic Outlook
+                        </div>
 
-</h3>
+                        <div class="target-progress">
 
-<p>
+                            <div
+                                class="target-progress-fill"
+                                style="width: {{ target.priority }}%;">
 
-{{ dashboard.outlook }}
+                            </div>
 
-</p>
+                        </div>
+
+                    </div>
+
+                    <div class="target-score">
+
+                        <strong>{{ "%.0f"|format(target.priority) }}</strong>
+
+                        <span>{{ "%.0f"|format(target.confidence) }}%</span>
+
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+        </article>
+
+        <div class="right-column">
+
+            <article class="panel operation-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Active Operation</h2>
+
+                        <p>Current transfer campaign</p>
+
+                    </div>
+
+                    <span class="panel-badge operation">
+
+                        TRANSFER
+
+                    </span>
+
+                </div>
+
+                {% if dashboard.campaign %}
+
+                <div class="operation-title">
+
+                    Transfer Surge
+
+                </div>
+
+                <div class="operation-summary">
+
+                    {{ dashboard.campaign.summary }}
+
+                </div>
+
+                <div class="operation-progress">
+
+                    <div class="operation-progress-top">
+
+                        <span>Progress</span>
+
+                        <strong>{{ "%.0f"|format(dashboard.campaign.progress) }}%</strong>
+
+                    </div>
+
+                    <div class="operation-progress-bar">
+
+                        <div
+                            class="operation-progress-fill"
+                            style="width: {{ dashboard.campaign.progress }}%;">
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="next-action">
+
+                    <span>Next Action</span>
+
+                    <strong>{{ dashboard.campaign.next_action }}</strong>
+
+                </div>
+
+                <div class="operation-stats">
+
+                    <div>
+
+                        <span>Phases</span>
+
+                        <strong>{{ dashboard.campaign.phase_count }}</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Targets</span>
+
+                        <strong>{{ dashboard.campaign.target_count }}</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Success</span>
+
+                        <strong>{{ "%.0f"|format(dashboard.campaign.estimated_success) }}%</strong>
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="operation-summary">
+
+                    No active operation.
+
+                </div>
+
+                {% endif %}
+
+            </article>
+
+            <article class="panel feed-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>Latest Intelligence</h2>
+
+                        <p>Recent strategic signals</p>
+
+                    </div>
+
+                    <span class="panel-badge">
+
+                        LIVE
+
+                    </span>
+
+                </div>
+
+                <div class="feed-list">
+
+                    {% for item in dashboard.feed %}
+
+                    <div class="feed-item feed-{{ item.severity }}">
+
+                        <div class="feed-dot">
+
+                        </div>
+
+                        <div>
+
+                            <div class="feed-title">
+
+                                {{ item.title }}
+
+                            </div>
+
+                            <div class="feed-summary">
+
+                                {{ item.summary }}
+
+                            </div>
+
+                            <div class="feed-time">
+
+                                {{ item.timestamp }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <section class="brief-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>Strategic Intelligence Brief</h2>
+
+                <p>Executive assessment for leadership</p>
+
+            </div>
+
+            <span class="panel-badge">
+
+                SITREP
+
+            </span>
+
+        </div>
+
+        <p class="brief-text">
+
+            {{ dashboard.outlook }}
+
+        </p>
+
+    </section>
+
+</main>
 
 {% endblock %}
