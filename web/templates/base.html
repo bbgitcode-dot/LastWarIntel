@@ -9,7 +9,7 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-    <title>LastWarIntel Strategic Command</title>
+    <title>Sentinel Strategic Command</title>
 
     <link
         href="/static/css/style.css"
@@ -25,59 +25,43 @@
 
         <div class="side-brand">
 
-            🐺
+            <div class="side-brand-icon">
+
+                🐺
+
+            </div>
+
+            <div class="side-brand-text">
+
+                SEN
+
+            </div>
 
         </div>
 
         <nav class="nav-list">
 
-            <a class="nav-item active" href="/">
+            {% for item in navigation %}
 
-                <span>🏠</span>
+            <a
+                href="{{ item.url }}"
+                class="nav-item {% if active_page == item.key %}active{% endif %}">
 
-                <strong>Command</strong>
+                <span>
 
-            </a>
+                    {{ item.icon }}
 
-            <a class="nav-item" href="/">
+                </span>
 
-                <span>🗺️</span>
+                <strong>
 
-                <strong>Servers</strong>
+                    {{ item.title }}
 
-            </a>
-
-            <a class="nav-item" href="/">
-
-                <span>🏰</span>
-
-                <strong>Alliances</strong>
+                </strong>
 
             </a>
 
-            <a class="nav-item" href="/">
-
-                <span>🚀</span>
-
-                <strong>Operations</strong>
-
-            </a>
-
-            <a class="nav-item" href="/">
-
-                <span>📈</span>
-
-                <strong>Rankings</strong>
-
-            </a>
-
-            <a class="nav-item" href="/">
-
-                <span>📜</span>
-
-                <strong>Intel</strong>
-
-            </a>
+            {% endfor %}
 
         </nav>
 

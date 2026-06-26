@@ -1,5 +1,5 @@
 """
-Dashboard Routes
+Intelligence Explorer Routes
 """
 
 from __future__ import annotations
@@ -7,7 +7,6 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from application.dashboard.builder import DashboardBuilder
 from web.navigation import NAVIGATION
 
 router = APIRouter()
@@ -17,18 +16,17 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/")
-def dashboard(
+@router.get("/intel")
+def intelligence(
     request: Request,
 ):
-    dashboard_data = DashboardBuilder().build(638)
-
     return templates.TemplateResponse(
         request=request,
-        name="dashboard.html",
+        name="coming_soon.html",
         context={
-            "dashboard": dashboard_data,
+            "title": "Intelligence",
+            "icon": "📜",
             "navigation": NAVIGATION,
-            "active_page": "dashboard",
+            "active_page": "intel",
         },
     )

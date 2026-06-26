@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from analytics.application.entity_report_builder import EntityReportBuilder
+from web.navigation import NAVIGATION
 
 router = APIRouter()
 
@@ -32,5 +33,7 @@ def alliance_file(
         name="alliance.html",
         context={
             "report": report,
+            "navigation": NAVIGATION,
+            "active_page": "alliances",
         },
     )
