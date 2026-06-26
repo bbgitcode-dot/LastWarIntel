@@ -1,7 +1,7 @@
 """
 LastWarIntel
 Entity Report Renderer
-Version: 1.1
+Version: 1.2
 
 Console renderer for EntityReport.
 """
@@ -47,15 +47,110 @@ class EntityReportRenderer:
         print(f"Server:   {report.server}")
         print(f"Alliance: {report.alliance}")
 
+        self._render_current_situation(report)
+        self._render_strategic_assessment(report)
+        self._render_recommendations(report)
         self._render_timeline(report)
         self._render_timeline_metrics(report)
         self._render_timeline_trend(report)
         self._render_events(report)
         self._render_health(report)
         self._render_assessment(report)
-        self._render_strategic_intelligence(report)
         self._render_recruitment(report)
-        self._render_recommendations(report)
+
+    def _render_current_situation(self, report: EntityReport) -> None:
+        self._section("CURRENT SITUATION")
+
+        if not report.situation:
+            print("No current situation available.")
+            return
+
+        situation = report.situation.situation
+
+        print(f"Summary:    {situation.summary}")
+        print(f"Confidence: {situation.confidence:.0f}%")
+
+        if situation.findings:
+            print()
+            print("Key Findings:")
+
+            for finding in situation.findings:
+                print(f"  - {finding.title}")
+                print(f"    {finding.description}")
+                print(f"    Confidence: {finding.confidence:.0f}%")
+
+    def _render_strategic_assessment(self, report: EntityReport) -> None:
+        self._section("STRATEGIC ASSESSMENT")
+
+        if not report.intelligence:
+            print("No strategic assessment available.")
+            return
+
+        assessment = report.intelligence.assessment
+
+        if assessment.hypotheses:
+            print("Hypotheses:")
+
+            for hypothesis in assessment.hypotheses:
+                print(f"  [{hypothesis.priority.name:<8}] {hypothesis.title}")
+                print(f"    Confidence: {hypothesis.confidence:.0f}%")
+                print(f"    {hypothesis.summary}")
+
+                if hypothesis.evidence:
+                    print()
+                    for evidence in hypothesis.evidence:
+                        print(f"      • {evidence}")
+
+                print()
+        else:
+            print("Hypotheses: none")
+
+        if assessment.risks:
+            print("Strategic Risks:")
+
+            for risk in assessment.risks:
+                print(f"  [{risk.priority.name:<8}] {risk.title}")
+                print(f"    Confidence: {risk.confidence:.0f}%")
+                print(f"    {risk.summary}")
+
+            print()
+
+        if assessment.opportunities:
+            print("Strategic Opportunities:")
+
+            for opportunity in assessment.opportunities:
+                print(f"  [{opportunity.priority.name:<8}] {opportunity.title}")
+                print(f"    Confidence: {opportunity.confidence:.0f}%")
+                print(f"    {opportunity.summary}")
+
+            print()
+
+        if assessment.outlook:
+            print("Strategic Outlook:")
+            print(f"  Confidence: {assessment.outlook.confidence:.0f}%")
+            print(f"  {assessment.outlook.summary}")
+
+    def _render_recommendations(self, report: EntityReport) -> None:
+        self._section("RECOMMENDED ACTIONS")
+
+        if (
+            not report.intelligence
+            or not report.intelligence.assessment.recommendations
+        ):
+            print("No recommendations.")
+            return
+
+        for recommendation in report.intelligence.assessment.recommendations:
+            print(f"[{recommendation.priority.name:<8}] {recommendation.title}")
+            print(f"  Confidence: {recommendation.confidence:.0f}%")
+            print(f"  {recommendation.description}")
+
+            if recommendation.rationale:
+                print()
+                for reason in recommendation.rationale:
+                    print(f"    • {reason}")
+
+            print()
 
     def _render_timeline(self, report: EntityReport) -> None:
         self._section("FACTS / TIMELINE")
@@ -191,29 +286,6 @@ class EntityReportRenderer:
                 f"Confidence: {item.confidence}%"
             )
 
-    def _render_strategic_intelligence(self, report: EntityReport) -> None:
-        self._section("STRATEGIC INTELLIGENCE")
-
-        if (
-            not report.intelligence
-            or not report.intelligence.assessment.hypotheses
-        ):
-            print("No strategic hypotheses.")
-            return
-
-        for hypothesis in report.intelligence.assessment.hypotheses:
-            print(f"[{hypothesis.priority.name:<8}] {hypothesis.title}")
-            print(f"  Confidence: {hypothesis.confidence:.0f}%")
-            print(f"  {hypothesis.summary}")
-
-            if hypothesis.evidence:
-                print()
-
-                for evidence in hypothesis.evidence:
-                    print(f"    • {evidence}")
-
-            print()
-
     def _render_recruitment(self, report: EntityReport) -> None:
         self._section("RECRUITMENT VIEW")
 
@@ -234,26 +306,3 @@ class EntityReportRenderer:
 
         for reason in target.reasons:
             print(f"  - {reason}")
-
-    def _render_recommendations(self, report: EntityReport) -> None:
-        self._section("RECOMMENDED ACTIONS")
-
-        if (
-            not report.intelligence
-            or not report.intelligence.assessment.recommendations
-        ):
-            print("No recommendations.")
-            return
-
-        for recommendation in report.intelligence.assessment.recommendations:
-            print(f"[{recommendation.priority.name:<8}] {recommendation.title}")
-            print(f"  Confidence: {recommendation.confidence:.0f}%")
-            print(f"  {recommendation.description}")
-
-            if recommendation.rationale:
-                print()
-
-                for reason in recommendation.rationale:
-                    print(f"    • {reason}")
-
-            print()
