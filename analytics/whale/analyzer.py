@@ -12,6 +12,7 @@ from analytics.comparison.difference import (
 )
 from analytics.comparison.models import DifferenceSet
 from analytics.reasoning.models import (
+    FactEntityType,
     FactSeverity,
     IntelligenceFact,
 )
@@ -116,6 +117,9 @@ class WhaleAnalyzer:
                         for event in events
                         if event.event == "Incoming"
                     ],
+                    entity_type=FactEntityType.PLAYER,
+                    entity_id="multiple" if incoming > 1 else self._single_entity_id(events, "Incoming"),
+                    tags=["whale", "movement", "incoming"],
                 )
             )
 
@@ -134,6 +138,9 @@ class WhaleAnalyzer:
                         for event in events
                         if event.event == "Outgoing"
                     ],
+                    entity_type=FactEntityType.PLAYER,
+                    entity_id="multiple" if outgoing > 1 else self._single_entity_id(events, "Outgoing"),
+                    tags=["whale", "movement", "outgoing"],
                 )
             )
 
@@ -152,6 +159,9 @@ class WhaleAnalyzer:
                         for event in events
                         if event.event == "Moved"
                     ],
+                    entity_type=FactEntityType.PLAYER,
+                    entity_id="multiple" if moved > 1 else self._single_entity_id(events, "Moved"),
+                    tags=["whale", "movement", "transfer"],
                 )
             )
 
@@ -211,6 +221,23 @@ class WhaleAnalyzer:
             / len(events),
             2,
         )
+
+    @staticmethod
+    def _single_entity_id(
+        events: list[WhaleEvent],
+        event_type: str,
+    ) -> str:
+
+        matching = [
+            event
+            for event in events
+            if event.event == event_type
+        ]
+
+        if not matching:
+            return ""
+
+        return matching[0].identifier
 
     @staticmethod
     def _format_event(
