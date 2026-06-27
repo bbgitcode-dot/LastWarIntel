@@ -77,11 +77,10 @@ class OperationsPipeline:
         )
 
         briefing = self._briefing.create(
-            server=server,
-            assessments=[],
-            watch_targets=watch_targets,
-            breaking_news=[],
-        )
+			server=server,
+			watch_targets=watch_targets,
+			breaking_news=[],
+		)
 
         return SentinelResult(
             briefing=briefing,

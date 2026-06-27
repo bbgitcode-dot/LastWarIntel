@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from application.assessments.models import Assessment
 from application.briefing.models import MorningBriefing
 from application.watchlist.models import WatchTarget
 
@@ -16,16 +15,14 @@ class MorningBriefingBuilder:
     """
     Builds a high-level operational morning briefing.
 
-    The builder intentionally performs no business reasoning.
-    It aggregates already prepared application objects into a
-    single briefing model.
+    The builder aggregates operational objects into a single
+    MorningBriefing without performing business reasoning.
     """
 
     def build(
         self,
         *,
         server: int,
-        assessments: list[Assessment],
         watch_targets: list[WatchTarget],
         breaking_news: list[str] | None = None,
         generated_at: datetime | None = None,
@@ -36,13 +33,19 @@ class MorningBriefingBuilder:
         if generated_at is None:
             generated_at = datetime.now()
 
+        assessments = [
+            target.assessment
+            for target in watch_targets
+            if target.assessment is not None
+        ]
+
         return MorningBriefing(
             server=server,
             generated_at=generated_at,
             summary=self._summary(
-                assessments,
-                watch_targets,
-                breaking_news,
+                assessments=len(assessments),
+                watch_targets=len(watch_targets),
+                breaking_news=len(breaking_news),
             ),
             assessments=assessments,
             breaking_news=breaking_news,
@@ -51,13 +54,14 @@ class MorningBriefingBuilder:
 
     @staticmethod
     def _summary(
-        assessments: list[Assessment],
-        watch_targets: list[WatchTarget],
-        breaking_news: list[str],
+        *,
+        assessments: int,
+        watch_targets: int,
+        breaking_news: int,
     ) -> str:
 
         return (
-            f"{len(assessments)} assessment(s), "
-            f"{len(watch_targets)} watch target(s), "
-            f"{len(breaking_news)} breaking news item(s)."
+            f"{assessments} assessment(s), "
+            f"{watch_targets} watch target(s), "
+            f"{breaking_news} breaking news item(s)."
         )
