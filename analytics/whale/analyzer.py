@@ -11,6 +11,10 @@ from analytics.comparison.difference import (
     EntityType,
 )
 from analytics.comparison.models import DifferenceSet
+from analytics.reasoning.models import (
+    FactSeverity,
+    IntelligenceFact,
+)
 from analytics.whale.models import (
     WhaleAssessment,
     WhaleEvent,
@@ -72,12 +76,86 @@ class WhaleAnalyzer:
                 )
             )
 
+        facts = self._build_facts(
+            incoming=incoming,
+            outgoing=outgoing,
+            moved=moved,
+            events=events,
+        )
+
         return WhaleAssessment(
             whales=events,
+            facts=facts,
             incoming=incoming,
             outgoing=outgoing,
             moved=moved,
         )
+
+    def _build_facts(
+        self,
+        incoming: int,
+        outgoing: int,
+        moved: int,
+        events: list[WhaleEvent],
+    ) -> list[IntelligenceFact]:
+
+        facts: list[IntelligenceFact] = []
+
+        if incoming:
+            facts.append(
+                IntelligenceFact(
+                    source="Whale Intelligence",
+                    title="Incoming Whale Movement",
+                    description=(
+                        f"{incoming} whale player(s) appeared in the current snapshot."
+                    ),
+                    severity=self._severity_from_count(incoming),
+                    confidence=self._average_confidence(events),
+                    evidence=[
+                        self._format_event(event)
+                        for event in events
+                        if event.event == "Incoming"
+                    ],
+                )
+            )
+
+        if outgoing:
+            facts.append(
+                IntelligenceFact(
+                    source="Whale Intelligence",
+                    title="Outgoing Whale Movement",
+                    description=(
+                        f"{outgoing} whale player(s) disappeared from the current snapshot."
+                    ),
+                    severity=self._severity_from_count(outgoing),
+                    confidence=self._average_confidence(events),
+                    evidence=[
+                        self._format_event(event)
+                        for event in events
+                        if event.event == "Outgoing"
+                    ],
+                )
+            )
+
+        if moved:
+            facts.append(
+                IntelligenceFact(
+                    source="Whale Intelligence",
+                    title="Whale Transfer Movement",
+                    description=(
+                        f"{moved} whale player(s) changed server or alliance."
+                    ),
+                    severity=self._severity_from_count(moved),
+                    confidence=self._average_confidence(events),
+                    evidence=[
+                        self._format_event(event)
+                        for event in events
+                        if event.event == "Moved"
+                    ],
+                )
+            )
+
+        return facts
 
     def _is_whale(
         self,
@@ -106,3 +184,67 @@ class WhaleAnalyzer:
             return changes["power"][1]
 
         return None
+
+    @staticmethod
+    def _severity_from_count(
+        count: int,
+    ) -> FactSeverity:
+
+        if count >= 3:
+            return FactSeverity.CRITICAL
+
+        if count == 2:
+            return FactSeverity.HIGH
+
+        return FactSeverity.MEDIUM
+
+    @staticmethod
+    def _average_confidence(
+        events: list[WhaleEvent],
+    ) -> float:
+
+        if not events:
+            return 0.0
+
+        return round(
+            sum(event.confidence for event in events)
+            / len(events),
+            2,
+        )
+
+    @staticmethod
+    def _format_event(
+        event: WhaleEvent,
+    ) -> str:
+
+        name = event.payload.get(
+            "name",
+            event.identifier,
+        )
+
+        if event.event == "Moved":
+            changes = event.payload.get(
+                "changes",
+                {},
+            )
+
+            server_change = changes.get("server")
+            alliance_change = changes.get("alliance")
+
+            details: list[str] = []
+
+            if server_change:
+                details.append(
+                    f"server {server_change[0]} → {server_change[1]}"
+                )
+
+            if alliance_change:
+                details.append(
+                    f"alliance {alliance_change[0]} → {alliance_change[1]}"
+                )
+
+            movement = ", ".join(details)
+
+            return f"{name} moved ({movement}), power {event.power}M."
+
+        return f"{name} detected as {event.event.lower()} whale, power {event.power}M."

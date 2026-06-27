@@ -37000,12 +37000,30 @@ D:.
 |   |           scoring.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
 |   |           
+|   +---comparison
+|   |   |   analyzer.py
+|   |   |   detector.py
+|   |   |   difference.py
+|   |   |   facade.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           analyzer.cpython-314.pyc
+|   |           detector.cpython-314.pyc
+|   |           difference.cpython-314.pyc
+|   |           facade.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
 |   +---domain
 |   |   |   campaign.py
+|   |   |   comparison.py
 |   |   |   dataset.py
 |   |   |   entity.py
 |   |   |   milestone.py
 |   |   |   snapshot.py
+|   |   |   snapshot_timeline.py
 |   |   |   __init__.py
 |   |   |   
 |   |   +---factories
@@ -37016,6 +37034,7 @@ D:.
 |   |   |       
 |   |   \---__pycache__
 |   |           campaign.cpython-314.pyc
+|   |           comparison.cpython-314.pyc
 |   |           dataset.cpython-314.pyc
 |   |           entity.cpython-314.pyc
 |   |           milestone.cpython-314.pyc
@@ -37092,6 +37111,18 @@ D:.
 |   |           topic_builder.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
 |   |           
+|   +---matching
+|   |   |   facade.py
+|   |   |   matcher.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           facade.cpython-314.pyc
+|   |           matcher.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
 |   +---ranking
 |   |   |   analyzer.py
 |   |   |   facade.py
@@ -37100,6 +37131,18 @@ D:.
 |   |   |   
 |   |   \---__pycache__
 |   |           analyzer.cpython-314.pyc
+|   |           facade.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
+|   +---reasoning
+|   |   |   engine.py
+|   |   |   facade.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           engine.cpython-314.pyc
 |   |           facade.cpython-314.pyc
 |   |           models.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
@@ -37151,13 +37194,17 @@ D:.
 |   +---services
 |   |   |   alliance_service.py
 |   |   |   dashboard_service.py
+|   |   |   feed_service.py
 |   |   |   ranking_service.py
+|   |   |   server_landscape_service.py
 |   |   |   server_service.py
 |   |   |   __init__.py
 |   |   |   
 |   |   \---__pycache__
 |   |           alliance_service.cpython-314.pyc
 |   |           dashboard_service.cpython-314.pyc
+|   |           feed_service.cpython-314.pyc
+|   |           server_landscape_service.cpython-314.pyc
 |   |           server_service.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
 |   |           
@@ -37227,6 +37274,18 @@ D:.
 |   |           topic_renderer.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
 |   |           
+|   +---whale
+|   |   |   analyzer.py
+|   |   |   facade.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           analyzer.cpython-314.pyc
+|   |           facade.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
 |   \---__pycache__
 |           alliance_events.cpython-314.pyc
 |           alliance_health.cpython-314.pyc
@@ -37264,6 +37323,28 @@ D:.
 |   |           models.cpython-314.pyc
 |   |           __init__.cpython-314.pyc
 |   |           
+|   +---intelligence_feed
+|   |   |   builder.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           builder.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
+|   +---server_landscape
+|   |   |   builder.py
+|   |   |   context.py
+|   |   |   models.py
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   |           builder.cpython-314.pyc
+|   |           context.cpython-314.pyc
+|   |           models.cpython-314.pyc
+|   |           __init__.cpython-314.pyc
+|   |           
 |   +---server_overview
 |   |   |   builder.py
 |   |   |   models.py
@@ -37293,6 +37374,13 @@ D:.
 +---discord
 |       bot.py
 |       commands.py
+|       
++---docs
+|       ARCHITECTURE.md
+|       CHANGELOG.md
+|       INTELLIGENCE.md
+|       ROADMAP.md
+|       VISION.md
 |       
 +---export
 |       excel.py
@@ -37394,6 +37482,7 @@ D:.
     |   |   alliance.py
     |   |   alliances.py
     |   |   dashboard.py
+    |   |   feed.py
     |   |   intelligence.py
     |   |   operations.py
     |   |   rankings.py
@@ -37405,6 +37494,7 @@ D:.
     |           alliance.cpython-314.pyc
     |           alliances.cpython-314.pyc
     |           dashboard.cpython-314.pyc
+    |           feed.cpython-314.pyc
     |           intelligence.cpython-314.pyc
     |           operations.cpython-314.pyc
     |           rankings.cpython-314.pyc
@@ -37423,7 +37513,9 @@ D:.
     |       base.html
     |       coming_soon.html
     |       dashboard.html
+    |       feed.html
     |       servers.html
+    |       server_overview.html
     |       __init__.py
     |       
     \---__pycache__

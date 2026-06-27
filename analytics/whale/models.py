@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from analytics.reasoning.models import IntelligenceFact
+
 
 @dataclass(slots=True, frozen=True)
 class WhaleEvent:
@@ -15,13 +17,9 @@ class WhaleEvent:
     """
 
     identifier: str
-
     event: str
-
     power: float | None
-
     confidence: float
-
     payload: dict
 
 
@@ -33,8 +31,8 @@ class WhaleAssessment:
 
     whales: list[WhaleEvent] = field(default_factory=list)
 
+    facts: list[IntelligenceFact] = field(default_factory=list)
+
     incoming: int = 0
-
     outgoing: int = 0
-
     moved: int = 0
