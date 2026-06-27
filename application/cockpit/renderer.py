@@ -62,82 +62,46 @@ class CockpitRenderer:
             return lines
 
         if isinstance(payload, DashboardStatusModel):
-            lines.append(
-                f"Watch Targets        : {payload.watch_target_count}"
-            )
-            lines.append(
-                f"Breaking News        : {payload.breaking_news_count}"
-            )
-            lines.append(
-                f"Server Health        : {payload.server_health:.0f}"
-            )
-            lines.append(
-                f"Recruitment Score    : {payload.recruitment_opportunity:.0f}"
+            lines.extend(
+                self._render_dashboard_status(
+                    payload,
+                )
             )
 
         elif isinstance(payload, PriorityTargetsModel):
-            if not payload.targets:
-                lines.append("No priority targets.")
-
-            for index, target in enumerate(payload.targets, start=1):
-                snapshot = target.decision_snapshot
-
-                if snapshot:
-                    lines.append(
-                        f"{index:>2}. "
-                        f"{target.name:<12}"
-                        f" Score={target.score:.0f}"
-                        f" Health={snapshot.health:.0f}"
-                        f" Talent={snapshot.talent:.0f}"
-                        f" Recruit={snapshot.recruitability:.0f}"
-                    )
-                else:
-                    lines.append(
-                        f"{index:>2}. {target.name}"
-                    )
+            lines.extend(
+                self._render_priority_targets(
+                    payload,
+                )
+            )
 
         elif isinstance(payload, WatchlistBoardModel):
-            if not payload.targets:
-                lines.append("No watch targets.")
-
-            for target in payload.targets:
-                lines.append(
-                    f"{target.history.status.value:<12}"
-                    f"{target.name:<12}"
-                    f"{target.score:.0f}"
+            lines.extend(
+                self._render_watchlist_board(
+                    payload,
                 )
+            )
 
         elif isinstance(payload, RecruitmentBoardModel):
-            if not payload.targets:
-                lines.append("No recruitment targets.")
-
-            for index, target in enumerate(payload.targets, start=1):
-                lines.append(
-                    f"{index:>2}. "
-                    f"{target.name:<12}"
-                    f"{target.score:.0f}"
+            lines.extend(
+                self._render_recruitment_board(
+                    payload,
                 )
+            )
 
         elif isinstance(payload, MorningReportModel):
-            report = payload.report
-
-            lines.append(report.title)
-            lines.append("")
-
-            for section in report.sections:
-                lines.append(section.title)
-
-                for item in section.content:
-                    lines.append(f"  • {item}")
-
-                lines.append("")
+            lines.extend(
+                self._render_morning_report(
+                    payload,
+                )
+            )
 
         elif isinstance(payload, BreakingNewsModel):
-            if not payload.entries:
-                lines.append("No breaking news.")
-            else:
-                for entry in payload.entries:
-                    lines.append(f"• {entry}")
+            lines.extend(
+                self._render_breaking_news(
+                    payload,
+                )
+            )
 
         else:
             lines.append(str(payload))
@@ -145,3 +109,134 @@ class CockpitRenderer:
         lines.append("")
 
         return lines
+
+    @staticmethod
+    def _render_dashboard_status(
+        payload: DashboardStatusModel,
+    ) -> list[str]:
+
+        return [
+            f"Status              : {payload.overall_status}",
+            f"Confidence          : {payload.confidence:.0f}%",
+            f"Server Health       : {payload.server_health:.0f}",
+            f"Recruitment Score   : {payload.recruitment_opportunity:.0f}",
+            f"Watch Targets       : {payload.watch_target_count}",
+            f"Breaking News       : {payload.breaking_news_count}",
+            f"Recommendation      : {payload.recommendation}",
+        ]
+
+    @staticmethod
+    def _render_priority_targets(
+        payload: PriorityTargetsModel,
+    ) -> list[str]:
+
+        lines: list[str] = []
+
+        if not payload.targets:
+            return [
+                "No priority targets.",
+            ]
+
+        for index, target in enumerate(
+            payload.targets,
+            start=1,
+        ):
+            snapshot = target.decision_snapshot
+
+            if snapshot:
+                lines.append(
+                    f"{index:>2}. "
+                    f"{target.name:<12}"
+                    f" Score={target.score:.0f}"
+                    f" Health={snapshot.health:.0f}"
+                    f" Talent={snapshot.talent:.0f}"
+                    f" Recruit={snapshot.recruitability:.0f}"
+                )
+            else:
+                lines.append(
+                    f"{index:>2}. {target.name}"
+                )
+
+        return lines
+
+    @staticmethod
+    def _render_watchlist_board(
+        payload: WatchlistBoardModel,
+    ) -> list[str]:
+
+        lines: list[str] = []
+
+        if not payload.targets:
+            return [
+                "No watch targets.",
+            ]
+
+        for target in payload.targets:
+            lines.append(
+                f"{target.history.status.value:<12}"
+                f"{target.name:<12}"
+                f"{target.score:.0f}"
+            )
+
+        return lines
+
+    @staticmethod
+    def _render_recruitment_board(
+        payload: RecruitmentBoardModel,
+    ) -> list[str]:
+
+        lines: list[str] = []
+
+        if not payload.targets:
+            return [
+                "No recruitment targets.",
+            ]
+
+        for index, target in enumerate(
+            payload.targets,
+            start=1,
+        ):
+            lines.append(
+                f"{index:>2}. "
+                f"{target.name:<12}"
+                f"{target.score:.0f}"
+            )
+
+        return lines
+
+    @staticmethod
+    def _render_morning_report(
+        payload: MorningReportModel,
+    ) -> list[str]:
+
+        lines: list[str] = []
+
+        report = payload.report
+
+        lines.append(report.title)
+        lines.append("")
+
+        for section in report.sections:
+            lines.append(section.title)
+
+            for item in section.content:
+                lines.append(f"  • {item}")
+
+            lines.append("")
+
+        return lines
+
+    @staticmethod
+    def _render_breaking_news(
+        payload: BreakingNewsModel,
+    ) -> list[str]:
+
+        if not payload.entries:
+            return [
+                "No breaking news.",
+            ]
+
+        return [
+            f"• {entry}"
+            for entry in payload.entries
+        ]

@@ -49,6 +49,19 @@ class CockpitProvider:
                         breaking_news_count=len(breaking_news),
                         server_health=server_health,
                         recruitment_opportunity=recruitment_opportunity,
+                        overall_status=self._overall_status(
+                            server_health,
+                            recruitment_opportunity,
+                        ),
+                        recommendation=self._recommendation(
+                            server_health,
+                            recruitment_opportunity,
+                            len(breaking_news),
+                        ),
+                        confidence=self._confidence(
+                            server_health,
+                            recruitment_opportunity,
+                        ),
                     ),
                 ),
                 WidgetData(
@@ -65,11 +78,11 @@ class CockpitProvider:
                 ),
                 WidgetData(
                     widget_key="morning_report",
-                    payload=MorningReportModel(
-                        report=morning_report,
-                    )
-                    if morning_report
-                    else None,
+                    payload=(
+                        MorningReportModel(report=morning_report)
+                        if morning_report
+                        else None
+                    ),
                 ),
             ],
         )
@@ -112,4 +125,50 @@ class CockpitProvider:
                     ),
                 ),
             ],
+        )
+
+    @staticmethod
+    def _overall_status(
+        health: float,
+        opportunity: float,
+    ) -> str:
+
+        if health < 50:
+            return "Critical"
+
+        if health < 70:
+            return "Elevated Risk"
+
+        if opportunity >= 80:
+            return "Recruitment Opportunity"
+
+        return "Stable"
+
+    @staticmethod
+    def _recommendation(
+        health: float,
+        opportunity: float,
+        breaking_news: int,
+    ) -> str:
+
+        if opportunity >= 80:
+            return "Review recruitment targets."
+
+        if health < 60:
+            return "Observe alliance stability."
+
+        if breaking_news:
+            return "Review breaking news."
+
+        return "Continue monitoring."
+
+    @staticmethod
+    def _confidence(
+        health: float,
+        opportunity: float,
+    ) -> float:
+
+        return round(
+            (health + opportunity) / 2,
+            1,
         )
