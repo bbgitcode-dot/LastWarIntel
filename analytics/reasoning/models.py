@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
 
+from analytics.intelligence.indicators import StrategicIndicator
+
 
 class FactSeverity(Enum):
     """
@@ -34,6 +36,18 @@ class FactEntityType(Enum):
     CAMPAIGN = "Campaign"
     SNAPSHOT = "Snapshot"
     SYSTEM = "System"
+
+
+class HypothesisType(Enum):
+    """
+    Strategic hypothesis type.
+    """
+
+    COLLAPSE_RISK = "Collapse Risk"
+    RECRUITMENT_WINDOW = "Recruitment Window"
+    STRENGTH_INCREASE = "Strength Increase"
+    STRUCTURAL_INSTABILITY = "Structural Instability"
+    UNKNOWN = "Unknown"
 
 
 @dataclass(slots=True, frozen=True)
@@ -64,13 +78,46 @@ class IntelligenceFact:
 
 
 @dataclass(slots=True, frozen=True)
+class ReasoningContext:
+    """
+    Input for strategic reasoning.
+    """
+
+    facts: list[IntelligenceFact] = field(default_factory=list)
+
+    indicators: list[StrategicIndicator] = field(default_factory=list)
+
+
+@dataclass(slots=True, frozen=True)
+class ReasoningHypothesis:
+    """
+    Strategic hypothesis derived from facts and indicators.
+    """
+
+    hypothesis_type: HypothesisType
+
+    title: str
+
+    description: str
+
+    confidence: float
+
+    severity: FactSeverity
+
+    evidence: list[str] = field(default_factory=list)
+
+    tags: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True, frozen=True)
 class Assessment:
     """
     Human-readable assessment generated
-    from one or more intelligence facts.
+    from one or more intelligence facts or hypotheses.
     """
 
     title: str
+
     summary: str
 
 
@@ -81,7 +128,9 @@ class Recommendation:
     """
 
     title: str
+
     description: str
+
     priority: FactSeverity
 
 
@@ -89,20 +138,14 @@ class Recommendation:
 class ReasoningResult:
     """
     Final reasoning output.
-
-    Every reasoning result consists of
-
-    Facts
-
-    ↓
-
-    Assessment
-
-    ↓
-
-    Recommendation
     """
 
     facts: list[IntelligenceFact] = field(default_factory=list)
+
+    indicators: list[StrategicIndicator] = field(default_factory=list)
+
+    hypotheses: list[ReasoningHypothesis] = field(default_factory=list)
+
     assessment: Assessment | None = None
+
     recommendation: Recommendation | None = None

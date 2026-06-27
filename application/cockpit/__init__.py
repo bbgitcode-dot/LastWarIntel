@@ -1,0 +1,4 @@
+"""
+Sentinel
+Cockpit Application Package
+"""
