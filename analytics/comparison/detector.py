@@ -62,6 +62,7 @@ class DifferenceDetector:
                         difference_type=DifferenceType.REMOVED,
                         identifier=baseline_candidate.identifier,
                         payload={
+                            "entity_type": entity_type.value,
                             "name": baseline_candidate.name,
                             "server": baseline_candidate.server,
                             "alliance": baseline_candidate.alliance,
@@ -93,8 +94,10 @@ class DifferenceDetector:
                         difference_type=difference_type,
                         identifier=baseline_candidate.identifier,
                         payload={
+                            "entity_type": entity_type.value,
                             "matched_identifier": best_match.current.identifier,
                             "match_confidence": best_match.confidence,
+                            "name": best_match.current.name,
                             "changes": changes,
                         },
                         confidence=best_match.confidence,
@@ -111,6 +114,7 @@ class DifferenceDetector:
                     difference_type=DifferenceType.ADDED,
                     identifier=current_candidate.identifier,
                     payload={
+                        "entity_type": entity_type.value,
                         "name": current_candidate.name,
                         "server": current_candidate.server,
                         "alliance": current_candidate.alliance,

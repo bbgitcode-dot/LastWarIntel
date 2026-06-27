@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from analytics.intelligence.indicators import StrategicIndicator
 from analytics.reasoning.models import IntelligenceFact
 
 
@@ -16,18 +17,6 @@ class ServerRecommendationPriority(Enum):
     MEDIUM = "Medium"
     HIGH = "High"
     CRITICAL = "Critical"
-
-
-@dataclass(slots=True, frozen=True)
-class ServerStrategicIndicator:
-    """
-    One strategic server indicator.
-    """
-
-    title: str
-    value: float
-    unit: str = ""
-    summary: str = ""
 
 
 @dataclass(slots=True, frozen=True)
@@ -51,7 +40,7 @@ class ServerIntelligenceAssessment:
 
     status: str
 
-    indicators: list[ServerStrategicIndicator] = field(default_factory=list)
+    indicators: list[StrategicIndicator] = field(default_factory=list)
 
     recommendation: ServerRecommendation | None = None
 

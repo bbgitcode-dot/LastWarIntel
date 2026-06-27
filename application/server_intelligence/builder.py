@@ -5,6 +5,7 @@ Server Intelligence Builder
 
 from __future__ import annotations
 
+from analytics.intelligence.indicators import StrategicIndicator
 from analytics.intelligence.repository import IntelligenceRepository
 from analytics.reasoning.models import FactSeverity
 
@@ -72,7 +73,7 @@ class ServerIntelligenceBuilder:
 
     @staticmethod
     def _status_from_indicators(
-        indicators,
+        indicators: list[StrategicIndicator],
     ) -> str:
 
         strategic_risk = 0.0

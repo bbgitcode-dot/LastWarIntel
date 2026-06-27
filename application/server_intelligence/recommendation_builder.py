@@ -5,10 +5,11 @@ Server Intelligence Recommendation Builder
 
 from __future__ import annotations
 
+from analytics.intelligence.indicators import StrategicIndicator
+
 from application.server_intelligence.models import (
     ServerRecommendation,
     ServerRecommendationPriority,
-    ServerStrategicIndicator,
 )
 
 
@@ -19,7 +20,7 @@ class ServerRecommendationBuilder:
 
     def build(
         self,
-        indicators: list[ServerStrategicIndicator],
+        indicators: list[StrategicIndicator],
     ) -> ServerRecommendation:
 
         strategic_risk = self._value(
@@ -93,7 +94,7 @@ class ServerRecommendationBuilder:
 
     @staticmethod
     def _value(
-        indicators: list[ServerStrategicIndicator],
+        indicators: list[StrategicIndicator],
         title: str,
     ) -> float:
 
