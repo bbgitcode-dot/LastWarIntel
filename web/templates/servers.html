@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header class="command-header">
+
+    <div>
+
+        <div class="brand">
+
+            Server Overview
+
+        </div>
+
+        <div class="subtitle">
+
+            Strategic theater assessment · Server {{ overview.server }}
+
+        </div>
+
+    </div>
+
+    <div class="server-status">
+
+        <div class="status-label">
+
+            Status
+
+        </div>
+
+        <div class="status-pill status-stable">
+
+            ● {{ overview.status }}
+
+        </div>
+
+        <div class="snapshot-label">
+
+            Latest available snapshot
+
+        </div>
+
+    </div>
+
+</header>
+
+<main class="command-grid">
+
+    <section class="metrics-grid">
+
+        {% for metric in overview.metrics %}
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                {% if metric.title == "Recruitment" %}
+                🎯
+                {% elif metric.title == "Growth" %}
+                📈
+                {% elif metric.title == "Strategic Risk" %}
+                ⚠️
+                {% elif metric.title == "Opportunity" %}
+                💎
+                {% endif %}
+
+                {{ metric.title }}
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ "%.0f"|format(metric.value) }}{{ metric.unit }}
+
+            </div>
+
+            <div class="metric-bar">
+
+                <div
+                    class="metric-fill"
+                    style="width: {{ metric.value }}%;">
+
+                </div>
+
+            </div>
+
+        </article>
+
+        {% endfor %}
+
+    </section>
+
+    <section class="content-grid">
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>Recruitment Targets</h2>
+
+                    <p>Highest-priority diplomatic opportunities</p>
+
+                </div>
+
+                <span class="panel-badge">
+
+                    TOP {{ overview.recruitment_targets|length }}
+
+                </span>
+
+            </div>
+
+            <div class="target-list">
+
+                {% for target in overview.recruitment_targets %}
+
+                <a
+                    class="target-card target-link"
+                    href="/alliance/{{ overview.server }}/{{ target.alliance }}">
+
+                    <div class="target-rank">
+
+                        #{{ loop.index }}
+
+                    </div>
+
+                    <div class="target-main">
+
+                        <div class="target-name">
+
+                            {{ target.alliance }}
+
+                        </div>
+
+                        <div class="target-summary">
+
+                            {{ target.summary }}
+
+                        </div>
+
+                        <div class="target-progress">
+
+                            <div
+                                class="target-progress-fill"
+                                style="width: {{ target.score }}%;">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="target-score">
+
+                        <strong>{{ "%.0f"|format(target.score) }}</strong>
+
+                        <span>{{ "%.0f"|format(target.confidence) }}%</span>
+
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+        </article>
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>Growth Leaders</h2>
+
+                    <p>Fastest-growing alliances on this server</p>
+
+                </div>
+
+                <span class="panel-badge operation">
+
+                    GROWTH
+
+                </span>
+
+            </div>
+
+            <div class="target-list">
+
+                {% for alliance in overview.growth_leaders %}
+
+                <a
+                    class="target-card target-link"
+                    href="/alliance/{{ overview.server }}/{{ alliance.alliance }}">
+
+                    <div class="target-rank">
+
+                        #{{ loop.index }}
+
+                    </div>
+
+                    <div class="target-main">
+
+                        <div class="target-name">
+
+                            {{ alliance.alliance }}
+
+                        </div>
+
+                        <div class="target-summary">
+
+                            {{ alliance.summary }}
+
+                        </div>
+
+                        <div class="target-progress">
+
+                            <div
+                                class="metric-fill"
+                                style="width: {{ alliance.score }}%;">
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="target-score">
+
+                        <strong>{{ "%.0f"|format(alliance.score) }}%</strong>
+
+                        <span>{{ "%.0f"|format(alliance.confidence) }}%</span>
+
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+        </article>
+
+    </section>
+
+    <section class="content-grid">
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>Strategic Risks</h2>
+
+                    <p>Signals requiring leadership attention</p>
+
+                </div>
+
+                <span class="panel-badge">
+
+                    RISK
+
+                </span>
+
+            </div>
+
+            <div class="feed-list">
+
+                {% for risk in overview.risks %}
+
+                <div class="feed-item feed-warning">
+
+                    <div class="feed-dot">
+
+                    </div>
+
+                    <div>
+
+                        <div class="feed-title">
+
+                            Risk Signal
+
+                        </div>
+
+                        <div class="feed-summary">
+
+                            {{ risk }}
+
+                        </div>
+
+                        <div class="feed-time">
+
+                            Latest snapshot
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </article>
+
+        <article class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>Opportunities</h2>
+
+                    <p>Strategic openings detected by Sentinel</p>
+
+                </div>
+
+                <span class="panel-badge operation">
+
+                    OPPORTUNITY
+
+                </span>
+
+            </div>
+
+            <div class="feed-list">
+
+                {% for opportunity in overview.opportunities %}
+
+                <div class="feed-item feed-success">
+
+                    <div class="feed-dot">
+
+                    </div>
+
+                    <div>
+
+                        <div class="feed-title">
+
+                            Opportunity Signal
+
+                        </div>
+
+                        <div class="feed-summary">
+
+                            {{ opportunity }}
+
+                        </div>
+
+                        <div class="feed-time">
+
+                            Latest snapshot
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </article>
+
+    </section>
+
+    <section class="brief-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>Server Intelligence Brief</h2>
+
+                <p>Executive summary for server leadership</p>
+
+            </div>
+
+            <span class="panel-badge">
+
+                THEATER
+
+            </span>
+
+        </div>
+
+        <p class="brief-text">
+
+            {{ overview.outlook }}
+
+        </p>
+
+    </section>
+
+</main>
+
+{% endblock %}

@@ -6,16 +6,12 @@ Creates all domain models.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
-from analytics.domain.campaign import Campaign
-from analytics.domain.campaign import CampaignType
-from analytics.domain.dataset import Dataset
-from analytics.domain.dataset import DatasetSource
-from analytics.domain.dataset import DatasetType
-from analytics.domain.entity import Entity
-from analytics.domain.entity import EntityType
+from analytics.domain.campaign import Campaign, CampaignType
+from analytics.domain.dataset import Dataset, DatasetSource, DatasetType
+from analytics.domain.entity import Entity, EntityType
 from analytics.domain.milestone import Milestone
 from analytics.domain.snapshot import Snapshot
 
@@ -26,14 +22,21 @@ class SentinelFactory:
     """
 
     @staticmethod
+    def _id() -> str:
+        return str(uuid4())
+
+    @staticmethod
+    def _now() -> datetime:
+        return datetime.now(timezone.utc)
+
+    @staticmethod
     def create_campaign(
         name: str,
         campaign_type: CampaignType,
         description: str = "",
     ) -> Campaign:
-
         return Campaign(
-            id=str(uuid4()),
+            id=SentinelFactory._id(),
             name=name,
             campaign_type=campaign_type,
             description=description,
@@ -44,32 +47,14 @@ class SentinelFactory:
         campaign_id: str,
         name: str,
         sequence: int,
+        description: str = "",
     ) -> Milestone:
-
         return Milestone(
-            id=str(uuid4()),
+            id=SentinelFactory._id(),
             campaign_id=campaign_id,
             name=name,
             sequence=sequence,
-        )
-
-    @staticmethod
-    def create_dataset(
-        campaign_id: str,
-        milestone_id: str,
-        server: int,
-        dataset_type: DatasetType,
-        source: DatasetSource,
-    ) -> Dataset:
-
-        return Dataset(
-            id=str(uuid4()),
-            campaign_id=campaign_id,
-            milestone_id=milestone_id,
-            server=server,
-            dataset_type=dataset_type,
-            source=source,
-            uploaded_at=datetime.utcnow(),
+            description=description,
         )
 
     @staticmethod
@@ -77,14 +62,31 @@ class SentinelFactory:
         campaign_id: str,
         milestone_id: str,
         server: int,
+        name: str = "",
     ) -> Snapshot:
-
         return Snapshot(
-            id=str(uuid4()),
+            id=SentinelFactory._id(),
             campaign_id=campaign_id,
             milestone_id=milestone_id,
             server=server,
-            created_at=datetime.utcnow(),
+            name=name,
+            created_at=SentinelFactory._now(),
+        )
+
+    @staticmethod
+    def create_dataset(
+        snapshot_id: str,
+        server: int,
+        dataset_type: DatasetType,
+        source: DatasetSource,
+    ) -> Dataset:
+        return Dataset(
+            id=SentinelFactory._id(),
+            snapshot_id=snapshot_id,
+            server=server,
+            dataset_type=dataset_type,
+            source=source,
+            uploaded_at=SentinelFactory._now(),
         )
 
     @staticmethod
@@ -93,9 +95,8 @@ class SentinelFactory:
         name: str,
         server: int | None = None,
     ) -> Entity:
-
         return Entity(
-            id=str(uuid4()),
+            id=SentinelFactory._id(),
             entity_type=entity_type,
             name=name,
             server=server,

@@ -7,6 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
+from analytics.services.server_service import ServerService
 from web.navigation import NAVIGATION
 
 router = APIRouter()
@@ -20,12 +21,15 @@ templates = Jinja2Templates(
 def servers(
     request: Request,
 ):
+    overview = ServerService().overview(
+        server=638,
+    )
+
     return templates.TemplateResponse(
         request=request,
-        name="coming_soon.html",
+        name="servers.html",
         context={
-            "title": "Servers",
-            "icon": "🗺️",
+            "overview": overview,
             "navigation": NAVIGATION,
             "active_page": "servers",
         },

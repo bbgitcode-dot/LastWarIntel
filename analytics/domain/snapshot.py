@@ -15,7 +15,7 @@ class Snapshot:
     A snapshot represents the combined state for one server
     at one milestone.
 
-    It can consist of multiple datasets:
+    A snapshot can contain multiple datasets:
     - Alliance Ranking
     - THP Ranking
     - Player Ranking
@@ -28,9 +28,12 @@ class Snapshot:
 
     server: int
 
+    name: str = ""
+
     dataset_ids: list[str] = field(default_factory=list)
 
     created_at: datetime | None = None
+    captured_at: datetime | None = None
 
     quality_score: float = 100.0
     confidence: float = 100.0

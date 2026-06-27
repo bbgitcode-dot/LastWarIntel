@@ -37,12 +37,13 @@ class Dataset:
     - Alliance Top 50 screenshot import
     - THP Top 10 screenshot import
     - CSV export
+
+    Every dataset belongs to exactly one snapshot.
     """
 
     id: str
 
-    campaign_id: str
-    milestone_id: str
+    snapshot_id: str
 
     server: int
 
