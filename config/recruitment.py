@@ -1,0 +1,9 @@
+"""
+Sentinel
+Recruitment Configuration
+"""
+
+MIN_RECRUIT_POWER = 180
+TARGET_RECRUIT_POWER = 200
+HIGH_VALUE_POWER = 250
+WHALE_POWER = 300
