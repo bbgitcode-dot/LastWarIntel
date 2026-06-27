@@ -5,6 +5,7 @@ Cockpit Provider
 
 from __future__ import annotations
 
+from application.assessments.models import Assessment
 from application.cockpit.models import (
     PageData,
     WidgetData,
@@ -25,6 +26,10 @@ class CockpitProvider:
     """
     Provides typed presentation models
     for cockpit pages.
+
+    The provider is intentionally presentation-only.
+    All business decisions are expected to be performed
+    before reaching this layer.
     """
 
     def dashboard(
@@ -32,6 +37,7 @@ class CockpitProvider:
         *,
         watch_targets: list[WatchTarget],
         morning_report: Report | None,
+        assessment: Assessment | None = None,
         breaking_news: list[str] | None = None,
         server_health: float = 0.0,
         recruitment_opportunity: float = 0.0,
@@ -49,16 +55,21 @@ class CockpitProvider:
                         breaking_news_count=len(breaking_news),
                         server_health=server_health,
                         recruitment_opportunity=recruitment_opportunity,
-                        overall_status=self._overall_status(
+                        assessment=assessment,
+
+                        #
+                        # Legacy compatibility
+                        #
+                        overall_status=assessment.summary if assessment else self._overall_status(
                             server_health,
                             recruitment_opportunity,
                         ),
-                        recommendation=self._recommendation(
+                        recommendation=assessment.recommendation if assessment else self._recommendation(
                             server_health,
                             recruitment_opportunity,
                             len(breaking_news),
                         ),
-                        confidence=self._confidence(
+                        confidence=assessment.confidence if assessment else self._confidence(
                             server_health,
                             recruitment_opportunity,
                         ),
@@ -78,11 +89,11 @@ class CockpitProvider:
                 ),
                 WidgetData(
                     widget_key="morning_report",
-                    payload=(
-                        MorningReportModel(report=morning_report)
-                        if morning_report
-                        else None
-                    ),
+                    payload=MorningReportModel(
+                        report=morning_report,
+                    )
+                    if morning_report
+                    else None,
                 ),
             ],
         )

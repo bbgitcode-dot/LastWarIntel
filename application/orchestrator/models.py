@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from analytics.opportunity_intelligence.models import OpportunityAssessment
+from application.briefing.models import MorningBriefing
 from application.reports.models import Report
 from application.watchlist.models import WatchTarget
 
@@ -16,10 +17,21 @@ from application.watchlist.models import WatchTarget
 class SentinelResult:
     """
     Final result returned by the Sentinel orchestrator.
+
+    During the migration to the MorningBriefing domain,
+    legacy properties remain available.
     """
 
-    opportunities: list[OpportunityAssessment]
+    #
+    # New application aggregate
+    #
+    briefing: MorningBriefing | None = None
 
-    watch_targets: list[WatchTarget]
+    #
+    # Legacy compatibility
+    #
+    opportunities: list[OpportunityAssessment] | None = None
 
-    report: Report
+    watch_targets: list[WatchTarget] | None = None
+
+    report: Report | None = None

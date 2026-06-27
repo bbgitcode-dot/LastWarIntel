@@ -14,6 +14,7 @@ from analytics.opportunity_intelligence.models import (
 )
 from analytics.reasoning.models import IntelligenceFact
 
+from application.briefing.facade import MorningBriefingFacade
 from application.orchestrator.models import (
     SentinelResult,
 )
@@ -40,6 +41,8 @@ class OperationsPipeline:
 
         self._reports = ReportsFacade()
 
+        self._briefing = MorningBriefingFacade()
+
     def execute(
         self,
         server: int,
@@ -49,15 +52,10 @@ class OperationsPipeline:
     ) -> SentinelResult:
 
         context = OpportunityContext(
-
             server=server,
-
             alliance=alliance,
-
             facts=facts,
-
             indicators=indicators,
-
         )
 
         opportunities = self._opportunity.analyze(
@@ -65,17 +63,11 @@ class OperationsPipeline:
         )
 
         self._watchlist.add_from_opportunities(
-
             server=server,
-
             alliance=alliance,
-
             opportunities=opportunities,
-
             indicators=indicators,
-
             facts=facts,
-
         )
 
         watch_targets = self._watchlist.top()
@@ -84,12 +76,16 @@ class OperationsPipeline:
             watch_targets,
         )
 
-        return SentinelResult(
-
-            opportunities=opportunities,
-
+        briefing = self._briefing.create(
+            server=server,
+            assessments=[],
             watch_targets=watch_targets,
+            breaking_news=[],
+        )
 
+        return SentinelResult(
+            briefing=briefing,
+            opportunities=opportunities,
+            watch_targets=watch_targets,
             report=report,
-
         )

@@ -11,6 +11,7 @@ from analytics.opportunity_intelligence.models import (
 )
 from analytics.reasoning.models import IntelligenceFact
 
+from application.assessments.models import Assessment
 from application.watchlist.builder import (
     WatchlistBuilder,
 )
@@ -28,16 +29,13 @@ class WatchlistFacade:
         self,
         repository: WatchlistRepository | None = None,
     ) -> None:
-
         self._repository = repository or WatchlistRepository()
-
         self._builder = WatchlistBuilder()
 
     @property
     def repository(
         self,
     ) -> WatchlistRepository:
-
         return self._repository
 
     def add_from_opportunities(
@@ -47,20 +45,15 @@ class WatchlistFacade:
         opportunities: list[OpportunityAssessment],
         indicators: list[StrategicIndicator],
         facts: list[IntelligenceFact],
+        assessment: Assessment | None = None,
     ) -> int:
-
         targets = self._builder.build_from_opportunities(
-
             server=server,
-
             alliance=alliance,
-
             opportunities=opportunities,
-
             indicators=indicators,
-
             facts=facts,
-
+            assessment=assessment,
         )
 
         before = self._repository.count()
@@ -75,7 +68,6 @@ class WatchlistFacade:
         self,
         limit: int = 10,
     ):
-
         return self._repository.top(
             limit,
         )

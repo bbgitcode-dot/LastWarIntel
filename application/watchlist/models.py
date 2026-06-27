@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 
+from application.assessments.models import Assessment
 from application.watchlist.decision_snapshot import (
     DecisionSnapshot,
 )
@@ -53,26 +54,20 @@ class WatchTarget:
 
     alliance: str | None = None
 
-    tags: list[str] = field(
-        default_factory=list,
-    )
+    tags: list[str] = field(default_factory=list)
 
-    history: WatchHistory = field(
-        default_factory=WatchHistory,
-    )
+    history: WatchHistory = field(default_factory=WatchHistory)
 
     decision_snapshot: DecisionSnapshot | None = None
 
+    assessment: Assessment | None = None
+
     created_at: datetime = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc,
-        )
+        default_factory=lambda: datetime.now(timezone.utc)
     )
 
     updated_at: datetime = field(
-        default_factory=lambda: datetime.now(
-            timezone.utc,
-        )
+        default_factory=lambda: datetime.now(timezone.utc)
     )
 
     last_observed_at: datetime | None = None
@@ -84,6 +79,4 @@ class Watchlist:
     Collection of watch targets.
     """
 
-    targets: list[WatchTarget] = field(
-        default_factory=list,
-    )
+    targets: list[WatchTarget] = field(default_factory=list)

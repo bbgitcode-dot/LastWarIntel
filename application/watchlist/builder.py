@@ -15,6 +15,7 @@ from analytics.opportunity_intelligence.models import (
 )
 from analytics.reasoning.models import IntelligenceFact
 
+from application.assessments.models import Assessment
 from application.watchlist.decision_snapshot import (
     DecisionSnapshot,
 )
@@ -40,12 +41,12 @@ class WatchlistBuilder:
         opportunities: list[OpportunityAssessment],
         indicators: list[StrategicIndicator],
         facts: list[IntelligenceFact],
+        assessment: Assessment | None = None,
     ) -> list[WatchTarget]:
 
         targets: list[WatchTarget] = []
 
         for opportunity in opportunities:
-
             if opportunity.opportunity_type != OpportunityType.RECRUITMENT:
                 continue
 
@@ -56,37 +57,21 @@ class WatchlistBuilder:
             )
 
             targets.append(
-
                 WatchTarget(
-
-                    id=str(
-                        uuid4(),
-                    ),
-
+                    id=str(uuid4()),
                     entity_type=WatchEntityType.ALLIANCE,
-
                     server=server,
-
                     alliance=alliance,
-
                     name=alliance or "Unknown Alliance",
-
                     priority=self._priority(
                         opportunity.priority,
                     ),
-
                     score=opportunity.score,
-
                     reason=opportunity.description,
-
-                    tags=list(
-                        opportunity.tags,
-                    ),
-
+                    tags=list(opportunity.tags),
                     decision_snapshot=snapshot,
-
+                    assessment=assessment,
                 )
-
             )
 
         return targets
@@ -118,35 +103,21 @@ class WatchlistBuilder:
         )
 
         if not reasons:
-
             reasons.extend(
-
                 fact.title
-
                 for fact in facts[:5]
-
             )
 
         return DecisionSnapshot(
-
             status=WatchStatus.NEW,
-
             priority=opportunity.priority.value,
-
             confidence=opportunity.confidence,
-
             health=health,
-
             talent=talent,
-
             recruitability=recruitability,
-
             opportunity=opportunity.score,
-
             summary=opportunity.description,
-
             reasons=reasons,
-
         )
 
     @staticmethod
@@ -156,12 +127,8 @@ class WatchlistBuilder:
     ) -> float:
 
         for indicator in indicators:
-
             if indicator.title == title:
-
-                return float(
-                    indicator.value,
-                )
+                return float(indicator.value)
 
         return 0.0
 
