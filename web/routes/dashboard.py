@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from application.dashboard.builder import DashboardBuilder
+from analytics.services.dashboard_service import DashboardService
 from web.navigation import NAVIGATION
 
 router = APIRouter()
@@ -21,7 +21,9 @@ templates = Jinja2Templates(
 def dashboard(
     request: Request,
 ):
-    dashboard_data = DashboardBuilder().build(638)
+    dashboard_data = DashboardService().get_dashboard(
+        server=638,
+    )
 
     return templates.TemplateResponse(
         request=request,

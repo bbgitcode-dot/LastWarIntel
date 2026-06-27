@@ -1,5 +1,5 @@
 """
-Alliance Intelligence File Routes
+Alliance Routes
 """
 
 from __future__ import annotations
@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from analytics.application.entity_report_builder import EntityReportBuilder
+from analytics.services.alliance_service import AllianceService
 from web.navigation import NAVIGATION
 
 router = APIRouter()
@@ -23,7 +23,7 @@ def alliance_file(
     server: int,
     alliance: str,
 ):
-    report = EntityReportBuilder().build(
+    report = AllianceService().get_report(
         server=server,
         alliance=alliance,
     )
