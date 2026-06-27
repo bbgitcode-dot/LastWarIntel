@@ -21,7 +21,8 @@ class NavigationItem:
 
 
 NAVIGATION = [
-    NavigationItem("Command", "🏠", "/", "dashboard"),
+    NavigationItem("Feed", "🚨", "/", "feed"),
+    NavigationItem("Command", "🏠", "/command", "dashboard"),
     NavigationItem("Servers", "🗺️", "/servers", "servers"),
     NavigationItem("Alliances", "🏰", "/alliances", "alliances"),
     NavigationItem("Operations", "🚀", "/operations", "operations"),

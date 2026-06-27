@@ -1,5 +1,5 @@
 """
-Dashboard Routes
+Intelligence Feed Routes
 """
 
 from __future__ import annotations
@@ -7,7 +7,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from analytics.services.dashboard_service import DashboardService
+from analytics.services.feed_service import FeedService
 from web.navigation import NAVIGATION
 
 router = APIRouter()
@@ -17,20 +17,18 @@ templates = Jinja2Templates(
 )
 
 
-@router.get("/command")
-def dashboard(
+@router.get("/")
+def intelligence_feed(
     request: Request,
 ):
-    dashboard_data = DashboardService().get_dashboard(
-        server=638,
-    )
+    feed = FeedService().get_feed()
 
     return templates.TemplateResponse(
         request=request,
-        name="dashboard.html",
+        name="feed.html",
         context={
-            "dashboard": dashboard_data,
+            "feed": feed,
             "navigation": NAVIGATION,
-            "active_page": "dashboard",
+            "active_page": "feed",
         },
     )

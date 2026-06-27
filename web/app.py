@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from web.routes.alliance import router as alliance_router
 from web.routes.alliances import router as alliances_router
 from web.routes.dashboard import router as dashboard_router
+from web.routes.feed import router as feed_router
 from web.routes.intelligence import router as intelligence_router
 from web.routes.operations import router as operations_router
 from web.routes.rankings import router as rankings_router
@@ -28,6 +29,7 @@ app.mount(
     name="static",
 )
 
+app.include_router(feed_router)
 app.include_router(dashboard_router)
 app.include_router(alliance_router)
 app.include_router(alliances_router)

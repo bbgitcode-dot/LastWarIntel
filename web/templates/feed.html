@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<header class="command-header">
+
+    <div>
+
+        <div class="brand">
+
+            Intelligence Feed
+
+        </div>
+
+        <div class="subtitle">
+
+            Sentinel prioritizes attention. Details remain available in deeper views.
+
+        </div>
+
+    </div>
+
+    <div class="server-status">
+
+        <div class="status-label">
+
+            Curated Events
+
+        </div>
+
+        <div class="status-pill status-stable">
+
+            ● {{ feed.visible_events }} Relevant
+
+        </div>
+
+        <div class="snapshot-label">
+
+            {{ feed.total_events }} total signals · impact ≥ {{ "%.0f"|format(feed.minimum_impact) }}
+
+        </div>
+
+    </div>
+
+</header>
+
+<main class="command-grid">
+
+    <section class="metrics-grid">
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                🚨 Relevant
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ feed.visible_events }}
+
+            </div>
+
+            <div class="metric-subline">
+
+                Shown on start page
+
+            </div>
+
+        </article>
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                🔴 Critical
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ feed.critical_events }}
+
+            </div>
+
+            <div class="metric-subline">
+
+                Needs attention
+
+            </div>
+
+        </article>
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                📡 Signals
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ feed.total_events }}
+
+            </div>
+
+            <div class="metric-subline">
+
+                Total detected
+
+            </div>
+
+        </article>
+
+        <article class="metric-card">
+
+            <div class="metric-title">
+
+                🎯 Threshold
+
+            </div>
+
+            <div class="metric-value">
+
+                {{ "%.0f"|format(feed.minimum_impact) }}
+
+            </div>
+
+            <div class="metric-subline">
+
+                Minimum impact
+
+            </div>
+
+        </article>
+
+    </section>
+
+    <section class="feed-main-panel">
+
+        <div class="panel-header">
+
+            <div>
+
+                <h2>Breaking Intelligence</h2>
+
+                <p>Only significant changes are shown here.</p>
+
+            </div>
+
+            <span class="panel-badge">
+
+                CURATED
+
+            </span>
+
+        </div>
+
+        {% if feed.items %}
+
+        <div class="breaking-list">
+
+            {% for item in feed.items %}
+
+            <a
+                class="breaking-card breaking-{{ item.severity }}"
+                href="{{ item.target_url }}">
+
+                <div class="breaking-meta">
+
+                    <span>{{ item.category }}</span>
+
+                    {% if item.server %}
+
+                    <strong>Server {{ item.server }}</strong>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="breaking-title">
+
+                    {{ item.title }}
+
+                </div>
+
+                <div class="breaking-summary">
+
+                    {{ item.summary }}
+
+                </div>
+
+                <div class="breaking-footer">
+
+                    <span>Impact {{ "%.0f"|format(item.impact) }}</span>
+
+                    <span>Confidence {{ "%.0f"|format(item.confidence) }}%</span>
+
+                </div>
+
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-state">
+
+            No high-impact intelligence right now.
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</main>
+
+{% endblock %}
