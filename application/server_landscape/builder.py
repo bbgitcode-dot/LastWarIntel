@@ -13,10 +13,10 @@ from application.server_landscape.models import (
 )
 from analytics.ranking.facade import RankingFacade
 from analytics.server_intelligence.facade import ServerIntelligenceFacade
+from analytics.validation.models import ValidationStatus
 from analytics.validation.server_validator import (
     ServerValidationInput,
     ServerValidator,
-    ValidationStatus,
 )
 
 
@@ -62,15 +62,18 @@ class ServerLandscapeBuilder:
         rankings = self._ranking.analyze(server)
         intelligence = self._intelligence.analyze(server)
 
-        recruitment = 0.0
+        recruitability = 0.0
 
         if rankings.recruitment.entries:
-            recruitment = rankings.recruitment.entries[0].score
+            recruitability = rankings.recruitment.entries[0].score
 
         growth = 0.0
 
         if rankings.growth.entries:
-            growth = max(rankings.growth.entries[0].score, 0.0)
+            growth = max(
+                rankings.growth.entries[0].score,
+                0.0,
+            )
 
         risk = min(
             len(intelligence.assessment.risks) * 12,
@@ -88,7 +91,7 @@ class ServerLandscapeBuilder:
             state=state,
             dataset_quality=validation.quality_score,
             activity=growth,
-            recruitment=recruitment,
+            recruitability=recruitability,
             risk=risk,
             last_snapshot="Latest snapshot",
             summary=validation.summary,
