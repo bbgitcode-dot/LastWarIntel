@@ -111,3 +111,72 @@ Release Date: YYYY-MM-DD
 - Improved separation between Facts, Indicators and Assessments
 - Reduced coupling between intelligence modules
 - Prepared architecture for Recruitability and Recruitment Advisor
+
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is inspired by *Keep a Changelog* and follows Semantic Versioning.
+
+---
+
+# [0.8.0] - 2026-06-28
+
+## 🚀 Recruitment Intelligence MVP
+
+### Added
+
+* Recruitment Context model
+* Recruitment Context Builder
+* Recruitment Value model
+* Recruitment Value Calculator
+* Recruitment Value Facade
+* Recruitment Intelligence integrated into Operations Pipeline
+* Recruitment Value stored within WatchTarget
+* Recruitment-aware Watchlist support
+
+### Recruitment Metrics
+
+Implemented recruitment scoring based on:
+
+* Talent Value
+* Structural Health
+* Recruitability
+* Whale Opportunity
+* Recruitable Density
+* Elite Density
+* Recruitment Momentum (foundation)
+
+### Architecture
+
+* Completed end-to-end Recruitment Intelligence pipeline
+* Introduced centralized Recruitment Context generation
+* Improved separation between Intelligence and Operations
+* Extended WatchTarget with RecruitmentValue
+* Preserved Assessment as independent strategic reasoning layer
+
+### Operations
+
+* WatchTargets now carry both:
+
+  * Assessment
+  * RecruitmentValue
+
+* Recruitment Intelligence automatically flows into:
+
+  * Watchlist
+  * Reports
+  * Morning Briefing
+
+### Internal
+
+* Improved modular architecture
+* Additional integration tests
+* Pipeline simplification
+* Multiple refactorings
+
+---
+
+# [0.7.0]
+
+Previous public milestone.
