@@ -1,0 +1,1 @@
+python -c "from analytics.talent_intelligence.calculator import RecruitmentValueCalculator; r=RecruitmentValueCalculator().calculate(); print(type(r).__name__); print(r.overall.score); print(r.talent.score)"

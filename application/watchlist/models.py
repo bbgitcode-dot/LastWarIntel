@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 
+from analytics.talent_intelligence.recruitment_value import RecruitmentValue
 from application.assessments.models import Assessment
 from application.watchlist.decision_snapshot import (
     DecisionSnapshot,
@@ -61,6 +62,8 @@ class WatchTarget:
     decision_snapshot: DecisionSnapshot | None = None
 
     assessment: Assessment | None = None
+
+    recruitment_value: RecruitmentValue | None = None
 
     created_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)

@@ -14,6 +14,7 @@ from analytics.opportunity_intelligence.models import (
     OpportunityType,
 )
 from analytics.reasoning.models import IntelligenceFact
+from analytics.talent_intelligence.recruitment_value import RecruitmentValue
 
 from application.assessments.models import Assessment
 from application.watchlist.decision_snapshot import (
@@ -42,6 +43,7 @@ class WatchlistBuilder:
         indicators: list[StrategicIndicator],
         facts: list[IntelligenceFact],
         assessment: Assessment | None = None,
+        recruitment_value: RecruitmentValue | None = None,
     ) -> list[WatchTarget]:
 
         targets: list[WatchTarget] = []
@@ -71,6 +73,7 @@ class WatchlistBuilder:
                     tags=list(opportunity.tags),
                     decision_snapshot=snapshot,
                     assessment=assessment,
+                    recruitment_value=recruitment_value,
                 )
             )
 

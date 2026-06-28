@@ -10,6 +10,7 @@ from analytics.opportunity_intelligence.models import (
     OpportunityAssessment,
 )
 from analytics.reasoning.models import IntelligenceFact
+from analytics.talent_intelligence.recruitment_value import RecruitmentValue
 
 from application.assessments.models import Assessment
 from application.watchlist.builder import (
@@ -46,7 +47,9 @@ class WatchlistFacade:
         indicators: list[StrategicIndicator],
         facts: list[IntelligenceFact],
         assessment: Assessment | None = None,
+        recruitment_value: RecruitmentValue | None = None,
     ) -> int:
+
         targets = self._builder.build_from_opportunities(
             server=server,
             alliance=alliance,
@@ -54,6 +57,7 @@ class WatchlistFacade:
             indicators=indicators,
             facts=facts,
             assessment=assessment,
+            recruitment_value=recruitment_value,
         )
 
         before = self._repository.count()
