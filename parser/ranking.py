@@ -1,5 +1,9 @@
 import re
 
+from parser.normalization import HeroPowerNormalizer
+
+_HERO_POWER_NORMALIZER = HeroPowerNormalizer()
+
 
 def box_center(box):
     xs = [p[0] for p in box]
@@ -8,11 +12,12 @@ def box_center(box):
 
 
 def clean_power(text):
-    match = re.search(r"\d[\d,\.\s-]{6,}\d", text)
+    match = re.search(r"[0-9OIl|][0-9OIl|,\.\s-]{6,}[0-9OIl|]", str(text or ""))
     if not match:
         return None
 
-    digits = re.sub(r"\D", "", match.group(0))
+    normalized = _HERO_POWER_NORMALIZER.normalize(match.group(0))
+    digits = normalized.value
 
     if len(digits) < 7:
         return None
@@ -169,6 +174,28 @@ def parse_ranking_rows(ocr_results):
     parsed.sort(key=lambda row: row["power"], reverse=True)
 
     return parsed
+
+
+def infer_ranking_type_from_values(current_type, rows):
+    """Infer ranking type from parsed numeric values when OCR classification failed.
+
+    OCR header detection remains authoritative. This fallback is used only when
+    the ranking type is missing or unknown.
+    """
+    if current_type not in (None, "unknown"):
+        return current_type
+
+    powers = [row.get("power") for row in rows if row.get("power")]
+
+    if not powers:
+        return "unknown"
+
+    highest_value = max(powers)
+
+    if highest_value > 1_000_000_000:
+        return "alliance_power"
+
+    return "total_hero_power"
 
 
 def merge_rows_by_power(items, limit=10, tolerance=0.003):
