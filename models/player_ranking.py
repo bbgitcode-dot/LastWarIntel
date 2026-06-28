@@ -28,6 +28,10 @@ class PlayerRankingEntry:
     confidence: float = 1.0
     source_file: Optional[str] = None
     raw_text: Optional[str] = None
+    parse_status: str = "VALID"
+    parse_warnings: list[str] = field(default_factory=list)
+    parse_corrections: list[str] = field(default_factory=list)
+    normalized_identity: Optional[str] = None
 
     def to_legacy_row(self) -> dict:
         """Return a dict compatible with the current merge/export pipeline."""
@@ -47,6 +51,10 @@ class PlayerRankingEntry:
             "confidence": self.confidence,
             "source_file": self.source_file,
             "raw_text": self.raw_text,
+            "parse_status": self.parse_status,
+            "parse_warnings": ";".join(self.parse_warnings),
+            "parse_corrections": ";".join(self.parse_corrections),
+            "normalized_identity": self.normalized_identity,
         }
 
 

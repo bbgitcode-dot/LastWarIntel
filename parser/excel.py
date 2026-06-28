@@ -16,8 +16,25 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
             if df.empty:
                 continue
 
-            columns = ["rank", "name", "power"]
+            if ranking_type == "total_hero_power":
+                preferred_columns = [
+                    "rank",
+                    "alliance_tag",
+                    "player_name",
+                    "name",
+                    "power",
+                    "confidence",
+                    "parse_status",
+                    "parse_warnings",
+                    "parse_corrections",
+                    "normalized_identity",
+                    "raw_text",
+                    "source_file",
+                ]
+            else:
+                preferred_columns = ["rank", "name", "power", "source_file", "raw_text"]
 
+            columns = [column for column in preferred_columns if column in df.columns]
             df = df[columns]
 
             sheet = f"{server}_{ranking_type}"

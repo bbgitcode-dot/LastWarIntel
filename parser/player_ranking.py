@@ -6,49 +6,19 @@ import re
 from typing import Optional
 
 from models.player_ranking import PlayerRankingEntry, PlayerRankingSnapshot
-from parser.normalization import (
-    AllianceTagNormalizer,
-    PlayerNameNormalizer,
-    normalize_raw_player_identity_text,
-)
-
-_ALLIANCE_TAG_NORMALIZER = AllianceTagNormalizer()
-_PLAYER_NAME_NORMALIZER = PlayerNameNormalizer()
-
-
-_TAG_AT_START = re.compile(
-    r"^\s*[\(\{\[]?\s*\[?\s*(?P<tag>[A-Za-z0-9]{2,8})\s*[\]\|\}\)]\s*(?P<name>.*)$"
-)
+from parser.player_identity_quality import parse_player_identity_quality
 
 
 def split_alliance_tag_and_player_name_with_confidence(
     raw_name: str,
 ) -> tuple[Optional[str], str, float]:
-    """Split a raw OCR name into normalized alliance tag, name and confidence."""
-    identity = normalize_raw_player_identity_text(raw_name)
-    name = identity.value
-    confidence = identity.confidence
+    """Split a raw OCR name into normalized alliance tag, name and confidence.
 
-    if not name:
-        return None, "UNKNOWN", confidence
-
-    match = _TAG_AT_START.match(name)
-    if not match:
-        player = _PLAYER_NAME_NORMALIZER.normalize(name)
-        return None, player.value, min(confidence, player.confidence)
-
-    raw_tag = match.group("tag").strip()
-    raw_player_name = match.group("name").strip() or "UNKNOWN"
-
-    tag = _ALLIANCE_TAG_NORMALIZER.normalize(raw_tag)
-    player = _PLAYER_NAME_NORMALIZER.normalize(raw_player_name)
-
-    return (
-        tag.value or None,
-        player.value or "UNKNOWN",
-        min(confidence, tag.confidence, player.confidence),
-    )
-
+    Backward-compatible public API. For quality details use
+    parser.player_identity_quality.parse_player_identity_quality.
+    """
+    result = parse_player_identity_quality(raw_name)
+    return result.alliance_tag, result.player_name, result.confidence
 
 def split_alliance_tag_and_player_name(raw_name: str) -> tuple[Optional[str], str]:
     """Backward-compatible split helper used by existing callers/tests."""
@@ -72,26 +42,30 @@ def build_player_ranking_entries(
     )
 
     for index, row in enumerate(sorted_rows, start=1):
-        alliance_tag, player_name, normalization_confidence = (
-            split_alliance_tag_and_player_name_with_confidence(row.get("name", ""))
-        )
+        row_confidence = row.get("confidence")
+        if row_confidence is None:
+            row_confidence = 1.0
 
-        confidence = row.get("confidence")
-        if confidence is None:
-            confidence = 1.0
-        confidence = min(float(confidence), float(normalization_confidence))
+        identity_quality = parse_player_identity_quality(
+            row.get("name", ""),
+            base_confidence=float(row_confidence),
+        )
 
         entries.append(
             PlayerRankingEntry(
                 rank=int(row.get("rank") or index),
                 server=int(server),
-                alliance_tag=alliance_tag,
-                player_name=player_name,
+                alliance_tag=identity_quality.alliance_tag,
+                player_name=identity_quality.player_name,
                 hero_power=int(row["power"]),
                 snapshot_id=snapshot_id,
-                confidence=float(confidence),
+                confidence=float(identity_quality.confidence),
                 source_file=row.get("source_file") or source_file,
                 raw_text=row.get("raw_text"),
+                parse_status=identity_quality.status,
+                parse_warnings=identity_quality.warnings,
+                parse_corrections=identity_quality.corrections,
+                normalized_identity=identity_quality.normalized_input,
             )
         )
 
