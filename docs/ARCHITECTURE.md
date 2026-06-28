@@ -1,193 +1,239 @@
 # Sentinel Architecture
 
-> **Version:** 0.6.5
+> **Version:** 0.8.0
 > **Status:** Living Document
 
 ---
 
-# Vision
+# Purpose
 
 Sentinel is not a dashboard.
 
-Sentinel is a strategic intelligence platform.
+Sentinel is a **Strategic Intelligence Platform**.
 
-Its purpose is to transform observations into actionable strategic knowledge.
+Its objective is to transform observations into explainable strategic knowledge that supports alliance leaders in making better decisions.
 
-The system follows one simple principle:
+The architecture is therefore intentionally designed around **knowledge generation**, not data visualization.
 
-> **Raw data → Knowledge → Strategic Decisions**
-
----
-
-# Architecture
+Everything inside Sentinel follows one simple idea:
 
 ```text
-Presentation
-────────────────────────────────────────
-
-Web
-Reports
-Dashboard
-Breaking News
-Morning Report
-
-
-Application
-────────────────────────────────────────
-
-Sentinel Pipeline
-Server Landscape
-Intelligence Feed
-View Builders
-
-
-Analytics
-────────────────────────────────────────
-
-Comparison
-Matching
-Difference Detection
-
-Intelligence Modules
-
-Repository
-Publisher
-
-Hypothesis
-Recommendation
-Outlook
-
-
-Domain
-────────────────────────────────────────
-
-Campaign
-Snapshot
-Alliance
-Player
-Server
-
-Business Models
-
-
-Persistence
-────────────────────────────────────────
-
-Repositories
-
-Snapshots
-
-Database
-
-Import Pipeline
+Observation
+        ↓
+Knowledge
+        ↓
+Decision
 ```
 
 ---
 
-# Responsibilities
+# Architectural Philosophy
 
-## Presentation
+Most analytics software answers:
 
-Responsible for displaying information.
+> What happened?
 
-Contains
+Sentinel answers:
 
-* Dashboard
-* Reports
-* Breaking News
-* Morning Report
+> What happened?
 
-Rules
+↓
 
-* No business logic
-* No calculations
-* Uses ViewModels only
+> Why did it happen?
 
----
+↓
 
-## Application
+> Why is it important?
 
-Responsible for orchestrating workflows.
+↓
 
-Contains
+> What should we do?
 
-* SentinelPipeline
-* Builders
-* ViewModel generation
-
-Rules
-
-* Coordinates analytics modules
-* Contains no business logic
-* Never performs calculations
+This distinction affects every architectural decision.
 
 ---
 
-## Analytics
+# Core Principles
 
-The intelligence engine of Sentinel.
+Sentinel follows six architectural principles.
 
-Responsible for transforming raw observations into knowledge.
+## 1. Single Responsibility
 
-Contains
+Every module answers exactly one strategic question.
 
-* Comparison
-* Matching
-* Difference Detection
-* Intelligence Modules
-* Publisher
-* Repository
-* Hypothesis Engine
-* Recommendation Engine
-* Outlook Engine
+Examples:
 
-Rules
+* Growth Intelligence
+* Whale Intelligence
+* Recruitment Intelligence
+* Structural Health Intelligence
 
-* Generates IntelligenceFacts
-* Never communicates directly with the UI
-* Contains business logic
+Each module owns exactly one responsibility.
 
 ---
 
-## Domain
+## 2. Explainability
 
-Contains the core business entities.
+Every output must be reproducible.
 
-Examples
+Every recommendation must be traceable back to:
 
-* Campaign
-* Snapshot
-* Player
-* Alliance
-* Server
+* observations
+* facts
+* evidence
+* indicators
+* reasoning
 
-Rules
-
-* Independent from UI
-* Independent from storage
-* Independent from analytics
+No black boxes.
 
 ---
 
-## Persistence
+## 3. Layered Intelligence
 
-Responsible for data storage.
+Knowledge is generated gradually.
 
-Contains
+Each layer increases abstraction.
 
-* Snapshots
-* Repositories
-* Database
-* Import Pipeline
+Each layer reduces noise.
 
-Rules
+No layer skips another.
 
-* No business logic
-* No strategic calculations
+---
+
+## 4. Human Decision Support
+
+Sentinel never replaces commanders.
+
+It prepares decisions.
+
+The final decision always belongs to humans.
+
+---
+
+## 5. Modular Intelligence
+
+Every Intelligence Module can be replaced independently.
+
+New modules must integrate without modifying existing modules.
+
+---
+
+## 6. Operations consume Intelligence
+
+Analytics generate knowledge.
+
+Operations use knowledge.
+
+Operations never generate knowledge.
+
+---
+
+# High-Level Architecture
+
+```text
+Presentation
+────────────────────────────────────────────
+
+Dashboard
+
+Reports
+
+Morning Briefing
+
+Discord
+
+REST API
+
+
+                ▲
+
+                │
+
+Operations
+────────────────────────────────────────────
+
+Watchlist
+
+Recommendations
+
+Decision Snapshots
+
+Reports
+
+Briefings
+
+Orchestrator
+
+
+                ▲
+
+                │
+
+Analytics
+────────────────────────────────────────────
+
+Reasoning
+
+Strategic Assessments
+
+Recruitment Intelligence
+
+Opportunity Intelligence
+
+Health Intelligence
+
+Growth Intelligence
+
+Whale Intelligence
+
+Indicators
+
+Facts
+
+
+                ▲
+
+                │
+
+Core Data
+────────────────────────────────────────────
+
+Snapshots
+
+Players
+
+Alliances
+
+Servers
+
+Campaigns
+
+
+                ▲
+
+                │
+
+Persistence
+────────────────────────────────────────────
+
+Repositories
+
+Database
+
+OCR
+
+Import Pipeline
+```
+
+Every layer depends only on the layer below.
+
+Never the other way around.
 
 ---
 
 # Sentinel Intelligence Pipeline
+
+The Intelligence Pipeline is the heart of Sentinel.
 
 ```text
 Observation
@@ -208,279 +254,229 @@ Difference Detection
 DifferenceSet
         │
         ▼
-Intelligence Modules
+Intelligence Facts
         │
         ▼
-IntelligenceFacts
+Strategic Indicators
         │
         ▼
-Intelligence Publisher
+Reasoning
         │
         ▼
-Intelligence Repository
+Strategic Assessments
         │
         ▼
-Hypothesis Engine
+Strategic Values
         │
         ▼
-Strategic Assessment
+Operations
         │
         ▼
-Recommendation
-        │
-        ▼
-Outlook
+Presentation
 ```
 
+Every stage has exactly one responsibility.
+
 ---
 
-# Knowledge Flow
+# Layer Responsibilities
 
-Sentinel transforms information in several stages.
+## Observation
 
-```text
-Raw Data
+Represents raw imported data.
+
+Examples:
+
+* OCR
+* Discord imports
+* Snapshot files
+
+No interpretation happens here.
+
+---
+
+## Snapshot
+
+Represents the world at one point in time.
+
+Examples:
+
+* alliance strength
+* player power
+* server rankings
+
+Snapshots are immutable.
+
+---
+
+## Comparison
+
+Calculates changes between snapshots.
+
+Examples:
+
+* gained power
+* lost members
+* transferred players
+
+Comparison contains no business logic.
+
+---
+
+## Matching
+
+Determines entity identity across snapshots.
+
+Examples:
+
+* renamed players
+* transferred players
+* alliance changes
+
+Matching answers:
+
+> Who is the same entity?
+
+---
+
+## Difference Detection
+
+Creates normalized differences.
+
+Examples:
+
+PlayerJoined
+
+PlayerLeft
+
+AlliancePowerChanged
+
+OfficerTransferred
+
+DifferenceSets are the common language for change detection.
+
+---
+
+## Intelligence Facts
+
+Facts describe objective observations.
+
+Example:
+
+Alliance lost 21% power.
+
+Facts never interpret.
+
+Facts never recommend.
+
+They simply describe reality.
+
+---
+
+## Strategic Indicators
+
+Indicators summarize strategic characteristics.
+
+Examples:
+
+Talent Value
+
+Recruitability
+
+Structural Health
+
+Whale Density
+
+Elite Density
+
+Recruitable Density
+
+Indicators already contain interpretation.
+
+They answer:
+
+> How healthy is this alliance?
+
+instead of
+
+> What changed?
+
+---
+
+## Reasoning
+
+Reasoning combines multiple Indicators and Facts.
+
+Reasoning creates hypotheses.
+
+Example:
+
+High Recruitability
+
+*
+
+Declining Health
+
+*
+
+Officer Loss
 
 ↓
 
-Observations
+Alliance becoming unstable
 
-↓
+Reasoning is deterministic.
 
-Differences
-
-↓
-
-Facts
-
-↓
-
-Hypotheses
-
-↓
-
-Assessment
-
-↓
-
-Recommendations
-
-↓
-
-Strategic Decisions
-```
-
-Every stage increases abstraction while reducing noise.
+The same input always creates the same output.
 
 ---
 
-# Intelligence Philosophy
+## Strategic Assessments
 
-Every intelligence module answers exactly one strategic question.
+Assessments describe strategic situations.
 
-Examples
+Examples:
 
-Whale Intelligence
+Recruitment Window
 
-> Which strategically relevant players moved?
+Alliance Collapse
 
-Alliance Intelligence
+Transfer Winner
 
-> Which alliances changed significantly?
+Transfer Loser
 
-Growth Intelligence
+Whale Migration
 
-> Which entities are growing or shrinking?
+Leadership Risk
 
-Health Intelligence
+Assessments answer:
 
-> How stable is the current situation?
+> What is happening?
 
-Recruitment Intelligence
-
-> Where are the best recruitment opportunities?
-
-Each module produces IntelligenceFacts.
-
-Nothing else.
+They do not prioritize.
 
 ---
 
-# IntelligenceFacts
+## Strategic Values
 
-IntelligenceFacts are the common language of Sentinel.
+Values prioritize Assessments.
 
-Everything is built upon them.
+Examples:
 
-They are consumed by
+Recruitment Value
 
-* Breaking News
-* Morning Report
-* Intelligence Feed
-* Entity Pages
-* Reasoning
-* Strategic Assessment
+Threat Value
 
-Future modules should never communicate directly with each other.
+Diplomacy Value
 
-They communicate through IntelligenceFacts.
+Expansion Value
 
----
+Retention Value
 
-# Publisher
+Values answer:
 
-The Publisher is the only component allowed to write into the Intelligence Repository.
+> Which opportunity deserves attention first?
 
-Responsibilities
+They never create knowledge.
 
-* Validation
-* Deduplication
-* Publication
-
-Rules
-
-Analytics modules never write directly to the repository.
-
----
-
-# Repository
-
-The Intelligence Repository is the central knowledge store.
-
-It stores IntelligenceFacts only.
-
-Provides
-
-* Breaking News
-* Latest Facts
-* Search by Entity
-* Search by Tag
-* Search by Severity
-* Search by Source
-
-It does not perform calculations.
-
----
-
-# Architecture Rules
-
-## Rule 1
-
-Analytics modules never call each other directly.
-
----
-
-## Rule 2
-
-Every intelligence module produces IntelligenceFacts.
-
----
-
-## Rule 3
-
-Only the Publisher writes into the Intelligence Repository.
-
----
-
-## Rule 4
-
-The Repository is the single source of truth for intelligence.
-
----
-
-## Rule 5
-
-Application orchestrates workflows.
-
-Analytics generates knowledge.
-
-Presentation displays knowledge.
-
----
-
-## Rule 6
-
-Domain never depends on Analytics, Application or Web.
-
----
-
-## Rule 7
-
-Every metric must answer a strategic question.
-
-Metrics exist to support decisions.
-
-Not to decorate dashboards.
-
----
-
-# Design Principles
-
-Sentinel follows several core principles.
-
-## Separation of Concerns
-
-Each layer has one responsibility.
-
----
-
-## Deterministic Intelligence
-
-Facts are generated by deterministic logic.
-
-Reasoning is reproducible.
-
----
-
-## Explainability
-
-Every recommendation must be traceable.
-
-Facts
-
-↓
-
-Hypotheses
-
-↓
-
-Assessment
-
-↓
-
-Recommendation
-
----
-
-## Extensibility
-
-New intelligence modules should be pluggable.
-
-Examples
-
-* Whale Intelligence
-* Alliance Intelligence
-* Growth Intelligence
-* Health Intelligence
-* Recruitment Intelligence
-* Diplomacy Intelligence
-
-The Sentinel Pipeline should not require structural changes when new modules are added.
-
----
-
-# Long-Term Vision
-
-Sentinel should evolve into a Strategic Intelligence Platform capable of answering questions such as:
-
-* Which server is becoming unstable?
-* Which alliance is likely to collapse?
-* Where are the best recruitment opportunities?
-* Which whales transferred?
-* Which server gained the most strategic strength?
-* What changed overnight?
-* What should the president focus on today?
-
-The objective is not to visualize data.
-
-The objective is to support strategic decision making.
+They only prioritize existing knowledge.
