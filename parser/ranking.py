@@ -264,8 +264,11 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
                 warnings.append(f"possible_missing_rank_before:{missing}")
             previous_ocr_rank = int(ocr_rank)
         else:
+            # Missing OCR rank is common when OCR captures only names/power.
+            # Do not mark every row as a ranking integrity warning.
+            # True integrity warnings are reserved for observed rank gaps or
+            # mismatches when OCR rank evidence exists.
             row["rank"] = idx
-            warnings.append("ocr_rank_missing")
 
         row["rank_warning"] = ";".join(dict.fromkeys(warnings))
 

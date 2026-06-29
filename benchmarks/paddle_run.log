@@ -1,0 +1,101 @@
+STDOUT
+======
+OCR Provider: PaddleOCR (paddle)
+OCR Metadata Languages: ['en']
+OCR Row Languages: ['ch', 'chinese_cht', 'japan', 'korean']
+
+2026-06-28 13_14_06-Window.png
+
+
+STDERR
+======
+[33mUsing the local font file(`None`) specified by `LOCAL_FONT_FILE_PATH`![0m
+INFO: Could not find files for the given pattern(s).
+d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:712: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+  warnings.warn(warning_message)
+[32mCreating model: ('PP-LCNet_x1_0_doc_ori', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-LCNet_x1_0_doc_ori`.[0m
+WARNING: Logging before InitGoogleLogging() is written to STDERR
+I0629 12:46:57.875895 48604 onednn_context.cc:81] oneDNN v3.6.2
+[32mCreating model: ('UVDoc', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\UVDoc`.[0m
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+[32mCreating model: ('PP-LCNet_x1_0_doc_ori', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-LCNet_x1_0_doc_ori`.[0m
+[32mCreating model: ('UVDoc', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\UVDoc`.[0m
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+[32mCreating model: ('PP-LCNet_x1_0_doc_ori', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-LCNet_x1_0_doc_ori`.[0m
+[32mCreating model: ('UVDoc', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\UVDoc`.[0m
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+[32mCreating model: ('PP-LCNet_x1_0_doc_ori', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-LCNet_x1_0_doc_ori`.[0m
+[32mCreating model: ('UVDoc', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\UVDoc`.[0m
+[32mCreating model: ('PP-OCRv6_medium_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_det`.[0m
+[32mCreating model: ('PP-OCRv6_medium_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv6_medium_rec`.[0m
+[32mCreating model: ('PP-LCNet_x1_0_doc_ori', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-LCNet_x1_0_doc_ori`.[0m
+[32mCreating model: ('UVDoc', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\UVDoc`.[0m
+[32mCreating model: ('PP-OCRv5_server_det', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\PP-OCRv5_server_det`.[0m
+[32mCreating model: ('korean_PP-OCRv5_mobile_rec', None, None)[0m
+[32mModel files already exist. Using cached files. To redownload, please delete the directory manually: `C:\Users\bierbaer\.paddlex\official_models\korean_PP-OCRv5_mobile_rec`.[0m
+Traceback (most recent call last):
+  File "d:\Last War\LastWarIntel\main.py", line 178, in <module>
+    main()
+  File "d:\Last War\LastWarIntel\main.py", line 77, in main
+    metadata_ocr = read_metadata_ocr(reader, image)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\parser\ocr.py", line 29, in read_metadata_ocr
+    return reader.read_metadata(image)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\ocr\paddleocr_provider.py", line 219, in read_metadata
+    return self._read(self.metadata_reader, image)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\ocr\paddleocr_provider.py", line 215, in _read
+    raw = _run_paddle(reader, image)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\ocr\paddleocr_provider.py", line 170, in _run_paddle
+    return attempt()
+           ^^^^^^^^^
+  File "d:\Last War\LastWarIntel\ocr\paddleocr_provider.py", line 163, in <lambda>
+    lambda: reader.predict(image),
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddleocr\_pipelines\ocr.py", line 223, in predict
+    return list(
+           ^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\pipelines\_parallel.py", line 161, in predict
+    yield from self._pipeline.predict(
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\pipelines\ocr\pipeline.py", line 366, in predict
+    det_results = list(
+                  ^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\models\predictors\base_predictor.py", line 117, in __call__
+    yield from self.apply(input, **kwargs)
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\models\predictors\base_predictor.py", line 140, in apply
+    pred = self.process(batch_data, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\models\text_detection\predictor.py", line 145, in process
+    batch_preds = self.runner(x=x)
+                  ^^^^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\models\runners\paddle_static\runner.py", line 297, in __call__
+    pred = self.infer(x)
+           ^^^^^^^^^^^^^
+  File "d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\paddlex\inference\models\runners\paddle_static\runner.py", line 265, in __call__
+    self.predictor.run()
+NotImplementedError: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at ..\paddle\fluid\framework\new_executor\instruction\onednn\onednn_instruction.cc:118)
+

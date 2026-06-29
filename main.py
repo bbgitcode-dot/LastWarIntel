@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import os
+import sys
 import time
 
 from parser.image import load_and_normalize_image
@@ -25,7 +26,25 @@ def load_config():
         return json.load(f)
 
 
+def _configure_stdout() -> None:
+    """Make Windows consoles safe for multilingual OCR debug output."""
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+
+def _safe_print(*values) -> None:
+    text = " ".join(str(value) for value in values)
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(text.encode("unicode_escape").decode("ascii"))
+
+
 def main():
+    _configure_stdout()
     config = load_config()
     start_time = time.perf_counter()
     reader = create_reader()
@@ -147,7 +166,7 @@ def main():
 
         print(f"\nServer {key[0]} - {key[1]}")
         for row in merged:
-            print(row["rank"], row["name"], row["power"])
+            _safe_print(row["rank"], row["name"], row["power"])
 
     output_file = os.getenv("SENTINEL_OUTPUT_FILE", "output/lastwar_export.xlsx")
     export(final_grouped, filename=output_file)

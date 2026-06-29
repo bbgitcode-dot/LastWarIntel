@@ -1,34 +1,38 @@
-"""Quality gate helpers for OCR-derived player identities.
+"""Player identity parsing and quality calibration for OCR ranking rows.
 
-This module is intentionally conservative. OCR output is allowed to be bad,
-but bad OCR must never be imported silently as a trusted player identity.
+The goal of this layer is not to prove that a player identity is perfect.
+It decides whether the parsed identity is directly usable (VALID) or should
+remain in manual review (REVIEW). OCR is allowed to be imperfect as long as
+important structured fields are actionable and traceable.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Optional
 import re
 import unicodedata
-from typing import Optional
-
-from parser.normalization import (
-    AllianceTagNormalizer,
-    PlayerNameNormalizer,
-    normalize_raw_player_identity_text,
-)
 
 
-_TAG_ANYWHERE = re.compile(
-    r"(?P<prefix>.*?)"
-    r"[\(\{\[]?\s*\[\s*(?P<tag>[A-Za-z0-9]{2,8})\s*[\]\|\}\)]\s*"
-    r"(?P<name>.*)$"
-)
+_TAG_RE = re.compile(r"\[\s*([A-Za-z0-9]{2,6})\s*\]")
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
+_SPACE_RE = re.compile(r"\s+")
 
-_VALID_LATIN_NAME = re.compile(r"[A-Za-z0-9]")
-_GARBAGE_MARKS = {"?", "�", "□", "■", "▯", "▒", "�"}
+# Obvious non-name UI fragments that sometimes leak into the name region.
+_NOISE_WORDS = {
+    "warzone",
+    "ranking",
+    "commander",
+    "power",
+    "total",
+    "hero",
+    "alliance",
+    "updates",
+    "leaderboard",
+}
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True)
 class PlayerIdentityQuality:
     alliance_tag: Optional[str]
     player_name: str
@@ -36,137 +40,93 @@ class PlayerIdentityQuality:
     status: str
     warnings: list[str] = field(default_factory=list)
     corrections: list[str] = field(default_factory=list)
-    raw_input: str = ""
     normalized_input: str = ""
 
-    @property
-    def warnings_text(self) -> str:
-        return ";".join(self.warnings)
 
-    @property
-    def corrections_text(self) -> str:
-        return ";".join(self.corrections)
-
-
-def _penalize(confidence: float, amount: float) -> float:
-    return max(0.0, round(confidence - amount, 4))
+def _normalize_text(value: str) -> str:
+    text = unicodedata.normalize("NFKC", str(value or ""))
+    text = _CONTROL_RE.sub("", text)
+    text = text.replace("｜", "|")
+    text = _SPACE_RE.sub(" ", text).strip()
+    return text
 
 
-def _contains_garbage_marks(value: str) -> bool:
-    return any(mark in value for mark in _GARBAGE_MARKS)
-
-
-def _has_latin_or_digit(value: str) -> bool:
-    return bool(_VALID_LATIN_NAME.search(value or ""))
-
-
-def _is_effectively_empty_name(value: str) -> bool:
-    cleaned = str(value or "").strip()
-    if not cleaned:
+def _looks_like_noise(name: str) -> bool:
+    stripped = name.strip()
+    if not stripped:
         return True
-    if cleaned.upper() in {"UNKNOWN", "N/A", "NA", "NONE", "NULL"}:
+    lower = stripped.lower()
+    if lower in _NOISE_WORDS:
         return True
-    stripped_symbols = "".join(
-        ch for ch in cleaned
-        if unicodedata.category(ch)[0] not in {"P", "S", "Z", "C"}
-    )
-    return not stripped_symbols
+    if any(word in lower for word in ("warzone", "total hero", "alliance power")):
+        return True
+    # Pure punctuation / OCR symbols are not actionable identities.
+    useful = [ch for ch in stripped if ch.isalnum() or ord(ch) > 127]
+    return len(useful) == 0
 
 
-def _is_untrusted_ocr_name(value: str) -> bool:
-    """Return True when OCR name should not be trusted as identity.
+def parse_player_identity_quality(raw_name: str, base_confidence: float = 1.0) -> PlayerIdentityQuality:
+    """Parse a raw OCR name into tag, player name and calibrated status.
 
-    Asian names are often not read by the OCR stack used in the current import
-    flow. We therefore do not invent an identity from symbol noise. If OCR does
-    provide a usable latin/digit representation, it is kept. Otherwise the row
-    must go to review with player_name=UNKNOWN.
+    Calibration policy for the transfer baseline:
+    - Prefix garbage before a valid [TAG] is corrected, not automatically REVIEW.
+    - CJK names are accepted as usable text when OCR returns actual characters.
+    - Missing alliance tag is allowed; it can mean alliance-less player.
+    - REVIEW is reserved for identities that are not actionable.
     """
-    if _is_effectively_empty_name(value):
-        return True
-    if _contains_garbage_marks(value):
-        return True
-    # If the output has no latin letters or digits, downstream matching cannot
-    # use it safely with the current data model. Keep the row via rank/power/tag
-    # but mark player identity unknown.
-    if not _has_latin_or_digit(value):
-        return True
-    return False
+    warnings: list[str] = []
+    corrections: list[str] = []
+    normalized = _normalize_text(raw_name)
 
+    alliance_tag: Optional[str] = None
+    player_part = normalized
 
-class PlayerIdentityQualityGate:
-    """Extract alliance tag and player name with explicit review status."""
+    match = _TAG_RE.search(normalized)
+    if match:
+        alliance_tag = match.group(1).strip()
+        before = normalized[: match.start()].strip()
+        after = normalized[match.end() :].strip()
+        player_part = after
+        if before:
+            corrections.append("prefix_before_alliance_tag_ignored")
+    else:
+        # Not every player must have an alliance tag. Keep it valid if the name
+        # itself is readable, but record this because it matters for recruitment.
+        warnings.append("alliance_tag_missing")
 
-    def __init__(self) -> None:
-        self._tag_normalizer = AllianceTagNormalizer()
-        self._name_normalizer = PlayerNameNormalizer()
+    # Remove trailing power/rank fragments if OCR grouped too much text.
+    player_part = re.sub(r"\b\d{7,}\b.*$", "", player_part).strip()
+    player_part = _SPACE_RE.sub(" ", player_part)
 
-    def parse(self, raw_name: Optional[str], base_confidence: float = 1.0) -> PlayerIdentityQuality:
-        raw = str(raw_name or "")
-        normalized_identity = normalize_raw_player_identity_text(raw)
-        text = normalized_identity.value
-        confidence = min(float(base_confidence), float(normalized_identity.confidence))
-        warnings: list[str] = []
-        corrections: list[str] = list(normalized_identity.corrections)
+    if _looks_like_noise(player_part):
+        player_name = "UNKNOWN"
+        warnings.append("player_name_unusable")
+    else:
+        player_name = player_part
 
-        alliance_tag: Optional[str] = None
-        raw_player_name = text
+    confidence = max(0.0, min(1.0, float(base_confidence)))
+    if player_name == "UNKNOWN":
+        confidence = min(confidence, 0.25)
+    elif alliance_tag:
+        confidence = max(confidence, 0.80)
+    else:
+        # Name without tag is still usable, just slightly less certain.
+        confidence = min(max(confidence, 0.65), 0.85)
 
-        match = _TAG_ANYWHERE.match(text)
-        if match:
-            prefix = (match.group("prefix") or "").strip()
-            raw_tag = match.group("tag") or ""
-            raw_player_name = (match.group("name") or "").strip()
+    review_reasons = {
+        "player_name_unusable",
+    }
+    if confidence < 0.35:
+        warnings.append("low_identity_confidence")
 
-            tag_result = self._tag_normalizer.normalize(raw_tag)
-            alliance_tag = tag_result.value or None
-            confidence = min(confidence, tag_result.confidence)
-            corrections.extend(tag_result.corrections)
+    status = "REVIEW" if any(reason in warnings for reason in review_reasons) or confidence < 0.35 else "VALID"
 
-            if prefix:
-                warnings.append("prefix_before_alliance_tag_ignored")
-                confidence = _penalize(confidence, 0.08)
-        else:
-            warnings.append("missing_alliance_tag")
-            confidence = _penalize(confidence, 0.10)
-
-        name_result = self._name_normalizer.normalize(raw_player_name)
-        player_name = name_result.value or "UNKNOWN"
-        confidence = min(confidence, name_result.confidence)
-        corrections.extend(name_result.corrections)
-
-        if _is_untrusted_ocr_name(player_name):
-            player_name = "UNKNOWN"
-            warnings.append("untrusted_or_unreadable_player_name")
-            confidence = _penalize(confidence, 0.25)
-
-        if player_name == "UNKNOWN":
-            warnings.append("player_identity_requires_review")
-
-        if not alliance_tag:
-            warnings.append("alliance_tag_requires_review")
-
-        # De-duplicate while preserving order.
-        warnings = list(dict.fromkeys(warnings))
-        corrections = list(dict.fromkeys(corrections))
-
-        status = "VALID"
-        if warnings or confidence < 0.80:
-            status = "REVIEW"
-
-        return PlayerIdentityQuality(
-            alliance_tag=alliance_tag,
-            player_name=player_name,
-            confidence=round(confidence, 4),
-            status=status,
-            warnings=warnings,
-            corrections=corrections,
-            raw_input=raw,
-            normalized_input=text,
-        )
-
-
-_DEFAULT_GATE = PlayerIdentityQualityGate()
-
-
-def parse_player_identity_quality(raw_name: Optional[str], base_confidence: float = 1.0) -> PlayerIdentityQuality:
-    return _DEFAULT_GATE.parse(raw_name, base_confidence=base_confidence)
+    return PlayerIdentityQuality(
+        alliance_tag=alliance_tag,
+        player_name=player_name,
+        confidence=round(confidence, 4),
+        status=status,
+        warnings=list(dict.fromkeys(warnings)),
+        corrections=list(dict.fromkeys(corrections)),
+        normalized_input=normalized,
+    )

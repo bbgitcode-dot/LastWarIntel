@@ -1,0 +1,53 @@
+# Ground Truth Validation
+
+Sentinel's OCR output must be measurable against manually verified data.
+The Ground Truth Validator compares a curated THP sheet with a normal Sentinel
+OCR export and produces accuracy metrics for names, alliances, power and rank.
+
+## Input
+
+Ground truth workbook columns:
+
+```text
+Server | Rank | Alliance | HeroPower | TrueName | Screenshot
+```
+
+Example:
+
+```text
+551 | 2 | IVE | 320306014 | MEITTü メ 메잇 | 2026-06-29 14_45_10-Window.png
+```
+
+## Run
+
+```bash
+python ground_truth_validator.py ^
+  --ground-truth input/S6_preTransfer_server_551_top50_THP.xlsx ^
+  --ocr-output output/easy_lastwar_export.xlsx
+```
+
+## Output
+
+```text
+benchmarks/ground_truth_validation_report.xlsx
+benchmarks/ground_truth_validation_report.json
+```
+
+The report contains:
+
+- overall score
+- exact name accuracy
+- average name similarity
+- alliance accuracy
+- power accuracy
+- rank accuracy
+- usable identity matches
+- category breakdown for Latin, mixed CJK, Hangul, Kana and Han names
+- failure rows for manual inspection
+
+## Why this exists
+
+OCR accuracy must not be guessed. Sentinel uses ground truth data to verify
+whether OCR output is reliable enough for Player Identity and Player Mobility.
+
+Reliable Intelligence begins with reliable data.

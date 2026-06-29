@@ -83,15 +83,16 @@ def detect_server_consensus_from_ocr(ocr_results, min_occurrences: int = 3) -> S
     agreement = occurrences / max(total, 1)
 
     if occurrences >= min_occurrences:
-        warning = None
-        if len(counts) > 1:
-            warning = "server_consensus_with_conflicting_candidates"
+        # The core rule is: three matching Warzone detections are sufficient
+        # for automatic assignment. Conflicting low-count candidates remain
+        # visible in detections/confidence, but they should not turn every
+        # row into a server warning.
         return ServerDetection(
             server=server,
             confidence=round(agreement, 4),
             source="ocr_consensus",
             detections=candidates,
-            warning=warning,
+            warning=None,
         )
 
     return ServerDetection(

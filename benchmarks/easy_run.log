@@ -1,0 +1,555 @@
+STDOUT
+======
+OCR Provider: EasyOCR (easy)
+OCR Metadata Languages: ['en']
+OCR Row Languages: ['en', 'ch_sim']
+
+2026-06-28 13_14_06-Window.png
+Server : 549
+Server*: server_consensus_with_conflicting_candidates
+Typ    : alliance_power
+OCR    : 31 Elemente
+Typ*   : alliance_power
+2026-06-28 13_14_06-Window.png 549 alliance_power 7
+DEBUG | 2026-06-28 13_14_06-Window.png | Server=549 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=alliance_power | Rows=7
+
+2026-06-28 13_14_49-Window.png
+Server : 549
+Server*: validated
+Typ    : alliance_power
+OCR    : 34 Elemente
+Typ*   : alliance_power
+2026-06-28 13_14_49-Window.png 549 alliance_power 8
+DEBUG | 2026-06-28 13_14_49-Window.png | Server=549 | ServerWarning=None | Typ=alliance_power | Rows=8
+
+2026-06-28 13_15_08-Window.png
+Server : 549
+Server*: validated
+Typ    : alliance_power
+OCR    : 32 Elemente
+Typ*   : alliance_power
+2026-06-28 13_15_08-Window.png 549 alliance_power 7
+DEBUG | 2026-06-28 13_15_08-Window.png | Server=549 | ServerWarning=None | Typ=alliance_power | Rows=7
+
+2026-06-28 13_15_25-Window.png
+Server : 549
+Server*: server_consensus_with_conflicting_candidates
+Typ    : alliance_power
+OCR    : 31 Elemente
+Typ*   : alliance_power
+2026-06-28 13_15_25-Window.png 549 alliance_power 7
+DEBUG | 2026-06-28 13_15_25-Window.png | Server=549 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=alliance_power | Rows=7
+
+2026-06-28 13_15_43-Window.png
+Server : 549
+Server*: validated
+Typ    : alliance_power
+OCR    : 34 Elemente
+Typ*   : alliance_power
+2026-06-28 13_15_43-Window.png 549 alliance_power 7
+DEBUG | 2026-06-28 13_15_43-Window.png | Server=549 | ServerWarning=None | Typ=alliance_power | Rows=7
+
+2026-06-28 13_16_01-Window.png
+Server : 549
+Server*: server_consensus_with_conflicting_candidates
+Typ    : unknown
+OCR    : 31 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_16_01-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_16_01-Window.png | Server=549 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_16_27-Window.png
+Server : 549
+Server*: validated
+Typ    : alliance_power
+OCR    : 34 Elemente
+Typ*   : alliance_power
+2026-06-28 13_16_27-Window.png 549 alliance_power 8
+DEBUG | 2026-06-28 13_16_27-Window.png | Server=549 | ServerWarning=None | Typ=alliance_power | Rows=8
+
+2026-06-28 13_16_48-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 28 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_16_48-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_16_48-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_17_05-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 36 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_17_05-Window.png 549 total_hero_power 8
+DEBUG | 2026-06-28 13_17_05-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=8
+
+2026-06-28 13_17_22-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 38 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_17_22-Window.png 549 total_hero_power 8
+DEBUG | 2026-06-28 13_17_22-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=8
+
+2026-06-28 13_17_46-Window.png
+Server : 549
+Server*: server_consensus_with_conflicting_candidates
+Typ    : total_hero_power
+OCR    : 38 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_17_46-Window.png 549 total_hero_power 8
+DEBUG | 2026-06-28 13_17_46-Window.png | Server=549 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=total_hero_power | Rows=8
+
+2026-06-28 13_18_07-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 35 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_18_07-Window.png 549 total_hero_power 8
+DEBUG | 2026-06-28 13_18_07-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=8
+
+2026-06-28 13_18_20-Window.png
+Server : 549
+Server*: server_consensus_with_conflicting_candidates
+Typ    : total_hero_power
+OCR    : 36 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_18_20-Window.png 549 total_hero_power 8
+DEBUG | 2026-06-28 13_18_20-Window.png | Server=549 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=total_hero_power | Rows=8
+
+2026-06-28 13_18_36-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 31 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_18_36-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_18_36-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_18_53-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 31 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_18_53-Window.png 549 total_hero_power 6
+DEBUG | 2026-06-28 13_18_53-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=6
+
+2026-06-28 13_19_11-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 33 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_19_11-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_19_11-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_19_30-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 35 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_19_30-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_19_30-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_19_45-Window.png
+Server : 549
+Server*: validated
+Typ    : unknown
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_19_45-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_19_45-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_19_58-Window.png
+Server : 549
+Server*: validated
+Typ    : unknown
+OCR    : 34 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_19_58-Window.png 549 total_hero_power 6
+DEBUG | 2026-06-28 13_19_58-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=6
+
+2026-06-28 13_20_12-Window.png
+Server : 549
+Server*: validated
+Typ    : total_hero_power
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_20_12-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_20_12-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_20_25-Window.png
+Server : 549
+Server*: validated
+Typ    : unknown
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_20_25-Window.png 549 total_hero_power 7
+DEBUG | 2026-06-28 13_20_25-Window.png | Server=549 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_32_15-Window.png
+Server : 550
+Server*: validated
+Typ    : alliance_power
+OCR    : 31 Elemente
+Typ*   : alliance_power
+2026-06-28 13_32_15-Window.png 550 alliance_power 7
+DEBUG | 2026-06-28 13_32_15-Window.png | Server=550 | ServerWarning=None | Typ=alliance_power | Rows=7
+
+2026-06-28 13_32_29-Window.png
+Server : 550
+Server*: validated
+Typ    : alliance_power
+OCR    : 30 Elemente
+Typ*   : alliance_power
+2026-06-28 13_32_29-Window.png 550 alliance_power 7
+DEBUG | 2026-06-28 13_32_29-Window.png | Server=550 | ServerWarning=None | Typ=alliance_power | Rows=7
+
+2026-06-28 13_32_41-Window.png
+Server : 550
+Server*: validated
+Typ    : alliance_power
+OCR    : 31 Elemente
+Typ*   : alliance_power
+2026-06-28 13_32_41-Window.png 550 alliance_power 7
+DEBUG | 2026-06-28 13_32_41-Window.png | Server=550 | ServerWarning=None | Typ=alliance_power | Rows=7
+
+2026-06-28 13_32_57-Window.png
+Server : 550
+Server*: server_consensus_with_conflicting_candidates
+Typ    : alliance_power
+OCR    : 35 Elemente
+Typ*   : alliance_power
+2026-06-28 13_32_57-Window.png 550 alliance_power 8
+DEBUG | 2026-06-28 13_32_57-Window.png | Server=550 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=alliance_power | Rows=8
+
+2026-06-28 13_33_09-Window.png
+Server : 550
+Server*: validated
+Typ    : unknown
+OCR    : 31 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_33_09-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_33_09-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_33_23-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 31 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_33_23-Window.png 550 total_hero_power 6
+DEBUG | 2026-06-28 13_33_23-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=6
+
+2026-06-28 13_33_38-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_33_38-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_33_38-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_33_50-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 33 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_33_50-Window.png 550 total_hero_power 6
+DEBUG | 2026-06-28 13_33_50-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=6
+
+2026-06-28 13_34_01-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_34_01-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_34_01-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_34_13-Window.png
+Server : 550
+Server*: server_consensus_with_conflicting_candidates
+Typ    : total_hero_power
+OCR    : 33 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_34_13-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_34_13-Window.png | Server=550 | ServerWarning=server_consensus_with_conflicting_candidates | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_34_32-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_34_32-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_34_32-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_34_46-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 32 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_34_46-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_34_46-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+2026-06-28 13_35_00-Window.png
+Server : 550
+Server*: validated
+Typ    : total_hero_power
+OCR    : 33 Elemente
+Typ*   : total_hero_power
+2026-06-28 13_35_00-Window.png 550 total_hero_power 7
+DEBUG | 2026-06-28 13_35_00-Window.png | Server=550 | ServerWarning=None | Typ=total_hero_power | Rows=7
+
+===== ZUSAMMENFASSUNG =====
+
+Server 549 - alliance_power
+1 [ACEU] NladosCrecenEternos 27488431133
+8 0#849 [HkF] 百花缭乱 27378522255
+9 [SGf] Earth 23861453747
+4 Q [W] Wid wings 23574581102
+5 B 0驷凹.购 [655]熊5) 17161652068
+6 { [Flc] Four Leaf Clover 13725044256
+7 [Fwk] 尕们Gn0休息 11978769865
+8 [ym6] odC尤3< 11387828087
+9 [054] ^儿乜术礻 9129905843
+10 G 0凹8 [ZaP] ZAP PRESTIGE 6846234521
+11 q 0?-(购 [10R] #尤3速盟 6388593002
+3 0凹.购 [Vine] 懒洋洋酒荭 4970714650
+13 g [1ss+] 勿忘草 皿-晤{ 4581211128
+14 % 皿凹8- [TDR] haunted mansion 3807004225
+15 驷 [1f9]蓠木峥嵘 3482115703
+3 0咀.购 [82叼]半熟冒隙团 3294614324
+8 ITFmmfRfO [Nbp] NBAJAPAN 3114603849
+18 」 [Ni5] secret base 3093137641
+19 匈 tar] 术)))巾儿 2774776202
+20 四 ICFF] 灰羽遵盟 2283299082
+21 @ 0/-.驷 [r叼]么3+> 1836113187
+8 08购 [NOg] No Good 1001107392
+23 圈 0觋咀8 [mz9] Unstoppable 870733710
+8 C"咀.- [丫79]最强缒FR加 826487817
+25 召 0觋咀. [叫叩]元1叩 804640871
+26 } 0/咀8- [pmk] 击帅|&九 576769197
+27 [923]粉色回忆 538791240
+28 困 0如咀8购 [TWI] 自由1贪粱1 529378646
+8 [HPM] 腹^7丸 520047215
+30 眍 AYng] Cedar TrailaCres 512010639
+31 着 [717] Go 0z凹." 501080119
+32 [Lazy] Lazy Bunch 419826521
+33 困 [V3]卅- C8" 417188748
+34 眍 C四咀.购 [pul] 冰箱帝囤 409751382
+35 犸 0z凹.货 lojx] KJLfli 394316153
+36 & 0四咀.- [yVm] Mindanao Alliance 192128440
+37 Q 四咀* [0yz] 3畸03b3 190716996
+38 k C"].购 [cCOM] d卜于1 184713756
+39 G 皿6 tan] 1i )夕 182937506
+40 瑚 C皿咀.购 [m05]森0实 176734825
+41 Q 哑 咀.购 [443] Hermit 173735272
+42 Q9 "2吧.购 [Maah] maaa 166204702
+43 [kob] 熊名熊言 156875025
+
+Server 549 - total_hero_power
+1 [b9r] R"尤了"尤遵合 321044581
+2 [ACEU] 焦0棚 310948520
+3 [da2] UNKNOWN 308013695
+8 [ACEU] Tarori 292341388
+5 [02z] Ozzie Wrecking Crew 290542280
+6 [ACEU] Zsd芒 Smocchi 286089006
+7 [ACEU] kenm07777 271787107
+8 [ACEU] 。~芒 Sasakichi 257337256
+9 [ACEU] 升+35云召Vv 256306203
+10 [ACEv] rowamaru 252941165
+11 [hTi] U d 5尤人岛 246989573
+12 [ACEU] ChU; AoG 244819542
+13 [ACEU] 蛸0拔1彀 236076116
+14 [ba] UNKNOWN 235629564
+3 [Wil] #t2 234855367
+3 [HkF] 芒 < I 加 233562236
+17 [HkF] CI3 < 人I0 232943165
+18 [ACEv] taka0125 232265389
+19 [ACEU] polnchu 231245539
+20 % 0四-.购 230551371
+21 [ACEv] BALENCIAGA 旧 X 230390983
+22 [5Gf] IL91 228634059
+23 [ACEv] 迮挚0了亍儿 227823211
+24 [WI] Rodius X 227561507
+8 [Wil] King Uncle 226101935
+26 [ACEU] N3Dr 225944804
+8 [Wil] Uon X 224788718
+28 [655] UNKNOWN 223959489
+29 [ACEu] UNKNOWN 223388777
+30 [ACEu] 鼻办5味噌 222108237
+31 [ACEU] NAOOOH 221632454
+32 [HkF] 工匕 R击召 220365536
+33 [Flc] UNKNOWN 219883663
+34 [ACEU] asakichi0先辈 219791471
+35 [108] 十^ 少夕R55 218797920
+36 [65s] 眼镜夕3坊主 218203826
+37 [HkF] Vami 0旧.购 217934431
+38 [HkF] MARCHELLO 217666333
+39 [ACEU] 了y〉1 2012 216854176
+40 [HkF] homepageg6 215431303
+41 [ny] OkCDUl 击 d 213904507
+42 [Fwk] RJ-2 212379473
+43 [5Gf] big AIII 212075390
+44 [SGf] 钱溻民族38 211625306
+45 [ACEU] pR329 210938065
+46 [WI] HeHeHaHa X 210452351
+47 [HkF] TPP 0卯-.购 210068903
+48 [Fwk] UNKNOWN 209685473
+49 [WI] shishishi X 209535887
+50 [ACEU] C +J-一 209237062
+51 [5Gf] UNKNOWN 208715674
+8 [5Gf] NaoyaA 208508204
+8 [Flc] pistachio 02 207920114
+54 [Flc] 勺少扌-E YFm 207610884
+55 [Mjc] 靛0尾 207511533
+56 [HkF] YEY Hkf 206512253
+57 [HkF] a芒51210 206225727
+58 [WI] Essemm 206018820
+59 [ACEU] 亍1勺儿 205811782
+60 [HkF] Lizzy PON 204378898
+61 [ACEU] 5志己〉 203749215
+62 [5Gf] ICUIlCUIICCI 203602109
+6 [SGf] t寸73 202654601
+64 [WI] Aido Y 皿呃8购 201927091
+65 [ACEU] CAIAKI 201192949
+66 阳 爪 [1叩]550- 201015170
+67 [655] jrz 0厕凹6" 199973742
+68 [Fwk] 击匕AA 199383932
+5 [Wil] Ragelnfire 198843560
+5 5] C5人 196533163
+71 [ACEU] LUWEE 196463362
+72 [HkF] UNKNOWN 196351798
+73 [5Gf] 卜么卜403 196258353
+74 [655] 勺)才礻35 195644047
+75 @ 0-君 咀邓8购 195451429
+8 [5G] U5U5儿 195158161
+77 [Fld] UNKNOWN 194804873
+78 [ACEv] Shimyayuaema 194702278
+79 [05u] 姬花5b九 193904932
+80 @ [T]R] Vamos003 193759891
+81 [HkF] UNKNOWN 193101388
+82 [5Gf] 英二f龙龙飞 192926195
+83 [ACEv] inariBchimaki 192675853
+84 [022] Zomhie Boss Lvl 99 192174644
+0 [Fwk] R卜U 1$ 191540094
+86 [ACEu] UNKNOWN 191383725
+87 [5G] UMAJD 190673277
+9 [ACEU] JUfX11 190599454
+0 [ACEU] MU Eyes 190210110
+900 [HkF] UIODts 189970626
+9 [ACEu] 可爱01。龙 189910051
+93 [ACEU] 迮挚0 189631125
+93 [HkF] 5+芒芒七0 19047783
+94 [ACEU] chapppppy 2300299
+95 殂 0厕咀68" [5]巾加427 1970137
+96 [ACEU] L t3人 1957162
+
+Server 550 - alliance_power
+1 g [Warf] Whiskeyand Warfare 19567083952
+8 [LsC] Last Standing Crew 13490123049
+3 [0] OysFunctional Legion 6730012492
+0 [PCMS] The Laugh of Death 3199527639
+8 [P4X]LA PAIX 2916999957
+6 G [NeX] 550 1607939782
+9 [583] SuisseAlpineReduit 873859074
+8 [22Z] Brotherhoodz 818543822
+9 [FR02] Famili 2 579818086
+10 四 [BTP] Bami Ghost Alliance 563050225
+3 0卿咀.驷 [0T叼] Order If The Damned 434995829
+3 0z凹.驷 [Ami] hand of friends 359406143
+13 n 0卿咀.驷 [K4Z] [ERBER 331086192
+8 0匆咀.驷 [BA] BrotherlnArms 283099673
+15 g MBZ] MOBSTARZ 238043557
+16 g 0咀恶驷 [442] fighter girl 173170157
+17 [InF] ERA 147162884
+18 铟 [Arek] KenarCrew 138701656
+19 四 0觋咀既驷 [9bt] Undead Hordes 94583840
+20 箧 0?.5 [swio] swiss 94190404
+21 囱 0咀.驷 [474] cruzados espafoles 63115694
+8 0如-挺B [ALK] Alkebulans 36733773
+23 [fdc] Brigada awa 19260818
+8 0 四恶C [qKs] Danmark 13617964
+25 函 0@旧既阳 [leoo] XLEOx 2046130
+
+Server 550 - total_hero_power
+1 [Warf] Little Pabby 194754417
+2 [LsC] lamperisator 188999406
+3 [Warf] ULTRAOOC 180992339
+0 [Warf] Connor 787 178231651
+5 [Warf] SlayTey 176668162
+6 [Warf] GoldCradle 0-凹.驷 176328659
+9 [Warf] Warchief23 175796982
+8 [Warf] CM Lana 169730048
+9 [LsC] Ognostos 166129890
+9 [Warf] +35 165603309
+38 [Warf] UNKNOWN 164526296
+12 [LsC] ZeAli 0叩8驷 161011698
+13 [LsC] opase 0厕凹.」 160701653
+14 [Warf] Ultra Gas Poll 160090547
+9 [Warf] CheezyBacon 159769329
+16 [Warf] pe9671 159317763
+17 铟 [[0] MoodyMayne 158777621
+18 [LsC] Guj Reloaded 158651421
+0 [Warf] Ron Burgandy 157877683
+20 [Warf] Captain Albert 157794749
+4 [Warf] Lienny kdn 157454584
+2 四恋驷 [00T叼] Bomber 1 156465195
+23 [Warf] ZeNeefste 151848627
+8 [Warf] jesuu 四恶驷 151712729
+25 [Warf] Ankoy BZH 149880609
+26 [Warf] xOsavageox 147723695
+27 [Warf] HARRY 097 147180947
+28 p [h] WARFIRE 146339115
+8 [Warf] Makkazholank 146262250
+30 [DL] Jbelz 145777458
+31 眈 [Q] undetectableR4Wguy 145055987
+32 [Warf] cylons83 144862618
+33 [LsC] Mcowp 143749594
+34 [LsC] SammySammmy 143576293
+35 [Warf] rafo5 141989682
+36 h] Elmer Pud 141563841
+37 [LsC] GreatMerlot 141474103
+38 [Warf] Majack 140440994
+39 [Warf] Moto8519 139723388
+40 [Warf] uei123 138788856
+41 [LsC] R[177 138243965
+6 [Warf] AgentVenom786 137976310
+43 [LsC] Rohsing 137846650
+44 [LsC] remidi 50 137445183
+45 [Warf] LoRD SASSA 137168913
+8 [Warf] Prince baby 136961285
+47 [Warf] Prince X Devil 136751336
+8 [LsC] Markosl 136590640
+49 瓯 C觋凹.驷 |["] motebs 135555592
+50 [Warf] Vannick5150 135267335
+51 [Warf] Mike Honcho 135140364
+52 [LsC] Afroduif 135026139
+53 [LsC] Snowbull 134815381
+54 @ [0] Josh3888 134206523
+55 [LsC] slimshaddy 133869174
+56 [LsC] Walpurgi 132919771
+57 [Warf] Prenns 13861884
+58 [Warf] Trigano47 13683364
+
+Excel geschrieben nach output\easy_lastwar_export.xlsx
+
+Runtime: 618.78s
+
+
+STDERR
+======
+Using CPU. Note: This module is much faster with a GPU.
+Using CPU. Note: This module is much faster with a GPU.
+d:\Last War\LastWarIntel\.venv-paddle\Lib\site-packages\torch\utils\data\dataloader.py:752: UserWarning: 'pin_memory' argument is set as true but no accelerator is found, then device pinned memory won't be used.
+  super().__init__(loader)

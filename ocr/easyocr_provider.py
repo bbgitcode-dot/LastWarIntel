@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
-from config.ocr import OCRProfile, get_ocr_profile
+from config.ocr import get_ocr_profile
 from ocr.provider import OCRResult, OcrProviderInfo
 from ocr.utils import deduplicate_ocr_results
 
@@ -18,27 +17,28 @@ def _make_easyocr_reader(languages: tuple[str, ...]):
     return easyocr.Reader(list(languages), gpu=False)
 
 
-@dataclass(slots=True)
 class EasyOcrProvider:
-    """Sentinel OCR provider backed by EasyOCR."""
+    """Sentinel OCR provider backed by EasyOCR.
 
-    profile_name: str | None = None
+    This class intentionally does not use ``@dataclass(slots=True)``.
+    OCR readers and profile metadata are runtime state and must be set during
+    initialization. A slotted dataclass caused AttributeError when the provider
+    architecture attempted to attach those attributes.
+    """
 
-    def __post_init__(self) -> None:
-        profile = get_ocr_profile(self.profile_name)
-        object.__setattr__(self, "profile", profile)
+    def __init__(self, profile_name: str | None = None) -> None:
+        self.profile_name = profile_name
+        self.profile = get_ocr_profile(profile_name)
         try:
-            metadata_reader = _make_easyocr_reader(profile.metadata_languages)
-            row_readers = [_make_easyocr_reader(group) for group in profile.row_language_groups]
+            self.metadata_reader = _make_easyocr_reader(self.profile.metadata_languages)
+            self.row_readers = [_make_easyocr_reader(group) for group in self.profile.row_language_groups]
         except Exception as exc:  # pragma: no cover - depends on local OCR install/models
             raise RuntimeError(
                 "Failed to initialize EasyOCR readers. "
-                f"Metadata languages: {list(profile.metadata_languages)}. "
-                f"Row language groups: {[list(group) for group in profile.row_language_groups]}. "
+                f"Metadata languages: {list(self.profile.metadata_languages)}. "
+                f"Row language groups: {[list(group) for group in self.profile.row_language_groups]}. "
                 "Use SENTINEL_OCR_PROFILE=fast for the stable CPU baseline profile."
             ) from exc
-        object.__setattr__(self, "metadata_reader", metadata_reader)
-        object.__setattr__(self, "row_readers", row_readers)
 
     @property
     def info(self) -> OcrProviderInfo:

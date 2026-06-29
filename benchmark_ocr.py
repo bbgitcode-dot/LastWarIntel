@@ -77,11 +77,16 @@ def _run_provider(provider: str) -> ProviderBenchmarkResult:
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     runtime = time.perf_counter() - start
+    stdout = completed.stdout or ""
+    stderr = completed.stderr or ""
     log_file.write_text(
-        "STDOUT\n======\n" + completed.stdout + "\n\nSTDERR\n======\n" + completed.stderr,
+        "STDOUT\n======\n" + stdout + "\n\nSTDERR\n======\n" + stderr,
         encoding="utf-8",
+        errors="replace",
     )
 
     if completed.returncode != 0:
@@ -90,7 +95,7 @@ def _run_provider(provider: str) -> ProviderBenchmarkResult:
             status="ERROR",
             runtime_seconds=round(runtime, 3),
             output_file=str(output_file),
-            error=(completed.stderr or completed.stdout)[-4000:],
+            error=(stderr or stdout)[-4000:],
         )
 
     result = ProviderBenchmarkResult(

@@ -15,8 +15,8 @@ def test_merge_preserves_ocr_rank_and_detects_gap():
     assert "possible_missing_rank_before:80" in merged[1]["rank_warning"]
 
 
-def test_merge_warns_when_ocr_rank_missing():
+def test_merge_does_not_warn_every_row_when_ocr_rank_missing():
     rows = [{"name": "A", "power": 300}]
     merged = merge_rows_by_power(rows, limit=10, tolerance=0.0)
     assert merged[0]["rank"] == 1
-    assert merged[0]["rank_warning"] == "ocr_rank_missing"
+    assert merged[0]["rank_warning"] == ""

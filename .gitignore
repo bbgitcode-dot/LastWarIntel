@@ -1,28 +1,27 @@
-# Python
-__pycache__/
-*.pyc
-
 # Virtual Environment
 .venv/
+.venv-paddle/
 
-# VS Code
-.vscode/
+# Build/Release ZIPs
+*.zip
 
-# OCR Debug
-output/debug/
+# Benchmark outputs
+benchmarks/*.json
+benchmarks/*.xlsx
 
-# Excel Exporte
+# Runtime input/output data
+input/
+screenshots/
 output/*.xlsx
 
-# SQLite Datenbank
-database/*.db
+# Paddle / OCR model cache
+.paddlex/
+.paddleocr/
+*.pdmodel
+*.pdiparams
+*.pdiparams.info
 
-# Logs
-*.log
-
-# Windows
-Thumbs.db
-Desktop.ini
-
-# macOS
-.DS_Store
+# Python
+**/__pycache__/
+*.py[cod]
+*$py.class
