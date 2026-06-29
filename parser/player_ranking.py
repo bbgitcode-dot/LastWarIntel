@@ -31,9 +31,15 @@ def build_player_ranking_entries(
     server: int,
     snapshot_id: Optional[str] = None,
     source_file: Optional[str] = None,
+    server_confidence: Optional[float] = None,
+    server_source: Optional[str] = None,
+    server_warning: Optional[str] = None,
 ) -> list[PlayerRankingEntry]:
     """Convert legacy parsed OCR rows into structured THP entries."""
     entries: list[PlayerRankingEntry] = []
+
+    if server is None:
+        raise ValueError("Cannot build player ranking entries without a validated server.")
 
     sorted_rows = sorted(
         [row for row in rows if row.get("power")],
@@ -53,11 +59,17 @@ def build_player_ranking_entries(
 
         entries.append(
             PlayerRankingEntry(
-                rank=int(row.get("rank") or index),
+                rank=int(row.get("rank") or row.get("ocr_rank") or index),
                 server=int(server),
                 alliance_tag=identity_quality.alliance_tag,
                 player_name=identity_quality.player_name,
                 hero_power=int(row["power"]),
+                ocr_rank=row.get("ocr_rank"),
+                computed_rank=row.get("computed_rank") or index,
+                rank_warning=row.get("rank_warning"),
+                server_confidence=server_confidence,
+                server_source=server_source,
+                server_warning=server_warning,
                 snapshot_id=snapshot_id,
                 confidence=float(identity_quality.confidence),
                 source_file=row.get("source_file") or source_file,
@@ -78,6 +90,9 @@ def build_player_ranking_snapshot(
     ranking_type: str = "total_hero_power",
     snapshot_id: Optional[str] = None,
     source_file: Optional[str] = None,
+    server_confidence: Optional[float] = None,
+    server_source: Optional[str] = None,
+    server_warning: Optional[str] = None,
 ) -> PlayerRankingSnapshot:
     """Build a structured THP snapshot from parsed OCR ranking rows."""
     entries = build_player_ranking_entries(
@@ -85,7 +100,13 @@ def build_player_ranking_snapshot(
         server=server,
         snapshot_id=snapshot_id,
         source_file=source_file,
+        server_confidence=server_confidence,
+        server_source=server_source,
+        server_warning=server_warning,
     )
+
+    if server is None:
+        raise ValueError("Cannot build player ranking snapshot without a validated server.")
 
     return PlayerRankingSnapshot(
         server=int(server),

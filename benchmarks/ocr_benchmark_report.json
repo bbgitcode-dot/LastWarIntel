@@ -1,0 +1,38 @@
+[
+  {
+    "provider": "easy",
+    "status": "ERROR",
+    "runtime_seconds": 0.822,
+    "output_file": "output\\easy_lastwar_export.xlsx",
+    "sheets": 0,
+    "rows": 0,
+    "thp_rows": 0,
+    "alliance_rows": 0,
+    "server_review_rows": 0,
+    "unknown_names": 0,
+    "review_rows": 0,
+    "valid_rows": 0,
+    "rank_warnings": 0,
+    "server_warnings": 0,
+    "error": "Traceback (most recent call last):\n  File \"d:\\Last War\\LastWarIntel\\main.py\", line 159, in <module>\n    main()\n    ~~~~^^\n  File \"d:\\Last War\\LastWarIntel\\main.py\", line 31, in main\n    reader = create_reader()\n  File \"d:\\Last War\\LastWarIntel\\parser\\ocr.py\", line 24, in create_reader\n    return create_ocr_provider(provider_name=provider_name, profile_name=profile_name)\n  File \"d:\\Last War\\LastWarIntel\\ocr\\provider_factory.py\", line 19, in create_ocr_provider\n    return EasyOcrProvider(profile_name=profile_name)\n  File \"<string>\", line 4, in __init__\n  File \"d:\\Last War\\LastWarIntel\\ocr\\easyocr_provider.py\", line 29, in __post_init__\n    object.__setattr__(self, \"profile\", profile)\n    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'EasyOcrProvider' object has no attribute 'profile' and no __dict__ for setting new attributes\n",
+    "score": 0.0
+  },
+  {
+    "provider": "paddle",
+    "status": "ERROR",
+    "runtime_seconds": 22.295,
+    "output_file": "output\\paddle_lastwar_export.xlsx",
+    "sheets": 0,
+    "rows": 0,
+    "thp_rows": 0,
+    "alliance_rows": 0,
+    "server_review_rows": 0,
+    "unknown_names": 0,
+    "review_rows": 0,
+    "valid_rows": 0,
+    "rank_warnings": 0,
+    "server_warnings": 0,
+    "error": "ar\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\utils\\deps.py\", line 208, in _wrapper\n    return old_init_func(self, *args, **kwargs)\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\_parallel.py\", line 135, in __init__\n    self._pipeline = self._create_internal_pipeline(config, self.device)\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\_parallel.py\", line 190, in _create_internal_pipeline\n    pipeline = self._pipeline_cls(\n        config,\n    ...<6 lines>...\n        **self._init_kwargs,\n    )\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\ocr\\pipeline.py\", line 85, in __init__\n    self.doc_preprocessor_pipeline = self.create_pipeline(\n                                     ~~~~~~~~~~~~~~~~~~~~^\n        doc_preprocessor_config\n        ^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\base.py\", line 181, in create_pipeline\n    return create_pipeline(\n        config=config,\n    ...<8 lines>...\n        **kwargs,\n    )\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\__init__.py\", line 169, in create_pipeline\n    pipeline = BasePipeline.get(pipeline_name)(\n        config=config,\n    ...<6 lines>...\n        **kwargs,\n    )\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\utils\\deps.py\", line 208, in _wrapper\n    return old_init_func(self, *args, **kwargs)\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\_parallel.py\", line 135, in __init__\n    self._pipeline = self._create_internal_pipeline(config, self.device)\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\_parallel.py\", line 190, in _create_internal_pipeline\n    pipeline = self._pipeline_cls(\n        config,\n    ...<6 lines>...\n        **self._init_kwargs,\n    )\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\doc_preprocessor\\pipeline.py\", line 78, in __init__\n    self.doc_ori_classify_model = self.create_model(doc_ori_classify_config)\n                                  ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\pipelines\\base.py\", line 143, in create_model\n    return create_predictor(\n        model_name=config[\"model_name\"],\n    ...<9 lines>...\n        **kwargs,\n    )\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\models\\__init__.py\", line 457, in create_predictor\n    requested_engine.ensure_environment()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"d:\\Last War\\LastWarIntel\\.venv\\Lib\\site-packages\\paddlex\\inference\\models\\engines\\paddle.py\", line 98, in ensure_environment\n    raise RuntimeError(\n    ...<2 lines>...\n    )\nRuntimeError: Engine 'paddle_static' is unavailable because dependency 'paddlepaddle' is not installed.\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"d:\\Last War\\LastWarIntel\\main.py\", line 159, in <module>\n    main()\n    ~~~~^^\n  File \"d:\\Last War\\LastWarIntel\\main.py\", line 31, in main\n    reader = create_reader()\n  File \"d:\\Last War\\LastWarIntel\\parser\\ocr.py\", line 24, in create_reader\n    return create_ocr_provider(provider_name=provider_name, profile_name=profile_name)\n  File \"d:\\Last War\\LastWarIntel\\ocr\\provider_factory.py\", line 23, in create_ocr_provider\n    return PaddleOcrProvider()\n  File \"<string>\", line 5, in __init__\n  File \"d:\\Last War\\LastWarIntel\\ocr\\paddleocr_provider.py\", line 100, in __post_init__\n    raise RuntimeError(\n    ...<2 lines>...\n    ) from exc\nRuntimeError: Failed to initialize PaddleOCR readers. Metadata language: en. Row languages: ['ch', 'chinese_cht', 'japan', 'korean'].\n",
+    "score": 0.0
+  }
+]

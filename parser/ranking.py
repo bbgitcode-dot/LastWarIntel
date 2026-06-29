@@ -61,7 +61,7 @@ def is_warzone(text):
 
 def is_rank(text):
     text = text.strip()
-    return re.fullmatch(r"\d{1,2}", text) is not None
+    return re.fullmatch(r"\d{1,3}", text) is not None
 
 
 def clean_name_part(text):
@@ -149,11 +149,27 @@ def parse_ranking_rows(ocr_results):
         power_item = max(power_items, key=lambda item: item["x"])
         power = clean_power(power_item["text"])
 
+        rank_items = [
+            item for item in row["items"]
+            if item["x"] < power_item["x"] and is_rank(str(item["text"]))
+        ]
+        ocr_rank = None
+        if rank_items:
+            rank_item = min(rank_items, key=lambda item: item["x"])
+            try:
+                ocr_rank = int(str(rank_item["text"]).strip())
+            except ValueError:
+                ocr_rank = None
+
         name_parts = []
 
         for item in row["items"]:
             # Name steht links vom Powerwert
             if item["x"] >= power_item["x"]:
+                continue
+
+            # OCR rank is stored separately and must not pollute names.
+            if is_rank(str(item["text"])):
                 continue
 
             part = clean_name_part(item["text"])
@@ -166,6 +182,7 @@ def parse_ranking_rows(ocr_results):
         parsed.append({
             "name": name,
             "power": power,
+            "ocr_rank": ocr_rank,
             "raw_text": " | ".join(texts),
             "y": row["y"],
             "confidence": min(item["confidence"] for item in row["items"]),
@@ -229,7 +246,27 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
 
     merged.sort(key=lambda row: row["power"], reverse=True)
 
+    previous_ocr_rank = None
     for idx, row in enumerate(merged[:limit], start=1):
-        row["rank"] = idx
+        row["computed_rank"] = idx
+        ocr_rank = row.get("ocr_rank")
+        warnings = []
+        existing_warning = row.get("rank_warning")
+        if existing_warning:
+            warnings.extend(str(existing_warning).split(";"))
+
+        if ocr_rank is not None:
+            row["rank"] = int(ocr_rank)
+            if int(ocr_rank) != idx:
+                warnings.append(f"ocr_rank_differs_from_computed:{ocr_rank}!={idx}")
+            if previous_ocr_rank is not None and int(ocr_rank) > previous_ocr_rank + 1:
+                missing = ",".join(str(value) for value in range(previous_ocr_rank + 1, int(ocr_rank)))
+                warnings.append(f"possible_missing_rank_before:{missing}")
+            previous_ocr_rank = int(ocr_rank)
+        else:
+            row["rank"] = idx
+            warnings.append("ocr_rank_missing")
+
+        row["rank_warning"] = ";".join(dict.fromkeys(warnings))
 
     return merged[:limit]

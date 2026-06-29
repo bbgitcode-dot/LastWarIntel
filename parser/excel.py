@@ -19,6 +19,9 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
             if ranking_type == "total_hero_power":
                 preferred_columns = [
                     "rank",
+                    "ocr_rank",
+                    "computed_rank",
+                    "rank_warning",
                     "alliance_tag",
                     "player_name",
                     "name",
@@ -28,11 +31,38 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
                     "parse_warnings",
                     "parse_corrections",
                     "normalized_identity",
+                    "server_confidence",
+                    "server_source",
+                    "server_warning",
                     "raw_text",
                     "source_file",
                 ]
+            elif ranking_type == "server_review":
+                preferred_columns = [
+                    "source_file",
+                    "ranking_type",
+                    "server",
+                    "server_confidence",
+                    "server_source",
+                    "server_warning",
+                    "server_detections",
+                    "ocr_elements",
+                    "raw_text",
+                ]
             else:
-                preferred_columns = ["rank", "name", "power", "source_file", "raw_text"]
+                preferred_columns = [
+                    "rank",
+                    "ocr_rank",
+                    "computed_rank",
+                    "rank_warning",
+                    "name",
+                    "power",
+                    "server_confidence",
+                    "server_source",
+                    "server_warning",
+                    "source_file",
+                    "raw_text",
+                ]
 
             columns = [column for column in preferred_columns if column in df.columns]
             df = df[columns]

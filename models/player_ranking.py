@@ -24,6 +24,12 @@ class PlayerRankingEntry:
     alliance_tag: Optional[str]
     player_name: str
     hero_power: int
+    ocr_rank: Optional[int] = None
+    computed_rank: Optional[int] = None
+    rank_warning: Optional[str] = None
+    server_confidence: Optional[float] = None
+    server_source: Optional[str] = None
+    server_warning: Optional[str] = None
     snapshot_id: Optional[str] = None
     confidence: float = 1.0
     source_file: Optional[str] = None
@@ -47,6 +53,12 @@ class PlayerRankingEntry:
             "name": display_name,
             "power": self.hero_power,
             "hero_power": self.hero_power,
+            "ocr_rank": self.ocr_rank,
+            "computed_rank": self.computed_rank,
+            "rank_warning": self.rank_warning,
+            "server_confidence": self.server_confidence,
+            "server_source": self.server_source,
+            "server_warning": self.server_warning,
             "snapshot_id": self.snapshot_id,
             "confidence": self.confidence,
             "source_file": self.source_file,

@@ -1,106 +1,38 @@
-"""
-OCR adapter for Sentinel.
+"""OCR facade used by Sentinel's import pipeline.
 
-The OCR layer converts screenshots into raw text observations. It must not
-contain domain logic. Language configuration is intentionally centralized so
-transfer-baseline runs can be optimized without code changes.
+Historically this module instantiated EasyOCR directly. It now delegates to an
+exchangeable OCR provider while keeping the legacy function names used by
+``main.py`` and older smoke tests.
 """
 
 from __future__ import annotations
 
-import os
-from typing import Iterable, List, Optional, Sequence
-
-try:
-    from config.ocr import DEFAULT_OCR_LANGUAGES, OCR_GPU
-except Exception:  # pragma: no cover - defensive fallback for partial installs
-    DEFAULT_OCR_LANGUAGES = ["en", "ch_sim", "ch_tra", "ja", "ko"]
-    OCR_GPU = False
+from ocr.provider import OCRResult, OcrProvider
+from ocr.provider_factory import create_ocr_provider
 
 
-ENV_LANGUAGES = "SENTINEL_OCR_LANGUAGES"
-ENV_GPU = "SENTINEL_OCR_GPU"
+SentinelOCRReader = OcrProvider
 
 
-def _split_languages(value: str) -> List[str]:
-    return [part.strip() for part in value.split(",") if part.strip()]
+def create_reader(profile_name: str | None = None, provider_name: str | None = None) -> OcrProvider:
+    """Create the configured OCR provider.
 
-
-def get_ocr_languages(languages: Optional[Sequence[str]] = None) -> List[str]:
-    """Return the configured OCR languages in deterministic order.
-
-    Priority:
-    1. Explicit function argument
-    2. SENTINEL_OCR_LANGUAGES environment variable, comma-separated
-    3. config.ocr.DEFAULT_OCR_LANGUAGES
+    Environment variables:
+        SENTINEL_OCR_PROVIDER=easy|paddle
+        SENTINEL_OCR_PROFILE=fast|full   (EasyOCR only)
     """
-
-    if languages is not None:
-        cleaned = [str(lang).strip() for lang in languages if str(lang).strip()]
-        return cleaned or ["en"]
-
-    env_value = os.getenv(ENV_LANGUAGES, "").strip()
-    if env_value:
-        parsed = _split_languages(env_value)
-        if parsed:
-            return parsed
-
-    return list(DEFAULT_OCR_LANGUAGES)
+    return create_ocr_provider(provider_name=provider_name, profile_name=profile_name)
 
 
-def get_ocr_gpu(default: bool = OCR_GPU) -> bool:
-    """Return OCR GPU setting, allowing environment override."""
-
-    env_value = os.getenv(ENV_GPU, "").strip().lower()
-    if env_value in {"1", "true", "yes", "y", "on"}:
-        return True
-    if env_value in {"0", "false", "no", "n", "off"}:
-        return False
-    return bool(default)
+def read_metadata_ocr(reader: OcrProvider, image) -> list[OCRResult]:
+    """Read screenshot metadata with the provider's metadata OCR mode."""
+    return reader.read_metadata(image)
 
 
-def create_reader(
-    languages: Optional[Sequence[str]] = None,
-    gpu: Optional[bool] = None,
-    *,
-    allow_english_fallback: bool = True,
-):
-    """Create an EasyOCR reader using Sentinel's configured languages.
-
-    The default language set supports English, simplified/traditional Chinese,
-    Japanese and Korean. If EasyOCR cannot initialize the multilingual reader
-    because models are missing or unsupported, Sentinel falls back to English
-    by default and prints a clear warning instead of failing silently.
-    """
-
-    selected_languages = get_ocr_languages(languages)
-    use_gpu = get_ocr_gpu() if gpu is None else bool(gpu)
-
-    try:
-        import easyocr
-    except ModuleNotFoundError as exc:  # pragma: no cover - depends on runtime
-        raise RuntimeError(
-            "EasyOCR is not installed. Install it before running OCR imports."
-        ) from exc
-
-    try:
-        return easyocr.Reader(selected_languages, gpu=use_gpu)
-    except Exception as exc:
-        if not allow_english_fallback or selected_languages == ["en"]:
-            raise RuntimeError(
-                f"Failed to initialize EasyOCR with languages {selected_languages}."
-            ) from exc
-
-        print(
-            "WARNING: Failed to initialize EasyOCR with languages "
-            f"{selected_languages}. Falling back to ['en']. Original error: {exc}"
-        )
-        return easyocr.Reader(["en"], gpu=use_gpu)
+def read_ocr(reader: OcrProvider, image) -> list[OCRResult]:
+    """Read ranking rows with the provider's row OCR mode."""
+    return reader.read_rows(image)
 
 
-def read_ocr(reader, image):
-    return reader.readtext(image, detail=1, paragraph=False)
-
-
-def ocr_to_text(ocr_results):
+def ocr_to_text(ocr_results: list[OCRResult]) -> str:
     return "\n".join([item[1] for item in ocr_results])
