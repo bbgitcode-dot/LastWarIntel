@@ -7,6 +7,7 @@ from typing import Optional
 
 from models.player_ranking import PlayerRankingEntry, PlayerRankingSnapshot
 from parser.player_identity_quality import parse_player_identity_quality
+from parser.alliance_normalization import build_alliance_vocabulary, normalize_alliance_tag
 
 
 def split_alliance_tag_and_player_name_with_confidence(
@@ -47,21 +48,33 @@ def build_player_ranking_entries(
         reverse=True,
     )
 
-    for index, row in enumerate(sorted_rows, start=1):
+    # Build a local alliance vocabulary from tags confidently detected in the
+    # same snapshot. This lets us repair common OCR drops like PBC->PC without
+    # inventing global alliance knowledge.
+    parsed_identities = []
+    for row in sorted_rows:
         row_confidence = row.get("confidence")
         if row_confidence is None:
             row_confidence = 1.0
-
-        identity_quality = parse_player_identity_quality(
+        parsed_identities.append(parse_player_identity_quality(
             row.get("name", ""),
             base_confidence=float(row_confidence),
-        )
+        ))
+
+    alliance_vocabulary = build_alliance_vocabulary(
+        identity.alliance_tag for identity in parsed_identities if identity.alliance_tag and len(identity.alliance_tag) >= 3
+    )
+
+    for index, (row, identity_quality) in enumerate(zip(sorted_rows, parsed_identities), start=1):
+        alliance_result = normalize_alliance_tag(identity_quality.alliance_tag, alliance_vocabulary)
+        normalized_alliance = alliance_result.value or identity_quality.alliance_tag
+        identity_corrections = list(identity_quality.corrections) + list(alliance_result.corrections)
 
         entries.append(
             PlayerRankingEntry(
                 rank=int(row.get("rank") or row.get("ocr_rank") or index),
                 server=int(server),
-                alliance_tag=identity_quality.alliance_tag,
+                alliance_tag=normalized_alliance,
                 player_name=identity_quality.player_name,
                 hero_power=int(row["power"]),
                 ocr_rank=row.get("ocr_rank"),
@@ -76,7 +89,10 @@ def build_player_ranking_entries(
                 raw_text=row.get("raw_text"),
                 parse_status=identity_quality.status,
                 parse_warnings=identity_quality.warnings,
-                parse_corrections=identity_quality.corrections,
+                parse_corrections=list(dict.fromkeys(
+                    identity_corrections
+                    + [value for value in str(row.get("column_corrections") or "").split(";") if value]
+                )),
                 normalized_identity=identity_quality.normalized_input,
             )
         )

@@ -1,7 +1,1 @@
-VERSION = "0.4.0"
-
-PARSER_VERSION = "0.2.1"
-
-OCR_ENGINE = "EasyOCR"
-
-OCR_VERSION = "1.7.2"
+__version__ = "0.9.5.13"

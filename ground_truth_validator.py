@@ -27,6 +27,13 @@ from typing import Any
 
 import pandas as pd
 
+from parser.alliance_normalization import build_alliance_vocabulary, normalize_alliance_tag as normalize_alliance_against_vocabulary
+from parser.name_normalization import normalize_player_name, normalized_name_similarity
+from parser.power_normalization import compare_power
+from parser.sequence_alignment import find_best_sequence_candidate
+from parser.gap_recovery import annotate_gap_recovery
+from parser.gap_resolver import find_cross_server_gap_candidate
+
 
 DEFAULT_OUTPUT_DIR = Path("benchmarks")
 
@@ -45,12 +52,30 @@ LATIN_RE = re.compile(r"[A-Za-z]")
 @dataclass(slots=True)
 class ValidationSummary:
     ground_truth_rows: int
+    ocr_rows: int
     matched_rows: int
     missing_rows: int
+    bad_matches: int
+    gap_blocks: int
+    gap_rows: int
+    recoverable_gap_blocks: int
+    recoverable_gap_rows: int
+    blocked_rank_fallbacks: int
+    gap_resolved_rows: int
+    unresolved_gap_rows: int
+    precision: float
+    recall: float
+    f1: float
     name_exact_matches: int
     name_similarity_avg: float
+    name_normalized_similarity_avg: float
+    name_normalized_matches: int
     alliance_matches: int
+    alliance_exact_matches: int
+    alliance_normalized_matches: int
     power_matches: int
+    power_exact_matches: int
+    power_recovered_matches: int
     rank_matches: int
     usable_identity_matches: int
     score: float
@@ -276,6 +301,7 @@ def load_ocr_output(path: Path) -> pd.DataFrame:
     if not frames:
         raise ValueError(f"OCR workbook contains no Total Hero Power sheets: {path}")
     ocr = pd.concat(frames, ignore_index=True)
+    ocr["_ocr_row_id"] = range(len(ocr))
     ocr["server"] = ocr["server"].map(safe_int)
     ocr["rank"] = ocr["rank"].map(safe_int)
     ocr["power"] = ocr["power"].map(safe_int)
@@ -296,35 +322,95 @@ def _similarity(expected: str, actual: str) -> float:
     return SequenceMatcher(None, expected_n, actual_n).ratio()
 
 
-def _find_match(gt_row: pd.Series, ocr: pd.DataFrame) -> tuple[pd.Series | None, str]:
+def _normalized_similarity(expected: str, actual: str) -> float:
+    return normalized_name_similarity(normalize_name(expected), normalize_name(actual))
+
+
+def _alliance_matcher(vocabulary):
+    def _matches(expected: str, actual: str) -> bool:
+        expected_result = normalize_alliance_against_vocabulary(expected, vocabulary)
+        actual_result = normalize_alliance_against_vocabulary(actual, vocabulary)
+        return expected_result.value == actual_result.value
+    return _matches
+
+
+def _find_match(gt_row: pd.Series, ocr: pd.DataFrame, alliance_vocabulary=None) -> tuple[pd.Series | None, str, Any | None]:
     server = gt_row["server"]
     rank = gt_row["rank"]
     power = gt_row["power"]
+    expected_name = normalize_name(gt_row["true_name"])
+    expected_alliance = normalize_tag(gt_row["alliance"])
 
     candidates = ocr[ocr["server"] == server]
+
+    # First use exact/near/recovered power plus sequence-aware evidence. This
+    # prevents shifted OCR ranks from matching the wrong player and lets us
+    # recover common OCR-truncated THP values such as 23956100 -> 239561000.
+    match, method, sequence_candidate = find_best_sequence_candidate(
+        expected_rank=safe_int(rank),
+        expected_power=safe_int(power),
+        expected_name=expected_name,
+        expected_alliance=expected_alliance,
+        candidates=candidates,
+        normalize_name=normalize_name,
+        normalize_tag=normalize_tag,
+        name_similarity=_normalized_similarity,
+        alliance_match=_alliance_matcher(alliance_vocabulary or build_alliance_vocabulary([])),
+    )
+    if match is not None:
+        return match, method, sequence_candidate
+
+    # Gap resolver: if a screenshot was exported under the wrong server bucket,
+    # the correct row can exist outside the expected server. Pull it back only
+    # when power plus identity evidence is strong enough.
+    gap_match, gap_method, gap_candidate = find_cross_server_gap_candidate(
+        expected_server=safe_int(server),
+        expected_rank=safe_int(rank),
+        expected_power=safe_int(power),
+        expected_name=expected_name,
+        expected_alliance=expected_alliance,
+        all_candidates=ocr,
+        normalize_name=normalize_name,
+        normalize_tag=normalize_tag,
+        name_similarity=_normalized_similarity,
+        alliance_match=_alliance_matcher(alliance_vocabulary or build_alliance_vocabulary([])),
+    )
+    if gap_match is not None:
+        return gap_match, gap_method, gap_candidate
+
+    # Rank is only the final fallback. It is useful for review visibility, but it
+    # must not become a false positive when both power and name contradict the
+    # Ground Truth. A rank-only candidate must still provide at least one strong
+    # identity signal.
     by_rank = candidates[candidates["rank"] == rank]
     if not by_rank.empty:
-        return by_rank.iloc[0], "server_rank"
+        rank_candidate = by_rank.iloc[0]
+        actual_name = normalize_name(rank_candidate.get("ocr_name", rank_candidate.get("player_name", "")))
+        actual_alliance = normalize_tag(rank_candidate.get("alliance", rank_candidate.get("alliance_tag", "")))
+        actual_power = safe_int(rank_candidate.get("power"))
+        nscore = _normalized_similarity(expected_name, actual_name)
+        amatch = _alliance_matcher(alliance_vocabulary or build_alliance_vocabulary([]))(expected_alliance, actual_alliance)
+        presult = compare_power(power, actual_power)
 
-    by_power = candidates[candidates["power"] == power]
-    if not by_power.empty:
-        return by_power.iloc[0], "server_power"
+        if presult.match or nscore >= 0.88 or (amatch and nscore >= 0.55):
+            return rank_candidate, "server_rank", None
 
-    # Last resort: very small power tolerance for values that were normalized
-    # slightly differently. THP is expected to be exact, so this remains strict.
-    if power:
-        tolerance = max(1, int(power * 0.00001))
-        by_near_power = candidates[(candidates["power"] - power).abs() <= tolerance]
-        if not by_near_power.empty:
-            return by_near_power.iloc[0], "server_near_power"
+        # Keep the rejected row in the detail report so the user can inspect why
+        # a tempting rank fallback was blocked. This is not counted as a bad
+        # match anymore; it is an unresolved gap candidate.
+        return rank_candidate, "blocked_rank_fallback", None
 
-    return None, "missing"
-
+    return None, "missing", None
 
 def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, Any]] = []
+    # Validation has access to expected tags, so use the Ground Truth as the
+    # authoritative local vocabulary. Do not include OCR-only two-letter shards
+    # such as PC/IV here, otherwise they become false exact candidates instead
+    # of being corrected to PBC/IVE.
+    alliance_vocabulary = build_alliance_vocabulary(ground_truth.get("alliance", []))
     for _, gt_row in ground_truth.iterrows():
-        match, match_method = _find_match(gt_row, ocr)
+        match, match_method, sequence_candidate = _find_match(gt_row, ocr, alliance_vocabulary)
         expected_name = normalize_name(gt_row["true_name"])
         expected_alliance = normalize_tag(gt_row["alliance"])
         expected_power = safe_int(gt_row["power"])
@@ -345,29 +431,78 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
             source_file = normalize_text(match.get("source_file", ""))
             ocr_sheet = normalize_text(match.get("ocr_sheet", ""))
 
+        bad_match = str(match_method).startswith("bad_")
+        blocked_match = str(match_method) == "blocked_rank_fallback"
         name_similarity = _similarity(expected_name, actual_name)
-        name_exact = normalize_name(expected_name).casefold() == normalize_name(actual_name).casefold()
-        alliance_match = expected_alliance == actual_alliance
-        power_match = expected_power == actual_power
-        rank_match = expected_rank == actual_rank
-        usable_identity = bool(match is not None and power_match and alliance_match and name_similarity >= 0.80)
+        name_normalized_similarity = _normalized_similarity(expected_name, actual_name)
+        expected_name_normalized = normalize_player_name(expected_name)
+        actual_name_normalized = normalize_player_name(actual_name)
+        raw_name_exact = normalize_name(expected_name).casefold() == normalize_name(actual_name).casefold()
+        raw_name_normalized_match = bool(name_normalized_similarity >= 0.88)
+        expected_alliance_result = normalize_alliance_against_vocabulary(expected_alliance, alliance_vocabulary)
+        actual_alliance_result = normalize_alliance_against_vocabulary(actual_alliance, alliance_vocabulary)
+        expected_alliance_normalized = expected_alliance_result.value
+        actual_alliance_normalized = actual_alliance_result.value
+        raw_alliance_exact_match = expected_alliance == actual_alliance
+        raw_alliance_match = expected_alliance_normalized == actual_alliance_normalized
+        raw_alliance_normalized_match = bool(raw_alliance_match and not raw_alliance_exact_match)
+        power_result = compare_power(expected_power, actual_power)
+        raw_power_match = power_result.match
+        raw_power_exact_match = power_result.match_type == "exact"
+        raw_power_recovered_match = bool(raw_power_match and not raw_power_exact_match)
+        raw_rank_match = expected_rank == actual_rank
+
+        # Effective metrics: rejected rank-only fallbacks are deliberately not
+        # counted as valid matches, even if one incidental field happens to fit.
+        accepted_match = not bad_match and not blocked_match
+        name_exact = bool(raw_name_exact and accepted_match)
+        name_normalized_match = bool(raw_name_normalized_match and accepted_match)
+        alliance_exact_match = bool(raw_alliance_exact_match and accepted_match)
+        alliance_match = bool(raw_alliance_match and accepted_match)
+        alliance_normalized_match = bool(raw_alliance_normalized_match and accepted_match)
+        power_match = bool(raw_power_match and accepted_match)
+        power_exact_match = bool(raw_power_exact_match and accepted_match)
+        power_recovered_match = bool(raw_power_recovered_match and accepted_match)
+        rank_match = bool(raw_rank_match and accepted_match)
+        usable_identity = bool(match is not None and accepted_match and power_match and alliance_match and max(name_similarity, name_normalized_similarity) >= 0.80)
 
         rows.append({
             "server": gt_row["server"],
             "rank": expected_rank,
             "expected_alliance": expected_alliance,
             "ocr_alliance": actual_alliance,
+            "expected_alliance_normalized": expected_alliance_normalized,
+            "ocr_alliance_normalized": actual_alliance_normalized,
             "alliance_match": alliance_match,
+            "alliance_exact_match": alliance_exact_match,
+            "alliance_normalized_match": alliance_normalized_match,
+            "alliance_match_type": actual_alliance_result.match_type,
             "expected_power": expected_power,
             "ocr_power": actual_power,
+            "ocr_power_recovered": power_result.recovered_actual,
             "power_match": power_match,
+            "power_exact_match": power_exact_match,
+            "power_recovered_match": power_recovered_match,
+            "power_match_type": power_result.match_type,
+            "power_similarity": round(power_result.similarity, 4),
+            "sequence_alignment_score": None if sequence_candidate is None else sequence_candidate.score,
             "expected_name": expected_name,
             "ocr_name": actual_name,
+            "expected_name_latin_core": expected_name_normalized.latin_core,
+            "ocr_name_latin_core": actual_name_normalized.latin_core,
+            "expected_name_key": expected_name_normalized.comparison_key,
+            "ocr_name_key": actual_name_normalized.comparison_key,
             "name_exact_match": name_exact,
+            "name_normalized_match": name_normalized_match,
             "name_similarity": round(name_similarity, 4),
+            "name_normalized_similarity": round(name_normalized_similarity, 4),
             "usable_identity_match": usable_identity,
             "name_category": gt_row["name_category"],
             "match_method": match_method,
+            "bad_match": bad_match,
+            "raw_rank_match": raw_rank_match,
+            "raw_alliance_match": raw_alliance_match,
+            "raw_power_match": raw_power_match,
             "rank_match": rank_match,
             "ocr_rank": actual_rank,
             "ground_truth_screenshot": normalize_text(gt_row.get("screenshot", "")),
@@ -376,14 +511,29 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
         })
 
     detail = pd.DataFrame(rows)
+    detail, gap_metrics = annotate_gap_recovery(detail)
     total = len(detail)
-    matched = int((detail["match_method"] != "missing").sum())
+    detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
+    valid_detail = detail[detail["valid_match"]]
+    matched = int(len(valid_detail))
+    bad_matches = int(detail["bad_match"].sum())
+    gap_resolved_rows = int(detail["match_method"].astype(str).str.startswith("gap_").sum())
+    ocr_rows = int(len(ocr))
+    precision = round(matched / max(ocr_rows, 1), 4)
+    recall = round(matched / max(total, 1), 4)
+    f1 = round((2 * precision * recall / max(precision + recall, 1e-9)), 4)
     name_exact = int(detail["name_exact_match"].sum())
+    normalized_name_matches = int(detail["name_normalized_match"].sum())
     alliance_matches = int(detail["alliance_match"].sum())
+    alliance_exact_matches = int(detail["alliance_exact_match"].sum())
+    alliance_normalized_matches = int(detail["alliance_normalized_match"].sum())
     power_matches = int(detail["power_match"].sum())
+    power_exact_matches = int(detail["power_exact_match"].sum())
+    power_recovered_matches = int(detail["power_recovered_match"].sum())
     rank_matches = int(detail["rank_match"].sum())
     usable_matches = int(detail["usable_identity_match"].sum())
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
+    avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
 
     # Score weights direct identity needs: power/rank/alliance establish row,
     # name quality establishes reusable Player Identity.
@@ -392,18 +542,37 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
         + (power_matches / max(total, 1)) * 0.15
         + (rank_matches / max(total, 1)) * 0.10
         + (alliance_matches / max(total, 1)) * 0.20
-        + (name_exact / max(total, 1)) * 0.25
-        + avg_similarity * 0.15
+        + (name_exact / max(total, 1)) * 0.15
+        + (normalized_name_matches / max(total, 1)) * 0.10
+        + avg_normalized_similarity * 0.15
     ) * 100, 2)
 
     summary = ValidationSummary(
         ground_truth_rows=total,
+        ocr_rows=ocr_rows,
         matched_rows=matched,
-        missing_rows=total - matched,
+        missing_rows=int((detail["match_method"] == "missing").sum()),
+        bad_matches=bad_matches,
+        gap_blocks=int(gap_metrics.get("gap_blocks", 0)),
+        gap_rows=int(gap_metrics.get("gap_rows", 0)),
+        recoverable_gap_blocks=int(gap_metrics.get("recoverable_gap_blocks", 0)),
+        recoverable_gap_rows=int(gap_metrics.get("recoverable_gap_rows", 0)),
+        blocked_rank_fallbacks=int(gap_metrics.get("blocked_rank_fallbacks", 0)),
+        gap_resolved_rows=gap_resolved_rows,
+        unresolved_gap_rows=int(gap_metrics.get("gap_rows", 0)),
+        precision=precision,
+        recall=recall,
+        f1=f1,
         name_exact_matches=name_exact,
         name_similarity_avg=avg_similarity,
+        name_normalized_similarity_avg=avg_normalized_similarity,
+        name_normalized_matches=normalized_name_matches,
         alliance_matches=alliance_matches,
+        alliance_exact_matches=alliance_exact_matches,
+        alliance_normalized_matches=alliance_normalized_matches,
         power_matches=power_matches,
+        power_exact_matches=power_exact_matches,
+        power_recovered_matches=power_recovered_matches,
         rank_matches=rank_matches,
         usable_identity_matches=usable_matches,
         score=score,
@@ -411,11 +580,17 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
 
     category = detail.groupby("name_category", dropna=False).agg(
         rows=("rank", "count"),
-        matched_rows=("match_method", lambda s: int((s != "missing").sum())),
+        matched_rows=("valid_match", "sum"),
         name_exact_matches=("name_exact_match", "sum"),
+        name_normalized_matches=("name_normalized_match", "sum"),
         avg_name_similarity=("name_similarity", "mean"),
+        avg_name_normalized_similarity=("name_normalized_similarity", "mean"),
         alliance_matches=("alliance_match", "sum"),
+        alliance_exact_matches=("alliance_exact_match", "sum"),
+        alliance_normalized_matches=("alliance_normalized_match", "sum"),
         power_matches=("power_match", "sum"),
+        power_exact_matches=("power_exact_match", "sum"),
+        power_recovered_matches=("power_recovered_match", "sum"),
         usable_identity_matches=("usable_identity_match", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
@@ -438,6 +613,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     summary_rows = [asdict(summary)]
     failures = detail[
         (detail["match_method"] == "missing")
+        | (detail["bad_match"])
         | (~detail["name_exact_match"])
         | (~detail["alliance_match"])
         | (~detail["power_match"])

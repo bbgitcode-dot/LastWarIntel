@@ -171,33 +171,24 @@ def parse_ranking_rows(ocr_results):
             except ValueError:
                 ocr_rank = None
 
-        name_parts = []
-        rank_token = row.rank_token
+        from parser.columns import reconstruct_columns
 
-        for item in sorted(row.tokens, key=lambda token: token.cx):
-            if item is power_item:
-                continue
+        columns = reconstruct_columns(
+            row.tokens,
+            rank_token=row.rank_token,
+            power_token=power_item,
+            is_rank=is_rank,
+            is_power=is_power,
+        )
 
-            # Ignore tokens on or right of the power column. They are usually
-            # duplicated numeric fragments or metadata.
-            if item.cx >= power_item.cx:
-                continue
-
-            if rank_token is not None and item is rank_token:
-                continue
-
-            if is_rank(str(item.text)):
-                continue
-
-            part = clean_name_part(item.text)
-            if part:
-                name_parts.append(part)
-
-        name = " ".join(name_parts).strip()
+        name = columns.raw_name
 
         warnings = list(row.warnings)
+        warnings.extend(columns.warnings)
         if not name:
             warnings.append("missing_name_after_alignment")
+
+        corrections = list(columns.corrections)
 
         parsed.append({
             "name": name,
@@ -207,6 +198,7 @@ def parse_ranking_rows(ocr_results):
             "y": row.y,
             "confidence": row.confidence,
             "alignment_warning": ";".join(dict.fromkeys(warnings)),
+            "column_corrections": ";".join(dict.fromkeys(corrections)),
         })
 
     # Preserve visual order here. The merge step is responsible for final power
@@ -280,20 +272,25 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
         if alignment_warning:
             warnings.extend(str(alignment_warning).split(";"))
 
+        # Final exported rank is power-order rank. For Last War THP lists, the
+        # power column is the strongest row anchor and the final ranking is
+        # therefore derived from descending power order. OCR rank remains
+        # available as evidence in `ocr_rank`, but it must not overwrite the
+        # computed rank because a single shifted or duplicated OCR rank can
+        # poison validation and downstream identity matching.
+        row["rank"] = idx
+
         if ocr_rank is not None:
-            row["rank"] = int(ocr_rank)
             if int(ocr_rank) != idx:
-                warnings.append(f"ocr_rank_differs_from_computed:{ocr_rank}!={idx}")
+                warnings.append(f"ocr_rank_differs_from_power_rank:{ocr_rank}!={idx}")
             if previous_ocr_rank is not None and int(ocr_rank) > previous_ocr_rank + 1:
                 missing = ",".join(str(value) for value in range(previous_ocr_rank + 1, int(ocr_rank)))
-                warnings.append(f"possible_missing_rank_before:{missing}")
+                warnings.append(f"possible_missing_ocr_rank_before:{missing}")
             previous_ocr_rank = int(ocr_rank)
         else:
             # Missing OCR rank is common when OCR captures only names/power.
             # Do not mark every row as a ranking integrity warning.
-            # True integrity warnings are reserved for observed rank gaps or
-            # mismatches when OCR rank evidence exists.
-            row["rank"] = idx
+            pass
 
         row["rank_warning"] = ";".join(dict.fromkeys(warnings))
 

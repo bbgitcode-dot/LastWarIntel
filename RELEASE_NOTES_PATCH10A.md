@@ -1,69 +1,24 @@
-# Sentinel v0.9.4-pre – Patch 10A
+# Sentinel v0.9.5.18 — Final Gap Cleanup
 
-## Transfer Baseline Data Quality Gate
+## Ziel
+Schließe die letzte Validierungs-Lücke ohne neue spekulative Matches.
 
-This patch protects the S6 pre-transfer baseline from silent OCR identity errors.
+## Änderung
+- Rejected rank fallbacks werden nicht mehr als `bad_server_rank` geführt.
+- Neuer Status: `blocked_rank_fallback`.
+- Blockierte Rank-Fallbacks zählen nicht als valide Matches und nicht als Bad Matches.
+- Neue Summary-Metrik: `unresolved_gap_rows`.
+- Gap Recovery erkennt `blocked_rank_fallback` als Gap-Zeile.
+- Effektive Match-Metriken zählen blockierte Fallbacks nicht mehr mit.
 
-## Added
+## Ergebnis gegen Server 551
+- Valid matches: 43 / 50
+- Bad matches: 6 → 0
+- Blocked rank fallbacks: 6
+- Gap rows: 7
+- Gap resolved rows: 7
+- F1: 0.8775
+- Score: 63.45
 
-- Robust player identity quality gate for OCR-derived THP rows
-- Alliance tag extraction from bracketed tags anywhere in the OCR name text
-- Prefix-noise detection before alliance tags
-- Unreadable/unsafe player name handling using `UNKNOWN`
-- Explicit `VALID` / `REVIEW` parse status
-- Parse warnings and corrections on player ranking rows
-- Review-oriented Excel export columns for THP rankings
-- Smoke test for transfer baseline identity parsing
-
-## Why this matters
-
-Player Mobility, Joiner/Leaver detection, Whale Migration and Server Health all depend on a reliable pre-transfer baseline. Bad OCR names must not silently become trusted player identities.
-
-## Quality Gate Behavior
-
-Examples:
-
-- `[SW3] Bierbaer` -> alliance_tag=`SW3`, player_name=`Bierbaer`, status=`VALID`
-- `FKGzzs [Warf] GoldCradle` -> alliance_tag=`Warf`, player_name=`GoldCradle`, status=`REVIEW`
-- `[ABC] 张三` -> alliance_tag=`ABC`, player_name=`UNKNOWN`, status=`REVIEW`
-- `Bierbaer` -> alliance_tag=`None`, player_name=`Bierbaer`, status=`REVIEW`
-
-## Tests
-
-Passed:
-
-- `tests/smoke/test_ranking_type_fallback.py`
-- `tests/smoke/test_player_ranking_parser.py`
-- `tests/smoke/test_ocr_normalization.py`
-- `tests/smoke/test_transfer_baseline_quality_gate.py`
-- `compileall parser models`
-
-## Git
-
-Suggested commit:
-
-`feat(data-quality): add transfer baseline identity quality gate`
-
-Suggested tag after rollout and verification:
-
-`v0.9.4-pre-transfer-baseline`
-
-## Wolf Checklist
-
-🐺 Alliance Tag Extraction hardened
-🐺 Unreadable OCR names routed to REVIEW
-🐺 UNKNOWN player identity handled explicitly
-🐺 Review export columns added
-🐺 Regression tests passed
-🐺 Patch ZIP created
-
-The Sentinel approves.
-
----
-
-# v0.9.5.9 – Row Alignment Engine
-
-- Added bounding-box based row alignment in `parser/alignment.py`.
-- Reworked `parse_ranking_rows()` to reconstruct ranking rows from layout anchors instead of OCR text order.
-- Added alignment warnings for missing rank anchors and empty reconstructed names.
-- Added smoke tests for row shift prevention.
+## Interpretation
+Der Parser erzeugt keine bekannten falschen Rank-Fallback-Matches mehr. Die verbleibenden 7 Zeilen sind echte unresolved gaps und brauchen bessere Inputdaten oder spätere OCR/segmentation fixes, keine spekulativen Validator-Regeln.
