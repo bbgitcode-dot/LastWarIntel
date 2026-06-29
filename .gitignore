@@ -13,6 +13,8 @@ benchmarks/*.xlsx
 input/
 screenshots/
 output/*.xlsx
+output/
+benchmarks/
 
 # Paddle / OCR model cache
 .paddlex/
@@ -25,3 +27,4 @@ output/*.xlsx
 **/__pycache__/
 *.py[cod]
 *$py.class
+
