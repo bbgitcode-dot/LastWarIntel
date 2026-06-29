@@ -86,6 +86,11 @@ def clean_name_part(text):
 
 
 def cluster_ocr_by_rows(ocr_results, y_tolerance=28):
+    """Legacy helper kept for compatibility.
+
+    New ranking parsing uses build_aligned_ranking_rows() below. This helper is
+    still used by older smoke tests and callers that expect broad Y clustering.
+    """
     items = []
 
     for box, text, confidence in ocr_results:
@@ -131,67 +136,84 @@ def cluster_ocr_by_rows(ocr_results, y_tolerance=28):
 
 
 def parse_ranking_rows(ocr_results):
-    clustered_rows = cluster_ocr_by_rows(ocr_results)
+    """Parse ranking rows using bounding-box based row alignment.
+
+    The parser no longer trusts OCR result order or broad text clustering. It
+    reconstructs every visible card row from layout anchors, primarily the THP
+    value and optional rank token, before extracting name text.
+    """
+    from parser.alignment import build_aligned_ranking_rows
+
+    aligned_rows = build_aligned_ranking_rows(
+        ocr_results,
+        is_power=is_power,
+        clean_power=clean_power,
+        is_rank=is_rank,
+        is_noise=is_noise,
+        is_warzone=is_warzone,
+    )
 
     parsed = []
 
-    for row in clustered_rows:
-        texts = [item["text"] for item in row["items"]]
-
-        power_items = [
-            item for item in row["items"]
-            if is_power(item["text"])
-        ]
-
-        if not power_items:
+    for row in aligned_rows:
+        power_item = row.power_token
+        if power_item is None:
             continue
 
-        power_item = max(power_items, key=lambda item: item["x"])
-        power = clean_power(power_item["text"])
+        power = clean_power(power_item.text)
+        if power is None:
+            continue
 
-        rank_items = [
-            item for item in row["items"]
-            if item["x"] < power_item["x"] and is_rank(str(item["text"]))
-        ]
         ocr_rank = None
-        if rank_items:
-            rank_item = min(rank_items, key=lambda item: item["x"])
+        if row.rank_token is not None:
             try:
-                ocr_rank = int(str(rank_item["text"]).strip())
+                ocr_rank = int(str(row.rank_token.text).strip())
             except ValueError:
                 ocr_rank = None
 
         name_parts = []
+        rank_token = row.rank_token
 
-        for item in row["items"]:
-            # Name steht links vom Powerwert
-            if item["x"] >= power_item["x"]:
+        for item in sorted(row.tokens, key=lambda token: token.cx):
+            if item is power_item:
                 continue
 
-            # OCR rank is stored separately and must not pollute names.
-            if is_rank(str(item["text"])):
+            # Ignore tokens on or right of the power column. They are usually
+            # duplicated numeric fragments or metadata.
+            if item.cx >= power_item.cx:
                 continue
 
-            part = clean_name_part(item["text"])
+            if rank_token is not None and item is rank_token:
+                continue
 
+            if is_rank(str(item.text)):
+                continue
+
+            part = clean_name_part(item.text)
             if part:
                 name_parts.append(part)
 
         name = " ".join(name_parts).strip()
 
+        warnings = list(row.warnings)
+        if not name:
+            warnings.append("missing_name_after_alignment")
+
         parsed.append({
             "name": name,
             "power": power,
             "ocr_rank": ocr_rank,
-            "raw_text": " | ".join(texts),
-            "y": row["y"],
-            "confidence": min(item["confidence"] for item in row["items"]),
+            "raw_text": " | ".join(row.texts),
+            "y": row.y,
+            "confidence": row.confidence,
+            "alignment_warning": ";".join(dict.fromkeys(warnings)),
         })
 
-    parsed.sort(key=lambda row: row["power"], reverse=True)
-
+    # Preserve visual order here. The merge step is responsible for final power
+    # sorting and duplicate handling across screenshots. Keeping visual order in
+    # raw parse output makes debugging row shifts much easier.
+    parsed.sort(key=lambda item: item.get("y", 0))
     return parsed
-
 
 def infer_ranking_type_from_values(current_type, rows):
     """Infer ranking type from parsed numeric values when OCR classification failed.
@@ -254,6 +276,9 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
         existing_warning = row.get("rank_warning")
         if existing_warning:
             warnings.extend(str(existing_warning).split(";"))
+        alignment_warning = row.get("alignment_warning")
+        if alignment_warning:
+            warnings.extend(str(alignment_warning).split(";"))
 
         if ocr_rank is not None:
             row["rank"] = int(ocr_rank)
