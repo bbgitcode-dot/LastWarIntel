@@ -1,9 +1,9 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.24  
-**Runtime Baseline:** v0.9.5.23 – Sentinel Data Quality Loop  
+**Current Version:** v0.9.5.27  
+**Runtime Baseline:** v0.9.5.27 – Recoverable Gap Intelligence  
 **Current Phase:** Operational Data Stability  
-**Next Planned Sprint:** v0.9.5.25 – Sentinel Ranking Guard
+**Next Planned Sprint:** v0.9.5.27 – Field-Based Data Quality Loop
 
 ---
 
@@ -155,11 +155,18 @@ This is not a server assignment issue. It is a ranking integrity issue.
 
 ---
 
-## Next step: v0.9.5.25 – Sentinel Ranking Guard
+## Completed step: v0.9.5.25 – Sentinel Ranking Guard
 
 Purpose:
 
 > Prevent rows from entering the wrong ranking type.
+
+Outcome:
+
+- Ranking Guard introduced as a modular Data Guard component.
+- THP-shaped rows in Alliance Power are quarantined.
+- Alliance-shaped rows in THP are quarantined.
+- Import report surfaces Ranking Guard quarantine as review work.
 
 Expected checks:
 
@@ -188,6 +195,8 @@ Expected checks:
 ---
 
 ## Further stabilization backlog
+
+## Next step: v0.9.5.26 – Field-Based Data Quality Loop
 
 ### v0.9.5.26 – Field-Based Data Quality Loop
 
@@ -246,3 +255,41 @@ Review is the final fallback.
 ```
 
 Sentinel should prefer missing or quarantined data over false operational truth.
+
+
+## Completed step: v0.9.5.26 – Ground Truth Validation Framework
+
+Purpose:
+
+> Make Sentinel import quality measurable against curated transfer-phase Ground Truth.
+
+Outcome:
+
+- Ground Truth validation now defaults to the active Server 551 Top 50 THP reference and current export.
+- Precision is scoped to the Ground Truth server in multi-server imports.
+- Ranking Guard quarantine evidence is included in validation reports.
+- Detail rows now classify whether a row matched, was blocked by rank fallback, is missing, or is represented in quarantine.
+
+This gives the Proud Owner a repeatable quality gate for S6 pre/post Transfer data.
+
+
+## Completed step: v0.9.5.27 – Recoverable Gap Intelligence
+
+Purpose:
+
+> Resolve recoverable validation gaps without weakening Sentinel's integrity doctrine.
+
+Outcome:
+
+- Added same-server evidence resolver for Ground Truth validation.
+- Unique exact THP power can now recover weak-identity rows such as UNKNOWN-name entries.
+- Near-power recovery is allowed only with identity support.
+- Server 551 Top 50 THP validation improved from 45 to 49 matched rows.
+- Blocked rank fallbacks dropped from 5 to 1 while rank-only contradiction remains blocked.
+
+This is the first operational inference layer: Sentinel now records when a row is observed, when a row is inferred for validation, and when uncertainty remains unresolved.
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

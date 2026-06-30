@@ -79,7 +79,7 @@ def build_import_run_report(
         if isinstance(server, int):
             servers.add(server)
         status, review_count, confidence = _status_for_group(rows)
-        if ranking_type == "data_guard_quarantine":
+        if ranking_type in {"data_guard_quarantine", "ranking_guard_quarantine"}:
             status = "Quarantine"
             review_count = len(rows)
             confidence = 0
@@ -108,6 +108,19 @@ def build_import_run_report(
                     "severity": "warning",
                     "action": "Review quarantined screenshot block",
                     "reason": "data_guard_quarantine",
+                    "screenshot": row.get("source_file") or "",
+                })
+            elif ranking_type == "ranking_guard_quarantine":
+                review_items.append({
+                    "server": _int(row.get("original_server")) or None,
+                    "ranking_type": str(row.get("original_ranking_type") or row.get("ranking_type") or "unknown"),
+                    "expected_ranking_type": str(row.get("expected_ranking_type") or "unknown"),
+                    "rank": _int(row.get("rank")) or _int(row.get("computed_rank")) or None,
+                    "title": "Ranking Guard quarantine",
+                    "description": str(row.get("ranking_guard_warning") or "Ranking Guard isolated this row instead of guessing a ranking type."),
+                    "severity": "warning",
+                    "action": "Review row ranking-type assignment",
+                    "reason": "ranking_guard_quarantine",
                     "screenshot": row.get("source_file") or "",
                 })
             elif row.get("data_guard_conflict") or "server_assignment_conflict" in warning:
@@ -141,7 +154,7 @@ def build_import_run_report(
             "status": "Warning" if review_items else "Healthy",
             "warnings": len(review_items),
             "critical": 0,
-            "checks": ["server_assignment", "data_quality_loop", "quarantine"],
+            "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "quarantine"],
         },
         "imports": server_imports,
         "reviews": review_items,
@@ -154,8 +167,8 @@ def build_import_run_report(
             },
             {
                 "time": "latest",
-                "title": "Sentinel Data Guard completed",
-                "detail": f"{len(review_items)} assignment review item(s) detected",
+                "title": "Sentinel integrity guards completed",
+                "detail": f"{len(review_items)} review item(s) detected",
                 "severity": "success" if not review_items else "warning",
             },
         ],

@@ -169,3 +169,8 @@ Sentinel v1.0.0 is not defined by feature count.
 It is defined by trust:
 
 > **Trusted observations create trusted intelligence. Trusted intelligence supports better human decisions.**
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

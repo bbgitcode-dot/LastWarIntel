@@ -2,8 +2,8 @@
 
 > **Transforming observations into operational truth and explainable strategic intelligence.**
 
-**Current Version:** v0.9.5.24  
-**Runtime Baseline:** v0.9.5.23 – Sentinel Data Quality Loop  
+**Current Version:** v0.9.5.25  
+**Runtime Baseline:** v0.9.5.25 – Sentinel Ranking Guard  
 **Status:** Active Development
 
 ---
@@ -77,7 +77,7 @@ The latest test on servers 549, 550, and 551 showed:
 - The Data Quality Loop increases runtime cost significantly and must be measured against recovered quality.
 - A new problem surfaced: THP rows can still enter Alliance Power rankings. This is not a server-assignment problem; it is a ranking-type integrity problem.
 
-The next stabilization step is therefore **v0.9.5.25 – Sentinel Ranking Guard**.
+The current stabilization step is **v0.9.5.25 – Sentinel Ranking Guard**, which quarantines ranking-type contamination before merge/export.
 
 ---
 
@@ -125,3 +125,4 @@ Details: `docs/MODUS_OPERANDI.md`
 - `docs/ROADMAP.md`
 - `docs/RELEASE_NOTES.md`
 - `docs/MODUS_OPERANDI.md`
+- `docs/SENTINEL_DATA_GUARD.md`

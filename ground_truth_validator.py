@@ -6,8 +6,8 @@ actually matters for later Player Mobility and Identity Matching.
 
 Usage:
     python ground_truth_validator.py \
-        --ground-truth input/S6_preTransfer_server_551_top50_THP.xlsx \
-        --ocr-output output/easy_lastwar_export.xlsx
+        --ground-truth ground_truth/S6/server_551/top50_THP.xlsx \
+        --ocr-output output/lastwar_export.xlsx
 
 Outputs:
     benchmarks/ground_truth_validation_report.xlsx
@@ -33,6 +33,8 @@ from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
+from parser.evidence_resolver import find_same_server_evidence_candidate
+from inference.context_engine import apply_contextual_inference
 
 
 DEFAULT_OUTPUT_DIR = Path("benchmarks")
@@ -63,9 +65,19 @@ class ValidationSummary:
     blocked_rank_fallbacks: int
     gap_resolved_rows: int
     unresolved_gap_rows: int
+    inference_rows: int
+    inference_accepted_rows: int
     precision: float
     recall: float
     f1: float
+    validation_server: int | None
+    validation_ranking_type: str
+    ocr_scope_rows: int
+    ocr_total_rows: int
+    quarantine_rows: int
+    quarantine_scope_rows: int
+    ground_truth_quarantined_rows: int
+    export_extra_rows: int
     name_exact_matches: int
     name_similarity_avg: float
     name_normalized_similarity_avg: float
@@ -312,6 +324,111 @@ def load_ocr_output(path: Path) -> pd.DataFrame:
     return ocr
 
 
+
+def load_ranking_guard_quarantine(path: Path) -> pd.DataFrame:
+    """Load Ranking Guard quarantine rows from a Sentinel export workbook.
+
+    The normal OCR loader intentionally reads only Total Hero Power sheets. For
+    operational validation we also need to know whether a Ground Truth row was
+    protected by the Ranking Guard instead of silently exported into the wrong
+    ranking. This loader keeps quarantine evidence separate from trusted OCR
+    output so quarantine can be measured without being treated as Operational
+    Truth.
+    """
+    book = pd.read_excel(path, sheet_name=None)
+    frames = []
+    for sheet_name, df in book.items():
+        if df.empty or "ranking_guard_quarantine" not in sheet_name.lower():
+            continue
+        df = _collapse_duplicate_columns(df)
+        df = _ensure_column_from_aliases(df, "ocr_name", ["player_name", "name"], "")
+        df = _ensure_column_from_aliases(df, "alliance", ["alliance_tag", "tag"], "")
+        df = _ensure_column_from_aliases(df, "server", ["original_server"], None)
+        df = _collapse_duplicate_columns(df)
+        df["ocr_sheet"] = sheet_name
+        frames.append(df)
+    if not frames:
+        return pd.DataFrame(columns=[
+            "server", "rank", "power", "alliance", "ocr_name", "source_file",
+            "ocr_sheet", "expected_ranking_type", "ranking_guard_reason",
+            "ranking_guard_warning", "quarantine_reason",
+        ])
+    quarantine = pd.concat(frames, ignore_index=True)
+    quarantine["_quarantine_row_id"] = range(len(quarantine))
+    quarantine["server"] = quarantine["server"].map(safe_int)
+    quarantine["rank"] = quarantine.get("rank", pd.Series([None] * len(quarantine))).map(safe_int)
+    quarantine["power"] = quarantine.get("power", pd.Series([None] * len(quarantine))).map(safe_int)
+    quarantine["alliance"] = quarantine["alliance"].map(normalize_tag)
+    quarantine["ocr_name"] = quarantine["ocr_name"].map(normalize_name)
+    if "source_file" not in quarantine.columns:
+        quarantine["source_file"] = ""
+    for column in ["expected_ranking_type", "ranking_guard_reason", "ranking_guard_warning", "quarantine_reason"]:
+        if column not in quarantine.columns:
+            quarantine[column] = ""
+    return quarantine
+
+
+def _validation_servers(ground_truth: pd.DataFrame) -> list[int]:
+    servers = sorted({int(server) for server in ground_truth.get("server", []) if pd.notna(server)})
+    return servers
+
+
+def _primary_validation_server(ground_truth: pd.DataFrame) -> int | None:
+    servers = _validation_servers(ground_truth)
+    return servers[0] if len(servers) == 1 else None
+
+
+def _scope_ocr_to_ground_truth(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> pd.DataFrame:
+    servers = _validation_servers(ground_truth)
+    if not servers:
+        return ocr
+    return ocr[ocr["server"].isin(servers)].copy()
+
+
+def _find_quarantine_match(gt_row: pd.Series, quarantine: pd.DataFrame, alliance_vocabulary=None) -> tuple[pd.Series | None, str]:
+    if quarantine is None or quarantine.empty:
+        return None, "not_quarantined"
+    expected_server = safe_int(gt_row.get("server"))
+    expected_rank = safe_int(gt_row.get("rank"))
+    expected_power = safe_int(gt_row.get("power"))
+    expected_name = normalize_name(gt_row.get("true_name", ""))
+    expected_alliance = normalize_tag(gt_row.get("alliance", ""))
+    candidates = quarantine[quarantine["server"] == expected_server]
+    if candidates.empty:
+        return None, "not_quarantined"
+
+    best = None
+    best_score = -1.0
+    best_method = "not_quarantined"
+    matcher = _alliance_matcher(alliance_vocabulary or build_alliance_vocabulary([]))
+    for _, candidate in candidates.iterrows():
+        actual_power = safe_int(candidate.get("power"))
+        actual_rank = safe_int(candidate.get("rank"))
+        actual_name = normalize_name(candidate.get("ocr_name", ""))
+        actual_alliance = normalize_tag(candidate.get("alliance", ""))
+        power_result = compare_power(expected_power, actual_power)
+        name_score = _normalized_similarity(expected_name, actual_name)
+        alliance_match = matcher(expected_alliance, actual_alliance)
+        rank_match = expected_rank == actual_rank
+        score = 0.0
+        if power_result.match:
+            score += 0.55
+        if alliance_match:
+            score += 0.20
+        if name_score >= 0.88:
+            score += 0.20
+        elif name_score >= 0.60:
+            score += 0.10
+        if rank_match:
+            score += 0.05
+        if score > best_score:
+            best = candidate
+            best_score = score
+            best_method = "ranking_guard_quarantine" if score >= 0.70 else "weak_quarantine_candidate"
+    if best is not None and best_method == "ranking_guard_quarantine":
+        return best, best_method
+    return None, "not_quarantined"
+
 def _similarity(expected: str, actual: str) -> float:
     expected_n = normalize_name(expected).casefold()
     actual_n = normalize_name(actual).casefold()
@@ -360,6 +477,24 @@ def _find_match(gt_row: pd.Series, ocr: pd.DataFrame, alliance_vocabulary=None) 
     if match is not None:
         return match, method, sequence_candidate
 
+    # Same-server evidence resolver: if the normal sequence matcher refuses a
+    # tempting rank fallback, a unique exact-power row may still explain the gap
+    # without changing Operational Truth. This captures observed rows with weak
+    # identity OCR such as UNKNOWN names while keeping the inference explicit.
+    evidence_match, evidence_method, evidence_candidate = find_same_server_evidence_candidate(
+        expected_rank=safe_int(rank),
+        expected_power=safe_int(power),
+        expected_name=expected_name,
+        expected_alliance=expected_alliance,
+        candidates=candidates,
+        normalize_name=normalize_name,
+        normalize_tag=normalize_tag,
+        name_similarity=_normalized_similarity,
+        alliance_match=_alliance_matcher(alliance_vocabulary or build_alliance_vocabulary([])),
+    )
+    if evidence_match is not None:
+        return evidence_match, evidence_method, evidence_candidate
+
     # Gap resolver: if a screenshot was exported under the wrong server bucket,
     # the correct row can exist outside the expected server. Pull it back only
     # when power plus identity evidence is strong enough.
@@ -402,8 +537,10 @@ def _find_match(gt_row: pd.Series, ocr: pd.DataFrame, alliance_vocabulary=None) 
 
     return None, "missing", None
 
-def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
+def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataFrame | None = None) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, Any]] = []
+    scoped_ocr = _scope_ocr_to_ground_truth(ground_truth, ocr)
+    scoped_quarantine = _scope_ocr_to_ground_truth(ground_truth, quarantine) if quarantine is not None and not quarantine.empty else pd.DataFrame()
     # Validation has access to expected tags, so use the Ground Truth as the
     # authoritative local vocabulary. Do not include OCR-only two-letter shards
     # such as PC/IV here, otherwise they become false exact candidates instead
@@ -415,6 +552,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
         expected_alliance = normalize_tag(gt_row["alliance"])
         expected_power = safe_int(gt_row["power"])
         expected_rank = safe_int(gt_row["rank"])
+
+        quarantine_match, quarantine_match_method = _find_quarantine_match(gt_row, scoped_quarantine, alliance_vocabulary)
 
         if match is None:
             actual_name = ""
@@ -430,6 +569,13 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
             actual_rank = safe_int(match.get("rank"))
             source_file = normalize_text(match.get("source_file", ""))
             ocr_sheet = normalize_text(match.get("ocr_sheet", ""))
+
+        quarantine_name = "" if quarantine_match is None else normalize_name(quarantine_match.get("ocr_name", ""))
+        quarantine_alliance = "" if quarantine_match is None else normalize_tag(quarantine_match.get("alliance", ""))
+        quarantine_power = None if quarantine_match is None else safe_int(quarantine_match.get("power"))
+        quarantine_rank = None if quarantine_match is None else safe_int(quarantine_match.get("rank"))
+        quarantine_source_file = "" if quarantine_match is None else normalize_text(quarantine_match.get("source_file", ""))
+        quarantine_reason = "" if quarantine_match is None else normalize_text(quarantine_match.get("ranking_guard_reason", quarantine_match.get("quarantine_reason", "")))
 
         bad_match = str(match_method).startswith("bad_")
         blocked_match = str(match_method) == "blocked_rank_fallback"
@@ -465,6 +611,16 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
         power_recovered_match = bool(raw_power_recovered_match and accepted_match)
         rank_match = bool(raw_rank_match and accepted_match)
         usable_identity = bool(match is not None and accepted_match and power_match and alliance_match and max(name_similarity, name_normalized_similarity) >= 0.80)
+        if accepted_match and match_method not in ["missing", "blocked_rank_fallback"]:
+            failure_class = "matched"
+        elif quarantine_match is not None:
+            failure_class = "ranking_guard_quarantine"
+        elif blocked_match:
+            failure_class = "blocked_rank_fallback"
+        elif match is None:
+            failure_class = "missing_from_export"
+        else:
+            failure_class = "unresolved_mismatch"
 
         rows.append({
             "server": gt_row["server"],
@@ -505,6 +661,14 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
             "raw_power_match": raw_power_match,
             "rank_match": rank_match,
             "ocr_rank": actual_rank,
+            "failure_class": failure_class,
+            "quarantine_match_method": quarantine_match_method,
+            "quarantine_rank": quarantine_rank,
+            "quarantine_alliance": quarantine_alliance,
+            "quarantine_power": quarantine_power,
+            "quarantine_name": quarantine_name,
+            "quarantine_source_file": quarantine_source_file,
+            "quarantine_reason": quarantine_reason,
             "ground_truth_screenshot": normalize_text(gt_row.get("screenshot", "")),
             "ocr_source_file": source_file,
             "ocr_sheet": ocr_sheet,
@@ -512,13 +676,21 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
 
     detail = pd.DataFrame(rows)
     detail, gap_metrics = annotate_gap_recovery(detail)
+    detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
+    detail, context_inferences = apply_contextual_inference(detail)
     total = len(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     valid_detail = detail[detail["valid_match"]]
     matched = int(len(valid_detail))
     bad_matches = int(detail["bad_match"].sum())
     gap_resolved_rows = int(detail["match_method"].astype(str).str.startswith("gap_").sum())
-    ocr_rows = int(len(ocr))
+    inference_rows = int(detail["match_method"].astype(str).str.startswith("inference_").sum())
+    ocr_rows = int(len(scoped_ocr))
+    ocr_total_rows = int(len(ocr))
+    quarantine_rows = int(0 if quarantine is None else len(quarantine))
+    quarantine_scope_rows = int(len(scoped_quarantine))
+    ground_truth_quarantined_rows = int((detail["failure_class"] == "ranking_guard_quarantine").sum())
+    export_extra_rows = max(ocr_rows - matched, 0)
     precision = round(matched / max(ocr_rows, 1), 4)
     recall = round(matched / max(total, 1), 4)
     f1 = round((2 * precision * recall / max(precision + recall, 1e-9)), 4)
@@ -559,10 +731,20 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame) -> tuple[ValidationS
         recoverable_gap_rows=int(gap_metrics.get("recoverable_gap_rows", 0)),
         blocked_rank_fallbacks=int(gap_metrics.get("blocked_rank_fallbacks", 0)),
         gap_resolved_rows=gap_resolved_rows,
-        unresolved_gap_rows=int(gap_metrics.get("gap_rows", 0)),
+        unresolved_gap_rows=max(int(gap_metrics.get("gap_rows", 0)) - inference_rows, 0),
+        inference_rows=inference_rows,
+        inference_accepted_rows=len(context_inferences),
         precision=precision,
         recall=recall,
         f1=f1,
+        validation_server=_primary_validation_server(ground_truth),
+        validation_ranking_type="total_hero_power",
+        ocr_scope_rows=ocr_rows,
+        ocr_total_rows=ocr_total_rows,
+        quarantine_rows=quarantine_rows,
+        quarantine_scope_rows=quarantine_scope_rows,
+        ground_truth_quarantined_rows=ground_truth_quarantined_rows,
+        export_extra_rows=export_extra_rows,
         name_exact_matches=name_exact,
         name_similarity_avg=avg_similarity,
         name_normalized_similarity_avg=avg_normalized_similarity,
@@ -619,33 +801,62 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         | (~detail["power_match"])
     ].copy()
 
+    failure_summary = detail.groupby("failure_class", dropna=False).agg(
+        rows=("rank", "count"),
+        power_matches=("power_match", "sum"),
+        alliance_matches=("alliance_match", "sum"),
+        usable_identity_matches=("usable_identity_match", "sum"),
+    ).reset_index()
+
     json_path = output_dir / "ground_truth_validation_report.json"
     json_payload = {
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
+        "failure_summary": failure_summary.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
+    inference_summary = {
+        "inference_rows": int(len(inference_detail)),
+        "accepted": int((inference_detail.get("inference_status", "") == "accepted").sum()) if not inference_detail.empty else 0,
+        "avg_confidence": round(float(inference_detail["inference_confidence"].mean()), 4) if not inference_detail.empty and "inference_confidence" in inference_detail else 0.0,
+        "read_only": True,
+        "operational_truth_modified": False,
+    }
+    inference_json_path = output_dir / "inference_report.json"
+    inference_json_path.write_text(json.dumps({"summary": inference_summary, "details": inference_detail.to_dict(orient="records")}, ensure_ascii=False, indent=2), encoding="utf-8")
 
     xlsx_path = output_dir / "ground_truth_validation_report.xlsx"
     with pd.ExcelWriter(xlsx_path, engine="openpyxl") as writer:
         pd.DataFrame(summary_rows).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(category).to_excel(writer, sheet_name="category_summary", index=False)
+        _sanitize_frame(failure_summary).to_excel(writer, sheet_name="failure_summary", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
+
+    inference_xlsx_path = output_dir / "inference_report.xlsx"
+    with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
+        pd.DataFrame([inference_summary]).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(inference_detail).to_excel(writer, sheet_name="details", index=False)
 
     print("\n===== GROUND TRUTH VALIDATION SUMMARY =====")
     print(pd.DataFrame(summary_rows).to_string(index=False))
     print("\nCategory summary:")
     print(category.to_string(index=False))
+    print("\nFailure summary:")
+    print(failure_summary.to_string(index=False))
     print(f"\nReport JSON:  {json_path}")
     print(f"Report Excel: {xlsx_path}")
+    print(f"Inference JSON:  {inference_json_path}")
+    print(f"Inference Excel: {inference_xlsx_path}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate Sentinel OCR output against a Ground Truth Excel file.")
-    parser.add_argument("--ground-truth", required=True, help="Path to manually curated ground truth Excel file.")
-    parser.add_argument("--ocr-output", default="output/easy_lastwar_export.xlsx", help="Path to Sentinel OCR export Excel file.")
+    parser.add_argument("--ground-truth", default="ground_truth/S6/server_551/top50_THP.xlsx", help="Path to manually curated ground truth Excel file.")
+    parser.add_argument("--ocr-output", default="output/lastwar_export.xlsx", help="Path to Sentinel OCR export Excel file.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Directory for validation reports.")
     args = parser.parse_args()
 
@@ -655,7 +866,8 @@ def main() -> None:
 
     gt = load_ground_truth(ground_truth_path)
     ocr = load_ocr_output(ocr_output_path)
-    summary, detail, category = validate(gt, ocr)
+    quarantine = load_ranking_guard_quarantine(ocr_output_path)
+    summary, detail, category = validate(gt, ocr, quarantine)
     write_report(summary, detail, category, output_dir)
 
 

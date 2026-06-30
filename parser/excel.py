@@ -38,10 +38,16 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
                     "raw_text",
                     "source_file",
                 ]
-            elif ranking_type in {"server_review", "data_guard_quarantine"}:
+            elif ranking_type in {"server_review", "data_guard_quarantine", "ranking_guard_quarantine"}:
                 preferred_columns = [
                     "source_file",
                     "ranking_type",
+                    "original_ranking_type",
+                    "expected_ranking_type",
+                    "ranking_guard_status",
+                    "ranking_guard_confidence",
+                    "ranking_guard_reason",
+                    "ranking_guard_warning",
                     "original_server",
                     "candidate_server",
                     "server",

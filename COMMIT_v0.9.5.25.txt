@@ -1,0 +1,16 @@
+Sentinel v0.9.5.25 – Sentinel Ranking Guard
+
+Commit:
+
+git add .
+git commit -m "feat(data-quality): add Sentinel Ranking Guard for v0.9.5.25"
+git tag -a v0.9.5.25 -m "v0.9.5.25 Sentinel Ranking Guard"
+
+Validation:
+
+python -m compileall -q parser services main.py
+pytest tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_sentinel_data_guard.py tests/smoke/test_operational_import_repository.py -q
+
+Result:
+
+10 passed

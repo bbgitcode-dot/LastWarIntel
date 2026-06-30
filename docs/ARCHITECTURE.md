@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-> **Version:** v0.9.5.24  
+> **Version:** v0.9.5.27  
 > **Status:** Living Document
 
 ---
@@ -35,12 +35,21 @@ Review / Quarantine Views
 
                 ▲
                 │
+Inference Layer
+────────────────────────────────────────────
+Context Engine
+Evidence-based Inference Reports
+Read-only validation conclusions
+
+                ▲
+                │
 Integrity Layer
 ────────────────────────────────────────────
 Sentinel Data Guard
 Sentinel Data Quality Loop
 Recovery Advisor
-Future Ranking Guard
+Sentinel Ranking Guard
+Evidence Resolver (validation/inference)
 
                 ▲
                 │
@@ -175,14 +184,40 @@ Planned fix:
 
 ## v0.9.5.25 – Sentinel Ranking Guard
 
+Status: implemented as a modular runtime guard in `parser/ranking_guard.py`.
+
 Responsibilities:
 
 - Validate that each row belongs to the assigned ranking type.
 - Reject or quarantine THP rows inside Alliance Power rankings.
 - Reject or quarantine Alliance Power rows inside THP rankings.
-- Validate rank continuity, expected value ranges, required fields, and semantic row shape.
+- Validate expected value ranges, required fields, player/alliance row shape, and quarantine semantic mismatches before merge/export.
 
 ---
+
+## Evidence Resolver boundary
+
+The Evidence Resolver introduced in v0.9.5.27 is a validation/inference component, not a runtime mutation layer.
+
+Responsibilities:
+
+- Resolve recoverable Ground Truth gaps when observed export evidence is strong enough.
+- Prefer unique exact THP power as a row anchor.
+- Require additional identity evidence for near or repaired power matches.
+- Mark recovered rows with explicit `gap_*` match methods in validation reports.
+
+Non-responsibilities:
+
+- It must not rewrite exports.
+- It must not override Data Guard or Ranking Guard.
+- It must not turn rank-only contradiction into accepted truth.
+
+Operational rule:
+
+```text
+Observed export data remains Operational Truth.
+Evidence Resolver output is inferred validation evidence.
+```
 
 ## Layer rules
 
@@ -193,3 +228,21 @@ Responsibilities:
 5. Parser extracts structure. It does not produce strategic intelligence.
 6. Ground Truth benchmarks. It does not power runtime.
 7. Strategic Intelligence consumes trusted observations only.
+
+
+## Inference Layer
+
+The Inference Layer operates above Operational Truth. It does not modify parser rows, exports, Data Guard decisions, or Ranking Guard decisions. Its responsibility is to derive explicit, explainable conclusions from validated evidence.
+
+First capability in v0.9.5.28:
+
+- Context Engine for bounded local ranking gaps.
+- Evidence-based confidence scoring.
+- Separate inference reports for auditability.
+
+Layer rule:
+
+```text
+Operational Truth is observed and guarded.
+Inference is derived and explained.
+```

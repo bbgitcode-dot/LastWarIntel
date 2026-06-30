@@ -1,6 +1,183 @@
 # Sentinel Release Notes
 
+## v0.9.5.27 – Recoverable Gap Intelligence
+
+### Focus
+
+Adds an evidence-based resolver for recoverable Ground Truth gaps. The release does not change OCR output or Operational Truth. It improves the validation layer so Sentinel can distinguish rows that are truly missing from rows that are present in the export with weak identity OCR but strong unique evidence such as exact THP power.
+
+### Added
+
+- `parser/evidence_resolver.py` with same-server evidence resolution for Ground Truth validation.
+- Unique exact-power gap recovery for rows whose identity text is weak, missing, or OCR-damaged.
+- Conservative near-power recovery when supported by additional identity evidence.
+- New smoke tests for evidence resolver behavior and validator gap recovery.
+
+### Changed
+
+- `ground_truth_validator.py` now attempts evidence-based gap recovery before falling back to blocked rank-only matches.
+- Validation reports count recovered rows through existing `gap_resolved_rows` metrics using explicit `gap_*` match methods.
+- Version updated to `0.9.5.27`.
+
+### Measured impact on Server 551 Top 50 THP validation
+
+Using the current 15-screenshot Server 551 THP export:
+
+```text
+matched_rows:           45 -> 49
+recall:               0.90 -> 0.98
+blocked_rank_fallbacks:  5 -> 1
+gap_resolved_rows:       0 -> 4
+unresolved_gap_rows:     5 -> 1
+score:               66.83 -> 69.80
+```
+
+### Guardrail
+
+Evidence recovery is validation/inference only. It does not rewrite the Sentinel export and does not override Data Guard or Ranking Guard. Operational Truth remains observed data; recovered gaps are explicit inferred validation matches.
+
+### Validation
+
+```text
+python -m compileall -q parser ground_truth_validator.py services main.py
+pytest tests/smoke/test_evidence_resolver.py tests/smoke/test_ground_truth_validator.py tests/smoke/test_validator_match_discipline.py tests/smoke/test_gap_recovery.py tests/smoke/test_gap_resolver.py tests/smoke/test_sequence_alignment.py tests/smoke/test_power_normalization.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_sentinel_data_guard.py tests/smoke/test_operational_import_repository.py -q
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(validation): resolve recoverable ground truth gaps with evidence"
+git tag -a v0.9.5.27 -m "v0.9.5.27 Recoverable Gap Intelligence"
+```
+
+---
+
+## v0.9.5.26 – Ground Truth Validation Framework
+
+### Focus
+
+Operationalizes the existing Ground Truth Validator for the current transfer-phase import workflow. The validator now measures the v0.9.5.25 export against curated Server 551 Top 50 THP truth and includes Ranking Guard quarantine evidence in the quality report.
+
+### Added
+
+- Server-scoped validation metrics so precision is calculated against the relevant Ground Truth server instead of all THP sheets in a multi-server export.
+- Ranking Guard quarantine loader for `REVIEW_ranking_guard_quarantine` sheets.
+- Failure classification for matched rows, blocked rank fallbacks, missing export rows, unresolved mismatches, and Ranking Guard quarantine hits.
+- Failure summary sheet in the Excel validation report and `failure_summary` in the JSON report.
+- Default validation paths for the current operational workflow:
+  - `ground_truth/S6/server_551/top50_THP.xlsx`
+  - `output/lastwar_export.xlsx`
+
+### Changed
+
+- `ground_truth_validator.py` can now be run directly after `python main.py` without requiring explicit paths when the standard project layout is used.
+- Validation summary now exposes `validation_server`, `ocr_scope_rows`, `ocr_total_rows`, quarantine counts, Ground Truth rows found in quarantine, and export-extra rows.
+- Version updated to `0.9.5.26`.
+
+### Validation
+
+```text
+python -m compileall -q ground_truth_validator.py parser tests/smoke/test_ground_truth_validator.py
+pytest tests/smoke/test_ground_truth_validator.py tests/smoke/test_sentinel_data_guard.py tests/smoke/test_operational_import_repository.py tests/smoke/test_sentinel_ranking_guard.py -q
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(validation): operationalize ground truth quality framework for v0.9.5.26"
+git tag -a v0.9.5.26 -m "v0.9.5.26 Ground Truth Validation Framework"
+```
+
+---
+
 This file consolidates the release notes that were previously split across many individual release-note files in `/docs`.
+
+
+## v0.9.5.25 – Sentinel Ranking Guard
+
+### Focus
+
+Introduces the first runtime Ranking Guard as a modular Data Guard component. The release prevents silent ranking-type contamination by validating whether parsed rows semantically fit their assigned ranking type before merge/export.
+
+### Added
+
+- `parser/ranking_guard.py` with row-level semantic ranking-type checks.
+- `REVIEW_ranking_guard_quarantine` export sheet for rows that do not fit the assigned ranking type.
+- Ranking Guard metadata on quarantined rows:
+  - `original_ranking_type`
+  - `expected_ranking_type`
+  - `ranking_guard_status`
+  - `ranking_guard_confidence`
+  - `ranking_guard_reason`
+  - `ranking_guard_warning`
+- Import report review items for Ranking Guard quarantine.
+- Smoke tests covering THP rows inside Alliance Power, Alliance Power rows inside THP, valid THP pass-through, and import report visibility.
+- `docs/SENTINEL_DATA_GUARD.md` documenting the Data Guard doctrine and its modular long-term model.
+
+### Changed
+
+- `main.py` now applies Ranking Guard after row grouping and before server content reconciliation, merge, and export.
+- `parser/excel.py` exports Ranking Guard quarantine sheets with review fields.
+- `services/import_repository.py` treats Ranking Guard quarantine as explicit review work.
+- `version.py` updated to `0.9.5.25`.
+
+### Guardrail
+
+The Ranking Guard does not guess or auto-correct ranking types. Suspicious rows are quarantined with evidence and expected semantic fit.
+
+### Validation
+
+```text
+python -m compileall -q parser services main.py
+pytest tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_sentinel_data_guard.py tests/smoke/test_operational_import_repository.py -q
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(data-quality): add Sentinel Ranking Guard for v0.9.5.25"
+git tag -a v0.9.5.25 -m "v0.9.5.25 Sentinel Ranking Guard"
+```
+
+---
+
+## v0.9.5.28 – Inference Engine Core
+
+### Focus
+
+Introduces Sentinel's first read-only Inference Layer. The Context Engine operates above Operational Truth and produces explicit validation inferences from trusted neighboring evidence without changing OCR output, parser rows, exports, Data Guard decisions, or Ranking Guard decisions.
+
+### Added
+
+- `inference/` package.
+- Context Engine for bounded local ranking gaps.
+- Explainable inference metadata in Ground Truth validation details.
+- `benchmarks/inference_report.json` and `benchmarks/inference_report.xlsx`.
+- Smoke tests for contextual inference.
+
+### Changed
+
+- Ground Truth validation distinguishes observed matches from inferred conclusions.
+- Single-row bounded gaps can be resolved as `inference_context_gap` when trusted neighbor anchors and power continuity provide sufficient evidence.
+- Validation summary includes `inference_rows` and `inference_accepted_rows`.
+- Version updated to `0.9.5.28`.
+
+### Guardrail
+
+Inference is read-only. Operational Truth remains protected by Data Guard and Ranking Guard. Inference reports derived conclusions; it does not fabricate runtime data.
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(inference): introduce read-only context engine for v0.9.5.28"
+git tag -a v0.9.5.28 -m "v0.9.5.28 Inference Engine Core"
+```
+
+---
 
 ## v0.9.5.24 – Documentation Consolidation
 

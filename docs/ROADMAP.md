@@ -1,6 +1,6 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.24
+**Version:** v0.9.5.27
 
 ---
 
@@ -44,24 +44,36 @@ Current focus:
 - Document operating model.
 - Create Road to v1.0.
 
-### v0.9.5.25 – Sentinel Ranking Guard
+### v0.9.5.25 – Sentinel Ranking Guard ✅
 
 - Prevent THP rows from entering Alliance Power ranking.
 - Prevent Alliance Power rows from entering THP ranking.
 - Add ranking-type semantic checks.
 - Quarantine instead of silent correction.
 
-### v0.9.5.26 – Field-Based Data Quality Loop
+### v0.9.5.26 – Ground Truth Validation Framework ✅
+
+- Operationalize Ground Truth validation for current imports.
+- Scope quality metrics to the relevant server.
+- Include Ranking Guard quarantine evidence in validation reports.
+
+### v0.9.5.27 – Recoverable Gap Intelligence ✅
+
+- Resolve recoverable Ground Truth gaps with evidence-based same-server inference.
+- Keep Operational Truth untouched while reporting inferred validation matches explicitly.
+- Reduce blocked rank fallbacks without accepting rank-only false positives.
+
+### v0.9.5.28 – Field-Based Data Quality Loop
 
 - Expand recovery from server-only/header recovery to field-specific recovery.
 - Add strategies for name, alliance tag, rank, THP, and alliance power.
 
-### v0.9.5.27 – Quarantine Center
+### v0.9.5.29 – Quarantine Center
 
 - Surface quarantined blocks in Command Center.
 - Make review actionable and explainable.
 
-### v0.9.5.28 – Import Session History
+### v0.9.5.30 – Import Session History
 
 - Store import sessions with screenshots, runtime, rows, warnings, recoveries, and quarantine decisions.
 
@@ -112,3 +124,8 @@ Sentinel v1.0 should be production-ready for alliance leadership:
 - Morning Briefing / Decision Center.
 
 See `docs/ROAD_TO_V1.md`.
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

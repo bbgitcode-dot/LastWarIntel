@@ -2,7 +2,7 @@
 
 > **The Philosophy of Sentinel**
 
-**Version:** v0.9.5.24
+**Version:** v0.9.5.25
 
 ---
 
@@ -42,7 +42,7 @@ If Sentinel is uncertain, it must not guess. It must either recover better evide
 
 ### Data Guard protects
 
-The Data Guard validates data integrity and explains concerns.
+The Data Guard validates data integrity and explains concerns. As of v0.9.5.25, Ranking Guard is a modular Data Guard component for ranking-type integrity.
 
 It may:
 
@@ -97,3 +97,8 @@ See `docs/MODUS_OPERANDI.md`.
 ## One sentence
 
 > **Sentinel transforms observations into trusted, explainable intelligence so humans can make better strategic decisions.**
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

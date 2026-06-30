@@ -2,7 +2,7 @@
 
 > **Building the Strategic Intelligence Platform for Last War**
 
-**Version:** v0.9.5.24
+**Version:** v0.9.5.25
 
 ---
 
@@ -69,3 +69,8 @@ Once data stability is sufficient, Sentinel advances toward:
 The long-term goal remains unchanged:
 
 > **Sentinel should tell leadership what deserves attention and why.**
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

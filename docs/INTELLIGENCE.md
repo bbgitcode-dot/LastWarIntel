@@ -1,6 +1,6 @@
 # Sentinel Intelligence Concepts
 
-> **Version:** v0.9.5.24
+> **Version:** v0.9.5.25
 
 ---
 
@@ -83,9 +83,9 @@ Quarantined data should preserve:
 
 ---
 
-## Next concept: Ranking Guard
+## Ranking Guard
 
-The upcoming Ranking Guard is an integrity module that validates whether a row belongs to its assigned ranking type.
+The Ranking Guard introduced in v0.9.5.25 is an integrity module that validates whether a row belongs to its assigned ranking type.
 
 It will protect against issues such as:
 
@@ -94,3 +94,8 @@ It will protect against issues such as:
 - invalid value ranges,
 - impossible rank continuity,
 - missing required ranking fields.
+
+
+## v0.9.5.28 – Inference Engine Core
+
+Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

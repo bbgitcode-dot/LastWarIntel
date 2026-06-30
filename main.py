@@ -8,6 +8,7 @@ from parser.image import load_and_normalize_image
 from parser.ocr import create_reader, read_ocr, read_metadata_ocr, ocr_to_text
 from parser.server import detect_ranking_type, detect_server_consensus_from_ocr
 from parser.data_guard import resolve_server_assignment, reconcile_server_assignments_by_content
+from parser.ranking_guard import apply_ranking_guard
 from parser.quality_loop import run_server_quality_loop
 from services.import_repository import JsonImportRunRepository, build_import_run_report
 from parser.debug import draw_debug_boxes
@@ -184,6 +185,7 @@ def main():
                 row["data_guard_conflict"] = server_detection.conflict
                 grouped[key].append(row)
 
+    grouped = apply_ranking_guard(grouped)
     grouped = reconcile_server_assignments_by_content(grouped)
 
     print("\n===== ZUSAMMENFASSUNG =====")

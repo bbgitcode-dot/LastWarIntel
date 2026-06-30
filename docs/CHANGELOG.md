@@ -1,10 +1,69 @@
 # Changelog
 
+
+## [0.9.5.27] - Recoverable Gap Intelligence
+
+### Added
+
+- Evidence Resolver for Ground Truth validation gaps.
+- Unique exact-power recovery and conservative near-power recovery.
+- Smoke tests for evidence recovery and validator integration.
+
+### Changed
+
+- Ground Truth Validator now reports recoverable inferred matches as explicit `gap_*` methods.
+- Version updated to `0.9.5.27`.
+
 All notable changes to Sentinel are documented here.
 
 This file summarizes major release milestones. Detailed historical notes are consolidated in `docs/RELEASE_NOTES.md`.
 
 ---
+
+## [0.9.5.26] - Ground Truth Validation Framework
+
+### Added
+
+- Operational Ground Truth validation defaults for Server 551 Top 50 THP and current export.
+- Server-scoped precision metrics for multi-server exports.
+- Ranking Guard quarantine evidence in Ground Truth validation reports.
+- Failure classification and failure summary for validation details.
+
+### Changed
+
+- Version updated to `0.9.5.26`.
+
+---
+
+## [0.9.5.25] - Sentinel Ranking Guard
+
+### Added
+
+- `parser/ranking_guard.py` as a modular Data Guard integrity component for ranking-type validation.
+- Runtime quarantine path `REVIEW_ranking_guard_quarantine`.
+- Import report and Command Center review metadata for ranking-type conflicts.
+- Smoke tests for THP-in-Alliance-Power and Alliance-Power-in-THP contamination.
+- `docs/SENTINEL_DATA_GUARD.md` to preserve the Data Guard doctrine as the central integrity model.
+
+### Changed
+
+- Import pipeline now applies Ranking Guard before content reconciliation and export.
+- Operational import report now lists `ranking_guard` as an integrity check.
+- Version updated to `0.9.5.25`.
+
+
+## [0.9.5.28] - Inference Engine Core
+
+### Added
+
+- Read-only `inference/` package.
+- Context Engine for explainable bounded-gap inference.
+- Inference JSON/XLSX reports.
+
+### Changed
+
+- Ground Truth validation can mark accepted contextual inferences separately from observed OCR matches.
+- Version updated to `0.9.5.28`.
 
 ## [0.9.5.24] - Documentation Consolidation
 
