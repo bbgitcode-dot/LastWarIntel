@@ -1,45 +1,49 @@
-# Sentinel v0.9.5.28 – Inference Engine Core
+# Sentinel v0.9.5.29 – Ranking Guard Recovery
 
 ## Focus
 
-Introduces the first read-only Inference Layer for Sentinel. The new Context Engine operates above Operational Truth and produces explicit, explainable validation inferences without modifying OCR output, parser rows, exports, or guard decisions.
+Introduces a conservative Ranking Guard Recovery layer after the Ranking Guard and before quarantine.
+
+The goal is not to guess corrected rankings. The goal is to recover only rows whose ranking-type assignment is provably safe, and to calibrate false-positive alliance-name shapes that previously filled quarantine.
 
 ## Added
 
-- `inference/` package.
-- `inference.context_engine.apply_contextual_inference()`.
-- Contextual inference for single-row bounded ranking gaps.
-- Inference metadata in Ground Truth validation details:
-  - `inference_status`
-  - `inference_confidence`
-  - `inference_evidence`
-  - `inference_decision`
-- `benchmarks/inference_report.json`.
-- `benchmarks/inference_report.xlsx`.
-- Smoke tests for the Context Engine.
+- `parser/ranking_recovery.py`
+  - Evidence-based recovery decisions for Ranking Guard quarantines.
+  - Explicit distinction between `recovered`, `calibrated_pass`, and `quarantine`.
+  - Safe THP recovery only when explicit player fields and player-scale power are present.
+  - Alliance Power calibration for rows where bracketed alliance names mimic player tags but no explicit player fields exist.
+- Ranking recovery metrics in `data/latest_import_report.json`:
+  - attempts,
+  - success,
+  - calibrated_pass,
+  - rejected,
+  - confidence_avg.
+- Smoke tests for Ranking Guard Recovery.
 
 ## Changed
 
-- Ground Truth Validator can now distinguish observed matches from read-only contextual inferences.
-- Recoverable bounded gaps can be resolved as `inference_context_gap` when trusted neighbor anchors and power continuity provide sufficient evidence.
-- Validation summary now reports `inference_rows` and `inference_accepted_rows`.
-- Version updated to `0.9.5.28`.
+- `parser/ranking_guard.py` now gives the recovery layer one conservative chance before quarantine.
+- Ranking Guard remains the integrity gate; Recovery cannot bypass it.
+- Rows recovered or calibrated by the recovery layer are annotated with explainable evidence fields.
+- Version updated to `0.9.5.29`.
 
 ## Guardrail
 
-Inference does not change Operational Truth. It does not alter the Sentinel export and does not override Data Guard or Ranking Guard decisions. It only records derived, explainable conclusions in validation/inference reports.
+Recovery is evidence-based only.
+
+A row is not moved because it is convenient. It is moved only if row-level evidence proves a safer destination. If evidence is insufficient, quarantine remains the correct outcome.
 
 ## Validation
 
 ```text
-python -m compileall -q .
-pytest tests/smoke/test_inference_context_engine.py tests/smoke/test_evidence_resolver.py tests/smoke/test_gap_recovery.py tests/smoke/test_ground_truth_validator.py tests/smoke/test_sentinel_data_guard.py tests/smoke/test_sentinel_ranking_guard.py -q
+python -m pytest tests/smoke/test_ranking_recovery.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_operational_import_repository.py -q
 ```
 
 ## Commit
 
 ```bash
 git add .
-git commit -m "feat(inference): introduce read-only context engine for v0.9.5.28"
-git tag -a v0.9.5.28 -m "v0.9.5.28 Inference Engine Core"
+git commit -m "feat(ranking): add evidence-based ranking guard recovery"
+git tag -a v0.9.5.29 -m "v0.9.5.29 Ranking Guard Recovery"
 ```

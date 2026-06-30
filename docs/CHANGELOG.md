@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.9.5.29] - Ranking Guard Recovery
+
+### Added
+
+- Evidence-based Ranking Guard Recovery layer.
+- Recovery metrics in operational import reports.
+- Smoke tests for safe recovery and calibration decisions.
+
+### Changed
+
+- Ranking Guard can now recover provably safe ranking-type assignments before quarantine.
+- False-positive alliance-name shapes can be calibrated without being quarantined.
+- Version updated to `0.9.5.29`.
+
+
 
 ## [0.9.5.27] - Recoverable Gap Intelligence
 

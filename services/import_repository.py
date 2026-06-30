@@ -72,6 +72,10 @@ def build_import_run_report(
     review_items: list[dict[str, Any]] = []
     total_rows = 0
     servers: set[int] = set()
+    recovery_attempts = 0
+    recovery_success = 0
+    recovery_calibrated = 0
+    recovery_confidences: list[float] = []
 
     for (server, ranking_type), rows in sorted(grouped.items(), key=lambda item: str(item[0])):
         rows = list(rows or [])
@@ -83,6 +87,17 @@ def build_import_run_report(
             status = "Quarantine"
             review_count = len(rows)
             confidence = 0
+        for row in rows:
+            if row.get("ranking_recovery_status"):
+                recovery_attempts += 1
+                if row.get("ranking_recovery_status") == "recovered":
+                    recovery_success += 1
+                if row.get("ranking_recovery_status") == "calibrated_pass":
+                    recovery_calibrated += 1
+                try:
+                    recovery_confidences.append(float(row.get("ranking_recovery_confidence") or 0))
+                except (TypeError, ValueError):
+                    pass
         source_files = sorted({str(row.get("source_file")) for row in rows if row.get("source_file")})
         server_imports.append({
             "server": server if isinstance(server, int) else None,
@@ -154,7 +169,14 @@ def build_import_run_report(
             "status": "Warning" if review_items else "Healthy",
             "warnings": len(review_items),
             "critical": 0,
-            "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "quarantine"],
+            "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "ranking_recovery", "quarantine"],
+        },
+        "ranking_recovery": {
+            "attempts": recovery_attempts,
+            "success": recovery_success,
+            "calibrated_pass": recovery_calibrated,
+            "rejected": len([item for item in review_items if item.get("reason") == "ranking_guard_quarantine"]),
+            "confidence_avg": round(sum(recovery_confidences) / len(recovery_confidences), 4) if recovery_confidences else 0,
         },
         "imports": server_imports,
         "reviews": review_items,

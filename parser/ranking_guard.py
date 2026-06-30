@@ -12,6 +12,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from parser.ranking_recovery import annotate_recovery, evaluate_ranking_recovery
+
 PLAYER_POWER_SOFT_MAX = 5_000_000_000
 ALLIANCE_POWER_SOFT_MIN = 1_000_000_000
 ALLIANCE_POWER_STRONG_MIN = 10_000_000_000
@@ -212,9 +214,9 @@ def apply_ranking_guard(
 ) -> dict[tuple[object, str], list[dict[str, Any]]]:
     """Quarantine rows that do not semantically fit their ranking type.
 
-    This function never moves rows into a guessed corrected ranking. It keeps
-    trusted rows in place and moves suspicious rows to REVIEW/ranking_guard
-    quarantine with explanatory metadata.
+    This function never guesses.  Before quarantine, it gives the Ranking
+    Recovery layer one chance to recover rows that are provably safe or to
+    calibrate false-positive alliance-name shapes.
     """
     guarded: dict[tuple[object, str], list[dict[str, Any]]] = {}
     quarantined_rows: list[dict[str, Any]] = []
@@ -228,6 +230,29 @@ def apply_ranking_guard(
         for row in rows:
             decision = evaluate_ranking_row(row, ranking_type)
             if decision.should_quarantine:
+                recovery = evaluate_ranking_recovery(
+                    row,
+                    assigned_ranking_type=ranking_type,
+                    expected_ranking_type=decision.expected_ranking_type,
+                    guard_reasons=decision.reasons,
+                    guard_confidence=decision.confidence,
+                )
+                if recovery.recovered and isinstance(server, int) and recovery.target_ranking_type:
+                    recovered_row = annotate_recovery(row, recovery)
+                    recovered_row["original_ranking_type"] = ranking_type
+                    recovered_row["ranking_type"] = recovery.target_ranking_type
+                    recovered_row["ranking_guard_status"] = "recovered"
+                    recovered_row["ranking_guard_confidence"] = recovery.confidence
+                    recovered_row["ranking_guard_reason"] = ";".join(recovery.reasons)
+                    guarded.setdefault((server, recovery.target_ranking_type), []).append(recovered_row)
+                    continue
+                if recovery.calibrated:
+                    calibrated_row = annotate_recovery(row, recovery)
+                    calibrated_row["ranking_guard_status"] = "validated_after_recovery_calibration"
+                    calibrated_row["ranking_guard_confidence"] = recovery.confidence
+                    calibrated_row["ranking_guard_reason"] = ";".join(recovery.reasons)
+                    guarded.setdefault(key, []).append(calibrated_row)
+                    continue
                 quarantined_rows.append(_mark_quarantined(row, server=server, decision=decision))
                 continue
 
