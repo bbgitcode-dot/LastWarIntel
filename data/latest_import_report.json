@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-06-30T19:47:00.299048+00:00",
-  "runtime_seconds": 1319.3,
+  "created_at": "2026-06-30T22:44:47.243082+00:00",
+  "runtime_seconds": 1390.77,
   "screenshots": 52,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -13,29 +13,36 @@
   "rows": 344,
   "status": "Review",
   "readiness": 50,
-  "review_count": 74,
+  "review_count": 53,
   "data_guard": {
     "status": "Warning",
-    "warnings": 74,
+    "warnings": 53,
     "critical": 0,
     "checks": [
       "server_assignment",
       "data_quality_loop",
       "ranking_guard",
+      "ranking_recovery",
       "quarantine"
     ]
+  },
+  "ranking_recovery": {
+    "attempts": 21,
+    "success": 0,
+    "calibrated_pass": 21,
+    "rejected": 53,
+    "confidence_avg": 0.9648
   },
   "imports": [
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 74,
+      "rows": 53,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 74,
-      "screenshots": 13,
+      "review_count": 53,
+      "screenshots": 12,
       "source_files": [
-        "2026-06-28 13_14_49-Window.png",
         "2026-06-28 13_15_08-Window.png",
         "2026-06-28 13_15_25-Window.png",
         "2026-06-28 13_15_43-Window.png",
@@ -54,14 +61,15 @@
     {
       "server": 549,
       "ranking_type": "alliance_power",
-      "rows": 13,
+      "rows": 25,
       "status": "Review",
       "confidence": 90,
-      "review_count": 13,
-      "screenshots": 4,
+      "review_count": 25,
+      "screenshots": 5,
       "source_files": [
         "2026-06-28 13_14_06-Window.png",
         "2026-06-28 13_14_49-Window.png",
+        "2026-06-28 13_15_08-Window.png",
         "2026-06-28 13_15_25-Window.png",
         "2026-06-28 13_16_01-Window.png"
       ],
@@ -96,10 +104,10 @@
     {
       "server": 550,
       "ranking_type": "alliance_power",
-      "rows": 4,
+      "rows": 8,
       "status": "Review",
       "confidence": 90,
-      "review_count": 4,
+      "review_count": 8,
       "screenshots": 3,
       "source_files": [
         "2026-06-28 13_32_15-Window.png",
@@ -132,13 +140,14 @@
     {
       "server": 551,
       "ranking_type": "alliance_power",
-      "rows": 7,
+      "rows": 12,
       "status": "Review",
       "confidence": 90,
-      "review_count": 7,
-      "screenshots": 2,
+      "review_count": 12,
+      "screenshots": 3,
       "source_files": [
         "2026-06-29 14_43_59-Window.png",
+        "2026-06-29 14_44_25-Window.png",
         "2026-06-29 14_44_46-Window.png"
       ],
       "source": "551_alliance_power"
@@ -175,26 +184,26 @@
     {
       "server": 549,
       "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
+      "expected_ranking_type": "unknown",
       "rank": 1,
       "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;assigned_alliance_power_but_row_is_thp_shaped",
+      "description": "ranking_type_conflict:missing_alliance_name",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_14_49-Window.png"
+      "screenshot": "2026-06-28 13_15_08-Window.png"
     },
     {
-      "server": 549,
+      "server": 551,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 2,
       "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;assigned_alliance_power_but_row_is_thp_shaped",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_14_49-Window.png"
+      "screenshot": "2026-06-29 14_44_25-Window.png"
     },
     {
       "server": 550,
@@ -202,7 +211,7 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 3,
       "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;assigned_alliance_power_but_row_is_thp_shaped",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -214,26 +223,26 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 4,
       "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;assigned_alliance_power_but_row_is_thp_shaped",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_14_49-Window.png"
+      "screenshot": "2026-06-28 13_15_25-Window.png"
     },
     {
-      "server": 551,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 5,
       "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;assigned_alliance_power_but_row_is_thp_shaped",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
+      "screenshot": "2026-06-28 13_32_29-Window.png"
     },
     {
-      "server": 549,
+      "server": 551,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 6,
@@ -242,10 +251,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_14_49-Window.png"
+      "screenshot": "2026-06-29 14_44_25-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 7,
@@ -254,7 +263,7 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
+      "screenshot": "2026-06-28 13_32_29-Window.png"
     },
     {
       "server": 549,
@@ -266,10 +275,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
+      "screenshot": "2026-06-28 13_15_25-Window.png"
     },
     {
-      "server": 551,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 9,
@@ -278,10 +287,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
+      "screenshot": "2026-06-28 13_32_29-Window.png"
     },
     {
-      "server": 550,
+      "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 10,
@@ -290,7 +299,7 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_15-Window.png"
+      "screenshot": "2026-06-28 13_15_25-Window.png"
     },
     {
       "server": 549,
@@ -302,7 +311,7 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_14_49-Window.png"
+      "screenshot": "2026-06-28 13_15_25-Window.png"
     },
     {
       "server": 549,
@@ -314,10 +323,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
+      "screenshot": "2026-06-28 13_15_43-Window.png"
     },
     {
-      "server": 550,
+      "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 13,
@@ -326,265 +335,13 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_15-Window.png"
+      "screenshot": "2026-06-28 13_15_43-Window.png"
     },
     {
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 14,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 15,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_01-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 16,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 17,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "unknown",
-      "rank": 18,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:missing_alliance_name",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 19,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_15-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 20,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 21,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 22,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_25-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 23,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 24,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_15-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 25,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_25-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 26,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_29-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 27,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_25-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 28,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_29-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 29,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_25-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 30,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_29-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 31,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_25-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 32,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_25-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 33,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_43-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 34,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_43-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 35,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -596,7 +353,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 36,
+      "rank": 15,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -608,7 +365,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 37,
+      "rank": 16,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -620,7 +377,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 38,
+      "rank": 17,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -632,7 +389,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 39,
+      "rank": 18,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -644,7 +401,7 @@
       "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 40,
+      "rank": 19,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -656,7 +413,7 @@
       "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 41,
+      "rank": 20,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -668,7 +425,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 42,
+      "rank": 21,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -680,7 +437,7 @@
       "server": 551,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 43,
+      "rank": 22,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -692,7 +449,7 @@
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 44,
+      "rank": 23,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -704,13 +461,265 @@
       "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 45,
+      "rank": 24,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
       "screenshot": "2026-06-28 13_32_29-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 25,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 26,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_01-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 27,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-29 14_44_46-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 28,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_01-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 29,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_01-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 30,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 31,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 32,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 33,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 34,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 35,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 36,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 37,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 38,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_16_27-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 39,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 40,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 41,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-29 14_44_46-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 42,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 43,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-28 13_32_41-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 44,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-29 14_44_46-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 45,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "2026-06-29 14_44_46-Window.png"
     },
     {
       "server": 550,
@@ -725,7 +734,7 @@
       "screenshot": "2026-06-28 13_32_41-Window.png"
     },
     {
-      "server": 549,
+      "server": 551,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 47,
@@ -734,7 +743,7 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_01-Window.png"
+      "screenshot": "2026-06-29 14_44_46-Window.png"
     },
     {
       "server": 551,
@@ -749,7 +758,7 @@
       "screenshot": "2026-06-29 14_44_46-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 49,
@@ -758,10 +767,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_01-Window.png"
+      "screenshot": "2026-06-28 13_32_57-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 50,
@@ -770,10 +779,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_01-Window.png"
+      "screenshot": "2026-06-28 13_32_57-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 51,
@@ -782,10 +791,10 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
+      "screenshot": "2026-06-28 13_32_57-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 52,
@@ -794,265 +803,13 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
+      "screenshot": "2026-06-28 13_32_57-Window.png"
     },
     {
-      "server": 549,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 53,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 54,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 55,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 56,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 57,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 58,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 59,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_16_27-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 60,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 61,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 62,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_46-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 63,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 64,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 65,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_46-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 66,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_46-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 67,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_41-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 68,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_46-Window.png"
-    },
-    {
-      "server": 551,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 69,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_44_46-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 70,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_57-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 71,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_57-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 72,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_57-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 73,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_32_57-Window.png"
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 74,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
       "severity": "warning",
@@ -1065,13 +822,13 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "52 screenshots · 3 servers · 344 rows · 1319.30s",
+      "detail": "52 screenshots · 3 servers · 344 rows · 1390.77s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "74 review item(s) detected",
+      "detail": "53 review item(s) detected",
       "severity": "warning"
     }
   ]
