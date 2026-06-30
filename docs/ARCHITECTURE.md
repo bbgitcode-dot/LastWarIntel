@@ -246,3 +246,8 @@ Layer rule:
 Operational Truth is observed and guarded.
 Inference is derived and explained.
 ```
+
+
+## Universal Server Detection
+
+Server assignment now uses pattern-first OCR evidence before language-specific labels. Repeated row-level `#server` candidates, such as mobile screenshots showing `#552` on each ranking row, are collected and passed into the existing consensus/Data Guard path. This preserves the doctrine: intrinsic screenshot evidence wins, but ambiguous or insufficient evidence remains review-only.

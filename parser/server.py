@@ -14,6 +14,12 @@ def normalize_server_number(value):
 
 
 _SERVER_PATTERNS = [
+    # Pattern-first server extraction. Mobile screenshots and non-English
+    # clients often repeat the server as "#552" on every ranking row while the
+    # header text may be localized (for example "Kriegszone #552").  The hash
+    # + 3/4 digit pattern is language-neutral and still conservative because
+    # rank values and power values do not use this shape.
+    r"[#＃]\s*(\d{3,4})",
     r"Warzone\s*[#\{\}]?\s*(\d{3,4})",
     r"Wagzone\s*[#\{\}]?\s*(\d{3,4})",
     r"Waqzone\s*[#\{\}]?\s*(\d{3,4})",
@@ -25,7 +31,13 @@ _SERVER_PATTERNS = [
     r"Qagzone\s*[#\{\}]?\s*(\d{3,4})",
     r"Qagzong\s*[#\{\}]?\s*(\d{3,4})",
     r"[WQ][a-zA-Z]{2,12}\s*[#\{\}]?\s*(\d{3,4})",
+    # Common localized labels remain useful as fallback signals, but they are
+    # deliberately secondary to the language-neutral #number pattern above.
+    r"Kriegszone\s*[#\{\}]?\s*(\d{3,4})",
+    r"Zona(?:\s+de\s+guerra)?\s*[#\{\}]?\s*(\d{3,4})",
+    r"Zone(?:\s+de\s+guerre)?\s*[#\{\}]?\s*(\d{3,4})",
 ]
+
 
 
 @dataclass(frozen=True)

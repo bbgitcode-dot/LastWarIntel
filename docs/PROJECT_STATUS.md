@@ -293,3 +293,10 @@ This is the first operational inference layer: Sentinel now records when a row i
 ## v0.9.5.28 – Inference Engine Core
 
 Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.
+
+
+---
+
+## v0.9.5.30 – Universal Server Detection
+
+Added pattern-first server detection for mobile and localized screenshots. Sentinel now extracts repeated `#server` evidence from OCR before relying on language-specific labels. Existing consensus and Data Guard rules remain authoritative; insufficient or ambiguous evidence still goes to review.

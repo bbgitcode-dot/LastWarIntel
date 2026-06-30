@@ -35,6 +35,20 @@ This file summarizes major release milestones. Detailed historical notes are con
 
 ---
 
+
+## [0.9.5.30] - Universal Server Detection
+
+### Added
+
+- Pattern-first server candidate extraction for repeated `#123` / `#1234` OCR evidence.
+- Localized fallback support for mobile/non-English screenshots.
+- Smoke tests for mobile hash consensus and localized server labels.
+
+### Changed
+
+- Existing server consensus and Data Guard logic now receive language-neutral candidates.
+- Version updated to `0.9.5.30`.
+
 ## [0.9.5.26] - Ground Truth Validation Framework
 
 ### Added

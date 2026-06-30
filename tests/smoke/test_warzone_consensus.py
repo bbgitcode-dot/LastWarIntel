@@ -23,3 +23,36 @@ def test_server_consensus_rejects_insufficient_evidence():
     ])
     assert result.server is None
     assert result.warning.startswith("server_consensus_below_threshold")
+
+
+def test_server_consensus_accepts_repeated_hash_only_mobile_hits():
+    result = detect_server_consensus_from_ocr([
+        (box(), "#552", 0.92),
+        (box(), "#552", 0.94),
+        (box(), "#552", 0.91),
+        (box(), "#552", 0.90),
+    ])
+    assert result.server == 552
+    assert result.warning is None
+    assert result.confidence == 1.0
+
+
+def test_server_consensus_accepts_localized_kriegszone_hits():
+    result = detect_server_consensus_from_ocr([
+        (box(), "Kriegszone #552", 0.92),
+        (box(), "Kriegszone #552", 0.94),
+        (box(), "Kriegszone #552", 0.91),
+    ])
+    assert result.server == 552
+    assert result.warning is None
+    assert result.confidence == 1.0
+
+
+def test_server_consensus_rejects_ambiguous_hash_hits_below_threshold():
+    result = detect_server_consensus_from_ocr([
+        (box(), "#551", 0.92),
+        (box(), "#552", 0.94),
+        (box(), "#552", 0.91),
+    ])
+    assert result.server is None
+    assert result.warning.startswith("server_consensus_below_threshold")
