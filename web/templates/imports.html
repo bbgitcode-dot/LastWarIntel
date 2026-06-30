@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Sentinel Import Center{% endblock %}
+
+{% block content %}
+<header class="command-header">
+    <div>
+        <div class="eyebrow">IMPORT CENTER</div>
+        <div class="brand">Latest Operational Import</div>
+        <div class="subtitle">Runtime data from the latest Sentinel import run. Ground truth is not used here.</div>
+    </div>
+    <div class="server-status">
+        <div class="status-label">Import Source</div>
+        {% if import_model.has_import %}
+        <div class="status-pill status-success">● {{ import_model.status }}</div>
+        <div class="snapshot-label">{{ import_model.source }}</div>
+        {% else %}
+        <div class="status-pill status-warning">● Pending</div>
+        <div class="snapshot-label">{{ import_model.source }}</div>
+        {% endif %}
+    </div>
+</header>
+
+<main class="command-grid">
+    <section class="metrics-grid">
+        <article class="metric-card tone-info">
+            <div class="metric-title">Screenshots</div>
+            <div class="metric-value small-value">{{ import_model.screenshots }}</div>
+            <div class="metric-subline">Latest import batch</div>
+        </article>
+        <article class="metric-card tone-success">
+            <div class="metric-title">Servers</div>
+            <div class="metric-value small-value">{{ import_model.server_count }}</div>
+            <div class="metric-subline">{{ import_model.servers|join(', ') if import_model.servers else 'No servers yet' }}</div>
+        </article>
+        <article class="metric-card tone-info">
+            <div class="metric-title">Rows Imported</div>
+            <div class="metric-value small-value">{{ import_model.rows }}</div>
+            <div class="metric-subline">{{ import_model.output_file or 'No export yet' }}</div>
+        </article>
+        <article class="metric-card tone-warning">
+            <div class="metric-title">Data Guard Reviews</div>
+            <div class="metric-value small-value">{{ import_model.review_count }}</div>
+            <div class="metric-subline">{{ import_model.data_guard.status }}</div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Detected Imports</h2>
+                <p>Current import evidence grouped by server and ranking type.</p>
+            </div>
+            <span class="panel-badge">{{ import_model.imports|length }} SOURCES</span>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Source</span><span>Server</span><span>Ranking</span><span>Rows</span><span>Screenshots</span><span>Status</span>
+            </div>
+            {% for item in import_model.imports %}
+            <div class="quality-row">
+                <strong>{{ item.source }}</strong>
+                <span>{{ item.server or '—' }}</span>
+                <span>{{ item.ranking_type }}</span>
+                <span>{{ item.rows }}</span>
+                <span>{{ item.screenshots }}</span>
+                <span>{{ item.status }}</span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No import run found yet.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Sentinel Data Guard</h2>
+                <p>Integrity checks for the latest import run.</p>
+            </div>
+            <span class="panel-badge">{{ import_model.data_guard.status }}</span>
+        </div>
+        <div class="attention-list">
+            {% for item in import_model.reviews %}
+            <article class="attention-item attention-{{ item.severity }}">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                    {% if item.screenshot %}<small>{{ item.screenshot }}</small>{% endif %}
+                </div>
+                <strong>{{ item.action }}</strong>
+            </article>
+            {% else %}
+            <article class="attention-item attention-success">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>No Data Guard alerts</h3>
+                    <p>The latest import has no server assignment conflicts.</p>
+                </div>
+                <strong>Proceed</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Recent Operations</h2>
+                <p>Latest operational events from the import pipeline.</p>
+            </div>
+        </div>
+        <div class="activity-list">
+            {% for item in import_model.recent_operations %}
+            <div class="activity-item activity-{{ item.severity }}">
+                <span>{{ item.time }}</span>
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.detail }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="activity-item activity-info">
+                <span>next</span>
+                <div>
+                    <strong>No operations loaded</strong>
+                    <p>Run main.py to populate the operational import feed.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

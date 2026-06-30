@@ -1,24 +1,19 @@
-# Sentinel v0.9.5.18 — Final Gap Cleanup
+# Sentinel v0.9.5.24 – Documentation Consolidation
 
-## Ziel
-Schließe die letzte Validierungs-Lücke ohne neue spekulative Matches.
+Documentation-only sprint consolidating the current platform state after Command Center, Sentinel Data Guard, and Sentinel Data Quality Loop.
 
-## Änderung
-- Rejected rank fallbacks werden nicht mehr als `bad_server_rank` geführt.
-- Neuer Status: `blocked_rank_fallback`.
-- Blockierte Rank-Fallbacks zählen nicht als valide Matches und nicht als Bad Matches.
-- Neue Summary-Metrik: `unresolved_gap_rows`.
-- Gap Recovery erkennt `blocked_rank_fallback` als Gap-Zeile.
-- Effektive Match-Metriken zählen blockierte Fallbacks nicht mehr mit.
+## Added
 
-## Ergebnis gegen Server 551
-- Valid matches: 43 / 50
-- Bad matches: 6 → 0
-- Blocked rank fallbacks: 6
-- Gap rows: 7
-- Gap resolved rows: 7
-- F1: 0.8775
-- Score: 63.45
+- docs/ROAD_TO_V1.md
+- docs/MODUS_OPERANDI.md
+- COMMIT_v0.9.5.24.txt
 
-## Interpretation
-Der Parser erzeugt keine bekannten falschen Rank-Fallback-Matches mehr. Die verbleibenden 7 Zeilen sind echte unresolved gaps und brauchen bessere Inputdaten oder spätere OCR/segmentation fixes, keine spekulativen Validator-Regeln.
+## Changed
+
+- Consolidated docs release notes into docs/RELEASE_NOTES.md.
+- Updated architecture, roadmap, project status, vision, philosophy, README, and intelligence concepts to match the v0.9.5.23 runtime baseline.
+- Updated version.py to 0.9.5.24.
+
+## Next
+
+v0.9.5.25 – Sentinel Ranking Guard.

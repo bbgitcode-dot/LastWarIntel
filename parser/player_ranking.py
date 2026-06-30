@@ -35,6 +35,7 @@ def build_player_ranking_entries(
     server_confidence: Optional[float] = None,
     server_source: Optional[str] = None,
     server_warning: Optional[str] = None,
+    data_guard_conflict: bool = False,
 ) -> list[PlayerRankingEntry]:
     """Convert legacy parsed OCR rows into structured THP entries."""
     entries: list[PlayerRankingEntry] = []
@@ -83,6 +84,7 @@ def build_player_ranking_entries(
                 server_confidence=server_confidence,
                 server_source=server_source,
                 server_warning=server_warning,
+                data_guard_conflict=data_guard_conflict,
                 snapshot_id=snapshot_id,
                 confidence=float(identity_quality.confidence),
                 source_file=row.get("source_file") or source_file,
@@ -109,6 +111,7 @@ def build_player_ranking_snapshot(
     server_confidence: Optional[float] = None,
     server_source: Optional[str] = None,
     server_warning: Optional[str] = None,
+    data_guard_conflict: bool = False,
 ) -> PlayerRankingSnapshot:
     """Build a structured THP snapshot from parsed OCR ranking rows."""
     entries = build_player_ranking_entries(
@@ -119,6 +122,7 @@ def build_player_ranking_snapshot(
         server_confidence=server_confidence,
         server_source=server_source,
         server_warning=server_warning,
+        data_guard_conflict=data_guard_conflict,
     )
 
     if server is None:

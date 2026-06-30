@@ -30,6 +30,7 @@ class PlayerRankingEntry:
     server_confidence: Optional[float] = None
     server_source: Optional[str] = None
     server_warning: Optional[str] = None
+    data_guard_conflict: bool = False
     snapshot_id: Optional[str] = None
     confidence: float = 1.0
     source_file: Optional[str] = None
@@ -59,6 +60,7 @@ class PlayerRankingEntry:
             "server_confidence": self.server_confidence,
             "server_source": self.server_source,
             "server_warning": self.server_warning,
+            "data_guard_conflict": self.data_guard_conflict,
             "snapshot_id": self.snapshot_id,
             "confidence": self.confidence,
             "source_file": self.source_file,

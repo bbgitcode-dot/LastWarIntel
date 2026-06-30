@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Sentinel Data Quality{% endblock %}
+
+{% block content %}
+<header class="command-header">
+    <div>
+        <div class="eyebrow">DATA QUALITY</div>
+        <div class="brand">Operational Readiness</div>
+        <div class="subtitle">Validation report: {{ quality.report_path }}</div>
+    </div>
+    <div class="server-status">
+        <div class="status-label">Quality Status</div>
+        {% if quality.has_report %}
+        <div class="status-pill status-success">● Live</div>
+        <div class="snapshot-label">F1 {{ "%.4f"|format(quality.summary.f1) }} · Score {{ "%.2f"|format(quality.summary.score) }}</div>
+        {% else %}
+        <div class="status-pill status-warning">● Pending</div>
+        <div class="snapshot-label">Run validator first</div>
+        {% endif %}
+    </div>
+</header>
+
+<main class="command-grid">
+    <section class="metrics-grid">
+        <article class="metric-card tone-success">
+            <div class="metric-title">Valid Matches</div>
+            <div class="metric-value small-value">{{ quality.summary.matched_rows }}/{{ quality.summary.ground_truth_rows }}</div>
+            <div class="metric-subline">Recall {{ "%.1f%%"|format(quality.summary.recall * 100) }}</div>
+        </article>
+        <article class="metric-card tone-success">
+            <div class="metric-title">Precision</div>
+            <div class="metric-value small-value">{{ "%.1f%%"|format(quality.summary.precision * 100) }}</div>
+            <div class="metric-subline">Bad matches {{ quality.summary.bad_matches }}</div>
+        </article>
+        <article class="metric-card tone-warning">
+            <div class="metric-title">Open Reviews</div>
+            <div class="metric-value small-value">{{ quality.reviews|length }}</div>
+            <div class="metric-subline">Unresolved rows {{ quality.summary.unresolved_gap_rows }}</div>
+        </article>
+        <article class="metric-card tone-info">
+            <div class="metric-title">Gap Recovery</div>
+            <div class="metric-value small-value">{{ quality.summary.gap_resolved_rows }}</div>
+            <div class="metric-subline">Resolved gap rows</div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Review Queue</h2>
+                <p>Only rows that need targeted screenshot action appear here.</p>
+            </div>
+            <span class="panel-badge">{{ quality.reviews|length }} OPEN</span>
+        </div>
+        <div class="attention-list">
+            {% for item in quality.reviews %}
+            <article class="attention-item attention-{{ item.severity }}">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                    {% if item.screenshot %}<small>{{ item.screenshot }}</small>{% endif %}
+                </div>
+                <strong>{{ item.action }}</strong>
+            </article>
+            {% else %}
+            <article class="attention-item attention-success">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>No review items</h3>
+                    <p>The latest quality report has no unresolved review actions.</p>
+                </div>
+                <strong>Proceed</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Server Coverage</h2>
+                <p>Coverage and missing rank blocks by server.</p>
+            </div>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Server</span><span>Ranking</span><span>Valid</span><span>Readiness</span><span>Missing / Blocked</span><span>Status</span>
+            </div>
+            {% for server in quality.servers %}
+            <div class="quality-row">
+                <strong>{{ server.server }}</strong>
+                <span>{{ server.ranking_type }}</span>
+                <span>{{ server.matched_rows }}/{{ server.expected_rows }}</span>
+                <span>{{ server.readiness }}%</span>
+                <span>
+                    {% if server.unresolved_ranks %}
+                        {{ server.unresolved_ranks|join(', ') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
+                <span>{{ server.status }}</span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No server quality data found.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

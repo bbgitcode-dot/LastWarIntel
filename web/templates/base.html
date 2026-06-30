@@ -1,82 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0">
-
-    <title>Sentinel Strategic Command</title>
-
-    <link
-        href="/static/css/style.css"
-        rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sentinel Command Center{% endblock %}</title>
+    <link href="/static/css/style.css" rel="stylesheet">
 </head>
-
 <body>
-
 <div class="layout-shell">
-
     <aside class="side-nav">
+        <a class="side-brand" href="/" aria-label="Sentinel Command Center">
+            <div class="side-brand-icon">🐺</div>
+            <div class="side-brand-text">SENTINEL</div>
+        </a>
 
-        <div class="side-brand">
-
-            <div class="side-brand-icon">
-
-                🐺
-
-            </div>
-
-            <div class="side-brand-text">
-
-                SEN
-
-            </div>
-
-        </div>
-
-        <nav class="nav-list">
-
+        <nav class="nav-list" aria-label="Main navigation">
+            {% set nav = namespace(current_group='') %}
             {% for item in navigation %}
-
-            <a
-                href="{{ item.url }}"
-                class="nav-item {% if active_page == item.key %}active{% endif %}">
-
-                <span>
-
-                    {{ item.icon }}
-
-                </span>
-
-                <strong>
-
-                    {{ item.title }}
-
-                </strong>
-
-            </a>
-
+                {% if item.group != nav.current_group %}
+                    {% if not loop.first %}</div>{% endif %}
+                    <div class="nav-group">
+                    <div class="nav-group-label">{{ item.group|upper }}</div>
+                    {% set nav.current_group = item.group %}
+                {% endif %}
+                <a href="{{ item.url }}" class="nav-item {% if active_page == item.key %}active{% endif %}">
+                    <span class="nav-icon">{{ item.icon }}</span>
+                    <strong>{{ item.title }}</strong>
+                </a>
+                {% if loop.last %}</div>{% endif %}
             {% endfor %}
-
         </nav>
-
     </aside>
 
     <div class="app-shell">
-
-        {% block content %}
-
-        {% endblock %}
-
+        {% block content %}{% endblock %}
     </div>
-
 </div>
-
 </body>
-
 </html>

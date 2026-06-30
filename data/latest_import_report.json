@@ -1,0 +1,333 @@
+{
+  "schema": "sentinel.import_run.v1",
+  "created_at": "2026-06-30T14:06:55.744550+00:00",
+  "runtime_seconds": 691.66,
+  "screenshots": 52,
+  "output_file": "output/lastwar_export.xlsx",
+  "servers": [
+    549,
+    550,
+    551
+  ],
+  "server_count": 3,
+  "rows": 325,
+  "status": "Review",
+  "readiness": 50,
+  "review_count": 14,
+  "data_guard": {
+    "status": "Warning",
+    "warnings": 14,
+    "critical": 0,
+    "checks": [
+      "server_assignment"
+    ]
+  },
+  "imports": [
+    {
+      "server": null,
+      "ranking_type": "server_review",
+      "rows": 3,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 3,
+      "screenshots": 3,
+      "source_files": [
+        "2026-06-29 14_44_25-Window.png",
+        "2026-06-29 14_46_44-Window.png",
+        "2026-06-29 14_49_13-Window.png"
+      ],
+      "source": "REVIEW_server_review"
+    },
+    {
+      "server": 549,
+      "ranking_type": "alliance_power",
+      "rows": 43,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 43,
+      "screenshots": 6,
+      "source_files": [
+        "2026-06-28 13_14_06-Window.png",
+        "2026-06-28 13_14_49-Window.png",
+        "2026-06-28 13_15_08-Window.png",
+        "2026-06-28 13_15_25-Window.png",
+        "2026-06-28 13_15_43-Window.png",
+        "2026-06-28 13_16_27-Window.png"
+      ],
+      "source": "549_alliance_power"
+    },
+    {
+      "server": 549,
+      "ranking_type": "total_hero_power",
+      "rows": 96,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 17,
+      "screenshots": 15,
+      "source_files": [
+        "2026-06-28 13_16_01-Window.png",
+        "2026-06-28 13_16_48-Window.png",
+        "2026-06-28 13_17_05-Window.png",
+        "2026-06-28 13_17_22-Window.png",
+        "2026-06-28 13_17_46-Window.png",
+        "2026-06-28 13_18_07-Window.png",
+        "2026-06-28 13_18_20-Window.png",
+        "2026-06-28 13_18_36-Window.png",
+        "2026-06-28 13_18_53-Window.png",
+        "2026-06-28 13_19_11-Window.png",
+        "2026-06-28 13_19_30-Window.png",
+        "2026-06-28 13_19_45-Window.png",
+        "2026-06-28 13_19_58-Window.png",
+        "2026-06-28 13_20_12-Window.png",
+        "2026-06-28 13_20_25-Window.png"
+      ],
+      "source": "549_total_hero_power"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "rows": 25,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 25,
+      "screenshots": 4,
+      "source_files": [
+        "2026-06-28 13_32_15-Window.png",
+        "2026-06-28 13_32_29-Window.png",
+        "2026-06-28 13_32_41-Window.png",
+        "2026-06-28 13_32_57-Window.png"
+      ],
+      "source": "550_alliance_power"
+    },
+    {
+      "server": 550,
+      "ranking_type": "total_hero_power",
+      "rows": 58,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 13,
+      "screenshots": 9,
+      "source_files": [
+        "2026-06-28 13_33_09-Window.png",
+        "2026-06-28 13_33_23-Window.png",
+        "2026-06-28 13_33_38-Window.png",
+        "2026-06-28 13_33_50-Window.png",
+        "2026-06-28 13_34_01-Window.png",
+        "2026-06-28 13_34_13-Window.png",
+        "2026-06-28 13_34_32-Window.png",
+        "2026-06-28 13_34_46-Window.png",
+        "2026-06-28 13_35_00-Window.png"
+      ],
+      "source": "550_total_hero_power"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "rows": 14,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 14,
+      "screenshots": 2,
+      "source_files": [
+        "2026-06-29 14_43_59-Window.png",
+        "2026-06-29 14_44_46-Window.png"
+      ],
+      "source": "551_alliance_power"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rows": 86,
+      "status": "Review",
+      "confidence": 85,
+      "review_count": 14,
+      "screenshots": 13,
+      "source_files": [
+        "2026-06-29 14_45_10-Window.png",
+        "2026-06-29 14_45_25-Window.png",
+        "2026-06-29 14_45_40-Window.png",
+        "2026-06-29 14_46_08-Window.png",
+        "2026-06-29 14_46_26-Window.png",
+        "2026-06-29 14_47_05-Window.png",
+        "2026-06-29 14_47_24-Window.png",
+        "2026-06-29 14_47_40-Window.png",
+        "2026-06-29 14_47_59-Window.png",
+        "2026-06-29 14_48_15-Window.png",
+        "2026-06-29 14_48_28-Window.png",
+        "2026-06-29 14_48_43-Window.png",
+        "2026-06-29 14_48_58-Window.png"
+      ],
+      "source": "551_total_hero_power"
+    }
+  ],
+  "reviews": [
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 20,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 21,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 22,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 23,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 24,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 25,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 26,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_46_08-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 76,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 77,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 78,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 79,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 80,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 81,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rank": 82,
+      "title": "Data Guard server assignment conflict",
+      "description": "server_assignment_conflict:content_guard_target=551:detected=552:score=1.00",
+      "severity": "warning",
+      "action": "Review screenshot server assignment",
+      "reason": "server_assignment_conflict",
+      "screenshot": "2026-06-29 14_48_58-Window.png"
+    }
+  ],
+  "recent_operations": [
+    {
+      "time": "latest",
+      "title": "Import completed",
+      "detail": "52 screenshots · 3 servers · 325 rows · 691.66s",
+      "severity": "warning"
+    },
+    {
+      "time": "latest",
+      "title": "Sentinel Data Guard completed",
+      "detail": "14 assignment review item(s) detected",
+      "severity": "warning"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Sentinel Command Center{% endblock %}
+
+{% block content %}
+<header class="command-header">
+    <div>
+        <div class="eyebrow">COMMAND CENTER</div>
+        <div class="brand">{{ command.title }}</div>
+        <div class="subtitle">{{ command.subtitle }}</div>
+    </div>
+    <div class="server-status">
+        <div class="status-label">Platform Status</div>
+        <div class="status-pill status-{{ command.status.tone }}">● {{ command.status.label }}</div>
+        <div class="snapshot-label">{{ command.status.detail }} · v{{ command.version }}</div>
+    </div>
+</header>
+
+<main class="command-grid">
+    <section class="mission-panel panel tone-{{ command.mission.tone }}">
+        <div class="mission-copy">
+            <div class="eyebrow">TODAY'S MISSION</div>
+            <h1>{{ command.mission.title }}</h1>
+            <p>{{ command.mission.description }}</p>
+            <div class="mission-action">
+                <span>Recommended action</span>
+                <strong>{{ command.mission.action }}</strong>
+            </div>
+        </div>
+        <div class="readiness-card">
+            <span>Operational Readiness</span>
+            <strong>{{ command.readiness }}%</strong>
+            <div class="metric-bar"><div class="metric-fill" style="width: {{ command.readiness }}%;"></div></div>
+            <small>{{ command.mission.effort }}</small>
+        </div>
+    </section>
+
+    <section class="attention-panel panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Immediate Attention</h2>
+                <p>Only items that affect operational readiness appear here.</p>
+            </div>
+            <span class="panel-badge">{{ command.attention_items|length }} OPEN</span>
+        </div>
+        <div class="attention-list">
+            {% for item in command.attention_items %}
+            <article class="attention-item attention-{{ item.severity }}">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                </div>
+                <strong>{{ item.action }}</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="metrics-grid">
+        {% for metric in command.metrics %}
+        <article class="metric-card tone-{{ metric.tone }}">
+            <div class="metric-title">{{ metric.title }}</div>
+            <div class="metric-value small-value">{{ metric.value }}</div>
+            <div class="metric-subline">{{ metric.subtitle }}</div>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section class="content-grid command-lower-grid">
+        <article class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>System Health</h2>
+                    <p>Service components required for the operational platform.</p>
+                </div>
+                <span class="panel-badge">LIVE</span>
+            </div>
+            <div class="component-grid">
+                {% for component in command.components %}
+                <div class="component-card component-{{ component.tone }}">
+                    <span>{{ component.name }}</span>
+                    <strong>{{ component.status }}</strong>
+                    <small>{{ component.detail }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Recent Operations</h2>
+                    <p>Operational events and next build steps.</p>
+                </div>
+            </div>
+            <div class="activity-list">
+                {% for item in command.activity %}
+                <div class="activity-item activity-{{ item.severity }}">
+                    <span>{{ item.time }}</span>
+                    <div>
+                        <strong>{{ item.title }}</strong>
+                        <p>{{ item.detail }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+</main>
+{% endblock %}
