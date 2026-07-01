@@ -93,6 +93,7 @@ def evaluate_ranking_power_sanity(
     is_first_source: bool,
     source_index: int = 1,
     prior_high_value_sources: int = 0,
+    source_row_index: int | None = None,
 ) -> RankingPowerSanityDecision:
     """Evaluate one row for a local power-envelope violation.
 
@@ -182,6 +183,27 @@ def evaluate_ranking_power_sanity(
                 local_ratio=ratio,
             )
 
+        # General top-of-screenshot allowance: desktop and mobile captures can
+        # split a server's real top alliances across multiple screenshots.  When
+        # OCR rank anchors are unavailable before final reconstruction, the first
+        # rows of a screenshot may look like median outliers even though they are
+        # simply the visible top of that scroll block.  Allow only the first two
+        # visual rows of a source screenshot and keep the absolute ceiling above;
+        # later rows in the same source still use the strict local envelope.
+        if (
+            rank is None
+            and source_row_index is not None
+            and source_row_index <= 2
+            and value >= 1_000_000_000
+        ):
+            return RankingPowerSanityDecision(
+                status="pass",
+                confidence=1.0,
+                reasons=["alliance_power_source_top_row_allowed"],
+                local_median=local_median,
+                local_ratio=ratio,
+            )
+
         threshold = 2.35
         if value >= 5_000_000_000 and ratio >= threshold:
             confidence = min(0.99, round((ratio - 1.0) / 2.5 + 0.62, 4))
@@ -225,7 +247,7 @@ def apply_ranking_power_sanity_guard(
             source_powers = [value for value in source_powers if value is not None]
             is_first_source = source_index == 1
             current_source_high_values = sum(1 for value in source_powers if value >= 50_000_000_000)
-            for row in source_rows:
+            for source_row_index, row in enumerate(source_rows, start=1):
                 decision = evaluate_ranking_power_sanity(
                     row,
                     ranking_type=ranking_type,
@@ -233,6 +255,7 @@ def apply_ranking_power_sanity_guard(
                     is_first_source=is_first_source,
                     source_index=source_index,
                     prior_high_value_sources=prior_high_value_sources,
+                    source_row_index=source_row_index,
                 )
                 if decision.should_quarantine:
                     quarantined_rows.append(

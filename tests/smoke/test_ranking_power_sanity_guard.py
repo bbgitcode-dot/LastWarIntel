@@ -162,3 +162,46 @@ def test_late_source_alliance_power_high_value_without_rank_anchor_is_still_quar
     assert len(quarantine) == 1
     assert quarantine[0]["power"] == 70_000_000_000
     assert "alliance_power_outlier" in quarantine[0]["ranking_guard_warning"]
+
+
+def test_general_top_of_source_alliance_power_values_are_allowed_without_rank_anchor():
+    grouped = {
+        (550, "alliance_power"): [
+            _row(19_567_083_952, "550_top.png", None, "[WARF] Whiskeyand Warfare"),
+            _row(13_490_123_049, "550_top.png", None, "[LsC] Last Standing Crew"),
+            _row(6_730_012_492, "550_top.png", None, "[0] OysFunctional Legion"),
+            _row(3_199_527_639, "550_top.png", None, "[PCMS] The Laugh of Death"),
+            _row(2_916_999_957, "550_top.png", None, "[P4X] LA PAIX"),
+        ],
+        (551, "alliance_power"): [
+            _row(5_320_326_083, "551_mid.png", None, "[Hsg] Hit squad"),
+            _row(3_429_840_690, "551_mid.png", None, "[ItI] one eye raven"),
+            _row(1_927_716_551, "551_mid.png", None, "[647] sikistff"),
+            _row(1_449_620_285, "551_mid.png", None, "[GRm] Garam r Korea"),
+            _row(1_436_117_971, "551_mid.png", None, "[ALY] Mhammad Al"),
+        ],
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    assert len(result[(550, "alliance_power")]) == 5
+    assert len(result[(551, "alliance_power")]) == 5
+
+
+def test_general_top_of_source_allowance_does_not_bless_late_row_outlier():
+    grouped = {
+        (550, "alliance_power"): [
+            _row(6_730_012_492, "550_top.png", None, "[0] OysFunctional Legion"),
+            _row(3_199_527_639, "550_top.png", None, "[PCMS] The Laugh of Death"),
+            _row(19_567_083_952, "550_top.png", None, "[WARF] Whiskeyand Warfare"),
+            _row(2_916_999_957, "550_top.png", None, "[P4X] LA PAIX"),
+            _row(1_607_939_782, "550_top.png", None, "[NeX] 550"),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    assert len(quarantine) == 1
+    assert quarantine[0]["power"] == 19_567_083_952
