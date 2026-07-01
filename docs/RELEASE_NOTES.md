@@ -297,6 +297,31 @@ Fixes the Server 552 blind-test issue where German mobile Alliance Power screens
 10 passed
 ```
 
+
+## v0.9.5.36 – Ranking Power Monotonicity Guard
+
+### Focus
+
+Generalizes the THP Power Sanity Guard into a ranking-wide power envelope guard.
+
+### Fixed
+
+- Prevents Alliance Power OCR spikes such as `23B -> 79B` from being promoted to top ranks.
+- Keeps legitimate low-power alliance tail ranks below 1B intact.
+- Preserves THP outlier quarantine behavior from v0.9.5.35.
+
+### Added
+
+- `parser/ranking_power_sanity_guard.py`.
+- Local power-envelope validation for `alliance_power` and `total_hero_power`.
+- Explainable quarantine metadata for power sanity outliers.
+
+### Validation
+
+```text
+19 passed
+```
+
 ## v0.9.5.24 – Documentation Consolidation
 
 ### Focus
