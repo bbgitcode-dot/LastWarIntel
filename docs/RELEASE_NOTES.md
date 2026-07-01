@@ -1,8 +1,48 @@
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.46
+**Current Version:** v0.9.5.48
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
+
+---
+
+## v0.9.5.48 – Source Context Recovery Reportability
+
+### Focus
+
+Makes context-aware power recovery auditable in operational outputs. The sprint does not expand strategic intelligence; it improves explainability of recovered and ambiguous power values.
+
+### Added
+
+- Power candidate metadata columns in Excel exports for THP, Alliance Power, and quarantine sheets.
+- `power_recovery` section in `data/latest_import_report.json` with candidate traces, selected value, best/second score, margin, confidence, and decision reason.
+- Per-import power recovery counters: recovered rows, candidate traces, and ambiguous candidate counts.
+- Regression coverage for Server 553-style candidate trace reporting.
+
+### Fixed
+
+- Global `review_count` now reflects import-level review warnings instead of reporting `0` while import blocks still contain review counts.
+- Candidate recovery rows now expose `power_candidate_best`, `power_candidate_second`, `power_candidate_margin`, and `power_recovery_status` directly on the row.
+
+### Guardrail
+
+Recovery remains auditable. If candidate evidence is ambiguous, Sentinel preserves uncertainty through quarantine instead of silently exporting a guessed value.
+
+### Validation
+
+```text
+python -m compileall -q parser services main.py version.py
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_operational_import_repository.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py -q
+23 passed
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(reporting): expose power candidate recovery traces"
+git tag -a v0.9.5.48 -m "v0.9.5.48 Source Context Recovery Reportability"
+```
 
 ---
 
@@ -810,7 +850,7 @@ Sentinel should not invent truth. But when the source-local evidence supports a 
 ```text
 python -m compileall -q parser main.py version.py
 pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_thp_power_sanity_guard.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py -q
-22 passed
+23 passed
 ```
 
 ## Commit

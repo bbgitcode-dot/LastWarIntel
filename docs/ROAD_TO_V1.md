@@ -2,7 +2,7 @@
 
 > From screenshot import to trusted strategic decision support.
 
-**Current Version:** v0.9.5.47  
+**Current Version:** v0.9.5.48  
 **Current Phase:** Data Integrity Fortress
 
 ---
@@ -53,7 +53,17 @@ Delivered:
 - Candidate metadata on recovered and ambiguous rows.
 - Server 553 regression coverage, including a context case where `764M` recovers to `224M` instead of the legacy `164M`.
 
-#### v0.9.5.48 – Import Session and Segment Integrity
+#### v0.9.5.48 – Source Context Recovery Reportability
+
+Status: Completed.
+
+Delivered:
+
+- Excel export metadata for recovered and ambiguous power candidates.
+- Import-report candidate traces with selected value, best/second score, margin, confidence, and reason.
+- Corrected global review-count aggregation.
+
+#### v0.9.5.49 – Import Session and Segment Integrity
 
 Create explicit import sessions and ranking-session metadata.
 
@@ -63,7 +73,7 @@ Exit criteria:
 - Missing, duplicate, and mixed ranking segments are visible.
 - Segment continuity warnings are explainable.
 
-#### v0.9.5.49 – Quarantine Center Foundation
+#### v0.9.5.50 – Quarantine Center Foundation
 
 Make review visible and actionable in the Command Center.
 

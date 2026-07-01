@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Version:** v0.9.5.47  
+**Version:** v0.9.5.48  
 **Status:** Living Document
 
 ---
@@ -123,19 +123,16 @@ Development and benchmarking tool only. Ground Truth validates Sentinel; it does
 
 ## Current architecture gap
 
-v0.9.5.47 introduced the **context-aware power candidate recovery engine**. The next architecture gap is explicit import-session and segment integrity so mixed screenshot batches can be validated without relying on filename or upload order.
+v0.9.5.48 made context-aware power recovery reportable. Recovered and ambiguous rows now carry candidate metadata in both Excel exports and the operational import report.
 
-Instead of:
+The next architecture gap is explicit import-session and segment integrity so mixed screenshot batches can be validated without relying on filename or upload order.
 
-```text
-764M → 164M
-```
-
-Sentinel should generate and score candidates:
+Recovery remains source-local and auditable:
 
 ```text
-764M → [164M, 224M, 174M, 264M, quarantine]
+764M → candidates [164M, 224M, 174M, 264M]
+       → score against local row context
+       → recover clear winner or quarantine ambiguity
+       → export/report candidate trace
 ```
-
-The selected candidate must be explainable through local ranking context and neighbour consistency.
 

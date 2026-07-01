@@ -8,7 +8,6 @@ small JSON document; the boundary can later be backed by SQLite/PostgreSQL.
 from __future__ import annotations
 
 import json
-from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -49,6 +48,45 @@ def _int(value: Any) -> int:
         return 0
 
 
+
+def _safe_float(value: Any) -> float:
+    try:
+        if value is None or value == "":
+            return 0.0
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _row_power_recovery_trace(row: dict[str, Any], *, server: Any, ranking_type: str) -> dict[str, Any] | None:
+    candidates = row.get("power_recovery_candidates")
+    has_recovery = row.get("power_recovered_from") is not None or bool(candidates) or bool(row.get("power_recovery_status"))
+    if not has_recovery:
+        return None
+
+    candidate_list = candidates if isinstance(candidates, list) else []
+    return {
+        "server": server if isinstance(server, int) else None,
+        "ranking_type": ranking_type,
+        "source_file": row.get("source_file") or "",
+        "rank": _int(row.get("rank")) or _int(row.get("computed_rank")) or None,
+        "ocr_rank": _int(row.get("ocr_rank")) or None,
+        "name": row.get("name") or row.get("player_name") or "",
+        "power_original": _int(row.get("power_recovered_from")) or _int(row.get("power_original")) or _int(row.get("power")) or None,
+        "power_selected": _int(row.get("power")) or None,
+        "status": row.get("power_recovery_status") or row.get("power_sanity_status") or "unknown",
+        "method": row.get("power_recovery_method") or "",
+        "confidence": _safe_float(row.get("power_sanity_confidence")),
+        "candidate_count": _int(row.get("power_candidate_count")) or len(candidate_list),
+        "best_candidate": _int(row.get("power_candidate_best")) or None,
+        "best_score": _safe_float(row.get("power_candidate_best_score") or row.get("power_recovery_selected_score")),
+        "second_candidate": _int(row.get("power_candidate_second")) or None,
+        "second_score": _safe_float(row.get("power_candidate_second_score")),
+        "margin": _safe_float(row.get("power_candidate_margin")),
+        "decision_reason": row.get("power_recovery_selected_reason") or "",
+        "candidates": candidate_list,
+    }
+
 def _status_for_group(rows: list[dict[str, Any]]) -> tuple[str, int, int]:
     if not rows:
         return "Incomplete", 0, 0
@@ -76,6 +114,9 @@ def build_import_run_report(
     recovery_success = 0
     recovery_calibrated = 0
     recovery_confidences: list[float] = []
+    power_recovery_traces: list[dict[str, Any]] = []
+    power_recovery_confidences: list[float] = []
+    import_review_count_total = 0
 
     for (server, ranking_type), rows in sorted(grouped.items(), key=lambda item: str(item[0])):
         rows = list(rows or [])
@@ -87,6 +128,8 @@ def build_import_run_report(
             status = "Quarantine"
             review_count = len(rows)
             confidence = 0
+        import_review_count_total += review_count
+        group_power_traces: list[dict[str, Any]] = []
         for row in rows:
             if row.get("ranking_recovery_status"):
                 recovery_attempts += 1
@@ -98,6 +141,14 @@ def build_import_run_report(
                     recovery_confidences.append(float(row.get("ranking_recovery_confidence") or 0))
                 except (TypeError, ValueError):
                     pass
+            trace = _row_power_recovery_trace(row, server=server, ranking_type=ranking_type)
+            if trace:
+                group_power_traces.append(trace)
+                power_recovery_traces.append(trace)
+                if trace.get("confidence"):
+                    power_recovery_confidences.append(float(trace["confidence"]))
+        group_power_recovered = sum(1 for trace in group_power_traces if trace.get("status") == "recovered")
+        group_power_ambiguous = sum(1 for trace in group_power_traces if trace.get("status") in {"ambiguous", "candidate_ambiguous"})
         source_files = sorted({str(row.get("source_file")) for row in rows if row.get("source_file")})
         server_imports.append({
             "server": server if isinstance(server, int) else None,
@@ -109,6 +160,9 @@ def build_import_run_report(
             "screenshots": len(source_files),
             "source_files": source_files,
             "source": f"{server}_{ranking_type}",
+            "power_recovery_count": group_power_recovered,
+            "power_candidate_trace_count": len(group_power_traces),
+            "power_ambiguous_count": group_power_ambiguous,
         })
         for row in rows:
             warning = str(row.get("server_warning") or "")
@@ -151,8 +205,11 @@ def build_import_run_report(
                     "screenshot": row.get("source_file") or "",
                 })
 
-    status = "Review" if review_items else "Ready"
-    readiness = 100 if not review_items else max(50, int(round(100 - min(len(review_items) * 5, 50))))
+    effective_review_count = max(import_review_count_total, len(review_items))
+    status = "Review" if effective_review_count else "Ready"
+    readiness = 100 if not effective_review_count else max(50, int(round(100 - min(effective_review_count * 5, 50))))
+    power_recovered = sum(1 for trace in power_recovery_traces if trace.get("status") == "recovered")
+    power_ambiguous = sum(1 for trace in power_recovery_traces if trace.get("status") in {"ambiguous", "candidate_ambiguous"})
     return {
         "schema": "sentinel.import_run.v1",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -164,10 +221,12 @@ def build_import_run_report(
         "rows": total_rows,
         "status": status,
         "readiness": readiness,
-        "review_count": len(review_items),
+        "review_count": effective_review_count,
+        "review_item_count": len(review_items),
+        "import_review_count": import_review_count_total,
         "data_guard": {
-            "status": "Warning" if review_items else "Healthy",
-            "warnings": len(review_items),
+            "status": "Warning" if effective_review_count else "Healthy",
+            "warnings": effective_review_count,
             "critical": 0,
             "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "ranking_recovery", "quarantine"],
         },
@@ -178,6 +237,13 @@ def build_import_run_report(
             "rejected": len([item for item in review_items if item.get("reason") == "ranking_guard_quarantine"]),
             "confidence_avg": round(sum(recovery_confidences) / len(recovery_confidences), 4) if recovery_confidences else 0,
         },
+        "power_recovery": {
+            "candidate_traces": len(power_recovery_traces),
+            "recovered": power_recovered,
+            "ambiguous": power_ambiguous,
+            "confidence_avg": round(sum(power_recovery_confidences) / len(power_recovery_confidences), 4) if power_recovery_confidences else 0,
+            "traces": power_recovery_traces,
+        },
         "imports": server_imports,
         "reviews": review_items,
         "recent_operations": [
@@ -185,13 +251,13 @@ def build_import_run_report(
                 "time": "latest",
                 "title": "Import completed",
                 "detail": f"{screenshots} screenshots · {len(servers)} servers · {total_rows} rows · {runtime_seconds:.2f}s",
-                "severity": "success" if not review_items else "warning",
+                "severity": "success" if not effective_review_count else "warning",
             },
             {
                 "time": "latest",
                 "title": "Sentinel integrity guards completed",
-                "detail": f"{len(review_items)} review item(s) detected",
-                "severity": "success" if not review_items else "warning",
+                "detail": f"{effective_review_count} review item(s) detected",
+                "severity": "success" if not effective_review_count else "warning",
             },
         ],
     }

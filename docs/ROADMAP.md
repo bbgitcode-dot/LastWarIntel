@@ -1,6 +1,6 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.47
+**Version:** v0.9.5.48
 
 ---
 
@@ -52,13 +52,21 @@ Completed in v0.9.5.47.
 - Recovers clear candidates and preserves candidate metadata.
 - Keeps ambiguous values reviewable.
 
-### v0.9.5.48 – Import Session and Segment Integrity
+### v0.9.5.48 – Source Context Recovery Reportability
+
+Completed in v0.9.5.48.
+
+- Exposes candidate scoring in Excel exports.
+- Adds candidate traces to the import report.
+- Fixes review-count aggregation.
+
+### v0.9.5.49 – Import Session and Segment Integrity
 
 - Introduce explicit import sessions.
 - Detect missing, duplicate, mixed, and out-of-order segments.
 - Avoid filename/order assumptions.
 
-### v0.9.5.49 – Quarantine Center Foundation
+### v0.9.5.50 – Quarantine Center Foundation
 
 - Surface quarantined rows in Command Center.
 - Include source screenshot, field, reason, and proposed action.

@@ -4,6 +4,24 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.48] - Source Context Recovery Reportability
+
+### Added
+
+- Excel export columns for power candidate recovery metadata.
+- Import-report `power_recovery` candidate traces with selected, best, second, margin, confidence, and reason fields.
+- Per-import recovery counters for recovered and ambiguous candidate rows.
+
+### Fixed
+
+- Global import-report `review_count` aggregation now matches import-level review warnings.
+
+### Changed
+
+- Version updated to `0.9.5.48`.
+
+---
+
 ## [0.9.5.47] - Context-aware Power Candidate Recovery
 
 ### Added

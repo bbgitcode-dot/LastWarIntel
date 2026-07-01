@@ -1,6 +1,6 @@
 # Sentinel Architectural Decisions
 
-**Version:** v0.9.5.47
+**Version:** v0.9.5.48
 
 ---
 
@@ -60,5 +60,5 @@
 
 **Reason:** `764M` may recover to `164M`, `224M`, `174M`, or another value depending on context.
 
-**Consequence:** v0.9.5.47 should implement context-aware candidate generation and scoring.
+**Consequence:** v0.9.5.48 should implement context-aware candidate generation and scoring.
 

@@ -44,11 +44,11 @@ Current technical state:
 
 Most important open problem:
 
-`v0.9.5.45` can reduce false OCR values such as `764M -> 164M`, but this is still heuristic. Some Server 553 screenshots show that the correct value may be closer to `224M`. The next development sprint should implement **context-aware power candidate recovery**.
+`v0.9.5.48` exposes context-aware power candidate scoring in Excel and the import report. The next development sprint should implement **import session and segment integrity** without treating screenshot filename/order/upload order as truth.
 
 Recommended next sprint:
 
-**v0.9.5.47 – Context-aware Power Candidate Recovery**
+**v0.9.5.49 – Import Session and Segment Integrity**
 
 Expected work:
 

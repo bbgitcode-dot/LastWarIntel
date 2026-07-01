@@ -348,12 +348,24 @@ def _apply_recovered_power(
     recovered["power_recovery_method"] = method
     recovered["power_sanity_status"] = "recovered"
     if candidates:
-        recovered["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
+        candidate_dicts = [_candidate_dict(candidate) for candidate in candidates]
+        recovered["power_recovery_candidates"] = candidate_dicts
         selected = next((candidate for candidate in candidates if candidate.value == recovered_power), candidates[0])
+        second = next((candidate for candidate in candidates if candidate.value != selected.value), None)
+        margin = selected.score - (second.score if second else 0.0)
         recovered["power_recovery_selected_score"] = round(selected.score, 4)
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
+        recovered["power_recovery_status"] = "recovered"
+        recovered["power_candidate_count"] = len(candidates)
+        recovered["power_candidate_best"] = selected.value
+        recovered["power_candidate_best_score"] = round(selected.score, 4)
+        recovered["power_candidate_second"] = second.value if second else None
+        recovered["power_candidate_second_score"] = round(second.score, 4) if second else None
+        recovered["power_candidate_margin"] = round(margin, 4)
         recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
     else:
+        recovered["power_recovery_status"] = "recovered"
+        recovered["power_candidate_count"] = 0
         recovered["power_sanity_confidence"] = 0.95
     previous_warning = str(recovered.get("ranking_guard_warning") or "").strip()
     warning = f"power_sanity:context_candidate_recovered:{original}->{recovered_power}"
@@ -567,8 +579,19 @@ def _mark_quarantined(
     if decision.local_ratio is not None:
         quarantined["power_sanity_local_ratio"] = round(decision.local_ratio, 4)
     if recovery_candidates:
-        quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in recovery_candidates]
+        candidates = sorted(recovery_candidates, key=lambda candidate: candidate.score, reverse=True)
+        best = candidates[0]
+        second = candidates[1] if len(candidates) > 1 else None
+        margin = best.score - (second.score if second else 0.0)
+        quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
+        quarantined["power_recovery_status"] = "ambiguous"
+        quarantined["power_candidate_count"] = len(candidates)
+        quarantined["power_candidate_best"] = best.value
+        quarantined["power_candidate_best_score"] = round(best.score, 4)
+        quarantined["power_candidate_second"] = second.value if second else None
+        quarantined["power_candidate_second_score"] = round(second.score, 4) if second else None
+        quarantined["power_candidate_margin"] = round(margin, 4)
         quarantined["power_sanity_status"] = "candidate_ambiguous"
     return quarantined
 
