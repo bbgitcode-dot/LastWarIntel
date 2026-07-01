@@ -2,7 +2,7 @@
 
 > From screenshot import to trusted strategic decision support.
 
-**Current Version:** v0.9.5.46  
+**Current Version:** v0.9.5.47  
 **Current Phase:** Data Integrity Fortress
 
 ---
@@ -45,14 +45,13 @@ Make screenshot-derived data safe enough to become Operational Truth.
 
 #### v0.9.5.47 – Context-aware Power Candidate Recovery
 
-Replace simple leading-digit replacement with a candidate scoring engine.
+Status: Completed.
 
-Exit criteria:
+Delivered:
 
-- Server 553 false `7xxM` rows are not exported as `7xxM`.
-- Recovered values are selected from multiple candidates using context.
-- Ambiguous recoveries remain quarantined.
-- Recovery metadata is audit-ready.
+- Candidate scoring engine for suspicious THP and Alliance Power values.
+- Candidate metadata on recovered and ambiguous rows.
+- Server 553 regression coverage, including a context case where `764M` recovers to `224M` instead of the legacy `164M`.
 
 #### v0.9.5.48 – Import Session and Segment Integrity
 

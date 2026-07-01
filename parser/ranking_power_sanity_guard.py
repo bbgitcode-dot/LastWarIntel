@@ -11,7 +11,220 @@ from dataclasses import dataclass, field
 from statistics import median
 from typing import Any
 
+
 QUARANTINE_KEY = ("REVIEW", "ranking_guard_quarantine")
+
+
+@dataclass(frozen=True)
+class PowerRecoveryCandidate:
+    value: int
+    score: float
+    reasons: list[str] = field(default_factory=list)
+
+
+def _candidate_dict(candidate: PowerRecoveryCandidate) -> dict[str, Any]:
+    return {
+        "value": candidate.value,
+        "score": round(candidate.score, 4),
+        "reasons": list(candidate.reasons),
+    }
+
+
+def _source_low_powers_for_recovery(*, ranking_type: str, source_powers: list[int], observed: int) -> list[int]:
+    if ranking_type == "total_hero_power":
+        return [power for power in source_powers if 50_000_000 <= power < min(observed, 350_000_000)]
+    if ranking_type == "alliance_power":
+        return [power for power in source_powers if 500_000_000 <= power < min(observed, 45_000_000_000)]
+    return []
+
+
+def _generate_power_recovery_candidates(
+    row: dict[str, Any],
+    *,
+    ranking_type: str,
+    source_powers: list[int],
+) -> list[int]:
+    """Generate plausible corrected power values for a suspicious OCR value.
+
+    Candidate generation is deliberately context-aware but source-local.  It does
+    not use filename order, upload order, or neighbouring screenshots as truth.
+    It combines the old leading-digit correction with candidates derived from the
+    visible local power envelope.  This lets Server 553-style values such as
+    764M consider 164M and 224M instead of blindly choosing 164M.
+    """
+    observed = _power(row)
+    if observed is None:
+        return []
+    text = str(observed)
+    if len(text) < 8 or text[0] not in {"7", "8"}:
+        return []
+
+    values: set[int] = set()
+
+    if ranking_type == "total_hero_power" and 500_000_000 <= observed < 1_000_000_000:
+        for leading in (1, 2, 3):
+            candidate = int(str(leading) + text[1:])
+            if 80_000_000 <= candidate <= 350_000_000:
+                values.add(candidate)
+
+        tail = observed % 1_000_000
+        for low in _source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=source_powers, observed=observed):
+            million_prefix = low // 1_000_000
+            candidate = million_prefix * 1_000_000 + tail
+            if 80_000_000 <= candidate <= 350_000_000:
+                values.add(candidate)
+
+    elif ranking_type == "alliance_power" and 50_000_000_000 <= observed < 150_000_000_000:
+        for leading in (1, 2, 3, 4):
+            candidate = int(str(leading) + text[1:])
+            if 1_000_000_000 <= candidate <= 45_000_000_000:
+                values.add(candidate)
+
+        tail = observed % 1_000_000_000
+        for low in _source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=source_powers, observed=observed):
+            billion_prefix = low // 1_000_000_000
+            candidate = billion_prefix * 1_000_000_000 + tail
+            if 1_000_000_000 <= candidate <= 45_000_000_000:
+                values.add(candidate)
+
+    return sorted(values)
+
+
+def _score_power_recovery_candidates(
+    row: dict[str, Any],
+    *,
+    ranking_type: str,
+    source_rows: list[dict[str, Any]],
+    source_powers: list[int],
+    source_row_index: int | None,
+) -> list[PowerRecoveryCandidate]:
+    observed = _power(row)
+    if observed is None:
+        return []
+    raw_candidates = _generate_power_recovery_candidates(row, ranking_type=ranking_type, source_powers=source_powers)
+    if not raw_candidates:
+        return []
+
+    index = source_row_index - 1 if source_row_index is not None else None
+    prior_lows: list[int] = []
+    following_lows: list[int] = []
+    row_rank = _ocr_rank(row)
+    ranked_context_available = row_rank is not None and any(_ocr_rank(context_row) is not None for context_row in source_rows)
+    if ranked_context_available:
+        for context_row in source_rows:
+            if context_row is row:
+                continue
+            context_rank = _ocr_rank(context_row)
+            power = _power(context_row)
+            if context_rank is None or power is None:
+                continue
+            recovered_context = _source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=[power], observed=observed)
+            if context_rank < row_rank:
+                prior_lows.extend(recovered_context)
+            elif context_rank > row_rank:
+                following_lows.extend(recovered_context)
+    elif index is not None:
+        for prior in source_rows[:index]:
+            power = _power(prior)
+            if power is not None:
+                prior_lows.extend(_source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=[power], observed=observed))
+        for following in source_rows[index + 1:]:
+            power = _power(following)
+            if power is not None:
+                following_lows.extend(_source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=[power], observed=observed))
+
+    low_values = _source_low_powers_for_recovery(ranking_type=ranking_type, source_powers=source_powers, observed=observed)
+    low_median = int(median(low_values)) if low_values else None
+    scale = 1_000_000 if ranking_type == "total_hero_power" else 1_000_000_000
+    candidates: list[PowerRecoveryCandidate] = []
+
+    for value in raw_candidates:
+        score = 0.0
+        reasons: list[str] = []
+
+        if low_median:
+            distance = abs(value - low_median) / max(low_median, 1)
+            local_score = max(0.0, 1.0 - distance) * 0.28
+            score += local_score
+            reasons.append(f"local_median_distance:{distance:.3f}")
+
+        if prior_lows:
+            nearest_prior = min(prior_lows, key=lambda power: abs(power - value))
+            if nearest_prior >= value:
+                score += 0.24
+                reasons.append("fits_prior_neighbour_order")
+            elif abs(nearest_prior - value) <= 1.5 * scale:
+                score += 0.12
+                reasons.append("near_prior_neighbour")
+            else:
+                score -= 0.18
+                reasons.append("breaks_prior_neighbour_order")
+
+        if following_lows:
+            nearest_following = min(following_lows, key=lambda power: abs(power - value))
+            if value >= nearest_following:
+                score += 0.24
+                reasons.append("fits_following_neighbour_order")
+            elif abs(nearest_following - value) <= 1.5 * scale:
+                score += 0.12
+                reasons.append("near_following_neighbour")
+            else:
+                score -= 0.18
+                reasons.append("breaks_following_neighbour_order")
+
+        # Prefer candidates that do not invent a new power tier when a same-tier
+        # source-local row already exists. This keeps the old 164M/17B cases
+        # stable, but allows 224M/27B when the local envelope points there.
+        same_bucket_hits = [power for power in low_values if abs((power // scale) - (value // scale)) <= 1]
+        if same_bucket_hits:
+            score += 0.18
+            reasons.append("source_local_bucket_match")
+
+        ocr_rank = _ocr_rank(row)
+        if ranking_type == "total_hero_power" and ocr_rank is not None and ocr_rank >= 50:
+            score += 0.10
+            reasons.append(f"late_thp_rank:{ocr_rank}")
+        if ranking_type == "alliance_power" and ((ocr_rank is not None and ocr_rank >= 4) or (source_row_index is not None and source_row_index >= 3)):
+            score += 0.10
+            reasons.append("non_top_alliance_context")
+
+        # Small penalty for candidates that remain too close to the observed OCR
+        # explosion, because they likely preserve the false leading magnitude.
+        if value >= observed * 0.50:
+            score -= 0.12
+            reasons.append("too_close_to_observed_explosion")
+
+        candidates.append(PowerRecoveryCandidate(value=value, score=round(score, 6), reasons=reasons))
+
+    candidates.sort(key=lambda candidate: (candidate.score, -abs(candidate.value - (low_median or candidate.value))), reverse=True)
+    return candidates
+
+
+def _recover_context_power(
+    row: dict[str, Any],
+    *,
+    ranking_type: str,
+    source_rows: list[dict[str, Any]],
+    source_powers: list[int],
+    source_row_index: int | None,
+) -> tuple[int | None, list[PowerRecoveryCandidate], str]:
+    candidates = _score_power_recovery_candidates(
+        row,
+        ranking_type=ranking_type,
+        source_rows=source_rows,
+        source_powers=source_powers,
+        source_row_index=source_row_index,
+    )
+    if not candidates:
+        return None, [], "no_candidates"
+
+    best = candidates[0]
+    second_score = candidates[1].score if len(candidates) > 1 else 0.0
+    margin = best.score - second_score
+
+    if best.score >= 0.58 and margin >= 0.10:
+        return best.value, candidates, f"selected_clear_candidate:score={best.score:.3f};margin={margin:.3f}"
+    return None, candidates, f"ambiguous_candidates:best={best.score:.3f};margin={margin:.3f}"
 
 
 @dataclass(frozen=True)
@@ -118,7 +331,14 @@ def _recover_leading_digit_power(
     return None
 
 
-def _apply_recovered_power(row: dict[str, Any], recovered_power: int, *, method: str) -> dict[str, Any]:
+def _apply_recovered_power(
+    row: dict[str, Any],
+    recovered_power: int,
+    *,
+    method: str,
+    candidates: list[PowerRecoveryCandidate] | None = None,
+    decision_reason: str | None = None,
+) -> dict[str, Any]:
     recovered = dict(row)
     original = _power(recovered)
     if original is None or original == recovered_power:
@@ -127,9 +347,16 @@ def _apply_recovered_power(row: dict[str, Any], recovered_power: int, *, method:
     recovered["power_recovered_from"] = original
     recovered["power_recovery_method"] = method
     recovered["power_sanity_status"] = "recovered"
-    recovered["power_sanity_confidence"] = 0.95
+    if candidates:
+        recovered["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
+        selected = next((candidate for candidate in candidates if candidate.value == recovered_power), candidates[0])
+        recovered["power_recovery_selected_score"] = round(selected.score, 4)
+        recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
+        recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
+    else:
+        recovered["power_sanity_confidence"] = 0.95
     previous_warning = str(recovered.get("ranking_guard_warning") or "").strip()
-    warning = f"power_sanity:leading_digit_recovered:{original}->{recovered_power}"
+    warning = f"power_sanity:context_candidate_recovered:{original}->{recovered_power}"
     recovered["ranking_guard_warning"] = warning if not previous_warning else f"{previous_warning};{warning}"
     _set_power(recovered, recovered_power)
     return recovered
@@ -320,6 +547,7 @@ def _mark_quarantined(
     server: object,
     ranking_type: str,
     decision: RankingPowerSanityDecision,
+    recovery_candidates: list[PowerRecoveryCandidate] | None = None,
 ) -> dict[str, Any]:
     quarantined = dict(row)
     reason = ";".join(decision.reasons)
@@ -338,6 +566,10 @@ def _mark_quarantined(
         quarantined["power_sanity_local_median"] = decision.local_median
     if decision.local_ratio is not None:
         quarantined["power_sanity_local_ratio"] = round(decision.local_ratio, 4)
+    if recovery_candidates:
+        quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in recovery_candidates]
+        quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
+        quarantined["power_sanity_status"] = "candidate_ambiguous"
     return quarantined
 
 
@@ -582,22 +814,61 @@ def apply_ranking_power_sanity_guard(
             source_shape_outlier_powers = _source_shape_outlier_powers(source_rows) if ranking_type == "alliance_power" else set()
             thp_source_digit_explosion_powers = _thp_source_digit_explosion_powers(source_rows) if ranking_type == "total_hero_power" else set()
             for source_row_index, row in enumerate(source_rows, start=1):
-                recovered_power = _recover_leading_digit_power(
-                    row,
-                    ranking_type=ranking_type,
-                    source_powers=source_powers,
-                    source_row_index=source_row_index,
-                )
+                if ranking_type == "total_hero_power" and is_first_source:
+                    recovered_power, recovery_candidates, recovery_reason = None, [], "first_thp_source_no_recovery"
+                else:
+                    recovered_power, recovery_candidates, recovery_reason = _recover_context_power(
+                        row,
+                        ranking_type=ranking_type,
+                        source_rows=source_rows,
+                        source_powers=source_powers,
+                        source_row_index=source_row_index,
+                    )
+                if recovered_power is None:
+                    # Backward safety net for legacy cases with strong intrinsic
+                    # rank evidence but too little source context to score a
+                    # wider candidate set.
+                    legacy_recovered_power = _recover_leading_digit_power(
+                        row,
+                        ranking_type=ranking_type,
+                        source_powers=source_powers,
+                        source_row_index=source_row_index,
+                    )
+                    if legacy_recovered_power is not None:
+                        recovered_power = legacy_recovered_power
+                        recovery_reason = "legacy_leading_digit_recovery"
+
                 if recovered_power is not None:
                     recovered_row = _apply_recovered_power(
                         row,
                         recovered_power,
-                        method=f"{ranking_type}_leading_digit_recovery",
+                        method=f"{ranking_type}_context_candidate_recovery",
+                        candidates=recovery_candidates,
+                        decision_reason=recovery_reason,
                     )
                     if ranking_type == "total_hero_power":
                         recovered_row.setdefault("thp_sanity_status", "recovered")
                         recovered_row.setdefault("thp_sanity_confidence", 0.95)
                     guarded.setdefault(key, []).append(recovered_row)
+                    continue
+
+                if recovery_candidates:
+                    candidate_decision = RankingPowerSanityDecision(
+                        status="quarantine",
+                        confidence=0.88,
+                        reasons=["power_recovery_candidates_ambiguous", recovery_reason],
+                        local_median=int(median(source_powers)) if source_powers else None,
+                        local_ratio=_safe_ratio(_power(row) or 0, int(median(source_powers)) if source_powers else None),
+                    )
+                    quarantined_rows.append(
+                        _mark_quarantined(
+                            row,
+                            server=server,
+                            ranking_type=ranking_type,
+                            decision=candidate_decision,
+                            recovery_candidates=recovery_candidates,
+                        )
+                    )
                     continue
 
                 decision = evaluate_ranking_power_sanity(

@@ -4,6 +4,21 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.47] - Context-aware Power Candidate Recovery
+
+### Added
+
+- Candidate generation and scoring for suspicious THP and Alliance Power OCR explosions.
+- Recovery candidate metadata on recovered and ambiguous rows.
+- Regression tests for Server 553-style candidate recovery, including `764M -> 224M` context selection.
+
+### Changed
+
+- Replaced single-path power recovery with context-aware candidate scoring while preserving legacy deterministic safeguards.
+- Version updated to `0.9.5.47`.
+
+---
+
 ## [0.9.5.46] - Documentation Consolidation
 
 ### Added

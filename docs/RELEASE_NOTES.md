@@ -6,6 +6,52 @@ This file consolidates Sentinel release notes. Individual historical release-not
 
 ---
 
+## v0.9.5.47 – Context-aware Power Candidate Recovery
+
+### Focus
+
+Replaces single-candidate leading-digit recovery with a context-aware candidate recovery engine for suspicious THP and Alliance Power values.
+
+### Added
+
+- Multiple power candidate generation for suspicious `7xxM` THP and `77B` Alliance Power rows.
+- Source-local candidate scoring using local envelope, neighbour powers, OCR rank context, row position, monotonic ordering, and ranking type.
+- Recovery metadata:
+  - `power_recovery_candidates`
+  - `power_recovery_selected_score`
+  - `power_recovery_selected_reason`
+  - `power_recovery_method=<ranking_type>_context_candidate_recovery`
+- Ambiguous candidate metadata for quarantine/review paths.
+- Regression coverage for Server 553 candidate recovery, including a `764M -> 224M` case when local context clearly supports the 224M candidate.
+
+### Changed
+
+- Power recovery now scores multiple candidates before accepting a correction.
+- Legacy deterministic leading-digit recovery remains as a guarded fallback for previously covered safe cases.
+- Version updated to `0.9.5.47`.
+
+### Guardrail
+
+Candidate recovery remains source-local. It does not use screenshot filename order, upload order, or cross-user batch order as truth.
+
+### Validation
+
+```text
+python -m compileall -q parser main.py version.py
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_thp_power_sanity_guard.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py -q
+24 passed
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(recovery): add context-aware power candidate recovery"
+git tag -a v0.9.5.47 -m "v0.9.5.47 Context-aware Power Candidate Recovery"
+```
+
+---
+
 ## v0.9.5.46 – Documentation Consolidation
 
 ### Focus
@@ -44,9 +90,6 @@ git add .
 git commit -m "docs(project): consolidate Sentinel handoff documentation for v0.9.5.46"
 git tag -a v0.9.5.46 -m "v0.9.5.46 Documentation Consolidation"
 ```
-
----
-
 
 ---
 

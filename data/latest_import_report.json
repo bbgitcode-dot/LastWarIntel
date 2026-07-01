@@ -1,14 +1,14 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-01T22:05:14.041512+00:00",
-  "runtime_seconds": 504.03,
+  "created_at": "2026-07-01T22:56:34.068617+00:00",
+  "runtime_seconds": 489.46,
   "screenshots": 15,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
     553
   ],
   "server_count": 1,
-  "rows": 120,
+  "rows": 119,
   "status": "Ready",
   "readiness": 100,
   "review_count": 0,
@@ -50,10 +50,10 @@
     {
       "server": 553,
       "ranking_type": "total_hero_power",
-      "rows": 93,
+      "rows": 92,
       "status": "Review",
       "confidence": 90,
-      "review_count": 36,
+      "review_count": 35,
       "screenshots": 12,
       "source_files": [
         "Screenshot_20260701-194402.png",
@@ -77,7 +77,7 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "15 screenshots · 1 servers · 120 rows · 504.03s",
+      "detail": "15 screenshots · 1 servers · 119 rows · 489.46s",
       "severity": "success"
     },
     {

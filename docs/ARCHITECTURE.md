@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Version:** v0.9.5.46  
+**Version:** v0.9.5.47  
 **Status:** Living Document
 
 ---
@@ -123,7 +123,7 @@ Development and benchmarking tool only. Ground Truth validates Sentinel; it does
 
 ## Current architecture gap
 
-v0.9.5.45 proved that simple leading-digit recovery is not enough. The next architecture improvement is a **context-aware power candidate recovery engine**.
+v0.9.5.47 introduced the **context-aware power candidate recovery engine**. The next architecture gap is explicit import-session and segment integrity so mixed screenshot batches can be validated without relying on filename or upload order.
 
 Instead of:
 

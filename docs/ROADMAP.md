@@ -1,6 +1,6 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.46
+**Version:** v0.9.5.47
 
 ---
 
@@ -34,9 +34,9 @@ Completed recently:
 
 Current focus:
 
-- Stop silent data contamination.
-- Make recovery explainable.
-- Stabilize Server 549–553 regression behavior.
+- Validate context-aware power candidate recovery in Server 549–553 regression behavior.
+- Introduce explicit import sessions and segment integrity.
+- Keep recovery explainable and audit-ready.
 - Build guardrails before strategic intelligence expands.
 
 ---
@@ -45,11 +45,12 @@ Current focus:
 
 ### v0.9.5.47 – Context-aware Power Candidate Recovery
 
-- Generate multiple recovery candidates for suspicious power values.
-- Score candidates using source-local ranking context.
-- Recover only when candidate confidence is strong.
-- Quarantine ambiguous power values.
-- Expose candidate metadata in reports.
+Completed in v0.9.5.47.
+
+- Generates multiple recovery candidates for suspicious power values.
+- Scores candidates using source-local ranking context.
+- Recovers clear candidates and preserves candidate metadata.
+- Keeps ambiguous values reviewable.
 
 ### v0.9.5.48 – Import Session and Segment Integrity
 

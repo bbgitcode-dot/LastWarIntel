@@ -2,7 +2,7 @@
 
 > Transforming observations into operational truth and explainable strategic intelligence.
 
-**Version:** v0.9.5.46
+**Version:** v0.9.5.47
 
 ---
 
@@ -60,7 +60,7 @@ Command Center
 
 ## Current sprint status
 
-v0.9.5.46 is a documentation consolidation sprint. It captures the knowledge created during the Data Guard, Ranking Guard, and Power Recovery hardening sprints through v0.9.5.45.
+v0.9.5.47 is a documentation consolidation sprint. It captures the knowledge created during the Data Guard, Ranking Guard, and Power Recovery hardening sprints through v0.9.5.45.
 
 The next development focus is context-aware power candidate recovery.
 

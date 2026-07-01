@@ -1,6 +1,6 @@
 # Sentinel Documentation
 
-**Current Version:** v0.9.5.46
+**Current Version:** v0.9.5.47
 
 Sentinel is an explainable strategic intelligence platform for Last War. It transforms noisy screenshots into guarded operational data and later into strategic decision support.
 

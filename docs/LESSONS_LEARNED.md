@@ -1,6 +1,6 @@
 # Sentinel Lessons Learned
 
-**Version:** v0.9.5.46
+**Version:** v0.9.5.47
 
 ---
 

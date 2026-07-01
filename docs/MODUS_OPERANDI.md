@@ -2,7 +2,7 @@
 
 > How the Proud Owner and Mimir build Sentinel.
 
-**Version:** v0.9.5.46
+**Version:** v0.9.5.47
 
 ---
 
@@ -90,8 +90,8 @@ For this sprint:
 
 ```bash
 git add .
-git commit -m "docs(project): consolidate Sentinel handoff documentation for v0.9.5.46"
-git tag -a v0.9.5.46 -m "v0.9.5.46 Documentation Consolidation"
+git commit -m "docs(project): consolidate Sentinel handoff documentation for v0.9.5.47"
+git tag -a v0.9.5.47 -m "v0.9.5.47 Documentation Consolidation"
 ```
 
 ---
