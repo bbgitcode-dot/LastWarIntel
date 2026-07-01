@@ -119,33 +119,43 @@ def detect_server_consensus_from_ocr(ocr_results, min_occurrences: int = 3) -> S
 def detect_ranking_type(text):
     """Detect ranking type from OCR text.
 
-    Header OCR is source evidence, not strategic inference.  Keep this
-    intentionally small and explicit: localized UI titles may tell Sentinel
-    which ranking screen is shown before value-range fallback runs.  This
-    prevents low-rank Alliance Power pages from being misread as THP only
-    because their values fall into player-scale ranges.
+    The detector is evidence-based instead of first-match based.  Mobile and
+    localized clients may include generic column labels such as "Allianzname"
+    on a Total Hero Power screen because player rows still contain an alliance
+    column.  Strong screen-title evidence must therefore outrank weak column
+    evidence.
     """
     upper = str(text or "").upper()
 
-    alliance_markers = [
-        "ALLIANCE POWER",
-        "ALLIANCE NAME",
-        "ALLIANZ-KAMPFKRAFT",
-        "ALLIANZ KAMPFKRAFT",
-        "ALLIANZNAME",
-    ]
-    total_hero_markers = [
-        "TOTAL HERO POWER",
-        "COMMANDER",
-        "GESAMTKAMPFKRAFT DER HELDEN",
-        "GESAMT KAMPFKRAFT DER HELDEN",
-        "KOMMANDANT",
-    ]
+    alliance_score = 0
+    thp_score = 0
 
-    if any(marker in upper for marker in alliance_markers):
+    # Strong title evidence.
+    if "ALLIANCE POWER" in upper:
+        alliance_score += 100
+    if "ALLIANZ-KAMPFKRAFT" in upper or "ALLIANZ KAMPFKRAFT" in upper:
+        alliance_score += 100
+
+    if "TOTAL HERO POWER" in upper:
+        thp_score += 100
+    if "GESAMTKAMPFKRAFT DER HELDEN" in upper or "GESAMT KAMPFKRAFT DER HELDEN" in upper:
+        thp_score += 100
+
+    # Column evidence.  "Allianzname" alone is weak because THP screens also
+    # show the player's alliance column.  "Kommandant"/"Commander" is much
+    # stronger evidence for a player ranking.
+    if "ALLIANCE NAME" in upper or "ALLIANZNAME" in upper:
+        alliance_score += 20
+    if "COMMANDER" in upper or "KOMMANDANT" in upper:
+        thp_score += 80
+
+    if thp_score > alliance_score and thp_score >= 80:
+        return "total_hero_power"
+    if alliance_score > thp_score and alliance_score >= 80:
         return "alliance_power"
 
-    if any(marker in upper for marker in total_hero_markers):
-        return "total_hero_power"
+    # Preserve previous behavior for simple column-only alliance screenshots.
+    if alliance_score >= 20 and thp_score == 0:
+        return "alliance_power"
 
     return "unknown"

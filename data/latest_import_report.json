@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-01T00:07:25.091490+00:00",
-  "runtime_seconds": 461.35,
+  "created_at": "2026-06-30T23:24:51.026913+00:00",
+  "runtime_seconds": 468.02,
   "screenshots": 16,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -9,12 +9,12 @@
   ],
   "server_count": 1,
   "rows": 129,
-  "status": "Ready",
-  "readiness": 100,
-  "review_count": 0,
+  "status": "Review",
+  "readiness": 90,
+  "review_count": 2,
   "data_guard": {
-    "status": "Healthy",
-    "warnings": 0,
+    "status": "Warning",
+    "warnings": 2,
     "critical": 0,
     "checks": [
       "server_assignment",
@@ -25,38 +25,51 @@
     ]
   },
   "ranking_recovery": {
-    "attempts": 0,
+    "attempts": 15,
     "success": 0,
-    "calibrated_pass": 0,
-    "rejected": 0,
-    "confidence_avg": 0
+    "calibrated_pass": 15,
+    "rejected": 2,
+    "confidence_avg": 0.9707
   },
   "imports": [
     {
+      "server": null,
+      "ranking_type": "ranking_guard_quarantine",
+      "rows": 2,
+      "status": "Quarantine",
+      "confidence": 0,
+      "review_count": 2,
+      "screenshots": 1,
+      "source_files": [
+        "Screenshot_20260701-003346.png"
+      ],
+      "source": "REVIEW_ranking_guard_quarantine"
+    },
+    {
       "server": 552,
       "ranking_type": "alliance_power",
-      "rows": 36,
+      "rows": 25,
       "status": "Review",
       "confidence": 90,
-      "review_count": 36,
-      "screenshots": 4,
+      "review_count": 25,
+      "screenshots": 3,
       "source_files": [
         "Screenshot_20260701-003252.png",
         "Screenshot_20260701-003328.png",
-        "Screenshot_20260701-003346.png",
-        "Screenshot_20260701-003409.png"
+        "Screenshot_20260701-003346.png"
       ],
       "source": "552_alliance_power"
     },
     {
       "server": 552,
       "ranking_type": "total_hero_power",
-      "rows": 93,
+      "rows": 102,
       "status": "Review",
       "confidence": 90,
-      "review_count": 35,
-      "screenshots": 12,
+      "review_count": 36,
+      "screenshots": 13,
       "source_files": [
+        "Screenshot_20260701-003409.png",
         "Screenshot_20260701-003430.png",
         "Screenshot_20260701-003446.png",
         "Screenshot_20260701-003509.png",
@@ -73,19 +86,44 @@
       "source": "552_total_hero_power"
     }
   ],
-  "reviews": [],
+  "reviews": [
+    {
+      "server": 552,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 1,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260701-003346.png"
+    },
+    {
+      "server": 552,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 2,
+      "title": "Ranking Guard quarantine",
+      "description": "ranking_type_conflict:player_alliance_tag_shape;player_name_shape;player_scale_power;assigned_alliance_power_but_row_is_thp_shaped",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260701-003346.png"
+    }
+  ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "16 screenshots · 1 servers · 129 rows · 461.35s",
-      "severity": "success"
+      "detail": "16 screenshots · 1 servers · 129 rows · 468.02s",
+      "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "0 review item(s) detected",
-      "severity": "success"
+      "detail": "2 review item(s) detected",
+      "severity": "warning"
     }
   ]
 }

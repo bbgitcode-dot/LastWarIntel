@@ -43,3 +43,8 @@ def test_explicit_player_fields_still_quarantine_inside_alliance_power():
     assert decision.should_quarantine
     assert decision.expected_ranking_type == "total_hero_power"
     assert "assigned_alliance_power_but_row_is_thp_shaped" in decision.reasons
+
+
+def test_commander_evidence_wins_over_alliance_name_column_on_mobile_thp():
+    text = "Rang Allianzname Kommandant Kampfkraft Kriegszone #552"
+    assert detect_ranking_type(text) == "total_hero_power"
