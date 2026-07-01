@@ -1,14 +1,17 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-01T08:07:15.404828+00:00",
-  "runtime_seconds": 494.52,
-  "screenshots": 16,
+  "created_at": "2026-07-01T18:07:37.619149+00:00",
+  "runtime_seconds": 1757.28,
+  "screenshots": 68,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
+    549,
+    550,
+    551,
     552
   ],
-  "server_count": 1,
-  "rows": 129,
+  "server_count": 4,
+  "rows": 471,
   "status": "Review",
   "readiness": 60,
   "review_count": 8,
@@ -39,10 +42,11 @@
       "status": "Quarantine",
       "confidence": 0,
       "review_count": 8,
-      "screenshots": 5,
+      "screenshots": 6,
       "source_files": [
-        "Screenshot_20260701-003252.png",
-        "Screenshot_20260701-003328.png",
+        "2026-06-28 13_15_08-Window.png",
+        "2026-06-28 13_32_15-Window.png",
+        "2026-06-29 14_44_25-Window.png",
         "Screenshot_20260701-003622.png",
         "Screenshot_20260701-003631.png",
         "Screenshot_20260701-003641.png"
@@ -50,12 +54,136 @@
       "source": "REVIEW_ranking_guard_quarantine"
     },
     {
-      "server": 552,
+      "server": 549,
       "ranking_type": "alliance_power",
-      "rows": 33,
+      "rows": 49,
       "status": "Review",
       "confidence": 90,
-      "review_count": 33,
+      "review_count": 49,
+      "screenshots": 7,
+      "source_files": [
+        "2026-06-28 13_14_06-Window.png",
+        "2026-06-28 13_14_49-Window.png",
+        "2026-06-28 13_15_08-Window.png",
+        "2026-06-28 13_15_25-Window.png",
+        "2026-06-28 13_15_43-Window.png",
+        "2026-06-28 13_16_01-Window.png",
+        "2026-06-28 13_16_27-Window.png"
+      ],
+      "source": "549_alliance_power"
+    },
+    {
+      "server": 549,
+      "ranking_type": "total_hero_power",
+      "rows": 90,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 24,
+      "screenshots": 14,
+      "source_files": [
+        "2026-06-28 13_16_48-Window.png",
+        "2026-06-28 13_17_05-Window.png",
+        "2026-06-28 13_17_22-Window.png",
+        "2026-06-28 13_17_46-Window.png",
+        "2026-06-28 13_18_07-Window.png",
+        "2026-06-28 13_18_20-Window.png",
+        "2026-06-28 13_18_36-Window.png",
+        "2026-06-28 13_18_53-Window.png",
+        "2026-06-28 13_19_11-Window.png",
+        "2026-06-28 13_19_30-Window.png",
+        "2026-06-28 13_19_45-Window.png",
+        "2026-06-28 13_19_58-Window.png",
+        "2026-06-28 13_20_12-Window.png",
+        "2026-06-28 13_20_25-Window.png"
+      ],
+      "source": "549_total_hero_power"
+    },
+    {
+      "server": 550,
+      "ranking_type": "alliance_power",
+      "rows": 24,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 24,
+      "screenshots": 4,
+      "source_files": [
+        "2026-06-28 13_32_15-Window.png",
+        "2026-06-28 13_32_29-Window.png",
+        "2026-06-28 13_32_41-Window.png",
+        "2026-06-28 13_32_57-Window.png"
+      ],
+      "source": "550_alliance_power"
+    },
+    {
+      "server": 550,
+      "ranking_type": "total_hero_power",
+      "rows": 58,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 20,
+      "screenshots": 9,
+      "source_files": [
+        "2026-06-28 13_33_09-Window.png",
+        "2026-06-28 13_33_23-Window.png",
+        "2026-06-28 13_33_38-Window.png",
+        "2026-06-28 13_33_50-Window.png",
+        "2026-06-28 13_34_01-Window.png",
+        "2026-06-28 13_34_13-Window.png",
+        "2026-06-28 13_34_32-Window.png",
+        "2026-06-28 13_34_46-Window.png",
+        "2026-06-28 13_35_00-Window.png"
+      ],
+      "source": "550_total_hero_power"
+    },
+    {
+      "server": 551,
+      "ranking_type": "alliance_power",
+      "rows": 20,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 20,
+      "screenshots": 3,
+      "source_files": [
+        "2026-06-29 14_43_59-Window.png",
+        "2026-06-29 14_44_25-Window.png",
+        "2026-06-29 14_44_46-Window.png"
+      ],
+      "source": "551_alliance_power"
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "rows": 98,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 46,
+      "screenshots": 15,
+      "source_files": [
+        "2026-06-29 14_45_10-Window.png",
+        "2026-06-29 14_45_25-Window.png",
+        "2026-06-29 14_45_40-Window.png",
+        "2026-06-29 14_46_08-Window.png",
+        "2026-06-29 14_46_26-Window.png",
+        "2026-06-29 14_46_44-Window.png",
+        "2026-06-29 14_47_05-Window.png",
+        "2026-06-29 14_47_24-Window.png",
+        "2026-06-29 14_47_40-Window.png",
+        "2026-06-29 14_47_59-Window.png",
+        "2026-06-29 14_48_15-Window.png",
+        "2026-06-29 14_48_28-Window.png",
+        "2026-06-29 14_48_43-Window.png",
+        "2026-06-29 14_48_58-Window.png",
+        "2026-06-29 14_49_13-Window.png"
+      ],
+      "source": "551_total_hero_power"
+    },
+    {
+      "server": 552,
+      "ranking_type": "alliance_power",
+      "rows": 36,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 36,
       "screenshots": 4,
       "source_files": [
         "Screenshot_20260701-003252.png",
@@ -92,40 +220,40 @@
   ],
   "reviews": [
     {
-      "server": 552,
+      "server": 550,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "alliance_power",
       "rank": 1,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.35",
+      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:4.22",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003252.png"
+      "screenshot": "2026-06-28 13_32_15-Window.png"
     },
     {
-      "server": 552,
+      "server": 551,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "alliance_power",
       "rank": 2,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.30",
+      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.67",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003252.png"
+      "screenshot": "2026-06-29 14_44_25-Window.png"
     },
     {
-      "server": 552,
+      "server": 549,
       "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
+      "expected_ranking_type": "unknown",
       "rank": 3,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:9.43",
+      "description": "ranking_type_conflict:missing_alliance_name",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003328.png"
+      "screenshot": "2026-06-28 13_15_08-Window.png"
     },
     {
       "server": 552,
@@ -192,7 +320,7 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "16 screenshots · 1 servers · 129 rows · 494.52s",
+      "detail": "68 screenshots · 4 servers · 471 rows · 1757.28s",
       "severity": "warning"
     },
     {
