@@ -322,6 +322,25 @@ Generalizes the THP Power Sanity Guard into a ranking-wide power envelope guard.
 19 passed
 ```
 
+
+## v0.9.5.37 – Screenshot-Aware Ranking Power Guard
+
+### Focus
+
+Turns the Ranking Power Guard from a strict local median filter into a rank-aware context validator.
+
+### Fixed
+
+- Legitimate top-3 Alliance Power rows are no longer quarantined when mobile screenshots split the top ranks across adjacent captures.
+- Lower-rank Alliance Power OCR explosions remain quarantined before power sorting.
+- THP Power Sanity behavior remains unchanged.
+
+### Validation
+
+```text
+21 passed
+```
+
 ## v0.9.5.24 – Documentation Consolidation
 
 ### Focus
