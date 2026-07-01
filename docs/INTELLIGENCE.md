@@ -1,18 +1,16 @@
 # Sentinel Intelligence Concepts
 
-> **Version:** v0.9.5.25
+**Version:** v0.9.5.46
 
 ---
 
-## Purpose
+## Current position
 
-This document defines the shared vocabulary used by Sentinel.
-
-The current v0.9.5.x work is still mostly pre-intelligence work: it creates trusted operational data. This is necessary before strategic assessments can be reliable.
+The current v0.9.5.x work is still mostly pre-intelligence work. It creates trusted operational data. Strategic intelligence must wait until data stability is strong enough.
 
 ---
 
-## Updated knowledge ladder
+## Knowledge ladder
 
 ```text
 Raw Screenshot
@@ -48,7 +46,7 @@ Recommendation
 
 ## Operational Truth
 
-Operational Truth is the trusted runtime state after OCR, parsing, Data Guard validation, Quality Loop recovery, and quarantine decisions.
+Operational Truth is the trusted runtime state after OCR, parsing, Data Guard validation, Ranking Guard validation, recovery, and quarantine decisions.
 
 It is not necessarily perfect. It is the best evidence Sentinel can safely use without hiding uncertainty.
 
@@ -58,44 +56,24 @@ It is not necessarily perfect. It is the best evidence Sentinel can safely use w
 
 Confidence describes evidence quality, not randomness.
 
-A low confidence value should trigger one of three outcomes:
+Low confidence should trigger one of:
 
 1. targeted recovery,
 2. quarantine,
 3. manual review.
 
-A low confidence value should not trigger guessing.
+Low confidence must not trigger guessing.
 
 ---
 
-## Quarantine
+## Recovered data
 
-Quarantine is a safe holding state for data that may be useful but cannot yet be trusted.
+Recovered rows are not the same as clean rows. They must preserve original evidence, recovery method, and confidence.
 
-Quarantined data should preserve:
+Future intelligence modules must be able to distinguish:
 
-- source screenshot,
-- OCR output,
-- suspected issue,
-- confidence,
-- Data Guard reason,
-- recommended next step.
+- clean trusted observations,
+- recovered trusted observations,
+- reviewed observations,
+- quarantined observations.
 
----
-
-## Ranking Guard
-
-The Ranking Guard introduced in v0.9.5.25 is an integrity module that validates whether a row belongs to its assigned ranking type.
-
-It will protect against issues such as:
-
-- THP rows entering Alliance Power rankings,
-- Alliance Power rows entering THP rankings,
-- invalid value ranges,
-- impossible rank continuity,
-- missing required ranking fields.
-
-
-## v0.9.5.28 – Inference Engine Core
-
-Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

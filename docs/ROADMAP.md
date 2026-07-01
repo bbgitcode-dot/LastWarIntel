@@ -1,20 +1,20 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.27
+**Version:** v0.9.5.46
 
 ---
 
 ## Roadmap philosophy
 
-Sentinel's roadmap is not a feature backlog. It is the path from raw screenshots to trusted strategic decision support.
+Sentinel's roadmap is the path from raw screenshots to trusted strategic decision support.
 
 Every milestone should help answer:
 
-> **What deserves our attention today?**
+> What deserves our attention today?
 
 ---
 
-## Current phase: Operational Data Stability
+## Current phase: Data Integrity Fortress
 
 Goal:
 
@@ -22,110 +22,82 @@ Goal:
 
 Completed recently:
 
-- Parser validation with Ground Truth.
+- Ground Truth validation framework.
 - Command Center foundation.
 - Ground Truth/runtime separation.
 - Sentinel Data Guard.
-- Sentinel Data Quality Loop.
+- Data Quality Loop.
+- Ranking Guard.
+- Power Sanity Guard.
+- Source-local Power Digit Recovery.
+- Documentation consolidation and handoff package.
 
 Current focus:
 
 - Stop silent data contamination.
+- Make recovery explainable.
+- Stabilize Server 549–553 regression behavior.
 - Build guardrails before strategic intelligence expands.
 
 ---
 
 ## Near-term milestones
 
-### v0.9.5.24 – Documentation Consolidation
+### v0.9.5.47 – Context-aware Power Candidate Recovery
 
-- Consolidate release notes.
-- Update architecture and status documentation.
-- Document operating model.
-- Create Road to v1.0.
+- Generate multiple recovery candidates for suspicious power values.
+- Score candidates using source-local ranking context.
+- Recover only when candidate confidence is strong.
+- Quarantine ambiguous power values.
+- Expose candidate metadata in reports.
 
-### v0.9.5.25 – Sentinel Ranking Guard ✅
+### v0.9.5.48 – Import Session and Segment Integrity
 
-- Prevent THP rows from entering Alliance Power ranking.
-- Prevent Alliance Power rows from entering THP ranking.
-- Add ranking-type semantic checks.
-- Quarantine instead of silent correction.
+- Introduce explicit import sessions.
+- Detect missing, duplicate, mixed, and out-of-order segments.
+- Avoid filename/order assumptions.
 
-### v0.9.5.26 – Ground Truth Validation Framework ✅
+### v0.9.5.49 – Quarantine Center Foundation
 
-- Operationalize Ground Truth validation for current imports.
-- Scope quality metrics to the relevant server.
-- Include Ranking Guard quarantine evidence in validation reports.
-
-### v0.9.5.27 – Recoverable Gap Intelligence ✅
-
-- Resolve recoverable Ground Truth gaps with evidence-based same-server inference.
-- Keep Operational Truth untouched while reporting inferred validation matches explicitly.
-- Reduce blocked rank fallbacks without accepting rank-only false positives.
-
-### v0.9.5.28 – Field-Based Data Quality Loop
-
-- Expand recovery from server-only/header recovery to field-specific recovery.
-- Add strategies for name, alliance tag, rank, THP, and alliance power.
-
-### v0.9.5.29 – Quarantine Center
-
-- Surface quarantined blocks in Command Center.
-- Make review actionable and explainable.
-
-### v0.9.5.30 – Import Session History
-
-- Store import sessions with screenshots, runtime, rows, warnings, recoveries, and quarantine decisions.
+- Surface quarantined rows in Command Center.
+- Include source screenshot, field, reason, and proposed action.
 
 ### v0.9.6.0 – Data Stability Baseline
 
-- Stable multi-server import for 549/550/551.
-- Guarded server and ranking assignment.
-- Review/Quarantine workflow visible in Command Center.
+- Stable multi-server import for Server 549–553 regression data.
+- No silent server or ranking-type contamination.
+- Explainable recovery and quarantine states.
 
 ---
 
 ## Mid-term milestones
 
-### Entity Resolution
+### Historical Data Foundation
 
-- Track players across snapshots despite OCR noise.
-- Improve alliance tag and player name normalization.
-- Handle renames and transfer-like movements.
+- Snapshot repository.
+- Import session history.
+- Player and alliance identity resolution.
+- Snapshot comparison.
 
-### Snapshot Repository
+### Operational Intelligence
 
-- Store trusted snapshots over time.
-- Support historical comparisons.
-- Support trend detection.
+- Difference detection.
+- WatchTargets.
+- Server and alliance change views.
+- Priority signals.
 
-### Server Landscape
+### Strategic Assessments
 
-- Show server-level coverage and completeness.
-- Identify missing rankings and stale snapshots.
+- Recruitment window.
+- Whale movement.
+- Alliance instability.
+- Transfer opportunity.
+- Explainable confidence and evidence.
 
-### Recruitment Intelligence Calibration
+### Decision Center
 
-- Use stable historical snapshots to calibrate recruitment value.
-- Detect alliance instability and player availability over time.
+- Morning Briefing.
+- Priority queue.
+- Recommendation history.
+- Leadership reports.
 
----
-
-## v1.0 target
-
-Sentinel v1.0 should be production-ready for alliance leadership:
-
-- Trusted import pipeline.
-- Command Center with operational status.
-- Entity pages for servers, alliances, and players.
-- WatchTargets with history.
-- Explainable strategic assessments.
-- Recruitment Intelligence beyond MVP.
-- Morning Briefing / Decision Center.
-
-See `docs/ROAD_TO_V1.md`.
-
-
-## v0.9.5.28 – Inference Engine Core
-
-Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.

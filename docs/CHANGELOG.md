@@ -1,193 +1,72 @@
 # Changelog
 
-## [0.9.5.29] - Ranking Guard Recovery
-
-### Added
-
-- Evidence-based Ranking Guard Recovery layer.
-- Recovery metrics in operational import reports.
-- Smoke tests for safe recovery and calibration decisions.
-
-### Changed
-
-- Ranking Guard can now recover provably safe ranking-type assignments before quarantine.
-- False-positive alliance-name shapes can be calibrated without being quarantined.
-- Version updated to `0.9.5.29`.
-
-
-
-## [0.9.5.27] - Recoverable Gap Intelligence
-
-### Added
-
-- Evidence Resolver for Ground Truth validation gaps.
-- Unique exact-power recovery and conservative near-power recovery.
-- Smoke tests for evidence recovery and validator integration.
-
-### Changed
-
-- Ground Truth Validator now reports recoverable inferred matches as explicit `gap_*` methods.
-- Version updated to `0.9.5.27`.
-
-All notable changes to Sentinel are documented here.
-
-This file summarizes major release milestones. Detailed historical notes are consolidated in `docs/RELEASE_NOTES.md`.
+All notable changes to Sentinel are documented here. Detailed release notes are consolidated in `docs/RELEASE_NOTES.md`.
 
 ---
 
-
-## [0.9.5.30] - Universal Server Detection
-
-### Added
-
-- Pattern-first server candidate extraction for repeated `#123` / `#1234` OCR evidence.
-- Localized fallback support for mobile/non-English screenshots.
-- Smoke tests for mobile hash consensus and localized server labels.
-
-### Changed
-
-- Existing server consensus and Data Guard logic now receive language-neutral candidates.
-- Version updated to `0.9.5.30`.
-
-## [0.9.5.26] - Ground Truth Validation Framework
+## [0.9.5.46] - Documentation Consolidation
 
 ### Added
 
-- Operational Ground Truth validation defaults for Server 551 Top 50 THP and current export.
-- Server-scoped precision metrics for multi-server exports.
-- Ranking Guard quarantine evidence in Ground Truth validation reports.
-- Failure classification and failure summary for validation details.
+- `docs/START_NEXT_CHAT.md` for clean project handoff.
+- `docs/LESSONS_LEARNED.md` for sprint knowledge retention.
+- `docs/ARCHITECTURAL_DECISIONS.md` for ADR-style architecture memory.
 
 ### Changed
 
-- Version updated to `0.9.5.26`.
+- Updated project documentation to reflect the actual v0.9.5.45 runtime baseline.
+- Updated `PROJECT_STATUS.md` with recent Data Guard, Ranking Guard, Power Sanity, and Server 549–553 findings.
+- Updated `ROAD_TO_V1.md` with milestones from Data Integrity Fortress to v1.0.0.
+- Updated architecture and operating model documentation.
+- Version updated to `0.9.5.46`.
 
 ---
 
-## [0.9.5.25] - Sentinel Ranking Guard
+## [0.9.5.45] - Source-local Power Digit Recovery
 
 ### Added
 
-- `parser/ranking_guard.py` as a modular Data Guard integrity component for ranking-type validation.
-- Runtime quarantine path `REVIEW_ranking_guard_quarantine`.
-- Import report and Command Center review metadata for ranking-type conflicts.
-- Smoke tests for THP-in-Alliance-Power and Alliance-Power-in-THP contamination.
-- `docs/SENTINEL_DATA_GUARD.md` to preserve the Data Guard doctrine as the central integrity model.
-
-### Changed
-
-- Import pipeline now applies Ranking Guard before content reconciliation and export.
-- Operational import report now lists `ranking_guard` as an integrity check.
-- Version updated to `0.9.5.25`.
-
-
-## [0.9.5.28] - Inference Engine Core
-
-### Added
-
-- Read-only `inference/` package.
-- Context Engine for explainable bounded-gap inference.
-- Inference JSON/XLSX reports.
-
-### Changed
-
-- Ground Truth validation can mark accepted contextual inferences separately from observed OCR matches.
-- Version updated to `0.9.5.28`.
-
-
-## [0.9.5.31] - Mobile Ranking Type Integrity Hotfix
-
-### Fixed
-
-- German mobile ranking headers are now recognized as intrinsic ranking-type evidence.
-- Low-rank Alliance Power rows below 1B no longer leak into THP when the screen is explicitly Alliance Power.
-
-## [0.9.5.24] - Documentation Consolidation
-
-### Added
-
-- `docs/ROAD_TO_V1.md`.
-- `docs/MODUS_OPERANDI.md`.
-- Updated documentation for Command Center, Sentinel Data Guard, Sentinel Data Quality Loop, quarantine, and upcoming Ranking Guard.
-
-### Changed
-
-- Consolidated scattered release-note files into `docs/RELEASE_NOTES.md`.
-- Updated `PROJECT_STATUS.md`, `ROADMAP.md`, `ARCHITECTURE.md`, `README.md`, `SENTINEL.md`, `VISION.md`, and `INTELLIGENCE.md` to reflect the current operational platform state.
-- Version updated to `0.9.5.24`.
-
----
-
-## [0.9.5.23] - Sentinel Data Quality Loop
-
-### Added
-
-- Quality Loop for targeted OCR recovery.
-- Safe Data Guard quarantine for suspicious blocks.
-- Recovery attempt metadata.
-
-### Changed
-
-- Suspicious server blocks are quarantined instead of silently merged.
-- Filename and timestamp logic are excluded from server assignment decisions.
-
----
-
-## [0.9.5.22] - Data Guard Hotfix Attempt
-
-### Added
-
-- Content-first Data Guard server reconciliation.
+- Leading digit recovery for suspicious THP and Alliance Power values.
+- Recovery metadata for corrected power fields.
 
 ### Finding
 
-- Hotfix removed false 552 output but risked overcorrection by merging suspicious rows into 551.
-- This led to the quarantine doctrine implemented in v0.9.5.23.
+- Recovery can reduce false `7xxM` and `77B` values, but candidate choice remains heuristic.
+- Next sprint should implement context-aware power candidate scoring.
 
 ---
 
-## [0.9.5.21] - Sentinel Data Guard
+## [0.9.5.44] - Source-local Power Sanity Guard
 
 ### Added
 
-- Sentinel Data Guard Phase 1.
-- Operational import report.
-- Command Center live import state.
+- Source-local power sanity checks for Ranking Guard.
+
+### Finding
+
+- Guard correctly catches false high values but can increase quarantine noise.
 
 ---
 
-## [0.9.5.20] - Architecture Consolidation
-
-### Changed
-
-- Ground Truth removed from runtime dependency path.
-- Command Center reads through repository/service boundary.
-
----
-
-## [0.9.5.19] - Command Center Foundation
+## [0.9.5.43] - THP Source-shape Digit Explosion Guard
 
 ### Added
 
-- FastAPI application shell.
-- Command Center UI.
-- Imports and Quality views.
-- Health/status/version endpoints.
+- Guard against `164M -> 764M` style OCR explosions.
 
 ---
 
-## [0.9.5.18] - Parser Stabilization
+## [0.9.5.42] - Rank / Power Envelope Guard
 
 ### Added
 
-- Ground Truth validation improvements.
-- Ranking alignment and gap handling.
-- Parser quality metrics.
+- Envelope checks for THP and Alliance Power ranking rows.
 
 ---
 
 ## Earlier history
 
-Earlier v0.9.5.x releases focused on OCR provider architecture, EasyOCR/PaddleOCR benchmarking, ground truth validation, duplicate column fixes, row alignment, parser normalization, and quality metrics.
+Earlier v0.9.5.x releases focused on OCR provider architecture, EasyOCR/PaddleOCR benchmarking, ground truth validation, row alignment, power-first ranking reconstruction, Data Guard, Data Quality Loop, Ranking Guard, and Command Center foundations.
 
-Full historical notes are available in `docs/RELEASE_NOTES.md`.
+Full historical notes are consolidated in `docs/RELEASE_NOTES.md`.
+

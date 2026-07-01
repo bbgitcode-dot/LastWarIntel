@@ -1,8 +1,8 @@
 # Sentinel Modus Operandi
 
-> **How the Proud Owner and Mimir build Sentinel.**
+> How the Proud Owner and Mimir build Sentinel.
 
-**Version:** v0.9.5.25
+**Version:** v0.9.5.46
 
 ---
 
@@ -10,49 +10,25 @@
 
 ### Proud Owner
 
-The Proud Owner owns:
-
-- product vision,
-- priorities,
-- acceptance decisions,
-- release direction,
-- final product judgment.
-
-The Proud Owner decides what matters.
+The Proud Owner owns product vision, priorities, acceptance decisions, release direction, and final product judgment.
 
 ### Mimir
 
-Mimir is the strategic copilot.
-
-Mimir supports with:
-
-- architecture reasoning,
-- challenge and critique,
-- patch planning,
-- documentation,
-- release packaging,
-- explainability focus,
-- operational quality control.
-
-Mimir advises. The Proud Owner decides.
+Mimir is the strategic copilot. Mimir supports with architecture reasoning, critique, patch planning, documentation, release packaging, explainability focus, and operational quality control.
 
 ### Sentinel
 
-Sentinel is the platform.
-
-Sentinel observes, validates, recovers, stores, explains, assesses, and recommends.
+Sentinel is the platform. Sentinel observes, validates, recovers, stores, explains, assesses, and recommends.
 
 ---
 
 ## Sprint delivery rule
 
-The preferred Sentinel delivery format is:
+Preferred delivery format:
 
-> **Full ZIP patch per sprint.**
+> Full ZIP patch per sprint.
 
-Not snippets.
-Not partial chat fragments.
-Not isolated files unless explicitly requested.
+Not snippets. Not partial chat fragments. Not isolated files unless explicitly requested.
 
 Every sprint package should include:
 
@@ -71,11 +47,30 @@ When the Proud Owner says **Stanzenmodus**, the expected mode is:
 
 - no vision speeches,
 - no scope expansion,
-- no unnecessary discussion,
+- no repeated planning loop,
 - produce the patch,
 - return the ZIP.
 
-If a patch cannot honestly be produced, Mimir must say so immediately.
+If a patch cannot honestly be produced, Mimir must say so immediately and state exactly what is missing.
+
+---
+
+## Documentation rules
+
+Standard documentation path: `/docs`.
+
+Architecture-changing sprints must update at least:
+
+- `docs/PROJECT_STATUS.md`,
+- `docs/ROAD_TO_V1.md`,
+- `docs/ARCHITECTURE.md`,
+- `docs/RELEASE_NOTES.md`,
+- `docs/CHANGELOG.md`.
+
+Handoff-changing sprints must update:
+
+- `docs/START_NEXT_CHAT.md`,
+- `docs/MODUS_OPERANDI.md`.
 
 ---
 
@@ -91,12 +86,12 @@ git commit -m "<type(scope): message>"
 git tag -a vX.Y.Z -m "vX.Y.Z <Release Name>"
 ```
 
-For v0.9.5.24:
+For this sprint:
 
 ```bash
 git add .
-git commit -m "docs(platform): consolidate Sentinel documentation for v0.9.5.24"
-git tag -a v0.9.5.24 -m "v0.9.5.24 Documentation Consolidation"
+git commit -m "docs(project): consolidate Sentinel handoff documentation for v0.9.5.46"
+git tag -a v0.9.5.46 -m "v0.9.5.46 Documentation Consolidation"
 ```
 
 ---
@@ -110,23 +105,7 @@ git tag -a v0.9.5.24 -m "v0.9.5.24 Documentation Consolidation"
 5. Data Guard protects; Quality Loop recovers; humans decide final uncertain cases.
 6. Every recommendation must remain explainable.
 7. Every metric must support a decision.
+8. Guards do not invent data.
+9. Recovery must be auditable.
+10. Documentation must preserve why decisions were made, not only what changed.
 
----
-
-## Current sprint memory
-
-Important design decision:
-
-> **Sentinel Data Quality Loop must be field-based, not server-only.**
-
-Planned field recovery targets:
-
-- Server.
-- Alliance Tag.
-- Player Name.
-- Hero Power.
-- Alliance Power.
-- Rank.
-- Ranking Type.
-
-This decision should guide v0.9.5.26 and later.

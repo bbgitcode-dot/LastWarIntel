@@ -1,302 +1,207 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.27  
-**Runtime Baseline:** v0.9.5.27 – Recoverable Gap Intelligence  
-**Current Phase:** Operational Data Stability  
-**Next Planned Sprint:** v0.9.5.27 – Field-Based Data Quality Loop
+**Current Version:** v0.9.5.46  
+**Sprint Type:** Documentation Consolidation  
+**Runtime Baseline:** v0.9.5.45 – Source-local Power Digit Recovery  
+**Current Phase:** Data Integrity Fortress / Operational Data Stability  
+**Next Planned Sprint:** v0.9.5.47 – Context-aware Power Candidate Recovery
 
 ---
 
-## Current summary
+## Executive summary
 
-Sentinel has moved from OCR parser development into platform stabilization.
+Sentinel is now beyond a basic OCR/export tool. The active workstream is the **Data Integrity Fortress**: every screenshot-derived observation must be guarded before it can become Operational Truth.
 
-Recent work introduced:
+The recent sprint sequence from v0.9.5.40 through v0.9.5.45 hardened the Ranking Guard and Data Guard against the most dangerous class of errors: plausible-looking but false rows entering the export silently. The system now prefers quarantine or explicit recovery metadata over false confidence.
 
-- Command Center runtime UI.
-- Operational import reporting.
-- Ground Truth separation from runtime.
-- Sentinel Data Guard.
-- Sentinel Data Quality Loop.
-- Safe quarantine as preferred fallback over silent correction.
-
-The project is now focused on making imported data stable enough for strategic intelligence modules.
+The current known limitation is narrow and well understood: **source-local leading digit recovery can detect and reduce 7xxM / 77B OCR explosions, but the current candidate choice is still too heuristic.** Example from Server 553: `764M` can be reduced to `164M`, while the screenshot truth for some rows is closer to `224M`. The next sprint should replace simple leading-digit substitution with a context-aware candidate scoring engine.
 
 ---
 
-## What recent sprints tried to achieve
+## What Sentinel currently does well
 
-### v0.9.5.18 – Parser stabilization
-
-Goal:
-
-- Improve parser determinism.
-- Introduce honest Ground Truth validation.
-- Reduce bad matches and expose unresolved gaps instead of hiding them.
-
-Outcome:
-
-- Parser quality became measurable through precision, recall, F1, score, and category reports.
-- Bad matches were reduced significantly.
-- Gaps became visible and actionable.
+- Imports Last War ranking screenshots through OCR and parser layers.
+- Separates runtime data from Ground Truth validation data.
+- Writes operational import reports to `data/latest_import_report.json`.
+- Exports Alliance Power and Total Hero Power sheets.
+- Protects server assignment through Sentinel Data Guard.
+- Protects ranking-type integrity through Ranking Guard.
+- Quarantines uncertain rows instead of silently merging or guessing.
+- Runs Ground Truth validation for development and regression analysis.
+- Provides Command Center foundations for operational visibility.
+- Records recovery metadata for field-level power corrections.
 
 ---
 
-### v0.9.5.19 – Command Center foundation
+## Recent sprint history and findings
 
-Goal:
+### v0.9.5.40 – Alliance Power Source-Shape Guard
 
-- Move Sentinel from script-only workflow toward a web-based operations surface.
+**Goal:** Stop 552-style Alliance Power spikes such as `79B / 77B / 70B` from entering Operational Truth.
 
-Outcome:
+**Finding:** The first guard detected some high outliers but could miss clustered false high values.
 
-- FastAPI service foundation.
-- Command Center UI.
-- Imports and Data Quality views.
-- Runtime health/status endpoints.
+**Lesson:** A single-row outlier detector is insufficient. False values can appear as a small high cluster.
 
 ---
 
-### v0.9.5.20 – Architecture consolidation
+### v0.9.5.41 – High Cluster Blocking Attempt
 
-Goal:
+**Goal:** Block paired false high clusters in Alliance Power.
 
-- Remove direct Ground Truth dependency from Command Center runtime.
-- Introduce repository/service boundary.
+**Finding:** The guard still allowed some false top-cluster values while quarantining later rows.
 
-Outcome:
-
-- Runtime no longer treats Ground Truth report as the application source of truth.
-- Ground Truth remains benchmark/development tooling.
+**Lesson:** Cluster decisions must apply to the entire suspect source-local cluster, not just the last row.
 
 ---
 
-### v0.9.5.21 – Sentinel Data Guard
+### v0.9.5.42 – Rank / Power Envelope Guard
 
-Goal:
+**Goal:** Add rank/power envelope checks to identify impossible rows.
 
-- Prevent silent server assignment errors such as 551 screenshots being exported as Server 552.
-- Show latest operational import data in the Command Center.
+**Finding on Server 553:** Some late-scroll THP rows were interpreted as early ranks. The guard correctly quarantined suspicious 7xxM values, but its reasoning still leaned too much on OCR rank.
 
-Outcome:
-
-- Sentinel Data Guard Phase 1 introduced.
-- Operational import report written to `data/latest_import_report.json`.
-- Command Center reads current import data.
-
-Finding:
-
-- Guard behavior must be conservative. It must not silently repair or merge conflict blocks.
+**Lesson:** OCR rank is weak evidence. Power, source-local context, row shape, and screenshot segment evidence must dominate.
 
 ---
 
-### v0.9.5.22 – Data Guard hotfix attempt
+### v0.9.5.43 – THP Source-Shape Digit Explosion Guard
 
-Goal:
+**Goal:** Detect 553-style `164M -> 764M` / `193M -> 793M` OCR explosions.
 
-- Fix the 551→552 block by using content-based evidence.
+**Finding:** The guard correctly prevented false 700M rows from entering the export, but it preserved many useful rows only as quarantine.
 
-Outcome:
-
-- False Server 552 output was removed.
-- However, an overcorrection merged suspicious rows into Server 551.
-
-Finding:
-
-- Data Guard must not auto-merge conflict blocks.
-- Correct response is quarantine and review/recovery, not forced reassignment.
+**Lesson:** Some suspicious values are recoverable. Guarding and recovery must be separate responsibilities.
 
 ---
 
-### v0.9.5.23 – Sentinel Data Quality Loop
+### v0.9.5.44 – Source-local Power Sanity Guard
 
-Goal:
+**Goal:** Make source-local power sanity decisions independent from filename/order assumptions.
 
-- Add a recovery stage before review.
-- Quarantine suspicious blocks safely.
-- Avoid filename/timestamp logic.
+**Finding:** The system became safer, but quarantine increased. Top Alliance and THP rows were blocked when their power-to-local-median ratio was high.
 
-Outcome:
+**Correction:** After checking the screenshots, the apparently high top values were not legitimate; Server 553 had no true 77B alliance and no 700M player. The guard was right to block those values.
 
-- Server 552 disappeared from the latest 549/550/551 import test.
-- Import report recognized exactly three servers: 549, 550, and 551.
-- Data Guard reported healthy with no assignment warnings.
-- Runtime increased significantly, showing the Quality Loop is active.
-
-New finding:
-
-- Rows from one ranking type can contaminate another ranking type.
-- Example: THP-like rows appeared inside Alliance Power rankings.
-
-Conclusion:
-
-- Server assignment is no longer the only guard target.
-- Sentinel needs a dedicated Ranking Guard.
+**Lesson:** Always validate assumptions against screenshot truth. A plausible game value is not automatically the screenshot truth.
 
 ---
 
-## Current test observations
+### v0.9.5.45 – Source-local Power Digit Recovery
 
-Latest large import:
+**Goal:** Recover safe leading-digit OCR errors instead of quarantining every suspicious row.
 
-- 52 screenshots.
-- Servers: 549, 550, 551.
-- 343 rows.
-- Runtime: about 1382 seconds.
-- No false 552 server in latest import report.
-- Data Guard status: Healthy.
-- Review count in report currently needs refinement because per-import review counters and overall review status can diverge.
+**Result:** The system removed the worst false values from the export:
 
-Important issue found:
+- `7xxM` THP values were reduced to `1xxM`-scale values.
+- `77B` Alliance Power was reduced to `17B`-scale values.
+- The import report for Server 553 reached Ready/Healthy/0 review in the observed run.
 
-- Ranking type contamination: THP rows can appear inside Alliance Power export.
+**Remaining issue:** Candidate recovery is still too simple. It may recover `764M -> 164M` even where screenshot truth is `224M`. It may recover `77B -> 17B` where the correct value is closer to `27B` or where the row should be ranked differently.
 
-This is not a server assignment issue. It is a ranking integrity issue.
+**Lesson:** Recovery needs a candidate engine, not a single leading-digit replacement rule.
 
 ---
 
-## Completed step: v0.9.5.25 – Sentinel Ranking Guard
+## Current known problems
 
-Purpose:
+### 1. Power candidate selection is too heuristic
 
-> Prevent rows from entering the wrong ranking type.
+**Status:** Open  
+**Observed on:** Server 553  
+**Confidence:** High
 
-Outcome:
+The system can detect that `764M` is not credible, but it does not yet reliably infer whether the best candidate is `164M`, `224M`, `174M`, or another value. The next sprint should build a candidate scoring engine.
 
-- Ranking Guard introduced as a modular Data Guard component.
-- THP-shaped rows in Alliance Power are quarantined.
-- Alliance-shaped rows in THP are quarantined.
-- Import report surfaces Ranking Guard quarantine as review work.
+Candidate scoring should consider:
 
-Expected checks:
+- source-local visual context,
+- neighbour powers above and below,
+- ranking type,
+- expected monotonic power order,
+- row position within the screenshot,
+- known OCR digit confusions,
+- whether the candidate preserves rank order,
+- whether the candidate creates duplicate or impossible values.
 
-### Alliance Power ranking
+### 2. Recovery metadata exists but needs stronger audit value
 
-- Power values should generally be in alliance-scale ranges.
-- Alliance name should be present or recoverable.
-- Rows with THP-scale values should be rejected or quarantined.
-- Ranking continuity should be plausible.
+**Status:** Partially implemented  
+**Confidence:** High
 
-### Total Hero Power ranking
+v0.9.5.45 introduced fields such as `power_original`, `power_recovered_from`, and `power_recovery_method`. Future reports should also include candidate lists, selected candidate score, rejected candidate reasons, and confidence.
 
-- Power values should generally be player-scale values.
-- Player/alliance tag shape should be plausible.
-- Rows with alliance-scale values should be rejected or quarantined.
+### 3. Import report status can be misleading
 
-### Generic checks
+**Status:** Open  
+**Confidence:** Medium
 
-- Value range guard.
-- Required field guard.
-- Duplicate row guard.
-- Rank continuity guard.
-- Ranking-type confidence.
-- Quarantine instead of auto-correction.
+The latest Server 553 run reported Ready/Healthy/0 reviews after recovery. That is operationally useful, but it can hide that recovered values may still be wrong. Ready should eventually distinguish:
 
----
+- clean trusted rows,
+- trusted recovered rows,
+- reviewed recovered rows,
+- quarantined rows.
 
-## Further stabilization backlog
+### 4. Screenshot segment reconstruction remains a long-term risk
 
-## Next step: v0.9.5.26 – Field-Based Data Quality Loop
+**Status:** Partially mitigated  
+**Confidence:** Medium
 
-### v0.9.5.26 – Field-Based Data Quality Loop
-
-Expand the Quality Loop beyond server/header recovery:
-
-- Server Recovery.
-- Alliance Tag Recovery.
-- Player Name Recovery.
-- Hero Power Recovery.
-- Alliance Power Recovery.
-- Rank Recovery.
-- Ranking Type Recovery.
-
-### v0.9.5.27 – Quarantine Center
-
-Make quarantined rows visible and actionable in Command Center:
-
-- Source screenshot.
-- OCR evidence.
-- Guard reason.
-- Suggested recovery.
-- Manual accept/reject workflow.
-
-### v0.9.5.28 – Import Session Model
-
-Introduce durable import sessions:
-
-- import id,
-- timestamp,
-- server coverage,
-- screenshots,
-- rows,
-- warnings,
-- recovery attempts,
-- quarantine results.
-
-### v0.9.6.0 – Data Quality Baseline Release
-
-Target:
-
-- Stable import pipeline for 549/550/551.
-- No silent server/ranking contamination.
-- Measurable recovery and review rates.
-- Command Center reflects operational truth.
+The current approach avoids relying on filename order, but true segment reconstruction is still not complete. Future imports from multiple users or mixed upload sessions require source grouping, ranking-session detection, and segment continuity checks.
 
 ---
 
-## Current doctrine
+## Current quality doctrine
 
 ```text
+Parser extracts.
 Data Guard protects.
-Quality Loop recovers.
+Quality Loop improves source evidence.
 Ranking Guard validates semantic fit.
+Recovery may repair fields only when evidence is explicit.
 Quarantine preserves uncertainty.
-Review is the final fallback.
+Ground Truth validates development quality.
+Operational Truth must never hide uncertainty.
 ```
-
-Sentinel should prefer missing or quarantined data over false operational truth.
-
-
-## Completed step: v0.9.5.26 – Ground Truth Validation Framework
-
-Purpose:
-
-> Make Sentinel import quality measurable against curated transfer-phase Ground Truth.
-
-Outcome:
-
-- Ground Truth validation now defaults to the active Server 551 Top 50 THP reference and current export.
-- Precision is scoped to the Ground Truth server in multi-server imports.
-- Ranking Guard quarantine evidence is included in validation reports.
-- Detail rows now classify whether a row matched, was blocked by rank fallback, is missing, or is represented in quarantine.
-
-This gives the Proud Owner a repeatable quality gate for S6 pre/post Transfer data.
-
-
-## Completed step: v0.9.5.27 – Recoverable Gap Intelligence
-
-Purpose:
-
-> Resolve recoverable validation gaps without weakening Sentinel's integrity doctrine.
-
-Outcome:
-
-- Added same-server evidence resolver for Ground Truth validation.
-- Unique exact THP power can now recover weak-identity rows such as UNKNOWN-name entries.
-- Near-power recovery is allowed only with identity support.
-- Server 551 Top 50 THP validation improved from 45 to 49 matched rows.
-- Blocked rank fallbacks dropped from 5 to 1 while rank-only contradiction remains blocked.
-
-This is the first operational inference layer: Sentinel now records when a row is observed, when a row is inferred for validation, and when uncertainty remains unresolved.
-
-
-## v0.9.5.28 – Inference Engine Core
-
-Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.
-
 
 ---
 
-## v0.9.5.30 – Universal Server Detection
+## Immediate next sprint recommendation: v0.9.5.47
 
-Added pattern-first server detection for mobile and localized screenshots. Sentinel now extracts repeated `#server` evidence from OCR before relying on language-specific labels. Existing consensus and Data Guard rules remain authoritative; insufficient or ambiguous evidence still goes to review.
+### Focus
+
+**Context-aware Power Candidate Recovery**
+
+### Goal
+
+Replace single leading-digit substitution with a candidate-based recovery engine.
+
+### Expected outputs
+
+- Candidate generation for suspicious THP and Alliance Power values.
+- Candidate scoring based on local ranking context.
+- Recovery only when one candidate is clearly stronger than alternatives.
+- Quarantine when candidates remain ambiguous.
+- Export/report metadata exposing original value, candidate list, selected candidate, score, and reason.
+- Regression tests using Server 553 cases.
+
+### Non-goals
+
+- Do not expand strategic intelligence yet.
+- Do not make filename order a truth source.
+- Do not auto-accept ambiguous recovery.
+
+---
+
+## Stability exit criteria before moving to intelligence
+
+Sentinel should not enter the next major intelligence phase until:
+
+- No false server assignments are observed in the 549–553 regression set.
+- No THP rows enter Alliance Power rankings or vice versa.
+- 7xxM/77B OCR explosions are either correctly recovered or quarantined.
+- Recovery reports are explainable enough for manual review.
+- Ground Truth recall remains stable on the Server 551 benchmark.
+- Re-running the same screenshot set produces deterministic export and report behavior.
+

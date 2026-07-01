@@ -1,70 +1,99 @@
 # Road to Sentinel v1.0.0
 
-> **From operational data stability to strategic decision support.**
+> From screenshot import to trusted strategic decision support.
 
-**Created:** v0.9.5.24
+**Current Version:** v0.9.5.46  
+**Current Phase:** Data Integrity Fortress
 
 ---
 
-## Current position
+## North Star
 
-Sentinel has crossed the boundary from parser tool to operational platform.
+Sentinel v1.0.0 is ready when alliance leadership can open the Command Center and quickly answer:
 
-Current assets:
-
-- OCR import pipeline.
-- Parser and normalizer.
-- Ground Truth validator.
-- Command Center.
-- Operational import report.
-- Sentinel Data Guard.
-- Sentinel Data Quality Loop.
-
-Current limiting factor:
-
-> **Data stability must be strong enough before intelligence expands.**
+- What changed?
+- Can I trust the data?
+- What still needs review?
+- Which opportunity deserves attention?
+- What should we do next?
 
 ---
 
 ## Milestone 1 – Data Integrity Fortress
 
-Target versions: v0.9.5.25 – v0.9.6.0
+**Target:** v0.9.5.x → v0.9.6.0  
+**Status:** Active
 
-### Goals
+### Goal
+
+Make screenshot-derived data safe enough to become Operational Truth.
+
+### Completed capabilities
+
+- OCR provider architecture.
+- Parser and ranking row extraction.
+- Ground Truth validation framework.
+- Command Center foundation.
+- Runtime import report.
+- Sentinel Data Guard.
+- Sentinel Data Quality Loop.
+- Ranking Guard.
+- Source-local Power Sanity Guard.
+- Leading-digit Power Recovery metadata.
+
+### Remaining capabilities
+
+#### v0.9.5.47 – Context-aware Power Candidate Recovery
+
+Replace simple leading-digit replacement with a candidate scoring engine.
+
+Exit criteria:
+
+- Server 553 false `7xxM` rows are not exported as `7xxM`.
+- Recovered values are selected from multiple candidates using context.
+- Ambiguous recoveries remain quarantined.
+- Recovery metadata is audit-ready.
+
+#### v0.9.5.48 – Import Session and Segment Integrity
+
+Create explicit import sessions and ranking-session metadata.
+
+Exit criteria:
+
+- Screenshot sets can be grouped without trusting filename order.
+- Missing, duplicate, and mixed ranking segments are visible.
+- Segment continuity warnings are explainable.
+
+#### v0.9.5.49 – Quarantine Center Foundation
+
+Make review visible and actionable in the Command Center.
+
+Exit criteria:
+
+- Every quarantined row shows screenshot, reason, suspected field, and next action.
+- Human review can accept, reject, or mark for recovery.
+
+#### v0.9.6.0 – Data Stability Baseline
+
+Declare a baseline only after repeated 549–553 regression runs are stable.
+
+Exit criteria:
 
 - No silent server contamination.
 - No silent ranking-type contamination.
-- Clear quarantine path.
-- Review as an explicit workflow.
-- Command Center reflects current operational truth.
-
-### Required capabilities
-
-- Sentinel Ranking Guard.
-- Field-based Data Quality Loop.
-- Quarantine Center.
-- Import Session History.
-- Stable import report schema.
-
-### Exit criteria
-
-- Large imports across 549/550/551 show no false server output.
-- THP rows do not enter Alliance Power rankings.
-- Alliance rows do not enter THP rankings.
-- Quarantined rows are visible and explainable.
-- Review actions are specific and actionable.
+- No unrecovered false 7xxM/77B values in Operational Truth.
+- Ground Truth Server 551 remains stable.
+- Reports distinguish clean, recovered, and quarantined rows.
 
 ---
 
 ## Milestone 2 – Historical Data Foundation
 
-Target versions: v0.9.6.x
+**Target:** v0.9.6.x
 
-### Goals
+### Goal
 
-- Persist trusted snapshots.
-- Create stable server/alliance/player identities.
-- Prepare trend analysis.
+Persist trusted snapshots and make changes measurable.
 
 ### Required capabilities
 
@@ -72,36 +101,36 @@ Target versions: v0.9.6.x
 - Import session table.
 - Player identity resolution.
 - Alliance identity resolution.
-- Deduplication and snapshot replacement rules.
+- Deduplication and replacement rules.
+- Snapshot comparison by server, alliance, player, and ranking type.
 
 ### Exit criteria
 
-- Sentinel can compare two imports from the same server.
+- Sentinel can compare two trusted imports from the same server.
 - Sentinel can track a player despite minor OCR name noise.
-- Sentinel can detect joined/left/moved players.
+- Sentinel can identify joined, left, moved, and renamed entities with evidence.
 
 ---
 
 ## Milestone 3 – Operational Intelligence
 
-Target versions: v0.9.7.x
+**Target:** v0.9.7.x
 
-### Goals
+### Goal
 
-- Transform stable differences into facts.
-- Surface what changed overnight.
-- Create operational WatchTargets.
+Turn trusted differences into operational facts.
 
 ### Required capabilities
 
-- Difference detection from trusted snapshots.
-- Intelligence facts.
-- WatchTarget enrichment.
+- Difference detection.
+- Fact generation.
+- WatchTarget model.
 - Server and alliance overview pages.
+- Change severity scoring.
 
 ### Exit criteria
 
-- Sentinel can say what changed between imports.
+- Sentinel can state what changed since the last trusted snapshot.
 - Every change is traceable to source observations.
 - Command Center highlights important operational changes.
 
@@ -109,37 +138,35 @@ Target versions: v0.9.7.x
 
 ## Milestone 4 – Strategic Assessments
 
-Target versions: v0.9.8.x
+**Target:** v0.9.8.x
 
-### Goals
+### Goal
 
-- Convert facts and indicators into explainable assessments.
+Convert facts and indicators into explainable assessments.
 
 ### Candidate assessments
 
-- Recruitment Window.
-- Alliance Collapse Risk.
-- Leadership Risk.
-- Whale Migration.
-- Transfer Winner.
-- Transfer Loser.
-- Hidden Opportunity.
+- Recruitment window.
+- Alliance collapse risk.
+- Whale movement.
+- Transfer opportunity.
+- Transfer risk.
+- Hidden alliance instability.
 
 ### Exit criteria
 
-- Assessments expose evidence, indicators, reasoning, and confidence.
+- Assessments include evidence, reasoning, confidence, and recommended action.
 - No assessment is generated from untrusted or quarantined data.
 
 ---
 
 ## Milestone 5 – Decision Center
 
-Target versions: v0.9.9.x → v1.0.0
+**Target:** v0.9.9.x → v1.0.0
 
-### Goals
+### Goal
 
-- Turn assessments into prioritized recommendations.
-- Make Sentinel useful for daily leadership decisions.
+Make Sentinel useful for daily leadership decisions.
 
 ### Required capabilities
 
@@ -147,30 +174,12 @@ Target versions: v0.9.9.x → v1.0.0
 - Priority queue.
 - Recommendation history.
 - Decision snapshots.
-- Reports.
 - Watchlist workflows.
+- Exportable leadership reports.
 
-### Exit criteria for v1.0.0
+### v1.0.0 definition
 
-Sentinel v1.0.0 is ready when the Proud Owner can open the Command Center and answer within a few minutes:
+Sentinel v1.0.0 is not defined by feature count. It is defined by trust.
 
-- What changed?
-- Can I trust the data?
-- What needs review?
-- Which opportunity matters most?
-- What should leadership do next?
+> Trusted observations create trusted intelligence. Trusted intelligence supports better human decisions.
 
----
-
-## v1.0.0 definition
-
-Sentinel v1.0.0 is not defined by feature count.
-
-It is defined by trust:
-
-> **Trusted observations create trusted intelligence. Trusted intelligence supports better human decisions.**
-
-
-## v0.9.5.28 – Inference Engine Core
-
-Sentinel now contains a first read-only Inference Layer. The Context Engine derives explainable validation conclusions from trusted neighboring evidence while keeping Operational Truth unchanged. This strengthens the path from guarded observations to strategic intelligence.
