@@ -94,3 +94,8 @@ git add .
 git commit -m "feat(ranking): add evidence-based ranking guard recovery"
 git tag -a v0.9.5.29 -m "v0.9.5.29 Ranking Guard Recovery"
 ```
+
+
+# v0.9.5.35 – THP Power Sanity Guard
+
+Adds a conservative THP-only sanity guard that quarantines late-scroll power outliers before final rank merge. This protects Operational Truth from OCR digit spikes while keeping OCR and parser behavior unchanged.
