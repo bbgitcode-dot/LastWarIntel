@@ -55,24 +55,29 @@ def _text(row: dict[str, Any]) -> str:
     return " ".join(str(value) for value in parts if value is not None)
 
 
+def _has_explicit_player_fields(row: dict[str, Any]) -> bool:
+    """Return True when the parser produced player-ranking columns.
+
+    Bracketed alliance tags inside the generic ``name``/``raw_text`` field are
+    valid Alliance Power evidence.  They must not be treated as player evidence
+    unless the player-ranking builder created explicit ``alliance_tag`` or
+    ``player_name`` fields.
+    """
+    return bool(
+        str(row.get("alliance_tag") or "").strip()
+        or str(row.get("player_name") or "").strip()
+        or row.get("hero_power") is not None
+    )
+
+
 def _has_player_tag(row: dict[str, Any]) -> bool:
     tag = str(row.get("alliance_tag") or "").strip()
-    if tag:
-        return True
-    text = _text(row)
-    return re.search(r"\[[A-Za-z0-9]{1,8}\]", text) is not None
+    return bool(tag)
 
 
 def _has_player_name(row: dict[str, Any]) -> bool:
     player_name = str(row.get("player_name") or "").strip()
-    if player_name:
-        return True
-    name = str(row.get("name") or "").strip()
-    if not name:
-        return False
-    # Generic alliance-power rows can have a name too. Player shape is stronger
-    # when the row contains the in-game alliance tag prefix.
-    return _has_player_tag(row) and len(name) > 3
+    return bool(player_name)
 
 
 def _looks_like_total_hero_power(row: dict[str, Any]) -> tuple[float, list[str]]:
@@ -80,13 +85,14 @@ def _looks_like_total_hero_power(row: dict[str, Any]) -> tuple[float, list[str]]
     reasons: list[str] = []
     value = _power(row)
 
+    explicit_player_fields = _has_explicit_player_fields(row)
     if _has_player_tag(row):
         score += 0.45
         reasons.append("player_alliance_tag_shape")
     if _has_player_name(row):
         score += 0.25
         reasons.append("player_name_shape")
-    if value is not None and value < PLAYER_POWER_SOFT_MAX:
+    if value is not None and value < PLAYER_POWER_SOFT_MAX and explicit_player_fields:
         score += 0.25
         reasons.append("player_scale_power")
     if row.get("hero_power") is not None:

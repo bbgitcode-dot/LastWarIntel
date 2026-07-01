@@ -44,9 +44,8 @@ def test_ranking_recovery_calibrates_low_power_alliance_name_false_positive():
     assert (551, "alliance_power") in recovered
     assert ("REVIEW", "ranking_guard_quarantine") not in recovered
     row = recovered[(551, "alliance_power")][0]
-    assert row["ranking_guard_status"] == "validated_after_recovery_calibration"
-    assert row["ranking_recovery_status"] == "calibrated_pass"
-    assert "no_explicit_player_fields" in row["ranking_recovery_reason"]
+    assert row["ranking_guard_status"] == "validated"
+    assert "ranking_recovery_status" not in row
 
 
 def test_ranking_recovery_keeps_ambiguous_rows_quarantined():

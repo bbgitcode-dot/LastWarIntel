@@ -94,6 +94,14 @@ This file summarizes major release milestones. Detailed historical notes are con
 - Ground Truth validation can mark accepted contextual inferences separately from observed OCR matches.
 - Version updated to `0.9.5.28`.
 
+
+## [0.9.5.31] - Mobile Ranking Type Integrity Hotfix
+
+### Fixed
+
+- German mobile ranking headers are now recognized as intrinsic ranking-type evidence.
+- Low-rank Alliance Power rows below 1B no longer leak into THP when the screen is explicitly Alliance Power.
+
 ## [0.9.5.24] - Documentation Consolidation
 
 ### Added

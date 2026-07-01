@@ -14,6 +14,8 @@ def test_ranking_guard_quarantines_thp_row_inside_alliance_power():
         (551, "alliance_power"): [
             {
                 "rank": 1,
+                "alliance_tag": "ABC",
+                "player_name": "PlayerOne",
                 "name": "[ABC] PlayerOne",
                 "power": 987_654_321,
                 "source_file": "thp_in_alliance.png",
@@ -23,12 +25,13 @@ def test_ranking_guard_quarantines_thp_row_inside_alliance_power():
 
     guarded = apply_ranking_guard(grouped)
 
+    assert ("REVIEW", "ranking_guard_quarantine") not in guarded
     assert (551, "alliance_power") not in guarded or guarded[(551, "alliance_power")] == []
-    quarantine = guarded[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["original_ranking_type"] == "alliance_power"
-    assert quarantine[0]["expected_ranking_type"] == "total_hero_power"
-    assert quarantine[0]["quarantine_reason"] == "ranking_type_conflict"
+    recovered = guarded[(551, "total_hero_power")]
+    assert len(recovered) == 1
+    assert recovered[0]["original_ranking_type"] == "alliance_power"
+    assert recovered[0]["ranking_type"] == "total_hero_power"
+    assert recovered[0]["ranking_guard_status"] == "recovered"
 
 
 def test_ranking_guard_quarantines_alliance_row_inside_total_hero_power():

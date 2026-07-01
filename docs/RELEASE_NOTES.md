@@ -278,6 +278,25 @@ git tag -a v0.9.5.28 -m "v0.9.5.28 Inference Engine Core"
 
 ---
 
+
+## v0.9.5.31 – Mobile Ranking Type Integrity Hotfix
+
+### Focus
+
+Fixes the Server 552 blind-test issue where German mobile Alliance Power screenshots were classified as unknown, then value-range fallback misclassified low-rank Alliance Power rows as Total Hero Power.
+
+### Fixed
+
+- Added localized German ranking-title evidence for mobile screenshots.
+- Preserved Alliance Power source classification for low-rank alliance rows below 1B.
+- Prevented Alliance Power rows from contaminating Total Hero Power exports when the source screen title is available.
+
+### Validation
+
+```text
+10 passed
+```
+
 ## v0.9.5.24 – Documentation Consolidation
 
 ### Focus

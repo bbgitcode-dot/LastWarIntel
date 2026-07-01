@@ -99,14 +99,32 @@ def evaluate_ranking_recovery(
         # in the alliance name.  The Ranking Guard should not treat that alone as
         # player evidence.  This keeps real low-power alliances in Alliance Power
         # instead of filling quarantine with false positives.
-        if _has_alliance_name_only_shape(row) and value is not None and value >= 1_000_000_000:
+        if _has_alliance_name_only_shape(row) and value is not None:
             evidence = [
                 "alliance_name_only_shape",
                 "no_explicit_player_fields",
                 "bracketed_tag_not_sufficient_for_thp",
-                "alliance_scale_power",
             ]
-            confidence = 0.98 if value >= PLAYER_POWER_SOFT_MAX else 0.96
+            if value >= 1_000_000_000:
+                evidence.append("alliance_scale_power")
+                confidence = 0.98 if value >= PLAYER_POWER_SOFT_MAX else 0.96
+            else:
+                # Low-rank Alliance Power rows can legitimately fall below 1B.
+                # Keep this calibration constrained to lower visible alliance
+                # ranks so top-rank THP-shaped contamination remains quarantined.
+                try:
+                    rank_value = int(row.get("rank") or row.get("ocr_rank") or row.get("computed_rank") or 0)
+                except (TypeError, ValueError):
+                    rank_value = 0
+                if rank_value < 20:
+                    return RankingRecoveryDecision(
+                        status="quarantine",
+                        target_ranking_type=None,
+                        confidence=0.0,
+                        reasons=["low_power_top_alliance_rank_requires_review"],
+                    )
+                evidence.append("low_rank_alliance_power_allowed")
+                confidence = 0.93
             return RankingRecoveryDecision(
                 status="calibrated_pass",
                 target_ranking_type="alliance_power",

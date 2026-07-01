@@ -117,12 +117,35 @@ def detect_server_consensus_from_ocr(ocr_results, min_occurrences: int = 3) -> S
 
 
 def detect_ranking_type(text):
-    upper = text.upper()
+    """Detect ranking type from OCR text.
 
-    if "ALLIANCE POWER" in upper:
+    Header OCR is source evidence, not strategic inference.  Keep this
+    intentionally small and explicit: localized UI titles may tell Sentinel
+    which ranking screen is shown before value-range fallback runs.  This
+    prevents low-rank Alliance Power pages from being misread as THP only
+    because their values fall into player-scale ranges.
+    """
+    upper = str(text or "").upper()
+
+    alliance_markers = [
+        "ALLIANCE POWER",
+        "ALLIANCE NAME",
+        "ALLIANZ-KAMPFKRAFT",
+        "ALLIANZ KAMPFKRAFT",
+        "ALLIANZNAME",
+    ]
+    total_hero_markers = [
+        "TOTAL HERO POWER",
+        "COMMANDER",
+        "GESAMTKAMPFKRAFT DER HELDEN",
+        "GESAMT KAMPFKRAFT DER HELDEN",
+        "KOMMANDANT",
+    ]
+
+    if any(marker in upper for marker in alliance_markers):
         return "alliance_power"
 
-    if "TOTAL HERO POWER" in upper:
+    if any(marker in upper for marker in total_hero_markers):
         return "total_hero_power"
 
     return "unknown"
