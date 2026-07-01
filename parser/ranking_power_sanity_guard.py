@@ -52,6 +52,16 @@ def _rank(row: dict[str, Any]) -> int | None:
     return None
 
 
+def _ocr_rank(row: dict[str, Any]) -> int | None:
+    value = row.get("ocr_rank")
+    try:
+        if value is not None and value != "":
+            return int(float(value))
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
 def _safe_ratio(value: int, local_median: int | None) -> float | None:
     if not local_median or local_median <= 0:
         return None
@@ -172,6 +182,33 @@ def evaluate_ranking_power_sanity(
         return RankingPowerSanityDecision(status="pass", confidence=1.0, reasons=["no_local_context"])
 
     if ranking_type == "total_hero_power":
+        ocr_rank = _ocr_rank(row)
+
+        # Intrinsic rank/power envelope guard. This does not depend on filename
+        # order or upload order. If the row itself says it is a late-scroll rank
+        # but its parsed power is in top-whale territory, the power is very likely
+        # an OCR digit explosion (observed on Server 553 where ranks 100+ became
+        # 764M and jumped ahead of the real top 10).
+        if ocr_rank is not None:
+            suspicious_late_rank = (
+                (ocr_rank >= 50 and value >= 500_000_000)
+                or (ocr_rank >= 80 and value >= 400_000_000)
+                or (ocr_rank >= 100 and value >= 300_000_000)
+            )
+            if suspicious_late_rank:
+                confidence = 0.99
+                return RankingPowerSanityDecision(
+                    status="quarantine",
+                    confidence=confidence,
+                    reasons=[
+                        "thp_rank_power_envelope_violation",
+                        f"ocr_rank:{ocr_rank}",
+                        f"power:{value}",
+                    ],
+                    local_median=local_median,
+                    local_ratio=ratio,
+                )
+
         if is_first_source:
             return RankingPowerSanityDecision(status="pass", confidence=1.0, reasons=["first_thp_source_allowed"], local_median=local_median, local_ratio=ratio)
         if value >= 500_000_000 and ratio >= 2.0:
@@ -203,6 +240,22 @@ def evaluate_ranking_power_sanity(
                 reasons=[
                     "alliance_power_outlier",
                     "absolute_power_ceiling",
+                    f"power_to_local_median_ratio:{ratio:.2f}",
+                ],
+                local_median=local_median,
+                local_ratio=ratio,
+            )
+
+        ocr_rank = _ocr_rank(row)
+        if ocr_rank is not None and ocr_rank >= 4 and value >= 50_000_000_000:
+            confidence = 0.99
+            return RankingPowerSanityDecision(
+                status="quarantine",
+                confidence=confidence,
+                reasons=[
+                    "alliance_rank_power_envelope_violation",
+                    f"ocr_rank:{ocr_rank}",
+                    f"power:{value}",
                     f"power_to_local_median_ratio:{ratio:.2f}",
                 ],
                 local_median=local_median,
