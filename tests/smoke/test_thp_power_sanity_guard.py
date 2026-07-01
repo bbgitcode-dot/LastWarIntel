@@ -5,7 +5,7 @@ def _row(power, source):
     return {"name": f"[TAG] player {power}", "power": power, "source_file": source}
 
 
-def test_late_scroll_thp_outlier_is_quarantined():
+def test_late_scroll_thp_outlier_is_recovered_when_candidate_fits_source_envelope():
     grouped = {
         (552, "total_hero_power"): [
             _row(403_000_000, "001.png"),
@@ -22,11 +22,13 @@ def test_late_scroll_thp_outlier_is_quarantined():
 
     result = apply_thp_power_sanity_guard(grouped)
 
-    assert len(result[(552, "total_hero_power")]) == 8
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["power"] == 798_000_000
-    assert quarantine[0]["quarantine_reason"] == "thp_power_sanity_outlier"
+    powers = [row["power"] for row in result[(552, "total_hero_power")]]
+    assert len(powers) == 9
+    assert 798_000_000 not in powers
+    assert 198_000_000 in powers
+    recovered = [row for row in result[(552, "total_hero_power")] if row.get("power_recovered_from") == 798_000_000][0]
+    assert recovered["power_sanity_status"] == "recovered"
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
 
 
 def test_first_thp_screenshot_can_contain_real_whales():
@@ -67,7 +69,7 @@ def test_normal_scroll_overlap_is_allowed():
     assert len(result[(552, "total_hero_power")]) == 9
 
 
-def test_thp_source_shape_blocks_late_scroll_digit_explosion_cluster():
+def test_thp_source_shape_recovers_late_scroll_digit_explosion_cluster():
     grouped = {
         (553, "total_hero_power"): [
             {
@@ -149,12 +151,15 @@ def test_thp_source_shape_blocks_late_scroll_digit_explosion_cluster():
     result = apply_thp_power_sanity_guard(grouped)
 
     exported = result[(553, "total_hero_power")]
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert [row["player_name"] for row in exported] == ["Bubellee", "StealthNinja", "khs", "Jupp2511"]
-    assert {row["player_name"] for row in quarantine} == {
+    exported_by_name = {row["player_name"]: row for row in exported}
+    assert exported_by_name["chris711"]["power"] == 164_292_586
+    assert exported_by_name["Pel Cowboy from Hell"]["power"] == 164_007_632
+    assert exported_by_name["st34km4n"]["power"] == 163_106_065
+    assert exported_by_name["Crank40"]["power"] == 162_831_270
+    assert all(exported_by_name[name]["power_sanity_status"] == "recovered" for name in [
         "chris711",
         "Pel Cowboy from Hell",
         "st34km4n",
         "Crank40",
-    }
-    assert all("source_shape_digit_explosion" in row["ranking_guard_reason"] for row in quarantine)
+    ])
+    assert ("REVIEW", "ranking_guard_quarantine") not in result

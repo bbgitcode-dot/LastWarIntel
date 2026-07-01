@@ -27,11 +27,11 @@ def test_alliance_power_local_outlier_is_quarantined_before_power_sort():
 
     powers = [row["power"] for row in result[(552, "alliance_power")]]
     assert 79_085_297_891 not in powers
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["power"] == 79_085_297_891
-    assert quarantine[0]["quarantine_reason"] == "alliance_power_sanity_outlier"
-    assert "alliance_power_outlier" in quarantine[0]["ranking_guard_warning"]
+    assert 19_085_297_891 in powers
+    recovered = [row for row in result[(552, "alliance_power")] if row["power"] == 19_085_297_891][0]
+    assert recovered["power_recovered_from"] == 79_085_297_891
+    assert recovered["power_sanity_status"] == "recovered"
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
 
 
 def test_alliance_power_legitimate_low_power_tail_is_allowed():
@@ -93,8 +93,8 @@ def test_source_shape_blocks_false_552_alliance_power_high_cluster():
     assert 79_085_297_891 not in powers
     assert 77_709_655_122 not in powers
     assert 70_057_779_917 not in powers
-    quarantine_powers = {row["power"] for row in result[("REVIEW", "ranking_guard_quarantine")]}
-    assert {79_085_297_891, 77_709_655_122, 70_057_779_917}.issubset(quarantine_powers)
+    assert {19_085_297_891, 17_709_655_122, 10_057_779_917}.issubset(set(powers))
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
 
 
 def test_alliance_power_top_rank_absolute_ceiling_still_quarantines():
@@ -137,7 +137,8 @@ def test_early_source_alliance_power_false_high_values_are_blocked_without_rank_
     assert 79_085_297_891 not in powers
     assert 77_709_655_122 not in powers
     assert 70_057_779_917 not in powers
-    assert len(result[("REVIEW", "ranking_guard_quarantine")]) == 3
+    assert {19_085_297_891, 17_709_655_122, 10_057_779_917}.issubset(set(powers))
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
 
 
 def test_late_source_alliance_power_high_value_without_rank_anchor_is_still_quarantined():
@@ -158,10 +159,10 @@ def test_late_source_alliance_power_high_value_without_rank_anchor_is_still_quar
 
     result = apply_ranking_power_sanity_guard(grouped)
 
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["power"] == 70_000_000_000
-    assert "alliance_power_outlier" in quarantine[0]["ranking_guard_warning"]
+    powers = [row["power"] for row in result[(552, "alliance_power")]]
+    assert 70_000_000_000 not in powers
+    assert 10_000_000_000 in powers
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
 
 
 def test_general_top_of_source_alliance_power_values_are_allowed_without_rank_anchor():
@@ -226,9 +227,10 @@ def test_server553_thp_digit_explosion_cluster_blocks_all_high_rows_even_with_on
     result = apply_ranking_power_sanity_guard(grouped)
 
     trusted_powers = {row["power"] for row in result[(553, "total_hero_power")]}
-    assert 762_831_270 not in trusted_powers
-    quarantine_powers = {row["power"] for row in result[("REVIEW", "ranking_guard_quarantine")]}
-    assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.issubset(quarantine_powers)
+    assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.isdisjoint(trusted_powers)
+    assert {164_292_586, 164_047_047, 163_106_065, 162_831_270}.issubset(trusted_powers)
+    recovered = [row for row in result[(553, "total_hero_power")] if row.get("power_recovered_from") == 762_831_270][0]
+    assert recovered["power"] == 162_831_270
 
 
 def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screenshot_order():
@@ -248,6 +250,7 @@ def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screen
 
     trusted_powers = {row["power"] for row in result[(553, "alliance_power")]}
     assert 77_739_565_950 not in trusted_powers
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["power"] == 77_739_565_950
+    assert 17_739_565_950 in trusted_powers
+    recovered = [row for row in result[(553, "alliance_power")] if row.get("power_recovered_from") == 77_739_565_950][0]
+    assert recovered["power"] == 17_739_565_950
+    assert ("REVIEW", "ranking_guard_quarantine") not in result

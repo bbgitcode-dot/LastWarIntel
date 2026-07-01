@@ -37,6 +37,104 @@ def _power(row: dict[str, Any]) -> int | None:
         return None
 
 
+
+
+def _set_power(row: dict[str, Any], value: int) -> None:
+    """Update the canonical and typed power fields in-place."""
+    row["power"] = value
+    if row.get("hero_power") is not None:
+        row["hero_power"] = value
+    if row.get("alliance_power") is not None:
+        row["alliance_power"] = value
+
+
+def _recover_leading_digit_power(
+    row: dict[str, Any],
+    *,
+    ranking_type: str,
+    source_powers: list[int],
+    source_row_index: int | None,
+) -> int | None:
+    """Recover source-local leading-digit explosions when rank/context agree.
+
+    This is intentionally narrow.  It handles the observed mobile OCR class where
+    a late THP value like ``164,292,586`` becomes ``764,292,586`` and an Alliance
+    Power value like ``17,739,565,950`` becomes ``77,739,565,950``.  The function
+    does not use filename or upload order; it requires intrinsic row/source
+    context before returning a replacement value.
+    """
+    value = _power(row)
+    if value is None:
+        return None
+    text = str(value)
+    if len(text) < 8 or text[0] not in {"7", "8"}:
+        return None
+
+    ocr_rank = _ocr_rank(row)
+    low_values = [power for power in source_powers if 0 < power < value and power < 300_000_000]
+    low_median = int(median(low_values)) if low_values else None
+
+    if ranking_type == "total_hero_power":
+        if value < 500_000_000 or value >= 1_000_000_000:
+            return None
+        candidate = int("1" + text[1:])
+        if not (100_000_000 <= candidate <= 300_000_000):
+            return None
+
+        # Strongest evidence: the row itself carries a late-scroll OCR rank.
+        # Real 700M+ top rows have low OCR ranks and must not be rewritten.
+        if ocr_rank is not None and ocr_rank >= 50:
+            return candidate
+
+        # Secondary evidence: source-local low envelope exists and the candidate
+        # falls back into that envelope while the observed value is a 3x+ spike.
+        if low_median and value / low_median >= 3.0 and 0.70 <= candidate / low_median <= 1.35:
+            return candidate
+        return None
+
+    if ranking_type == "alliance_power":
+        if value < 50_000_000_000 or value >= 100_000_000_000:
+            return None
+        candidate = int("1" + text[1:])
+        if not (1_000_000_000 <= candidate <= 40_000_000_000):
+            return None
+
+        # Rank/context evidence: the row is not a top-3 leader but the value is
+        # 50B+.  Recover to the plausible 10B/17B/19B class instead of dropping
+        # the alliance entirely.
+        if ocr_rank is not None and ocr_rank >= 4:
+            return candidate
+        if source_row_index is not None and source_row_index >= 3:
+            return candidate
+
+        # Source-local low envelope catch for missing rank anchors.
+        local_lows = [power for power in source_powers if 0 < power < 40_000_000_000]
+        if len(local_lows) >= 3:
+            local_median = int(median(local_lows))
+            if local_median > 0 and value / local_median >= 2.35 and 0.55 <= candidate / local_median <= 1.85:
+                return candidate
+        return None
+
+    return None
+
+
+def _apply_recovered_power(row: dict[str, Any], recovered_power: int, *, method: str) -> dict[str, Any]:
+    recovered = dict(row)
+    original = _power(recovered)
+    if original is None or original == recovered_power:
+        return recovered
+    recovered["power_original"] = original
+    recovered["power_recovered_from"] = original
+    recovered["power_recovery_method"] = method
+    recovered["power_sanity_status"] = "recovered"
+    recovered["power_sanity_confidence"] = 0.95
+    previous_warning = str(recovered.get("ranking_guard_warning") or "").strip()
+    warning = f"power_sanity:leading_digit_recovered:{original}->{recovered_power}"
+    recovered["ranking_guard_warning"] = warning if not previous_warning else f"{previous_warning};{warning}"
+    _set_power(recovered, recovered_power)
+    return recovered
+
+
 def _source_file(row: dict[str, Any]) -> str:
     return str(row.get("source_file") or "")
 
@@ -484,6 +582,24 @@ def apply_ranking_power_sanity_guard(
             source_shape_outlier_powers = _source_shape_outlier_powers(source_rows) if ranking_type == "alliance_power" else set()
             thp_source_digit_explosion_powers = _thp_source_digit_explosion_powers(source_rows) if ranking_type == "total_hero_power" else set()
             for source_row_index, row in enumerate(source_rows, start=1):
+                recovered_power = _recover_leading_digit_power(
+                    row,
+                    ranking_type=ranking_type,
+                    source_powers=source_powers,
+                    source_row_index=source_row_index,
+                )
+                if recovered_power is not None:
+                    recovered_row = _apply_recovered_power(
+                        row,
+                        recovered_power,
+                        method=f"{ranking_type}_leading_digit_recovery",
+                    )
+                    if ranking_type == "total_hero_power":
+                        recovered_row.setdefault("thp_sanity_status", "recovered")
+                        recovered_row.setdefault("thp_sanity_confidence", 0.95)
+                    guarded.setdefault(key, []).append(recovered_row)
+                    continue
+
                 decision = evaluate_ranking_power_sanity(
                     row,
                     ranking_type=ranking_type,

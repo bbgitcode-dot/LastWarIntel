@@ -9,6 +9,25 @@
 
 # Changelog
 
+## [0.9.5.45] - Source-local Power Digit Recovery
+
+### Added
+
+- Recovers source-local THP leading-digit OCR explosions such as `764M -> 164M` when rank/source evidence supports the correction.
+- Recovers source-local Alliance Power leading-digit OCR explosions such as `77B -> 17B` when the recovered value fits the local ranking envelope.
+- Adds explicit recovery metadata: `power_original`, `power_recovered_from`, `power_recovery_method`, and `power_sanity_status=recovered`.
+
+### Changed
+
+- Ranking Power Sanity Guard now distinguishes recoverable digit errors from unrecoverable outliers.
+- Recoverable rows remain in Operational Truth with metadata instead of being forced into quarantine.
+
+### Validation
+
+- `python -m compileall -q parser main.py version.py`
+- `pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_thp_power_sanity_guard.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py -q` → 22 passed.
+
+
 
 ## [0.9.5.39] - General Top Alliance Power Allowance
 
