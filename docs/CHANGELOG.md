@@ -4,6 +4,22 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.49] - Candidate Decision Engine Cutover
+
+### Changed
+
+- Removed the legacy leading-digit recovery decision path from Ranking Power Sanity Guard.
+- Power recovery now selects candidates only through context candidate scoring and explicit score-margin rules.
+- Ambiguous candidate ties are quarantined instead of recovered.
+- Added decision metadata: `power_recovery_decision_strategy`, `power_recovery_decision_version`, and `power_recovery_legacy_used`.
+
+### Fixed
+
+- Prevented `legacy_leading_digit_recovery` from overriding better-scored or tied candidates.
+- Ensured candidate traces identify whether the new decision engine or legacy logic made the call.
+
+---
+
 ## [0.9.5.48] - Source Context Recovery Reportability
 
 ### Added

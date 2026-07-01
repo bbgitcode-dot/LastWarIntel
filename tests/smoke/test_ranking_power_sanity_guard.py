@@ -27,11 +27,12 @@ def test_alliance_power_local_outlier_is_quarantined_before_power_sort():
 
     powers = [row["power"] for row in result[(552, "alliance_power")]]
     assert 79_085_297_891 not in powers
-    assert 19_085_297_891 in powers
-    recovered = [row for row in result[(552, "alliance_power")] if row["power"] == 19_085_297_891][0]
-    assert recovered["power_recovered_from"] == 79_085_297_891
-    assert recovered["power_recovery_candidates"]
-    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    ambiguous = [row for row in quarantine if row["power"] == 79_085_297_891][0]
+    assert ambiguous["power_recovery_status"] == "ambiguous"
+    assert ambiguous["power_recovery_decision_strategy"] == "context_candidate_margin"
+    assert ambiguous["power_recovery_legacy_used"] is False
+    assert ambiguous["power_recovery_candidates"]
 
 
 def test_alliance_power_legitimate_low_power_tail_is_allowed():
@@ -163,11 +164,12 @@ def test_late_source_alliance_power_high_value_without_rank_anchor_is_still_quar
 
     powers = [row["power"] for row in result[(552, "alliance_power")]]
     assert 70_000_000_000 not in powers
-    assert 10_000_000_000 in powers
-    recovered = [row for row in result[(552, "alliance_power")] if row["power"] == 10_000_000_000][0]
-    assert recovered["power_recovered_from"] == 70_000_000_000
-    assert recovered["power_recovery_candidates"]
-    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    ambiguous = [row for row in quarantine if row["power"] == 70_000_000_000][0]
+    assert ambiguous["power_recovery_status"] == "ambiguous"
+    assert ambiguous["power_recovery_decision_strategy"] == "context_candidate_margin"
+    assert ambiguous["power_recovery_legacy_used"] is False
+    assert ambiguous["power_recovery_candidates"]
 
 
 def test_general_top_of_source_alliance_power_values_are_allowed_without_rank_anchor():
@@ -233,7 +235,13 @@ def test_server553_thp_digit_explosion_cluster_blocks_all_high_rows_even_with_on
 
     trusted_powers = {row["power"] for row in result[(553, "total_hero_power")]}
     assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.isdisjoint(trusted_powers)
-    assert {164_292_586, 164_047_047, 163_106_065, 162_831_270}.issubset(trusted_powers)
+    # v0.9.5.49 no longer recovers tied 7xxM candidates through the legacy path.
+    # The already clean low rows remain trusted; ambiguous explosion rows go to review.
+    assert {164_292_586, 164_047_047}.issubset(trusted_powers)
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    quarantined_powers = {row["power"] for row in quarantine}
+    assert {763_106_065, 762_831_270}.issubset(quarantined_powers)
+    assert all("source_shape_digit_explosion" in row.get("ranking_guard_reason", "") for row in quarantine)
 
 
 def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screenshot_order():
@@ -253,10 +261,11 @@ def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screen
 
     trusted_powers = {row["power"] for row in result[(553, "alliance_power")]}
     assert 77_739_565_950 not in trusted_powers
-    recovered = [row for row in result[(553, "alliance_power")] if row.get("power_recovered_from") == 77_739_565_950][0]
-    assert recovered["power"] == 17_739_565_950
-    assert recovered["power_recovery_candidates"]
-    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    ambiguous = [row for row in result[("REVIEW", "ranking_guard_quarantine")] if row["power"] == 77_739_565_950][0]
+    assert ambiguous["power_recovery_status"] == "ambiguous"
+    assert ambiguous["power_recovery_decision_strategy"] == "context_candidate_margin"
+    assert ambiguous["power_recovery_legacy_used"] is False
+    assert ambiguous["power_recovery_candidates"]
 
 
 def test_context_candidate_recovery_selects_224m_when_local_rank_context_is_clear():
@@ -278,6 +287,8 @@ def test_context_candidate_recovery_selects_224m_when_local_rank_context_is_clea
     recovered = [row for row in result[(553, "total_hero_power")] if row.get("power_recovered_from") == 764_292_586][0]
     assert recovered["power"] == 224_292_586
     assert recovered["power_recovery_method"] == "total_hero_power_context_candidate_recovery"
+    assert recovered["power_recovery_decision_strategy"] == "context_candidate_margin"
+    assert recovered["power_recovery_legacy_used"] is False
     assert recovered["power_recovery_candidates"]
     assert ("REVIEW", "ranking_guard_quarantine") not in result
 
@@ -298,5 +309,7 @@ def test_context_candidate_recovery_selects_alliance_candidate_when_clear():
     recovered = [row for row in result[(553, "alliance_power")] if row.get("power_recovered_from") == 77_739_565_950][0]
     assert recovered["power"] == 27_739_565_950
     assert recovered["power_recovery_method"] == "alliance_power_context_candidate_recovery"
+    assert recovered["power_recovery_decision_strategy"] == "context_candidate_margin"
+    assert recovered["power_recovery_legacy_used"] is False
     assert recovered["power_recovery_candidates"]
     assert ("REVIEW", "ranking_guard_quarantine") not in result

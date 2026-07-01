@@ -1,22 +1,39 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.48  
-**Sprint Type:** Data Integrity / Recovery Reportability  
-**Runtime Baseline:** v0.9.5.48 – Source Context Recovery Reportability  
+**Current Version:** v0.9.5.49  
+**Sprint Type:** Candidate Decision Engine Cutover  
+**Runtime Baseline:** v0.9.5.49 – Candidate Decision Engine Cutover  
 **Current Phase:** Data Integrity Fortress / Operational Data Stability  
-**Next Planned Sprint:** v0.9.5.49 – Import Session and Segment Integrity
+**Next Planned Sprint:** v0.9.5.50 – Import Session and Segment Integrity
 
 ---
 
 ## Executive summary
 
-Sentinel v0.9.5.48 makes context-aware power recovery explainable in the operational outputs that leadership and review workflows actually consume.
+Sentinel v0.9.5.49 completes the cutover from legacy leading-digit recovery to explicit candidate decisioning. The candidate generator and scorer remain in place, but the old fallback can no longer select a value when the context score is weak or tied.
 
-v0.9.5.47 introduced the candidate-scoring engine. v0.9.5.48 exposes its evidence in the Excel export and in `data/latest_import_report.json`: original value, selected value, candidate list, best/second score, score margin, confidence, method, and decision reason.
-
-The sprint also fixes a report integrity problem observed in the Server 553 run: the global report could show `review_count: 0` while import blocks still showed review counts. Global review aggregation now reflects import-level review warnings, while `review_item_count` remains available for concrete quarantine/data-guard review objects.
+This sprint deliberately favors precision over recall: clear candidate winners are recovered, while ambiguous ties are quarantined with audit metadata. The Server 553 regression class is now safer because near-zero score margins no longer become Operational Truth.
 
 ---
+
+
+## What changed in v0.9.5.49
+
+The remaining legacy leading-digit recovery decision fallback has been removed. Sentinel may still generate leading-digit candidates, but it no longer chooses a recovered value merely because a legacy rule can produce one.
+
+The new decision path is:
+
+```text
+Candidate Generator
+    ↓
+Context Scoring
+    ↓
+Margin Decision Engine
+    ↓
+Recover only clear winners, quarantine ambiguous ties
+```
+
+This is intentionally stricter. Server 553 showed several cases where the selected legacy recovery was not the best scored candidate or where the margin was effectively zero. v0.9.5.49 now treats those cases as review-worthy uncertainty.
 
 ## What changed in v0.9.5.48
 
@@ -62,13 +79,13 @@ Sentinel now exposes why a power candidate was selected or quarantined. The scor
 ### 2. Import session integrity remains open
 
 **Status:** Open  
-**Next Sprint:** v0.9.5.49
+**Next Sprint:** v0.9.5.50
 
 Sentinel still needs explicit import sessions and ranking segment metadata so mixed, missing, duplicate, and out-of-order screenshot sets can be detected without trusting filenames or upload order.
 
 ---
 
-## Immediate next sprint recommendation: v0.9.5.49
+## Immediate next sprint recommendation: v0.9.5.50
 
 ### Focus
 

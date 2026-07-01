@@ -1,6 +1,6 @@
 # Sentinel Architectural Decisions
 
-**Version:** v0.9.5.48
+**Version:** v0.9.5.49
 
 ---
 
@@ -62,3 +62,13 @@
 
 **Consequence:** v0.9.5.48 should implement context-aware candidate generation and scoring.
 
+
+---
+
+## ADR-007 – Legacy power recovery may not decide truth
+
+**Decision:** Leading-digit recovery may generate candidates but may not select a recovered value by itself.
+
+**Reason:** Server 553 showed cases where legacy recovery selected a lower-scored or tied candidate.
+
+**Consequence:** v0.9.5.49 uses the candidate decision engine only. Ambiguous score margins quarantine the row.

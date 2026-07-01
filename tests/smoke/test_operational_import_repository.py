@@ -61,6 +61,9 @@ def test_import_report_exposes_power_candidate_trace_and_aggregates_review_count
                 "power_candidate_second_score": 0.61,
                 "power_candidate_margin": 0.16,
                 "power_recovery_selected_reason": "selected_clear_candidate",
+                "power_recovery_decision_strategy": "context_candidate_margin",
+                "power_recovery_decision_version": "v0.9.5.49",
+                "power_recovery_legacy_used": False,
                 "power_recovery_candidates": [
                     {"value": 164_292_586, "score": 0.77, "reasons": ["fits_following_neighbour_order"]},
                     {"value": 224_292_586, "score": 0.61, "reasons": ["local_median_distance:0.250"]},
@@ -88,5 +91,8 @@ def test_import_report_exposes_power_candidate_trace_and_aggregates_review_count
     assert trace["power_original"] == 764_292_586
     assert trace["power_selected"] == 164_292_586
     assert trace["best_candidate"] == 164_292_586
+    assert trace["decision_strategy"] == "context_candidate_margin"
+    assert trace["decision_version"] == "v0.9.5.49"
+    assert trace["legacy_used"] is False
     assert trace["second_candidate"] == 224_292_586
     assert trace["margin"] == 0.16

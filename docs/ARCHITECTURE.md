@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Version:** v0.9.5.48  
+**Version:** v0.9.5.49  
 **Status:** Living Document
 
 ---
@@ -136,3 +136,21 @@ Recovery remains source-local and auditable:
        → export/report candidate trace
 ```
 
+
+## Current recovery decision model
+
+v0.9.5.49 removes the final legacy leading-digit recovery fallback. Power recovery now follows a candidate-decision model:
+
+```text
+Suspicious power value
+    ↓
+Candidate generation
+    ↓
+Context scoring
+    ↓
+Margin threshold
+    ├── clear winner → recovered with audit metadata
+    └── tied/weak winner → quarantine
+```
+
+The recovery layer may still generate candidates from known OCR digit confusions, but it may not select a candidate without a clear score margin.

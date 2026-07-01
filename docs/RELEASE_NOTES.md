@@ -1,11 +1,54 @@
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.48
+**Current Version:** v0.9.5.49
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
 
 ---
 
+## v0.9.5.49 – Candidate Decision Engine Cutover
+
+### Focus
+
+Replaces the remaining legacy leading-digit recovery decision fallback with a strict candidate decision engine. Candidate generation still considers leading-digit alternatives, but recovery is allowed only when context scoring produces a clear winner.
+
+### Changed
+
+- Removed `legacy_leading_digit_recovery` as a decision path.
+- Recovery now requires `best_score >= 0.58` and `margin >= 0.10`.
+- Ambiguous candidate sets are moved to `REVIEW - ranking_guard_quarantine`.
+- Recovered and ambiguous rows now expose:
+  - `power_recovery_decision_strategy`,
+  - `power_recovery_decision_version`,
+  - `power_recovery_legacy_used`.
+
+### Added
+
+- Regression coverage proving ambiguous Server 553-style candidate ties are quarantined.
+- Report trace fields for decision strategy, decision version, and legacy usage.
+- Excel export columns for the same decision metadata.
+
+### Guardrail
+
+This sprint intentionally reduces unsafe auto-recovery. If two candidates are nearly tied, Sentinel must quarantine the row rather than promote a guessed value into Operational Truth.
+
+### Validation
+
+```text
+python -m compileall -q parser services main.py version.py
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_operational_import_repository.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py -q
+23 passed
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(recovery): remove legacy power recovery fallback"
+git tag -a v0.9.5.49 -m "v0.9.5.49 Candidate Decision Engine Cutover"
+```
+
+---
 ## v0.9.5.48 – Source Context Recovery Reportability
 
 ### Focus

@@ -1,6 +1,6 @@
 # Sentinel Data Guard – Die Integritätsschicht von Sentinel
 
-**Version:** v0.9.5.48
+**Version:** v0.9.5.49
 
 ---
 
@@ -71,5 +71,5 @@ Recovery darf Felder nur verändern, wenn die Veränderung nachvollziehbar und m
 
 ## Aktuelle Erweiterung
 
-v0.9.5.45 führte source-local leading digit recovery ein. v0.9.5.48 dokumentiert die Grenze dieses Ansatzes: Die nächste Version benötigt context-aware candidate recovery.
+v0.9.5.49 entfernt die letzte Legacy-Entscheidung der leading-digit recovery. Recovery darf Kandidaten erzeugen, aber nur bei klarem Kontext-Score und ausreichender Margin automatisch recovern. Ambiguität bleibt Quarantäne.
 

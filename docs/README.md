@@ -1,6 +1,6 @@
 # Sentinel Documentation
 
-**Current Version:** v0.9.5.48
+**Current Version:** v0.9.5.49
 
 Sentinel is an explainable strategic intelligence platform for Last War. It transforms noisy screenshots into guarded operational data and later into strategic decision support.
 
@@ -34,5 +34,5 @@ The active goal is not yet more intelligence. The active goal is to ensure that 
 
 ## Current open technical focus
 
-v0.9.5.48 exposes context-aware power recovery evidence in Excel exports and the import report. The next open technical focus is import session and segment integrity so mixed screenshot batches can be validated without trusting filename or upload order.
+v0.9.5.49 removes the legacy power recovery fallback and quarantines ambiguous candidate ties. The next open technical focus is import session and segment integrity so mixed screenshot batches can be validated without trusting filename or upload order.
 

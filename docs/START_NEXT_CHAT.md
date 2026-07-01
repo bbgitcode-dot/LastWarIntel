@@ -44,7 +44,7 @@ Current technical state:
 
 Most important open problem:
 
-`v0.9.5.48` exposes context-aware power candidate scoring in Excel and the import report. The next development sprint should implement **import session and segment integrity** without treating screenshot filename/order/upload order as truth.
+`v0.9.5.49` removes the legacy power recovery fallback. The next development sprint should implement **import session and segment integrity** without treating screenshot filename/order/upload order as truth.
 
 Recommended next sprint:
 

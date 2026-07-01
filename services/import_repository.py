@@ -84,6 +84,9 @@ def _row_power_recovery_trace(row: dict[str, Any], *, server: Any, ranking_type:
         "second_score": _safe_float(row.get("power_candidate_second_score")),
         "margin": _safe_float(row.get("power_candidate_margin")),
         "decision_reason": row.get("power_recovery_selected_reason") or "",
+        "decision_strategy": row.get("power_recovery_decision_strategy") or "",
+        "decision_version": row.get("power_recovery_decision_version") or "",
+        "legacy_used": bool(row.get("power_recovery_legacy_used")),
         "candidates": candidate_list,
     }
 

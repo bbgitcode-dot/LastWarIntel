@@ -261,74 +261,10 @@ def _set_power(row: dict[str, Any], value: int) -> None:
         row["alliance_power"] = value
 
 
-def _recover_leading_digit_power(
-    row: dict[str, Any],
-    *,
-    ranking_type: str,
-    source_powers: list[int],
-    source_row_index: int | None,
-) -> int | None:
-    """Recover source-local leading-digit explosions when rank/context agree.
-
-    This is intentionally narrow.  It handles the observed mobile OCR class where
-    a late THP value like ``164,292,586`` becomes ``764,292,586`` and an Alliance
-    Power value like ``17,739,565,950`` becomes ``77,739,565,950``.  The function
-    does not use filename or upload order; it requires intrinsic row/source
-    context before returning a replacement value.
-    """
-    value = _power(row)
-    if value is None:
-        return None
-    text = str(value)
-    if len(text) < 8 or text[0] not in {"7", "8"}:
-        return None
-
-    ocr_rank = _ocr_rank(row)
-    low_values = [power for power in source_powers if 0 < power < value and power < 300_000_000]
-    low_median = int(median(low_values)) if low_values else None
-
-    if ranking_type == "total_hero_power":
-        if value < 500_000_000 or value >= 1_000_000_000:
-            return None
-        candidate = int("1" + text[1:])
-        if not (100_000_000 <= candidate <= 300_000_000):
-            return None
-
-        # Strongest evidence: the row itself carries a late-scroll OCR rank.
-        # Real 700M+ top rows have low OCR ranks and must not be rewritten.
-        if ocr_rank is not None and ocr_rank >= 50:
-            return candidate
-
-        # Secondary evidence: source-local low envelope exists and the candidate
-        # falls back into that envelope while the observed value is a 3x+ spike.
-        if low_median and value / low_median >= 3.0 and 0.70 <= candidate / low_median <= 1.35:
-            return candidate
-        return None
-
-    if ranking_type == "alliance_power":
-        if value < 50_000_000_000 or value >= 100_000_000_000:
-            return None
-        candidate = int("1" + text[1:])
-        if not (1_000_000_000 <= candidate <= 40_000_000_000):
-            return None
-
-        # Rank/context evidence: the row is not a top-3 leader but the value is
-        # 50B+.  Recover to the plausible 10B/17B/19B class instead of dropping
-        # the alliance entirely.
-        if ocr_rank is not None and ocr_rank >= 4:
-            return candidate
-        if source_row_index is not None and source_row_index >= 3:
-            return candidate
-
-        # Source-local low envelope catch for missing rank anchors.
-        local_lows = [power for power in source_powers if 0 < power < 40_000_000_000]
-        if len(local_lows) >= 3:
-            local_median = int(median(local_lows))
-            if local_median > 0 and value / local_median >= 2.35 and 0.55 <= candidate / local_median <= 1.85:
-                return candidate
-        return None
-
-    return None
+# v0.9.5.49 intentionally removes the old leading-digit recovery decision path.
+# Leading-digit transforms may still contribute candidate values, but no row may
+# be recovered unless the context candidate decision engine selects a clear
+# winner. Ambiguous candidates are quarantined for review.
 
 
 def _apply_recovered_power(
@@ -356,6 +292,9 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_score"] = round(selected.score, 4)
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
+        recovered["power_recovery_decision_version"] = "v0.9.5.49"
+        recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
+        recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
         recovered["power_candidate_best"] = selected.value
         recovered["power_candidate_best_score"] = round(selected.score, 4)
@@ -365,6 +304,9 @@ def _apply_recovered_power(
         recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
     else:
         recovered["power_recovery_status"] = "recovered"
+        recovered["power_recovery_decision_version"] = "v0.9.5.49"
+        recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
+        recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
         recovered["power_sanity_confidence"] = 0.95
     previous_warning = str(recovered.get("ranking_guard_warning") or "").strip()
@@ -586,6 +528,9 @@ def _mark_quarantined(
         quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.49"
+        quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
+        quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)
         quarantined["power_candidate_best"] = best.value
         quarantined["power_candidate_best_score"] = round(best.score, 4)
@@ -812,7 +757,7 @@ def evaluate_ranking_power_sanity(
 def apply_ranking_power_sanity_guard(
     grouped: dict[tuple[object, str], list[dict[str, Any]]]
 ) -> dict[tuple[object, str], list[dict[str, Any]]]:
-    """Quarantine ranking power outliers without modifying trusted values."""
+    """Recover only clear candidate winners and quarantine ambiguous outliers."""
     guarded: dict[tuple[object, str], list[dict[str, Any]]] = {}
     quarantined_rows: list[dict[str, Any]] = []
 
@@ -847,20 +792,6 @@ def apply_ranking_power_sanity_guard(
                         source_powers=source_powers,
                         source_row_index=source_row_index,
                     )
-                if recovered_power is None:
-                    # Backward safety net for legacy cases with strong intrinsic
-                    # rank evidence but too little source context to score a
-                    # wider candidate set.
-                    legacy_recovered_power = _recover_leading_digit_power(
-                        row,
-                        ranking_type=ranking_type,
-                        source_powers=source_powers,
-                        source_row_index=source_row_index,
-                    )
-                    if legacy_recovered_power is not None:
-                        recovered_power = legacy_recovered_power
-                        recovery_reason = "legacy_leading_digit_recovery"
-
                 if recovered_power is not None:
                     recovered_row = _apply_recovered_power(
                         row,

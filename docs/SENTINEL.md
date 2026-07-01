@@ -2,7 +2,7 @@
 
 > Transforming observations into operational truth and explainable strategic intelligence.
 
-**Version:** v0.9.5.48
+**Version:** v0.9.5.49
 
 ---
 
@@ -60,7 +60,7 @@ Command Center
 
 ## Current sprint status
 
-v0.9.5.48 is a recovery reportability sprint. It exposes context-aware power candidate scoring in Excel exports and the operational import report.
+v0.9.5.49 is a recovery decision cutover sprint. It removes the legacy leading-digit decision fallback and requires clear candidate-score margins before automatic recovery.
 
 The next development focus is import session and segment integrity.
 
