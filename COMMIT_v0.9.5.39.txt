@@ -1,5 +1,0 @@
-git add .
-git commit -m "fix(ranking): generalize top alliance power allowance"
-git tag -a v0.9.5.39 -m "v0.9.5.39 General Top Alliance Power Allowance"
-git push origin main
-git push origin v0.9.5.39

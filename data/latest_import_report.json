@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-01T20:15:14.396144+00:00",
-  "runtime_seconds": 527.69,
+  "created_at": "2026-07-01T21:05:18.869354+00:00",
+  "runtime_seconds": 482.81,
   "screenshots": 15,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -11,10 +11,10 @@
   "rows": 122,
   "status": "Review",
   "readiness": 50,
-  "review_count": 10,
+  "review_count": 13,
   "data_guard": {
     "status": "Warning",
-    "warnings": 10,
+    "warnings": 13,
     "critical": 0,
     "checks": [
       "server_assignment",
@@ -28,18 +28,18 @@
     "attempts": 0,
     "success": 0,
     "calibrated_pass": 0,
-    "rejected": 10,
+    "rejected": 13,
     "confidence_avg": 0
   },
   "imports": [
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 10,
+      "rows": 13,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 10,
-      "screenshots": 8,
+      "review_count": 13,
+      "screenshots": 9,
       "source_files": [
         "Screenshot_20260701-194413.png",
         "Screenshot_20260701-194430.png",
@@ -48,7 +48,8 @@
         "Screenshot_20260701-194540.png",
         "Screenshot_20260701-194558.png",
         "Screenshot_20260701-194611.png",
-        "Screenshot_20260701-194622.png"
+        "Screenshot_20260701-194622.png",
+        "Screenshot_20260701-194631.png"
       ],
       "source": "REVIEW_ranking_guard_quarantine"
     },
@@ -70,10 +71,10 @@
     {
       "server": 553,
       "ranking_type": "total_hero_power",
-      "rows": 85,
+      "rows": 82,
       "status": "Review",
       "confidence": 90,
-      "review_count": 33,
+      "review_count": 30,
       "screenshots": 12,
       "source_files": [
         "Screenshot_20260701-194402.png",
@@ -99,7 +100,7 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 1,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:thp_power_outlier;late_scroll_source;power_to_local_median_ratio:3.97",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:3.97",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -123,7 +124,7 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 3,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:thp_power_outlier;late_scroll_source;power_to_local_median_ratio:4.26",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:4.26",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -147,7 +148,7 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 5,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:thp_power_outlier;late_scroll_source;power_to_local_median_ratio:4.51",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:4.51",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -195,7 +196,7 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 9,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:thp_power_outlier;late_scroll_source;power_to_local_median_ratio:4.63",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:4.63",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -212,19 +213,55 @@
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
       "screenshot": "Screenshot_20260701-194622.png"
+    },
+    {
+      "server": 553,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 11,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:1.00",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260701-194631.png"
+    },
+    {
+      "server": 553,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 12,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:1.00",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260701-194631.png"
+    },
+    {
+      "server": 553,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 13,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:thp_power_outlier;source_shape_digit_explosion;power_to_local_median_ratio:1.00",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260701-194631.png"
     }
   ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "15 screenshots · 1 servers · 122 rows · 527.69s",
+      "detail": "15 screenshots · 1 servers · 122 rows · 482.81s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "10 review item(s) detected",
+      "detail": "13 review item(s) detected",
       "severity": "warning"
     }
   ]

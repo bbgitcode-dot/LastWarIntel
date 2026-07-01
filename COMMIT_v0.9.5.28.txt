@@ -1,3 +1,0 @@
-git add .
-git commit -m "feat(inference): introduce read-only context engine for v0.9.5.28"
-git tag -a v0.9.5.28 -m "v0.9.5.28 Inference Engine Core"

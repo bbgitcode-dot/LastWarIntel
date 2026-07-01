@@ -1,5 +1,0 @@
-git add .
-git commit -m "fix(data-guard): quarantine ranking power outliers before merge"
-git tag -a v0.9.5.36 -m "v0.9.5.36 Ranking Power Monotonicity Guard"
-git push origin main
-git push origin v0.9.5.36

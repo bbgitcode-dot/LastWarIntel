@@ -1,5 +1,0 @@
-git add .
-git commit -m "fix(ranking-guard): add intrinsic segment integrity guard"
-git tag -a v0.9.5.42 -m "v0.9.5.42 Ranking Segment Integrity Guard"
-git push origin main
-git push origin v0.9.5.42

@@ -1,5 +1,0 @@
-git add .
-git commit -m "fix(ranking-guard): make power sanity rank and screenshot aware"
-git tag -a v0.9.5.37 -m "v0.9.5.37 Screenshot-Aware Ranking Power Guard"
-git push origin main
-git push origin v0.9.5.37

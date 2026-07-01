@@ -1383,3 +1383,11 @@ If PaddleOCR is installed correctly, the benchmark now writes:
 
 ---
 
+
+## v0.9.5.43
+
+- Added THP source-shape digit explosion guard.
+- Blocks mixed tail-source OCR spikes such as 164M rows read as 764M when rank-conflict evidence is present.
+- Keeps the guard source-local and independent from screenshot/upload order.
+
+Validation: `26 passed`.

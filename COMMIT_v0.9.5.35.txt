@@ -1,5 +1,0 @@
-git add .
-git commit -m "fix(data-guard): quarantine THP power outliers before rank merge"
-git tag -a v0.9.5.35 -m "v0.9.5.35 THP Power Sanity Guard"
-git push origin main
-git push origin v0.9.5.35

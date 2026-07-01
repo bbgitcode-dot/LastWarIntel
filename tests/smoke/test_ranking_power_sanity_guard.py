@@ -205,3 +205,49 @@ def test_general_top_of_source_allowance_does_not_bless_late_row_outlier():
     quarantine = result[("REVIEW", "ranking_guard_quarantine")]
     assert len(quarantine) == 1
     assert quarantine[0]["power"] == 19_567_083_952
+
+
+def test_server553_thp_digit_explosion_cluster_blocks_all_high_rows_even_with_one_missing_rank_conflict():
+    grouped = {
+        (553, "total_hero_power"): [
+            _row(764_292_586, "553_late.png", 100, "[LAFA] chris711"),
+            _row(764_047_047, "553_late.png", 103, "[LAFA] Pel Cowboy from Hell"),
+            _row(763_106_065, "553_late.png", 107, "[SWSQ] st34km4n"),
+            # This is the regression row from v0.9.5.43: no explicit late rank
+            # warning was available, but it is part of the same impossible high cluster.
+            _row(762_831_270, "553_late.png", None, "[SWSQ] Crank40"),
+            _row(164_292_586, "553_late.png", 100, "[LAFA] chris711"),
+            _row(164_047_047, "553_late.png", 103, "[LAFA] Pel Cowboy from Hell"),
+            _row(163_645_571, "553_late.png", 104, "[SBrO] StealthNinja"),
+            _row(163_415_086, "553_late.png", 105, "[IxN] khs"),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    trusted_powers = {row["power"] for row in result[(553, "total_hero_power")]}
+    assert 762_831_270 not in trusted_powers
+    quarantine_powers = {row["power"] for row in result[("REVIEW", "ranking_guard_quarantine")]}
+    assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.issubset(quarantine_powers)
+
+
+def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screenshot_order():
+    grouped = {
+        (553, "alliance_power"): [
+            _row(27_880_814_562, "553_ap_top.png", None, "[SWSq] Suprema Wave Squad"),
+            _row(25_796_108_798, "553_ap_top.png", None, "[LaFa] La Familia"),
+            _row(18_410_437_934, "553_ap_top.png", None, "[SBrO] Brothers of Shadows"),
+            _row(17_254_654_410, "553_ap_top.png", None, "[AnUW] AnUkrainianWarrior"),
+            _row(77_739_565_950, "553_ap_top.png", None, "[kk7] Barb"),
+            _row(10_410_414_985, "553_ap_top.png", None, "[IxN] The Iron Nilfgaard"),
+            _row(9_555_599_544, "553_ap_top.png", None, "[WWU] Westwärts United"),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    trusted_powers = {row["power"] for row in result[(553, "alliance_power")]}
+    assert 77_739_565_950 not in trusted_powers
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    assert len(quarantine) == 1
+    assert quarantine[0]["power"] == 77_739_565_950

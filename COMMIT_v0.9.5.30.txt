@@ -1,3 +1,0 @@
-git add .
-git commit -m "feat(server): add pattern-based universal server detection"
-git tag -a v0.9.5.30 -m "v0.9.5.30 Universal Server Detection"

@@ -69,6 +69,83 @@ def _safe_ratio(value: int, local_median: int | None) -> float | None:
 
 
 
+def _row_has_rank_conflict(row: dict[str, Any]) -> bool:
+    warning = str(row.get("rank_warning") or "")
+    if "ocr_rank_differs_from_power_rank" in warning:
+        return True
+    ocr = _ocr_rank(row)
+    computed = row.get("computed_rank")
+    try:
+        computed_int = int(float(computed)) if computed is not None and computed != "" else None
+    except (TypeError, ValueError):
+        computed_int = None
+    return ocr is not None and computed_int is not None and ocr != computed_int
+
+
+def _thp_source_digit_explosion_powers(rows: list[dict[str, Any]]) -> set[int]:
+    """Return THP values that look like source-local OCR leading-digit explosions.
+
+    Some mobile screenshots produce a mixed source where late-scroll rows around
+    160M are correctly present, while a few neighbouring rows from the same
+    visual block are read as 760M/790M and jump to the top after global sorting.
+    The detector is strictly source-local: it does not use filename order, upload
+    order, or neighbouring screenshots.  v0.9.5.44 also catches a compact high
+    cluster even when one row lacks a rank-conflict warning, because the whole
+    cluster shares the same impossible 7xx/8xx-M envelope while the visible
+    source median remains in normal 160M-250M territory.
+    """
+    values: list[int] = []
+    for row in rows:
+        value = _power(row)
+        if value is not None and value > 0:
+            values.append(value)
+    if len(values) < 6:
+        return set()
+
+    low_values = [value for value in values if value < 300_000_000]
+    high_values = [value for value in values if value >= 500_000_000]
+    if len(low_values) < 3 or not high_values:
+        return set()
+
+    low_median = int(median(low_values))
+    if low_median <= 0 or min(high_values) / low_median < 3.0:
+        return set()
+
+    outliers: set[int] = set()
+    rank_conflict_high_values: set[int] = set()
+    for row in rows:
+        value = _power(row)
+        if value is None or value < 500_000_000:
+            continue
+        if _row_has_rank_conflict(row):
+            rank_conflict_high_values.add(value)
+
+    outliers.update(rank_conflict_high_values)
+
+    # Cluster catch: if a source contains multiple 500M+ rows, most of them
+    # already have rank-conflict evidence, and the low envelope is normal THP,
+    # the remaining neighbouring high row is the same OCR digit-explosion class.
+    # This closes the Server 553 case where Crank40 survived while adjacent
+    # 764M/763M rows were correctly quarantined.
+    if len(high_values) >= 2 and len(rank_conflict_high_values) >= max(1, len(high_values) - 1):
+        outliers.update(high_values)
+
+    # Pure source-shape catch: a compact high cluster at the top of one visual
+    # source followed by a stable low envelope is also unsafe, even when rank
+    # warnings are incomplete.  Keep the threshold high to avoid real whale rows.
+    max_split = min(4, len(values) - 3)
+    for split in range(2, max_split + 1):
+        high = values[:split]
+        low = values[split:]
+        if min(high) < 500_000_000:
+            continue
+        low_median_for_split = int(median([value for value in low if value < 300_000_000])) if low else 0
+        if low_median_for_split > 0 and min(high) / low_median_for_split >= 3.0:
+            outliers.update(high)
+
+    return outliers
+
+
 def _source_shape_outlier_powers(rows: list[dict[str, Any]]) -> set[int]:
     """Return alliance-power values that look like source-local OCR digit explosions.
 
@@ -120,6 +197,22 @@ def _source_shape_outlier_powers(rows: list[dict[str, Any]]) -> set[int]:
     if first >= 50_000_000_000 and rest_median > 0 and first / rest_median >= 3.0:
         outliers.add(first)
 
+    # Source-local middle spike: if a 50B+ value appears after multiple lower
+    # visible rows from the same screenshot, it is not a legitimate top-of-source
+    # leader.  Server 553 exposed this as [kk7] Barb being read as 77.7B at
+    # visual rank 5 although the surrounding rank-1..4 alliance powers are
+    # 27.8B/25.8B/18.4B/17.2B.  This rule remains local and does not assume any
+    # order between screenshots or uploaders.
+    for index, value in enumerate(powers):
+        if index < 2 or value < 50_000_000_000:
+            continue
+        prior = [prior_value for prior_value in powers[:index] if prior_value < 40_000_000_000]
+        following = [next_value for next_value in powers[index + 1:] if next_value < 40_000_000_000]
+        if len(prior) >= 2 and following:
+            local_low = int(median(prior + following))
+            if local_low > 0 and value / local_low >= 2.35:
+                outliers.add(value)
+
     return outliers
 
 
@@ -160,6 +253,7 @@ def evaluate_ranking_power_sanity(
     prior_high_value_sources: int = 0,
     source_row_index: int | None = None,
     source_shape_outlier_powers: set[int] | None = None,
+    thp_source_digit_explosion_powers: set[int] | None = None,
 ) -> RankingPowerSanityDecision:
     """Evaluate one row for a local power-envelope violation.
 
@@ -183,6 +277,21 @@ def evaluate_ranking_power_sanity(
 
     if ranking_type == "total_hero_power":
         ocr_rank = _ocr_rank(row)
+        thp_source_digit_explosion_powers = thp_source_digit_explosion_powers or set()
+
+        if value in thp_source_digit_explosion_powers:
+            confidence = min(0.99, round((ratio - 1.0) / 3.0 + 0.70, 4))
+            return RankingPowerSanityDecision(
+                status="quarantine",
+                confidence=confidence,
+                reasons=[
+                    "thp_power_outlier",
+                    "source_shape_digit_explosion",
+                    f"power_to_local_median_ratio:{ratio:.2f}",
+                ],
+                local_median=local_median,
+                local_ratio=ratio,
+            )
 
         # Intrinsic rank/power envelope guard. This does not depend on filename
         # order or upload order. If the row itself says it is a late-scroll rank
@@ -253,6 +362,7 @@ def evaluate_ranking_power_sanity(
                 status="quarantine",
                 confidence=confidence,
                 reasons=[
+                    "alliance_power_outlier",
                     "alliance_rank_power_envelope_violation",
                     f"ocr_rank:{ocr_rank}",
                     f"power:{value}",
@@ -372,6 +482,7 @@ def apply_ranking_power_sanity_guard(
             is_first_source = source_index == 1
             current_source_high_values = sum(1 for value in source_powers if value >= 50_000_000_000)
             source_shape_outlier_powers = _source_shape_outlier_powers(source_rows) if ranking_type == "alliance_power" else set()
+            thp_source_digit_explosion_powers = _thp_source_digit_explosion_powers(source_rows) if ranking_type == "total_hero_power" else set()
             for source_row_index, row in enumerate(source_rows, start=1):
                 decision = evaluate_ranking_power_sanity(
                     row,
@@ -382,6 +493,7 @@ def apply_ranking_power_sanity_guard(
                     prior_high_value_sources=prior_high_value_sources,
                     source_row_index=source_row_index,
                     source_shape_outlier_powers=source_shape_outlier_powers,
+                    thp_source_digit_explosion_powers=thp_source_digit_explosion_powers,
                 )
                 if decision.should_quarantine:
                     quarantined_rows.append(
