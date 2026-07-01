@@ -58,6 +58,61 @@ def _safe_ratio(value: int, local_median: int | None) -> float | None:
     return value / local_median
 
 
+
+def _source_shape_outlier_powers(rows: list[dict[str, Any]]) -> set[int]:
+    """Return alliance-power values that look like source-local OCR digit explosions.
+
+    The detector is intentionally source-local: it never relies on filename order
+    or on neighbouring screenshots.  It looks only at the visible power shape of
+    one screenshot/scroll block.  This protects mixed multi-user upload batches
+    where screenshot ordering is arbitrary.
+    """
+    powers = [_power(row) for row in rows]
+    powers = [value for value in powers if value is not None and value > 0]
+    if len(powers) < 4:
+        return set()
+
+    outliers: set[int] = set()
+
+    # False Alliance-Power spikes observed in the 552 mobile source are in the
+    # 70B-80B range while the surrounding visible block is 20B or below.  Real
+    # 550/551 leaders in the current baseline are much lower (5B-20B) and must
+    # not be caught by this high-cluster detector.
+    max_split = min(3, len(powers) - 2)
+    for split in range(1, max_split + 1):
+        high = powers[:split]
+        low = powers[split:]
+        low_median = int(median(low)) if low else 0
+        if low_median <= 0:
+            continue
+        cluster_ratio = median(high) / low_median
+        boundary_ratio = high[-1] / max(low[0], 1)
+        if min(high) >= 50_000_000_000 and cluster_ratio >= 2.35 and boundary_ratio >= 2.25:
+            outliers.update(high)
+
+    # A high cluster at the top of a source can be an OCR digit explosion even
+    # when the boundary between the first two high values is smooth.  The v0.9.5.40
+    # guard caught the isolated 70B uiz row but allowed the paired 79B/77B rows
+    # because their internal cluster looked consistent.  Treat the first two
+    # 50B+ values as one suspicious source-local cluster when the remaining
+    # visible rows sit in a much lower alliance-power envelope.
+    if len(powers) >= 5 and powers[0] >= 50_000_000_000 and powers[1] >= 50_000_000_000:
+        rest_median = int(median(powers[2:]))
+        if rest_median > 0 and min(powers[0], powers[1]) / rest_median >= 2.35:
+            outliers.update({powers[0], powers[1]})
+
+    # A single 50B+ value at the top of a source whose remaining rows are all far
+    # lower is also suspicious unless later evidence re-validates it manually.
+    # This catches the isolated 70B uiz-style spike without depending on global
+    # screenshot order.
+    first = powers[0]
+    rest_median = int(median(powers[1:])) if len(powers) > 1 else 0
+    if first >= 50_000_000_000 and rest_median > 0 and first / rest_median >= 3.0:
+        outliers.add(first)
+
+    return outliers
+
+
 def _mark_quarantined(
     row: dict[str, Any],
     *,
@@ -94,6 +149,7 @@ def evaluate_ranking_power_sanity(
     source_index: int = 1,
     prior_high_value_sources: int = 0,
     source_row_index: int | None = None,
+    source_shape_outlier_powers: set[int] | None = None,
 ) -> RankingPowerSanityDecision:
     """Evaluate one row for a local power-envelope violation.
 
@@ -135,10 +191,10 @@ def evaluate_ranking_power_sanity(
 
     if ranking_type == "alliance_power":
         rank = _rank(row)
+        source_shape_outlier_powers = source_shape_outlier_powers or set()
 
-        # Absolute safety cap: Last War alliance-power screenshots in the current
-        # baseline are nowhere near this range.  Keep a hard ceiling so rank-aware
-        # grace cannot accidentally bless a catastrophic digit explosion.
+        # Absolute safety cap is evaluated before source-shape detection so an
+        # impossible value is explained as such, not merely as a local cluster.
         if value >= 150_000_000_000:
             confidence = 0.99
             return RankingPowerSanityDecision(
@@ -147,6 +203,20 @@ def evaluate_ranking_power_sanity(
                 reasons=[
                     "alliance_power_outlier",
                     "absolute_power_ceiling",
+                    f"power_to_local_median_ratio:{ratio:.2f}",
+                ],
+                local_median=local_median,
+                local_ratio=ratio,
+            )
+
+        if value in source_shape_outlier_powers:
+            confidence = min(0.99, round((ratio - 1.0) / 2.5 + 0.70, 4))
+            return RankingPowerSanityDecision(
+                status="quarantine",
+                confidence=confidence,
+                reasons=[
+                    "alliance_power_outlier",
+                    "source_shape_high_cluster",
                     f"power_to_local_median_ratio:{ratio:.2f}",
                 ],
                 local_median=local_median,
@@ -205,7 +275,8 @@ def evaluate_ranking_power_sanity(
             )
 
         threshold = 2.35
-        if value >= 5_000_000_000 and ratio >= threshold:
+        is_source_top_grace_row = source_row_index is not None and source_row_index <= 2
+        if value >= 5_000_000_000 and ratio >= threshold and not is_source_top_grace_row:
             confidence = min(0.99, round((ratio - 1.0) / 2.5 + 0.62, 4))
             return RankingPowerSanityDecision(
                 status="quarantine",
@@ -247,6 +318,7 @@ def apply_ranking_power_sanity_guard(
             source_powers = [value for value in source_powers if value is not None]
             is_first_source = source_index == 1
             current_source_high_values = sum(1 for value in source_powers if value >= 50_000_000_000)
+            source_shape_outlier_powers = _source_shape_outlier_powers(source_rows) if ranking_type == "alliance_power" else set()
             for source_row_index, row in enumerate(source_rows, start=1):
                 decision = evaluate_ranking_power_sanity(
                     row,
@@ -256,6 +328,7 @@ def apply_ranking_power_sanity_guard(
                     source_index=source_index,
                     prior_high_value_sources=prior_high_value_sources,
                     source_row_index=source_row_index,
+                    source_shape_outlier_powers=source_shape_outlier_powers,
                 )
                 if decision.should_quarantine:
                     quarantined_rows.append(

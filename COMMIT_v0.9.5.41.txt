@@ -1,0 +1,5 @@
+git add .
+git commit -m "fix(ranking-guard): quarantine paired alliance power high clusters"
+git tag -a v0.9.5.41 -m "v0.9.5.41 High-Cluster Alliance Power Guard"
+git push origin main
+git push origin v0.9.5.41

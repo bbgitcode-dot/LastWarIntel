@@ -53,10 +53,10 @@ def test_alliance_power_legitimate_low_power_tail_is_allowed():
     assert len(result[(552, "alliance_power")]) == 7
 
 
-def test_first_rank_alliance_power_gets_grace_for_real_leader():
+def test_first_rank_alliance_power_gets_grace_for_real_leader_below_high_cluster_floor():
     grouped = {
         (999, "alliance_power"): [
-            _row(80_000_000_000, "001.png", 1),
+            _row(49_000_000_000, "001.png", 1),
             _row(24_000_000_000, "001.png", 2),
             _row(23_500_000_000, "001.png", 3),
             _row(22_900_000_000, "001.png", 4),
@@ -71,7 +71,7 @@ def test_first_rank_alliance_power_gets_grace_for_real_leader():
     assert len(result[(999, "alliance_power")]) == 6
 
 
-def test_top_three_alliance_power_rows_are_boundary_aware():
+def test_source_shape_blocks_false_552_alliance_power_high_cluster():
     grouped = {
         (552, "alliance_power"): [
             _row(79_085_297_891, "001.png", 1, "[BwD] 八于9团4"),
@@ -90,10 +90,11 @@ def test_top_three_alliance_power_rows_are_boundary_aware():
     result = apply_ranking_power_sanity_guard(grouped)
 
     powers = [row["power"] for row in result[(552, "alliance_power")]]
-    assert 79_085_297_891 in powers
-    assert 77_709_655_122 in powers
-    assert 70_057_779_917 in powers
-    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    assert 79_085_297_891 not in powers
+    assert 77_709_655_122 not in powers
+    assert 70_057_779_917 not in powers
+    quarantine_powers = {row["power"] for row in result[("REVIEW", "ranking_guard_quarantine")]}
+    assert {79_085_297_891, 77_709_655_122, 70_057_779_917}.issubset(quarantine_powers)
 
 
 def test_alliance_power_top_rank_absolute_ceiling_still_quarantines():
@@ -110,12 +111,11 @@ def test_alliance_power_top_rank_absolute_ceiling_still_quarantines():
     result = apply_ranking_power_sanity_guard(grouped)
 
     quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    assert len(quarantine) == 1
-    assert quarantine[0]["power"] == 790_000_000_000
-    assert "absolute_power_ceiling" in quarantine[0]["ranking_guard_warning"]
+    assert any(row["power"] == 790_000_000_000 for row in quarantine)
+    assert any("absolute_power_ceiling" in row["ranking_guard_warning"] for row in quarantine if row["power"] == 790_000_000_000)
 
 
-def test_early_source_alliance_power_top_values_are_allowed_without_rank_anchor():
+def test_early_source_alliance_power_false_high_values_are_blocked_without_rank_anchor():
     grouped = {
         (552, "alliance_power"): [
             _row(79_085_297_891, "001.png", None, "[BwD] 八于9团4"),
@@ -134,10 +134,10 @@ def test_early_source_alliance_power_top_values_are_allowed_without_rank_anchor(
     result = apply_ranking_power_sanity_guard(grouped)
 
     powers = [row["power"] for row in result[(552, "alliance_power")]]
-    assert 79_085_297_891 in powers
-    assert 77_709_655_122 in powers
-    assert 70_057_779_917 in powers
-    assert ("REVIEW", "ranking_guard_quarantine") not in result
+    assert 79_085_297_891 not in powers
+    assert 77_709_655_122 not in powers
+    assert 70_057_779_917 not in powers
+    assert len(result[("REVIEW", "ranking_guard_quarantine")]) == 3
 
 
 def test_late_source_alliance_power_high_value_without_rank_anchor_is_still_quarantined():
