@@ -18,6 +18,7 @@ from uuid import uuid4
 
 from .models import (
     ManagedSnapshot,
+    ServerScope,
     SnapshotCoverage,
     SnapshotDashboard,
     SnapshotFeedCoverage,
@@ -26,8 +27,10 @@ from .models import (
 
 DEFAULT_EXPECTED_RANKINGS = ["alliance_power", "total_hero_power"]
 ALLOWED_TYPES = {"screenshot_upload", "historical_excel", "manual_import"}
-ALLOWED_STATUSES = {"open", "importing", "review", "complete", "closed"}
+ALLOWED_STATUSES = {"open", "importing", "review", "complete", "closed", "locked", "archived"}
 ACTIVE_IMPORT_STATUSES = {"open", "importing", "review"}
+EDITABLE_STATUSES = {"open", "importing", "review"}
+SERVER_SCOPE_MODES = {"all", "range", "selected"}
 
 
 class SnapshotContextError(RuntimeError):
@@ -88,13 +91,22 @@ class SnapshotService:
         description: str = "",
         expected_rankings: list[str] | None = None,
         source: str = "",
-        assigned_servers: list[int] | None = None,
+        assigned_servers: list[int] | str | None = None,
+        server_scope_mode: str = "selected",
+        server_range_start: int | str | None = None,
+        server_range_end: int | str | None = None,
         set_active: bool = True,
     ) -> ManagedSnapshot:
         clean_name = self._clean_name(name)
         clean_type = snapshot_type if snapshot_type in ALLOWED_TYPES else "screenshot_upload"
         rankings = self._clean_rankings(expected_rankings or DEFAULT_EXPECTED_RANKINGS)
-        servers = self._clean_servers(assigned_servers or [])
+        server_scope = self._build_server_scope(
+            mode=server_scope_mode,
+            assigned_servers=assigned_servers or [],
+            server_range_start=server_range_start,
+            server_range_end=server_range_end,
+        )
+        servers = self._expand_server_scope(server_scope)
         now = self._now()
         snapshot = ManagedSnapshot(
             id=self._slug_id(clean_name),
@@ -107,6 +119,8 @@ class SnapshotService:
             updated_at=now,
             source=source.strip(),
             assigned_servers=servers,
+            server_scope=server_scope,
+            locked=False,
         )
         payload = self._load()
         existing = [item for item in payload.get("snapshots", []) if isinstance(item, dict)]
@@ -143,6 +157,51 @@ class SnapshotService:
         self._save(payload)
         return self._from_raw(changed)
 
+
+    def update_snapshot(
+        self,
+        snapshot_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        expected_rankings: list[str] | None = None,
+        server_scope_mode: str | None = None,
+        assigned_servers: list[int] | str | None = None,
+        server_range_start: int | str | None = None,
+        server_range_end: int | str | None = None,
+    ) -> ManagedSnapshot | None:
+        payload = self._load()
+        changed: dict | None = None
+        for item in payload.get("snapshots", []) or []:
+            if not isinstance(item, dict) or str(item.get("id")) != snapshot_id:
+                continue
+            if str(item.get("status") or "open") not in EDITABLE_STATUSES:
+                raise SnapshotContextError("Snapshot is locked for editing. Only open, importing or review snapshots can be edited.")
+            before = dict(item)
+            if name is not None:
+                item["name"] = self._clean_name(name)
+            if description is not None:
+                item["description"] = description.strip()
+            if expected_rankings is not None:
+                item["expected_rankings"] = self._clean_rankings(expected_rankings)
+            if server_scope_mode is not None:
+                scope = self._build_server_scope(
+                    mode=server_scope_mode,
+                    assigned_servers=assigned_servers or [],
+                    server_range_start=server_range_start,
+                    server_range_end=server_range_end,
+                )
+                item["server_scope"] = asdict(scope)
+                item["assigned_servers"] = self._expand_server_scope(scope)
+            item["updated_at"] = self._now()
+            self._append_audit(item, "snapshot_updated", before)
+            changed = item
+            break
+        if not changed:
+            return None
+        self._save(payload)
+        return self._from_raw(changed)
+
     def bind_import_report(self, report: dict[str, Any], snapshot: ManagedSnapshot) -> dict[str, Any]:
         """Attach active snapshot context to a latest import report.
 
@@ -161,6 +220,7 @@ class SnapshotService:
         bound["snapshot_status_at_import"] = snapshot.status
         bound["snapshot_expected_rankings"] = list(snapshot.expected_rankings)
         bound["snapshot_expected_servers"] = list(snapshot.assigned_servers)
+        bound["snapshot_server_scope"] = asdict(snapshot.server_scope)
         bound["schema"] = "sentinel.import_run.v2"
         bound["schema_previous"] = report.get("schema") if isinstance(report, dict) else None
         return bound
@@ -213,7 +273,7 @@ class SnapshotService:
                 )
 
         expected_rankings = list(active.expected_rankings) if active else list(DEFAULT_EXPECTED_RANKINGS)
-        expected_servers = list(active.assigned_servers) if active else []
+        expected_servers = self._expected_servers_for_snapshot(active, report) if active else []
         missing: list[SnapshotMissingFeed] = []
         if active and expected_servers:
             present = {(feed.server, feed.ranking_type) for feed in imported_feeds if feed.server}
@@ -239,6 +299,12 @@ class SnapshotService:
         if active and report and not is_bound:
             warning = "Latest import report is not bound to the active snapshot. Do not treat it as current phase evidence."
 
+        expected_feed_count = len(expected_servers) * len(expected_rankings) if expected_servers else len(expected_rankings)
+        imported_valid_feed_count = len({(feed.server, feed.ranking_type) for feed in imported_feeds if feed.server and feed.ranking_type in expected_rankings})
+        if not expected_servers:
+            imported_valid_feed_count = len([ranking for ranking in expected_rankings if ranking in imported_rankings])
+        completeness_percent = round((imported_valid_feed_count / expected_feed_count) * 100, 1) if expected_feed_count else 0.0
+
         return SnapshotCoverage(
             snapshot=active,
             is_bound=is_bound,
@@ -247,6 +313,9 @@ class SnapshotService:
             report_created_at=str(report.get("created_at") or ""),
             expected_rankings=expected_rankings,
             expected_servers=expected_servers,
+            expected_feed_count=expected_feed_count,
+            imported_valid_feed_count=imported_valid_feed_count,
+            completeness_percent=completeness_percent,
             imported_servers=sorted(imported_servers),
             imported_rankings=sorted(imported_rankings),
             imported_feeds=imported_feeds,
@@ -285,7 +354,8 @@ class SnapshotService:
 
     @staticmethod
     def _from_raw(raw: dict) -> ManagedSnapshot:
-        servers = SnapshotService._clean_servers(raw.get("assigned_servers", []) or [])
+        server_scope = SnapshotService._server_scope_from_raw(raw)
+        servers = SnapshotService._expand_server_scope(server_scope)
         rankings = SnapshotService._clean_rankings(raw.get("expected_rankings", []) or DEFAULT_EXPECTED_RANKINGS)
         return ManagedSnapshot(
             id=str(raw.get("id") or ""),
@@ -298,6 +368,8 @@ class SnapshotService:
             updated_at=str(raw.get("updated_at") or ""),
             source=str(raw.get("source") or ""),
             assigned_servers=servers,
+            server_scope=server_scope,
+            locked=str(raw.get("status") or "open") in {"complete", "closed", "locked", "archived"},
         )
 
     @staticmethod
@@ -310,8 +382,95 @@ class SnapshotService:
             "description": snapshot.description,
             "expected_rankings": list(snapshot.expected_rankings),
             "expected_servers": list(snapshot.assigned_servers),
+            "server_scope": asdict(snapshot.server_scope),
             "bound_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
+
+
+    @staticmethod
+    def _server_scope_from_raw(raw: dict[str, Any]) -> ServerScope:
+        scope_raw = raw.get("server_scope") if isinstance(raw.get("server_scope"), dict) else {}
+        if scope_raw:
+            mode = str(scope_raw.get("mode") or "selected").lower()
+            start = SnapshotService._optional_int(scope_raw.get("start"))
+            end = SnapshotService._optional_int(scope_raw.get("end"))
+            servers = SnapshotService._clean_servers(scope_raw.get("servers", []) or [])
+            return SnapshotService._normalize_server_scope(ServerScope(mode=mode, start=start, end=end, servers=servers))
+        legacy_servers = SnapshotService._clean_servers(raw.get("assigned_servers", []) or [])
+        return SnapshotService._normalize_server_scope(ServerScope(mode="selected", servers=legacy_servers))
+
+    @staticmethod
+    def _build_server_scope(
+        *,
+        mode: str,
+        assigned_servers: list[Any] | str,
+        server_range_start: int | str | None,
+        server_range_end: int | str | None,
+    ) -> ServerScope:
+        clean_mode = str(mode or "selected").strip().lower()
+        if clean_mode not in SERVER_SCOPE_MODES:
+            clean_mode = "selected"
+        if clean_mode == "all":
+            return ServerScope(mode="all", servers=[])
+        if clean_mode == "range":
+            return SnapshotService._normalize_server_scope(
+                ServerScope(
+                    mode="range",
+                    start=SnapshotService._optional_int(server_range_start),
+                    end=SnapshotService._optional_int(server_range_end),
+                )
+            )
+        return SnapshotService._normalize_server_scope(ServerScope(mode="selected", servers=SnapshotService._clean_servers(assigned_servers)))
+
+    @staticmethod
+    def _normalize_server_scope(scope: ServerScope) -> ServerScope:
+        mode = scope.mode if scope.mode in SERVER_SCOPE_MODES else "selected"
+        if mode == "range":
+            start = scope.start
+            end = scope.end
+            if start and end:
+                if start > end:
+                    start, end = end, start
+                return ServerScope(mode="range", start=start, end=end, servers=[])
+            return ServerScope(mode="selected", servers=[])
+        if mode == "all":
+            return ServerScope(mode="all", servers=[])
+        return ServerScope(mode="selected", servers=SnapshotService._clean_servers(scope.servers))
+
+    @staticmethod
+    def _expand_server_scope(scope: ServerScope) -> list[int]:
+        if scope.mode == "range" and scope.start and scope.end:
+            return list(range(scope.start, scope.end + 1))
+        if scope.mode == "selected":
+            return SnapshotService._clean_servers(scope.servers)
+        return []
+
+    def _expected_servers_for_snapshot(self, snapshot: ManagedSnapshot | None, report: dict[str, Any]) -> list[int]:
+        if snapshot is None:
+            return []
+        if snapshot.server_scope.mode == "all":
+            known = set(snapshot.assigned_servers)
+            for item in report.get("imports") or []:
+                if isinstance(item, dict):
+                    server = self._optional_int(item.get("server"))
+                    if server:
+                        known.add(server)
+            return sorted(known)
+        return list(snapshot.assigned_servers)
+
+    @staticmethod
+    def _append_audit(item: dict[str, Any], event: str, before: dict[str, Any]) -> None:
+        audit = item.setdefault("audit", [])
+        if not isinstance(audit, list):
+            audit = []
+            item["audit"] = audit
+        audit.append({
+            "event": event,
+            "at": SnapshotService._now(),
+            "before_server_scope": before.get("server_scope"),
+            "before_assigned_servers": before.get("assigned_servers"),
+            "before_expected_rankings": before.get("expected_rankings"),
+        })
 
     @staticmethod
     def _clean_name(name: str) -> str:

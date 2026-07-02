@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 
 from application.historical_import.service import HistoricalImportService
 from application.operational_import.service import OperationalImportService
-from application.snapshots.service import SnapshotService
+from application.snapshots.service import SnapshotContextError, SnapshotService
 from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["imports"])
@@ -49,6 +49,9 @@ async def create_snapshot(request: Request):
     snapshot_type = form.get("snapshot_type", "screenshot_upload")
     description = form.get("description", "")
     assigned_servers_raw = form.get("assigned_servers", "")
+    server_scope_mode = form.get("server_scope_mode", "selected")
+    server_range_start = form.get("server_range_start", "")
+    server_range_end = form.get("server_range_end", "")
     expected_rankings: list[str] = []
     if form.get("expected_alliance_power"):
         expected_rankings.append("alliance_power")
@@ -62,6 +65,9 @@ async def create_snapshot(request: Request):
             expected_rankings=expected_rankings or ["alliance_power", "total_hero_power"],
             source="Import Center",
             assigned_servers=assigned_servers_raw,
+            server_scope_mode=server_scope_mode,
+            server_range_start=server_range_start,
+            server_range_end=server_range_end,
             set_active=True,
         )
         target = "/imports?snapshot=created"
@@ -82,6 +88,31 @@ async def update_snapshot_status(snapshot_id: str, request: Request):
     status = form.get("status", "open")
     snapshot_service.update_status(snapshot_id, status)
     return RedirectResponse(url="/imports?snapshot=status-updated", status_code=303)
+
+
+@router.post("/imports/snapshots/{snapshot_id}/edit")
+async def edit_snapshot(snapshot_id: str, request: Request):
+    form = _read_urlencoded(await request.body())
+    expected_rankings: list[str] = []
+    if form.get("expected_alliance_power"):
+        expected_rankings.append("alliance_power")
+    if form.get("expected_total_hero_power"):
+        expected_rankings.append("total_hero_power")
+    try:
+        snapshot_service.update_snapshot(
+            snapshot_id,
+            name=form.get("name", ""),
+            description=form.get("description", ""),
+            expected_rankings=expected_rankings or ["alliance_power", "total_hero_power"],
+            server_scope_mode=form.get("server_scope_mode", "selected"),
+            assigned_servers=form.get("assigned_servers", ""),
+            server_range_start=form.get("server_range_start", ""),
+            server_range_end=form.get("server_range_end", ""),
+        )
+        target = "/imports?snapshot=updated"
+    except (ValueError, SnapshotContextError):
+        target = "/imports?snapshot=edit-blocked"
+    return RedirectResponse(url=target, status_code=303)
 
 
 @router.get("/api/imports")

@@ -38,3 +38,27 @@ Future Data Guard decisions should be snapshot-aware. A row should be evaluated 
 ## Snapshot binding and Data Guard
 
 v0.9.5.73 adds an import-context gate before screenshot OCR. The gate prevents unbound Current Run evidence from entering the workflow. Data Guard remains responsible for server assignment, quarantine and protection of Operational Truth; snapshot binding only answers which named phase the evidence belongs to. If evidence is unbound or bound to a different active snapshot, it must not be interpreted as current operational completeness.
+
+## Snapshot completeness guardrail – v0.9.5.74
+
+Snapshot completeness is part of data integrity. It must be computed from explicit expected evidence, not from a global server count.
+
+The expected evidence unit is:
+
+```text
+Feed = Server × Ranking Type
+```
+
+The active snapshot defines the server scope:
+
+- `all`: dynamic known-server scope.
+- `range`: inclusive server range, for example `549-676`.
+- `selected`: explicit small list for special events.
+
+Completeness uses:
+
+```text
+imported_valid_feeds / expected_feeds
+```
+
+This prevents an 8-server event from being judged against a 128-server season and prevents a 128-server season from being accidentally reduced to two endpoints.

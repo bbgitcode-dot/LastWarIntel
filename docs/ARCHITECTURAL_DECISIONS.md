@@ -68,3 +68,18 @@ The Intelligence layer should not be expanded until import, review, snapshot and
 ## ADR – v0.9.5.73 Snapshot import binding is mandatory
 
 Screenshot imports must have an active managed `screenshot_upload` snapshot. A missing, closed, complete or wrong-type snapshot blocks import instead of allowing evidence to enter the Current Run without phase context. This prevents accidental mixing of events such as `S6 pre Transfer` with another phase. Snapshot metadata is audit context only and never overrides Data Guard, Ranking Guard or Human Review.
+
+## ADR – v0.9.5.74 Snapshot completeness derives from explicit server scope
+
+Sentinel must not assume a fixed number of participating servers. S4, S5, S6 and future events can have different server counts, and event-specific uploads may only cover a small set of servers.
+
+Decision:
+
+- Managed snapshots store a `server_scope` instead of relying on ambiguous free text.
+- Supported scope modes are `all`, `range` and `selected`.
+- `range` expands inclusively, for example `549-676` becomes 128 expected servers.
+- Completeness is calculated as imported valid feeds divided by expected feeds derived from `server_scope × expected_rankings`.
+- Active snapshots may be edited only while they are `open`, `importing` or `review`.
+- Completed, closed, locked or archived snapshots are protected against scope edits.
+
+Rationale: the snapshot defines what complete means. Sentinel must never treat filename order, upload order or a hard-coded season size as truth.

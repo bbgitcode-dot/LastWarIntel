@@ -1,9 +1,40 @@
 # Sentinel Patch Summary
 
-**Current release:** v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement  
+**Current release:** v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness  
 **Updated:** 2026-07-03
 
 This is the canonical patch-summary document. Future sprint patches should update this file instead of creating loose `PATCH_SUMMARY_v*.md` files, unless a temporary root-level file is needed inside a delivered patch package.
+
+## v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness
+
+### Purpose
+Replace fragile free-text expected-server handling with explicit snapshot server scope. Completeness is now calculated against the snapshot's intended scope instead of any fixed global server count.
+
+### Included changes
+- Added `ServerScope` model with `all`, `range` and `selected` modes.
+- Added range expansion so `549–676` becomes 128 expected servers without manual entry.
+- Kept selected-server mode for small events and special cases.
+- Added controlled snapshot editing for `open`, `importing` and `review` snapshots.
+- Locked completed/closed/archived snapshots against scope edits.
+- Added snapshot edit audit metadata for scope/ranking changes.
+- Bound import reports now include explicit `snapshot_server_scope` metadata.
+- Snapshot coverage now exposes expected feed count, valid imported feed count and completeness percentage.
+- Import Center UI now creates and edits snapshots through Server Scope instead of ambiguous expected-server text.
+
+### Validation
+```text
+pytest tests/smoke/test_snapshot_management.py tests/smoke/test_snapshot_upload_binding.py -q
+7 passed
+
+python -m compileall -q application/snapshots web/routes/imports.py version.py
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(snapshot): add server scope and dynamic completeness"
+git tag -a v0.9.5.74 -m "v0.9.5.74 Snapshot Server Scope and Dynamic Completeness"
+```
 
 ## v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
 

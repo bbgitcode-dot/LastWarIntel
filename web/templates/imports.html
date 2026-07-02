@@ -63,6 +63,10 @@
         <div class="drilldown-notice success-note">Snapshot activated.</div>
         {% elif snapshot_notice == 'status-updated' %}
         <div class="drilldown-notice success-note">Snapshot status updated.</div>
+        {% elif snapshot_notice == 'updated' %}
+        <div class="drilldown-notice success-note">Snapshot updated. Coverage was recalculated from its server scope.</div>
+        {% elif snapshot_notice == 'edit-blocked' %}
+        <div class="drilldown-notice danger-note">Snapshot edit blocked. Only open, importing or review snapshots can be changed.</div>
         {% elif snapshot_notice == 'missing-name' %}
         <div class="drilldown-notice danger-note">Snapshot name is required.</div>
         {% endif %}
@@ -81,7 +85,22 @@
                 <label>Description
                     <input name="description" placeholder="Purpose, phase, server group or upload instruction">
                 </label>
-                <label>Expected Servers
+                <label>Server Scope
+                    <select name="server_scope_mode">
+                        <option value="range">Server Range</option>
+                        <option value="selected">Selected Servers</option>
+                        <option value="all">All Known Servers</option>
+                    </select>
+                </label>
+                <div class="snapshot-range-grid">
+                    <label>From
+                        <input name="server_range_start" placeholder="549">
+                    </label>
+                    <label>To
+                        <input name="server_range_end" placeholder="676">
+                    </label>
+                </div>
+                <label>Selected Servers
                     <input name="assigned_servers" placeholder="Optional: 549, 550, 551, 552">
                 </label>
                 <div class="snapshot-checkboxes">
@@ -95,7 +114,8 @@
                 {% if snapshot_model.active %}
                 <strong>{{ snapshot_model.active.name }}</strong>
                 <small>{{ snapshot_model.active.snapshot_type|replace('_', ' ') }} · {{ snapshot_model.active.status }} · feeds: {{ snapshot_model.active.expected_rankings|join(', ') }}</small>
-                <small>Expected servers: {{ snapshot_model.active.assigned_servers|join(', ') if snapshot_model.active.assigned_servers else 'not fixed yet' }}</small>
+                <small>Server scope: {{ snapshot_model.active.server_scope.label }}</small>
+                <small>Expected servers: {{ snapshot_model.active.assigned_servers|length if snapshot_model.active.assigned_servers else 'dynamic' }}</small>
                 <em>{{ snapshot_model.storage_path }}</em>
                 {% else %}
                 <strong>No active snapshot</strong>
@@ -115,7 +135,7 @@
                 <span>{{ item.snapshot_type|replace('_', ' ') }}</span>
                 <span>{{ item.status }}</span>
                 <span>{{ item.expected_rankings|join(', ') }}</span>
-                <span>{{ item.assigned_servers|join(', ') if item.assigned_servers else '—' }}</span>
+                <span>{{ item.server_scope.label }}</span>
                 <span class="snapshot-actions">
                     <form method="post" action="/imports/snapshots/{{ item.id }}/activate"><button type="submit">Set Active</button></form>
                     <form method="post" action="/imports/snapshots/{{ item.id }}/status">
@@ -128,6 +148,28 @@
                         </select>
                         <button type="submit">Save</button>
                     </form>
+                    {% if not item.locked %}
+                    <details class="snapshot-edit-details">
+                        <summary>Edit</summary>
+                        <form method="post" action="/imports/snapshots/{{ item.id }}/edit" class="snapshot-inline-edit">
+                            <input name="name" value="{{ item.name }}" required maxlength="80">
+                            <input name="description" value="{{ item.description }}" placeholder="Description">
+                            <select name="server_scope_mode">
+                                <option value="range" {% if item.server_scope.mode == 'range' %}selected{% endif %}>Range</option>
+                                <option value="selected" {% if item.server_scope.mode == 'selected' %}selected{% endif %}>Selected</option>
+                                <option value="all" {% if item.server_scope.mode == 'all' %}selected{% endif %}>All Known</option>
+                            </select>
+                            <input name="server_range_start" value="{{ item.server_scope.start or '' }}" placeholder="From">
+                            <input name="server_range_end" value="{{ item.server_scope.end or '' }}" placeholder="To">
+                            <input name="assigned_servers" value="{{ item.server_scope.servers|join(', ') }}" placeholder="Selected servers">
+                            <label><input type="checkbox" name="expected_alliance_power" value="1" {% if 'alliance_power' in item.expected_rankings %}checked{% endif %}> Alliance</label>
+                            <label><input type="checkbox" name="expected_total_hero_power" value="1" {% if 'total_hero_power' in item.expected_rankings %}checked{% endif %}> Hero</label>
+                            <button type="submit">Update</button>
+                        </form>
+                    </details>
+                    {% else %}
+                    <small>locked</small>
+                    {% endif %}
                 </span>
             </div>
             {% endfor %}
@@ -149,7 +191,8 @@
         <div class="drilldown-notice danger-note">{{ snapshot_model.active_coverage.warning }}</div>
         {% endif %}
         <div class="metrics-grid compact-metrics">
-            <article class="metric-card tone-info"><div class="metric-title">Expected Feeds</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.expected_rankings|length }}</div><div class="metric-subline">{{ snapshot_model.active_coverage.expected_rankings|join(', ') }}</div></article>
+            <article class="metric-card tone-info"><div class="metric-title">Completeness</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.completeness_percent }}%</div><div class="metric-subline">{{ snapshot_model.active_coverage.imported_valid_feed_count }} / {{ snapshot_model.active_coverage.expected_feed_count }} feeds</div></article>
+            <article class="metric-card tone-info"><div class="metric-title">Expected Servers</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.expected_servers|length if snapshot_model.active_coverage.expected_servers else 'dynamic' }}</div><div class="metric-subline">{{ snapshot_model.active.server_scope.label }}</div></article>
             <article class="metric-card tone-info"><div class="metric-title">Imported Servers</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.imported_servers|length }}</div><div class="metric-subline">{{ snapshot_model.active_coverage.imported_servers|join(', ') if snapshot_model.active_coverage.imported_servers else 'none bound yet' }}</div></article>
             <article class="metric-card tone-warning"><div class="metric-title">Missing Feeds</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.missing_feeds|length }}</div><div class="metric-subline">expected combinations not seen</div></article>
             <article class="metric-card tone-warning"><div class="metric-title">Open Reviews</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.open_review_count }}</div><div class="metric-subline">bound to active snapshot</div></article>

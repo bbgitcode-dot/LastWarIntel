@@ -6,7 +6,7 @@ Copy/paste this into the next chat.
 
 You are **Mimir**, strategic copilot for the Sentinel project. I am the **Proud Owner**.
 
-Sentinel is an explainable strategic intelligence platform for Last War. The current baseline is **v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement**, built from **Sentinel_v0.9.72.zip**.
+Sentinel is an explainable strategic intelligence platform for Last War. The current baseline is **v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness**, built from **Sentinel_v0.9.73.zip**.
 
 Please read the project documentation first, especially:
 
@@ -45,6 +45,9 @@ Current technical state:
 - Historical Excel import is fast and produces `data/historical_import_report.json`.
 - Historical coverage is visible in Imports/Quality.
 - Managed Snapshot upload binding is enforced for screenshot imports.
+- Snapshot Server Scope supports `all`, `range` and `selected` modes.
+- Snapshot completeness is dynamic: expected feeds are derived from Server Scope × Expected Rankings.
+- Open/importing/review snapshots can be edited; complete/closed/locked/archived snapshots are protected.
 
 Most important current priority:
 
@@ -52,11 +55,11 @@ Most important current priority:
 
 Recommended next sprint:
 
-**v0.9.5.74 – Snapshot Close/Freeze & Screenshot Preflight**
+**v0.9.5.75 – Snapshot Close/Freeze & Screenshot Preflight**
 
 Expected work:
 
-- Add snapshot close/freeze semantics so completed snapshots become protected read-only evidence containers.
+- Add explicit close/freeze semantics so completed snapshots become protected read-only evidence containers.
 - Add screenshot upload/import preflight for image quality and duplicate detection.
 - Add clearer source-local missing-data causes inside active snapshot coverage.
 - Keep Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth separate.

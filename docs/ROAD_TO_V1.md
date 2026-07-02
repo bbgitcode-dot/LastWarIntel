@@ -1,6 +1,6 @@
 # Road to Sentinel v1.0.0
 
-**Current version:** v0.9.5.73  
+**Current version:** v0.9.5.74  
 **Current phase:** Data Integrity Fortress → Snapshot Management Hardening  
 **North Star:** Explainable strategic intelligence for Last War alliance leadership.
 

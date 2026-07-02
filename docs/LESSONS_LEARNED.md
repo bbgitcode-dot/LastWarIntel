@@ -46,3 +46,9 @@ After many rapid sprints, undocumented architecture becomes operational risk. Co
 ## v0.9.5.73 – Snapshot context must be enforced, not remembered
 
 A human can intend that a screenshot batch belongs to `S6 pre Transfer`, but Sentinel must not rely on that intent being remembered later. The import boundary now requires an active snapshot and writes the binding into import reports, exports and review history. This keeps Current Run evidence phase-aware without turning context into Operational Truth.
+
+## v0.9.5.74 – Completeness must be scoped, not hard-coded
+
+A snapshot with expected servers entered as `549, 676` exposed a design risk: the UI could interpret this as two selected servers while the user's intent was the full range `549-676`. Fixed server counts are also unsafe because Last War seasons and events vary in size.
+
+Lesson: Sentinel must capture intent explicitly. Snapshot completeness now derives from Server Scope (`all`, `range`, `selected`) and expected rankings. This keeps 8-server events, 64-server seasons, 128-server seasons and future unknown formats under the same model.

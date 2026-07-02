@@ -12,6 +12,24 @@ from dataclasses import dataclass, field
 
 
 @dataclass(slots=True, frozen=True)
+class ServerScope:
+    mode: str = "selected"
+    start: int | None = None
+    end: int | None = None
+    servers: list[int] = field(default_factory=list)
+
+    @property
+    def label(self) -> str:
+        if self.mode == "all":
+            return "All known servers"
+        if self.mode == "range" and self.start and self.end:
+            return f"{self.start}-{self.end}"
+        if self.servers:
+            return ", ".join(str(server) for server in self.servers)
+        return "not fixed yet"
+
+
+@dataclass(slots=True, frozen=True)
 class ManagedSnapshot:
     id: str
     name: str
@@ -23,6 +41,8 @@ class ManagedSnapshot:
     updated_at: str
     source: str = ""
     assigned_servers: list[int] = field(default_factory=list)
+    server_scope: ServerScope = field(default_factory=ServerScope)
+    locked: bool = False
 
 
 @dataclass(slots=True, frozen=True)
@@ -51,6 +71,9 @@ class SnapshotCoverage:
     report_created_at: str
     expected_rankings: list[str]
     expected_servers: list[int]
+    expected_feed_count: int
+    imported_valid_feed_count: int
+    completeness_percent: float
     imported_servers: list[int]
     imported_rankings: list[str]
     imported_feeds: list[SnapshotFeedCoverage]

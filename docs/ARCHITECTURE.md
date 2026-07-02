@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Current version:** v0.9.5.73
+**Current version:** v0.9.5.74
 
 Sentinel is an explainable strategic intelligence platform for Last War. Its current architecture is built around guarded data ingestion before strategic intelligence.
 

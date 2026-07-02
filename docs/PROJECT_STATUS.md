@@ -1,7 +1,7 @@
 # Sentinel Project Status
 
-**Current version:** v0.9.5.73  
-**Current sprint:** Snapshot Upload Binding & Import Context Enforcement  
+**Current version:** v0.9.5.74  
+**Current sprint:** Snapshot Server Scope & Dynamic Completeness  
 **Baseline code:** v0.9.5.72  
 **Primary focus:** Data integrity before intelligence
 
@@ -90,9 +90,17 @@ Server 551 benchmark data must not appear as current-run quality unless it is ac
 - Import Center shows active snapshot coverage, missing expected feeds and open reviews bound to the snapshot.
 - Unbound latest reports are explicitly warned against so phases such as `S6 pre Transfer` cannot be silently mixed with another event.
 
+
+### v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness
+- Replaced ambiguous expected-server text with explicit Server Scope.
+- Added `all`, `range` and `selected` server-scope modes.
+- Range scope expands inclusively, so `549-676` becomes 128 expected servers.
+- Snapshot completeness now reports imported valid feeds / expected feeds.
+- Active snapshots can be edited while open/importing/review; completed/closed snapshots are protected.
+
 ## Immediate next steps
 
-### Next development focus: Snapshot completeness and close semantics
+### Next development focus: Snapshot close/freeze semantics and screenshot preflight
 
 The active snapshot context is now enforced for screenshot imports. The next hardening step is to make snapshot lifecycle decisions explicit.
 
