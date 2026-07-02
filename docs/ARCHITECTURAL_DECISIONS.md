@@ -128,3 +128,11 @@ The previous implementation had technically valid pages, but the relationship be
 - Static output HTML remains available as latest-run evidence, not as a competing Command Center.
 - Review detail is reachable through `/reviews/{history_key}` and can later become the natural place for guarded human resolution.
 - CSS and navigation changes must keep new pages visually consistent with the existing Command Center design.
+
+## ADR - v0.9.5.63 Screenshot Evidence Links in Review UI
+
+**Decision:** Review UI mounts and links source screenshots through a dedicated `/screenshots` static route and renders screenshot evidence in Review Detail with open-in-new-tab behavior.
+
+**Reason:** The Review Center exists to let a human compare OCR hypotheses against source evidence. The screenshot is the evidence of record for a review item and must be available without navigating the filesystem manually.
+
+**Guardrails:** URL generation uses `Path(...).name` to avoid path traversal from persisted review data. The link is evidence access only and does not change Data Guard, Ranking Guard, Review History state, exports, or Operational Truth.

@@ -53,6 +53,12 @@ def create_app() -> FastAPI:
         name="static-output",
     )
 
+    application.mount(
+        "/screenshots",
+        StaticFiles(directory="screenshots", check_dir=False),
+        name="screenshots",
+    )
+
     application.include_router(system_router)
     application.include_router(command_center_router)
     application.include_router(feed_router)

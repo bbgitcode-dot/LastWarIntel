@@ -2036,3 +2036,55 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* v0.9.5.63 human review screenshot evidence */
+.screenshot-link-card {
+    display: grid;
+    gap: 6px;
+}
+
+.screenshot-open-link,
+.screenshot-inline-link {
+    color: var(--info);
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.screenshot-open-link:hover,
+.screenshot-inline-link:hover {
+    text-decoration: underline;
+}
+
+.screenshot-evidence-panel {
+    overflow: hidden;
+}
+
+.screenshot-preview-link {
+    display: block;
+    margin-top: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.30);
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(2, 6, 23, 0.72);
+}
+
+.screenshot-preview-link:hover {
+    border-color: rgba(56, 189, 248, 0.72);
+}
+
+.screenshot-preview {
+    display: block;
+    width: 100%;
+    max-height: 560px;
+    object-fit: contain;
+    background: rgba(2, 6, 23, 0.92);
+}
+
+.screenshot-missing {
+    margin-top: 12px;
+    padding: 16px;
+    color: var(--muted);
+    background: rgba(15, 23, 42, 0.62);
+    border: 1px dashed rgba(148, 163, 184, 0.38);
+    border-radius: 16px;
+}

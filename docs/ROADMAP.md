@@ -6,7 +6,8 @@
 - Reopen support for review-history records.
 
 ### Next
-- v0.9.5.62: Guarded Manual Override Engine foundation.
+- v0.9.5.63: Human Review screenshot evidence links and preview.
+- v0.9.5.64: Guarded Manual Override Engine foundation.
 - v0.9.5.63: Re-export with resolved manual overrides.
 - v0.9.5.64: Review Detail UX polish and source evidence crops.
 
@@ -21,7 +22,7 @@
 ### Next
 - v0.9.5.60: Manual Review Resolution Model.
 - v0.9.5.61: Editable Review UI.
-- v0.9.5.62: Manual Override Engine and guarded re-export.
+- v0.9.5.64: Manual Override Engine and guarded re-export.
 
 # Sentinel Roadmap
 

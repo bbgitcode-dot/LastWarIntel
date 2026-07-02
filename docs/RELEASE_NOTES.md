@@ -1289,3 +1289,21 @@ pytest tests/smoke/test_web_navigation_consolidation.py tests/smoke/test_command
 9 passed
 python -m compileall -q web/app.py web/navigation.py web/routes web/templates version.py
 ```
+
+## v0.9.5.63 - Human Review Screenshot Evidence
+
+Focus: make visual evidence directly reachable from the Review Center and Review Detail pages.
+
+### Added
+- Review Detail now shows a dedicated Screenshot Evidence panel with a clickable preview.
+- Screenshot filenames in Review Detail open the source screenshot in a new browser tab.
+- Review Queue screenshot references are clickable links.
+- Web app now mounts `/screenshots` as a read-only static evidence route.
+
+### Guardrails
+- Screenshot links are generated from safe basenames only. Persisted review JSON cannot inject path traversal into screenshot URLs.
+- The change improves human review UX only. It does not alter OCR, Data Guard, Ranking Guard, review decisions, or Operational Truth.
+
+### Validation
+- Added smoke coverage for screenshot links, preview markup, and the `/screenshots` static mount.
+- Version updated to `0.9.5.63`.

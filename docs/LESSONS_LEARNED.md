@@ -194,3 +194,9 @@ The stable mental model is:
 4. Exports show what was produced.
 
 Static output pages are useful run artifacts, but they should not compete with the web application as a second Command Center. They should be reachable as evidence/detail views from the main web flow.
+
+## v0.9.5.63 - Review Evidence Must Be One Click Away
+
+A human reviewer should never have to hunt for the source screenshot. The screenshot is the primary evidence behind any review decision, so filename-only display is insufficient. Review pages should link directly to the evidence, open it in a separate tab, and make the visual source obvious without breaking Data Guard separation.
+
+Screenshot links must be treated as UI evidence links, not truth. They help the human decide; they do not alter Operational Truth or bypass quarantine.

@@ -314,3 +314,12 @@ Full historical notes are consolidated in `docs/RELEASE_NOTES.md`.
 - Updated version to `0.9.5.62`.
 
 No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.
+
+## v0.9.5.63 - Human Review Screenshot Evidence
+
+- Added clickable source-screenshot links to Review Detail and Review Queue.
+- Added Review Detail screenshot preview that opens the original screenshot in a new tab.
+- Mounted `/screenshots` in the FastAPI web app for source evidence access.
+- Hardened screenshot URL generation by using screenshot basenames only.
+- Updated CSS so screenshot evidence panels match the consolidated Command Center design.
+- Updated version to `0.9.5.63`.

@@ -278,3 +278,11 @@ Review evidence has also moved closer to the real web application. Persistent re
 This release is intentionally UI/navigation-only. Data Guard, Ranking Guard, OCR, recovery, quarantine, Operational Truth, and Excel exports remain unchanged.
 
 Next recommended sprint: strengthen the Review Detail and Resolution workflow so a resolved review can be safely consumed by a future guarded Manual Override Engine without silent mutation of Operational Truth.
+
+## Current Status - v0.9.5.63
+
+v0.9.5.63 closes a visible Human Review usability gap found after v0.9.5.62: Review Detail showed the screenshot filename but not a link to the evidence. The Review Center now treats screenshots as first-class review evidence. Review Detail provides a dedicated screenshot panel with a preview and an open-in-new-tab link; Review Queue rows also link directly to the source screenshot.
+
+This sprint does not change extraction, recovery, Data Guard, Ranking Guard, or Operational Truth. It improves the operator's ability to resolve reviews quickly and safely by keeping the original screenshot one click away.
+
+Next likely focus: continue Human Review workflow hardening by improving review queue navigation, previous/next review movement, and eventually guarded application of resolved review decisions.

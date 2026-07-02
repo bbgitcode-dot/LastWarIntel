@@ -34,11 +34,33 @@
                 <strong>Ranking</strong>
                 <span>{{ item.ranking_type }} · Rank {{ item.rank }}</span>
             </div>
-            <div class="page-link-card">
+            <div class="page-link-card screenshot-link-card">
                 <strong>Screenshot</strong>
-                <span>{{ item.screenshot or 'No screenshot reference' }}</span>
+                {% if item.screenshot_url %}
+                <a class="screenshot-open-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">📷 {{ item.screenshot }} ↗</a>
+                <span>Open source evidence in a new tab</span>
+                {% else %}
+                <span>No screenshot reference</span>
+                {% endif %}
             </div>
         </div>
+    </section>
+
+    <section class="panel screenshot-evidence-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Screenshot Evidence</h2>
+                <p>The original screenshot is the primary source for manual review. Open it in a new tab when deciding.</p>
+            </div>
+            {% if item.screenshot_url %}<a class="panel-badge" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">OPEN SCREENSHOT ↗</a>{% endif %}
+        </div>
+        {% if item.screenshot_url %}
+        <a class="screenshot-preview-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">
+            <img class="screenshot-preview" src="{{ item.screenshot_url }}" alt="Screenshot evidence for {{ item.review_id }}">
+        </a>
+        {% else %}
+        <div class="screenshot-missing">No screenshot reference available for this review.</div>
+        {% endif %}
     </section>
 
     <section class="panel">

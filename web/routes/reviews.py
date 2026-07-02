@@ -36,6 +36,28 @@ def _history_path() -> Path:
     return Path("data/review_history.json")
 
 
+def _screenshot_url(filename: str | None) -> str:
+    """Return a safe browser URL for a source screenshot.
+
+    Review data stores screenshot filenames only. Keep this route source-local and
+    do not allow path traversal through persisted review JSON.
+    """
+    name = Path(str(filename or "")).name
+    if not name:
+        return ""
+    return f"/screenshots/{name}"
+
+
+def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(item)
+    enriched["screenshot_url"] = _screenshot_url(enriched.get("screenshot"))
+    return enriched
+
+
+def _enrich_review_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [_enrich_review_item(item) for item in items]
+
+
 def _refresh_counts(history: dict[str, Any]) -> dict[str, Any]:
     items = list(history.get("items") or [])
     history["open_count"] = sum(1 for item in items if item.get("status") == "OPEN")
@@ -118,8 +140,8 @@ def _reopen_review_item(history: dict[str, Any], history_key: str) -> tuple[dict
 def _review_model() -> dict[str, Any]:
     history = _load_json(Path("data/review_history.json"))
     evidence = _load_json(Path("output/review_evidence_pack.json"))
-    current_items = list(evidence.get("items") or [])
-    history_items = list(history.get("items") or [])
+    current_items = _enrich_review_items(list(evidence.get("items") or []))
+    history_items = _enrich_review_items(list(history.get("items") or []))
     open_items = [item for item in history_items if item.get("status") == "OPEN"]
     resolved_items = [item for item in history_items if item.get("status") == "RESOLVED"]
     by_status: dict[str, int] = {}

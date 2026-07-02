@@ -78,7 +78,7 @@
                 <div>
                     <h3>{{ item.review_id }} · {{ item.problem_type }}</h3>
                     <p>{{ item.problem_statement }}</p>
-                    <small>Server {{ item.server }} · {{ item.ranking_type }} · Rank {{ item.rank }} · Seen {{ item.seen_count or 1 }}x · {{ item.screenshot }}</small>
+                    <small>Server {{ item.server }} · {{ item.ranking_type }} · Rank {{ item.rank }} · Seen {{ item.seen_count or 1 }}x{% if item.screenshot_url %} · <a class="screenshot-inline-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">{{ item.screenshot }} ↗</a>{% elif item.screenshot %} · {{ item.screenshot }}{% endif %}</small>
                     {% if item.why_bullets %}
                     <ul>
                         {% for bullet in item.why_bullets[:3] %}<li>{{ bullet }}</li>{% endfor %}

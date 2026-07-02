@@ -41,4 +41,20 @@ def test_review_detail_template_exists_and_is_linked():
     assert "REVIEW DETAIL" in detail
     assert "Review Choices" in detail
     assert "Explainability Trace" in detail
+    assert 'target="_blank"' in detail
+    assert "screenshot-preview" in detail
+    assert "screenshot_url" in routes
     assert '@router.get("/reviews/{history_key}")' in routes
+
+
+def test_screenshot_static_mount_is_available_for_review_evidence():
+    app = (ROOT / "web/app.py").read_text(encoding="utf-8")
+    assert '"/screenshots"' in app
+    assert 'StaticFiles(directory="screenshots"' in app
+
+
+def test_review_items_are_enriched_with_safe_screenshot_urls():
+    from web.routes.reviews import _enrich_review_item
+
+    item = _enrich_review_item({"screenshot": "../bad/Screenshot_20260702-082210.png"})
+    assert item["screenshot_url"] == "/screenshots/Screenshot_20260702-082210.png"

@@ -130,7 +130,7 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
           <td>{_e(item.get('review_ocr_status') or '')}</td>
           <td>{_e(item.get('row_reconstruction_status') or '')}</td>
           <td>{_num(item.get('row_reconstruction_score'), '')}</td>
-          <td>{_e(item.get('screenshot') or '')}</td>
+          <td>{f'<a href="../screenshots/{_e(Path(str(item.get("screenshot") or "")).name)}" target="_blank" rel="noopener noreferrer">{_e(item.get("screenshot"))} ↗</a>' if item.get('screenshot') else ''}</td>
           <td>{_e(item.get('description') or '')}</td>
         </tr>
         """)
@@ -724,7 +724,7 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
         trace = item.get("trace") or {}
         img = ""
         if item.get("screenshot"):
-            img = f'<div class="screenshot-ref"><div class="label">Screenshot</div><a href="{_e(item.get("screenshot_path"))}">{_e(item.get("screenshot"))}</a></div>'
+            img = f'<div class="screenshot-ref"><div class="label">Screenshot</div><a href="{_e(item.get("screenshot_path"))}" target="_blank" rel="noopener noreferrer">{_e(item.get("screenshot"))} ↗</a></div>'
         cards.append(f"""
         <section class="card evidence-card" id="{_e(item.get('id'))}">
           <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label') or item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
