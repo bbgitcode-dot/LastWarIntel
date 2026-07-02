@@ -1,5 +1,23 @@
 # Sentinel Lessons Learned
 
+**Version:** v0.9.5.56
+
+## 15. A dashboard is not the same as an evidence pack
+
+The v0.9.5.55 Command Center made Sentinel visually observable, but the 554 review showed that broad telemetry can overwhelm the actual review task. Human review needs a small evidence bundle per problem, not another wall of metrics.
+
+## 16. Review quality improves when the next action is explicit
+
+Each review item should state what must be checked: server identity, ambiguous candidate margin, ranking-type mismatch, or bounded row reconstruction. The Evidence Pack turns generic quarantine into a directed review task.
+
+## 17. UI must remain read-only until trust gates are designed
+
+Even when the UI shows a likely candidate, it must not write back to Operational Truth. Accept/reject workflows require their own guardrails and audit trail.
+
+---
+
+# Sentinel Lessons Learned
+
 **Version:** v0.9.5.55
 
 ## 13. Run observability is part of data quality

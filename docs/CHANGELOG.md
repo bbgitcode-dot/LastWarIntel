@@ -1,3 +1,23 @@
+## [0.9.5.56] - Review Evidence Pack
+
+### Added
+
+- Static `output/review_evidence_pack.html` focused on review-item evidence rather than broad dashboard telemetry.
+- Machine-readable `output/review_evidence_pack.json` with one evidence object per review item.
+- Evidence cards with location, screenshot reference, power original/selected, best/second candidate, margin, decision reason, suggested action, and candidate details.
+- Command Center links to the Evidence Pack.
+- Smoke coverage for evidence pack generation.
+
+### Changed
+
+- `main.py` now prints the generated Review Evidence Pack path after each run.
+- Version updated to `0.9.5.56`.
+
+### Guardrail
+
+- Evidence Pack is read-only. It does not promote rows, alter exports, or override Data Guard / Ranking Guard decisions.
+
+
 ## [0.9.5.55] - Command Center MVP
 
 ### Added

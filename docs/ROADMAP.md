@@ -1,5 +1,22 @@
 # Sentinel Roadmap
 
+**Version:** v0.9.5.56
+
+## Current phase: Data Integrity Fortress / Review Quality
+
+Recent milestone: v0.9.5.56 adds a focused Review Evidence Pack so individual quarantined or ambiguous rows can be reviewed without scanning the full Command Center.
+
+Next planned direction:
+
+- Generate row/power/name crop assets for each evidence card.
+- Add zoomable visual links from the Evidence Pack to review crops.
+- Keep Command Center high-level and keep review work item-centered.
+- Continue keeping Data Quality ahead of Intelligence.
+
+---
+
+# Sentinel Roadmap
+
 **Version:** v0.9.5.55
 
 ## Current phase: Data Integrity Fortress / Operational Observability

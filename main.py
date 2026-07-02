@@ -228,6 +228,7 @@ def main():
     command_center_files = generate_command_center()
     print(f"Command Center geschrieben nach {command_center_files['command_center']}")
     print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
+    print(f"Review Evidence Pack geschrieben nach {command_center_files['review_evidence_pack']}")
     print(f"\nRuntime: {duration:.2f}s")
 
 

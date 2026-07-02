@@ -32,6 +32,13 @@ def test_generate_command_center_from_reports(tmp_path: Path):
             "status": "recovered",
             "confidence": 0.83,
             "decision_reason": "selected_clear_candidate",
+            "source_file": "example.png",
+            "best_candidate": 193262033,
+            "second_candidate": 190262033,
+            "best_score": 0.83,
+            "second_score": 0.70,
+            "margin": 0.13,
+            "candidates": [{"value": 193262033, "score": 0.83, "reasons": ["ocr_error_model"]}],
         }]},
         "review_ocr": {"attempted": 2, "promoted": 0},
         "row_reconstruction": {"attempted": 1, "promoted": 1},
@@ -73,11 +80,21 @@ def test_generate_command_center_from_reports(tmp_path: Path):
 
     command_center = Path(result["command_center"])
     review_dashboard = Path(result["review_dashboard"])
+    evidence_pack = Path(result["review_evidence_pack"])
+    evidence_json = Path(result["review_evidence_json"])
     assert command_center.exists()
     assert review_dashboard.exists()
+    assert evidence_pack.exists()
+    assert evidence_json.exists()
     html = command_center.read_text(encoding="utf-8")
     assert "Sentinel Command Center" in html
     assert "Server 553" in html
     assert "ThorNord" in html
     assert "Ground Truth" in html
     assert "Review Dashboard" in review_dashboard.read_text(encoding="utf-8")
+    evidence_html = evidence_pack.read_text(encoding="utf-8")
+    assert "Sentinel Review Evidence Pack" in evidence_html
+    assert "Suggested action" in evidence_html
+    payload = json.loads(evidence_json.read_text(encoding="utf-8"))
+    assert payload["schema"] == "sentinel.review_evidence_pack.v1"
+    assert payload["items"][0]["id"] == "REV-001"

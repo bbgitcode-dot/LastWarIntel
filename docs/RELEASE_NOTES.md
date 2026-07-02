@@ -1,3 +1,35 @@
+# Sentinel v0.9.5.56 – Review Evidence Pack
+
+## Focus
+
+Reduce review noise. v0.9.5.55 proved that broad dashboards are useful for observability but too noisy for deciding individual review items. v0.9.5.56 adds a focused evidence pack for human review.
+
+## Added
+
+- `output/review_evidence_pack.html` with one concise evidence card per review item.
+- `output/review_evidence_pack.json` for machine-readable review evidence.
+- Evidence fields for screenshot, server, ranking, rank, original/selected power, best/second candidate, margin, decision reason, Review OCR status, Row Reconstruction status, and suggested action.
+- Candidate-detail expansion for ambiguous power recovery cases.
+- Link from Command Center / Review Dashboard to the Evidence Pack.
+
+## Guardrails
+
+- Evidence Pack reads `data/latest_import_report.json` only.
+- It is intentionally narrower than the Command Center.
+- It does not duplicate OCR, recovery, Data Guard, or quarantine logic.
+- It does not write manual review decisions back into Operational Truth.
+
+## Validation
+
+```text
+pytest tests/smoke/test_command_center.py -q
+1 passed
+python -m compileall -q services/command_center.py main.py version.py
+```
+
+---
+
+
 # Sentinel v0.9.5.55 – Command Center MVP
 
 ## Focus

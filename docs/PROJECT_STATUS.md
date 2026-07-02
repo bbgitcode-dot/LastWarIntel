@@ -1,3 +1,17 @@
+**Current Version:** v0.9.5.56  
+**Runtime Baseline:** v0.9.5.56 – Review Evidence Pack  
+**Sprint Focus:** Make review items actionable without expanding the Command Center into another noisy dashboard.
+
+## v0.9.5.56 sprint result
+
+v0.9.5.55 introduced the Command Center MVP and confirmed that Sentinel can render run status after every import. The follow-up run also showed that a broad dashboard can become too much input when the real need is to understand one specific review item.
+
+v0.9.5.56 therefore adds a focused Review Evidence Pack. After each run Sentinel now emits `output/review_evidence_pack.html` and `output/review_evidence_pack.json`. Each evidence card summarizes the exact review item, its screenshot reference, candidate power evidence, best/second candidate gap, decision reason, review OCR status, row reconstruction status, and suggested human action.
+
+The Command Center remains useful as an operations overview, but the Evidence Pack becomes the primary surface for review quality work. OCR, Recovery, Data Guard, Ranking Guard, and export logic remain unchanged.
+
+Next likely sprint: Review crop assets and visual crop linking for each evidence card.
+
 **Current Version:** v0.9.5.55  
 **Runtime Baseline:** v0.9.5.55 – Command Center MVP  
 **Sprint Focus:** Make run outcomes visible through static dashboards generated from existing reports.
