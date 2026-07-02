@@ -23,10 +23,11 @@ class NavigationItem:
 
 
 NAVIGATION = [
-    NavigationItem("Command", "🎯", "/", "command", "mission"),
-    NavigationItem("Operations", "📥", "/operations", "operations", "operations"),
-    NavigationItem("Imports", "📦", "/imports", "imports", "operations"),
-    NavigationItem("Data Quality", "📊", "/quality", "quality", "operations"),
+    NavigationItem("Command Center", "🎯", "/", "command", "mission"),
+    NavigationItem("Imports", "📦", "/imports", "imports", "pipeline"),
+    NavigationItem("Quality", "🛡️", "/quality", "quality", "pipeline"),
+    NavigationItem("Reviews", "🔎", "/reviews", "reviews", "pipeline"),
+    NavigationItem("Operations", "📥", "/operations", "operations", "pipeline"),
     NavigationItem("Servers", "🌍", "/servers", "servers", "intelligence"),
     NavigationItem("Alliances", "🤝", "/alliances", "alliances", "intelligence"),
     NavigationItem("Players", "👤", "/players", "players", "intelligence"),

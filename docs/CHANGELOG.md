@@ -278,3 +278,10 @@ Earlier v0.9.5.x releases focused on OCR provider architecture, EasyOCR/PaddleOC
 
 Full historical notes are consolidated in `docs/RELEASE_NOTES.md`.
 
+## v0.9.5.60 - Command Center Consolidation
+
+- Added stable review-history identity keys so reruns update open reviews instead of duplicating them.
+- Added `/reviews` as the consolidated web Review Center entry point.
+- Mounted latest static output reports under `/static-output` for transitional run-detail access.
+- Updated navigation taxonomy around Command Center, Imports, Quality, Reviews, Operations, and Intelligence.
+- Kept OCR, Data Guard, Ranking Guard, and recovery logic unchanged.

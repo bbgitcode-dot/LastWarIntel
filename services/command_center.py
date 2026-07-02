@@ -71,8 +71,8 @@ def _artifact_links(import_report: dict[str, Any] | None) -> str:
         (str(DEFAULT_GROUND_TRUTH_REPORT), "Ground Truth JSON"),
         (str(DEFAULT_INFERENCE_REPORT), "Inference JSON"),
         ("review_center.html", "Review Center"),
-        ("review_dashboard.html", "Review Dashboard"),
-        ("review_evidence_pack.html", "Evidence Pack"),
+        ("review_dashboard.html", "Review Queue"),
+        ("review_evidence_pack.html", "Review Detail / Evidence"),
         ("review_history.json", "Review History"),
     ]
     return "".join(f'<a href="{_e(href)}">{_e(label)}</a>' for href, label in links)
@@ -438,58 +438,126 @@ def _confidence_label(trace: dict[str, Any] | None) -> str:
     return "zu knapp für Auto-Promotion"
 
 
-def _history_key(source_created_at: Any, item: dict[str, Any]) -> str:
-    raw = "|".join(str(v) for v in [
-        source_created_at,
+def _history_identity(item: dict[str, Any]) -> str:
+    """Return the stable business identity of a review item.
+
+    A review can appear in many import runs.  Runtime timestamps must not be
+    part of the identity, otherwise every rerun creates a new open review for
+    the same unresolved problem.  The identity intentionally follows the human
+    review surface: server, ranking type, rank, screenshot, problem type and
+    reason.
+    """
+    return "|".join(str(v or "") for v in [
         item.get("server"),
         item.get("ranking_type"),
         item.get("rank"),
         item.get("screenshot"),
+        item.get("problem_type"),
         item.get("reason"),
-        item.get("power_original"),
-        item.get("best_candidate"),
     ])
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _history_key(item: dict[str, Any]) -> str:
+    return hashlib.sha1(_history_identity(item).encode("utf-8")).hexdigest()[:16]
+
+
+def _history_record_from_evidence(item: dict[str, Any], *, created_at: Any, source_created_at: Any) -> dict[str, Any]:
+    key = _history_key(item)
+    return {
+        "history_key": key,
+        "review_identity": _history_identity(item),
+        "status": "OPEN",
+        "created_at": created_at,
+        "last_seen_at": created_at,
+        "seen_count": 1,
+        "source_report_created_at": source_created_at,
+        "review_id": item.get("id"),
+        "server": item.get("server"),
+        "ranking_type": item.get("ranking_type"),
+        "rank": item.get("rank"),
+        "reason": item.get("reason"),
+        "problem_type": item.get("problem_type"),
+        "problem_statement": item.get("problem_statement"),
+        "screenshot": item.get("screenshot"),
+        "power_original": item.get("power_original"),
+        "best_candidate": item.get("best_candidate"),
+        "second_candidate": item.get("second_candidate"),
+        "margin": item.get("margin"),
+        "why_bullets": item.get("why_bullets") or [],
+        "explainability_steps": item.get("explainability_steps") or [],
+        "choices": item.get("choices") or [],
+        "resolution": item.get("resolution_template") or _resolution_template(),
+    }
+
+
+def _merge_history_record(existing: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any]:
+    """Merge a rerun into an existing review without losing resolution state."""
+    status = existing.get("status") or incoming.get("status") or "OPEN"
+    resolution = existing.get("resolution") or incoming.get("resolution") or _resolution_template()
+    created_at = existing.get("created_at") or incoming.get("created_at")
+    seen_count = int(existing.get("seen_count") or 1) + 1
+
+    merged = dict(existing)
+    for key, value in incoming.items():
+        if key in {"history_key", "review_identity", "status", "created_at", "resolution", "seen_count"}:
+            continue
+        if value not in (None, "", [], {}):
+            merged[key] = value
+    merged["history_key"] = incoming.get("history_key") or existing.get("history_key")
+    merged["review_identity"] = incoming.get("review_identity") or existing.get("review_identity")
+    merged["status"] = status
+    merged["created_at"] = created_at
+    merged["last_seen_at"] = incoming.get("last_seen_at") or existing.get("last_seen_at")
+    merged["seen_count"] = seen_count
+    merged["resolution"] = resolution
+    return merged
 
 
 def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) -> dict[str, Any]:
     payload = existing if isinstance(existing, dict) else {}
-    items = list(payload.get("items") or [])
-    known = {str(item.get("history_key")) for item in items}
+    by_identity: dict[str, dict[str, Any]] = {}
+    ordered: list[dict[str, Any]] = []
+
+    # First normalize and de-duplicate existing history.  This repairs v0.9.5.59
+    # histories where runtime timestamps accidentally created duplicate OPEN
+    # items for the same problem.
+    for old in list(payload.get("items") or []):
+        identity = old.get("review_identity") or _history_identity(old)
+        normalized = dict(old)
+        normalized["review_identity"] = identity
+        normalized["history_key"] = _history_key(normalized)
+        normalized.setdefault("last_seen_at", normalized.get("created_at"))
+        normalized.setdefault("seen_count", 1)
+        normalized["resolution"] = normalized.get("resolution") or _resolution_template()
+        if identity in by_identity:
+            by_identity[identity] = _merge_history_record(by_identity[identity], normalized)
+        else:
+            by_identity[identity] = normalized
+            ordered.append(normalized)
+
     source_created_at = evidence.get("source_report_created_at")
     for item in evidence.get("items") or []:
-        key = _history_key(source_created_at, item)
-        if key in known:
-            continue
-        items.append({
-            "history_key": key,
-            "status": "OPEN",
-            "created_at": evidence.get("created_at"),
-            "source_report_created_at": source_created_at,
-            "review_id": item.get("id"),
-            "server": item.get("server"),
-            "ranking_type": item.get("ranking_type"),
-            "rank": item.get("rank"),
-            "reason": item.get("reason"),
-            "problem_type": item.get("problem_type"),
-            "problem_statement": item.get("problem_statement"),
-            "screenshot": item.get("screenshot"),
-            "power_original": item.get("power_original"),
-            "best_candidate": item.get("best_candidate"),
-            "second_candidate": item.get("second_candidate"),
-            "margin": item.get("margin"),
-            "why_bullets": item.get("why_bullets") or [],
-            "explainability_steps": item.get("explainability_steps") or [],
-            "choices": item.get("choices") or [],
-            "resolution": item.get("resolution_template") or _resolution_template(),
-        })
-        known.add(key)
+        incoming = _history_record_from_evidence(
+            item,
+            created_at=evidence.get("created_at"),
+            source_created_at=source_created_at,
+        )
+        identity = incoming["review_identity"]
+        if identity in by_identity:
+            by_identity[identity] = _merge_history_record(by_identity[identity], incoming)
+        else:
+            by_identity[identity] = incoming
+            ordered.append(incoming)
+
+    # Preserve stable display order while using the merged record for each identity.
+    items = [by_identity[item["review_identity"]] for item in ordered if item.get("review_identity") in by_identity]
+    items = items[-500:]
     return {
         "schema": "sentinel.review_history.v1",
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "open_count": sum(1 for item in items if item.get("status") == "OPEN"),
         "resolved_count": sum(1 for item in items if item.get("status") == "RESOLVED"),
-        "items": items[-500:],
+        "items": items,
     }
 
 
@@ -699,7 +767,7 @@ def _trace_steps(steps: list[dict[str, Any]]) -> str:
 def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
     items = list((history or {}).get("items") or [])[-limit:]
     if not items:
-        return '<tr><td colspan="9" class="muted">No historical reviews recorded.</td></tr>'
+        return '<tr><td colspan="11" class="muted">No historical reviews recorded.</td></tr>'
     rendered = []
     for item in reversed(items):
         status = str(item.get("status") or "OPEN")
@@ -714,7 +782,9 @@ def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
           <td>{_e(item.get('problem_type') or '')}</td>
           <td>{_e(item.get('problem_statement') or '')}</td>
           <td>{_e(item.get('screenshot') or '')}</td>
+          <td>{_e(item.get('seen_count') or 1)}</td>
           <td>{_e(item.get('created_at') or '')}</td>
+          <td>{_e(item.get('last_seen_at') or '')}</td>
         </tr>
         """)
     return ''.join(rendered)
@@ -749,7 +819,7 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sentinel Review Center</title><style>{_base_css()}</style></head>
 <body><header><h1>Sentinel Review Center</h1><div class="muted">Generated {generated_at} · <span class="badge {_badge_class(status)}">{_e(status)}</span></div>
-<div class="links"><a href="command_center.html">Command Center</a><a href="review_dashboard.html">Review Dashboard</a><a href="review_evidence_pack.html">Legacy Evidence Pack</a></div></header><main>
+<div class="links"><a href="command_center.html">Command Center</a><a href="review_dashboard.html">Review Queue</a><a href="review_evidence_pack.html">Review Detail / Evidence</a></div></header><main>
 <section class="grid">
 {_metric_card('Open Reviews', open_count, 'persistent review history')}
 {_metric_card('Resolved Reviews', resolved_count, 'manual resolution foundation')}
@@ -759,7 +829,7 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 <div class="tabs"><a href="#open">Open Reviews</a><a href="#history">History</a><a href="command_center.html">Back to Command Center</a></div>
 <div class="notice">The Review Center is the future human-in-the-loop workspace. v0.9.5.59 is read-only and focuses on explainability and persistent review state.</div>
 <h2 id="open">Open Reviews</h2>{_review_center_cards(report)}
-<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Created</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
+<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
 </main></body></html>"""
 
 
@@ -809,7 +879,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <div class="notice">Data Quality remains the source of truth: this dashboard visualizes reports only. It does not change OCR, recovery, quarantine, or export decisions.</div>
 <h2>Server Overview</h2><section class="server-grid">{_server_cards(report)}</section>
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
-<h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Legacy Evidence Pack</a></div></section>
+<h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Open Review Detail / Evidence</a><a href="review_dashboard.html">Open Review Queue</a></div></section>
 <h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>

@@ -1,70 +1,13 @@
 {
   "schema": "sentinel.review_history.v1",
-  "updated_at": "2026-07-02T14:45:33+00:00",
-  "open_count": 6,
+  "updated_at": "2026-07-02T18:56:04+00:00",
+  "open_count": 3,
   "resolved_count": 0,
   "items": [
     {
-      "history_key": "73305e75b092f069",
+      "history_key": "196dc3939c44f2d0",
       "status": "OPEN",
       "created_at": "2026-07-02T14:18:16+00:00",
-      "source_report_created_at": "2026-07-02T14:18:16.238991+00:00",
-      "review_id": "REV-001",
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "rank": 1,
-      "reason": "ranking_guard_quarantine",
-      "problem_type": "alliance_power_ambiguous",
-      "problem_statement": "REV-001: Ich konnte die Allianzstärke der Allianz auf Server 554, Rang 1, nicht eindeutig bestimmen. Vorschlag 1: 4.756.681.920, Vorschlag 2: 5.756.681.920 oder manuelle Eingabe.",
-      "screenshot": "Screenshot_20260702-082010.png",
-      "power_original": 77756681920,
-      "best_candidate": 4756681920,
-      "second_candidate": 5756681920,
-      "margin": 0.0369,
-      "resolution": null
-    },
-    {
-      "history_key": "71edf8c1f3aa4650",
-      "status": "OPEN",
-      "created_at": "2026-07-02T14:18:16+00:00",
-      "source_report_created_at": "2026-07-02T14:18:16.238991+00:00",
-      "review_id": "REV-002",
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "rank": 2,
-      "reason": "ranking_guard_quarantine",
-      "problem_type": "alliance_power_outlier",
-      "problem_statement": "REV-002: Die Allianzstärke auf Server 554, Rang 2, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen.",
-      "screenshot": "Screenshot_20260702-082020.png",
-      "power_original": null,
-      "best_candidate": null,
-      "second_candidate": null,
-      "margin": null,
-      "resolution": null
-    },
-    {
-      "history_key": "fbc31e829e4e732a",
-      "status": "OPEN",
-      "created_at": "2026-07-02T14:18:16+00:00",
-      "source_report_created_at": "2026-07-02T14:18:16.238991+00:00",
-      "review_id": "REV-003",
-      "server": 554,
-      "ranking_type": "total_hero_power",
-      "rank": 3,
-      "reason": "ranking_guard_quarantine",
-      "problem_type": "power_ambiguous",
-      "problem_statement": "REV-003: Ich konnte die Spieler-Power des Eintrags auf Server 554, Rang 3, nicht eindeutig bestimmen. Vorschlag 1: 167.730.565, Vorschlag 2: 159.730.565 oder manuelle Eingabe.",
-      "screenshot": "Screenshot_20260702-082210.png",
-      "power_original": 767730565,
-      "best_candidate": 167730565,
-      "second_candidate": 159730565,
-      "margin": 0.0185,
-      "resolution": null
-    },
-    {
-      "history_key": "9dbe838ff08689bc",
-      "status": "OPEN",
-      "created_at": "2026-07-02T14:45:33+00:00",
       "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
       "review_id": "REV-001",
       "server": 554,
@@ -78,6 +21,20 @@
       "best_candidate": 4756681920,
       "second_candidate": 5756681920,
       "margin": 0.0369,
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      },
+      "review_identity": "554|alliance_power|1|Screenshot_20260702-082010.png|alliance_power_ambiguous|ranking_guard_quarantine",
+      "last_seen_at": "2026-07-02T18:56:04+00:00",
+      "seen_count": 3,
       "why_bullets": [
         "OCR/Parser lieferte den Ausgangswert 77.756.681.920.",
         "Die besten Kandidaten liegen nah beieinander: 4.756.681.920 vs. 5.756.681.920.",
@@ -159,23 +116,12 @@
           "score": null,
           "kind": "manual_input"
         }
-      ],
-      "resolution": {
-        "status": "OPEN",
-        "selected_choice": null,
-        "manual_value": null,
-        "manual_name": null,
-        "manual_alliance": null,
-        "comment": null,
-        "reviewer": null,
-        "resolved_at": null,
-        "resolution_source": "human_review"
-      }
+      ]
     },
     {
-      "history_key": "223d44a0af2331ba",
+      "history_key": "8afd8ed30a20c87b",
       "status": "OPEN",
-      "created_at": "2026-07-02T14:45:33+00:00",
+      "created_at": "2026-07-02T14:18:16+00:00",
       "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
       "review_id": "REV-002",
       "server": 554,
@@ -189,6 +135,20 @@
       "best_candidate": null,
       "second_candidate": null,
       "margin": null,
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      },
+      "review_identity": "554|alliance_power|2|Screenshot_20260702-082020.png|alliance_power_outlier|ranking_guard_quarantine",
+      "last_seen_at": "2026-07-02T18:56:04+00:00",
+      "seen_count": 3,
       "why_bullets": [
         "Der Wert weicht stark vom lokalen Allianz-Power-Kontext ab.",
         "Es gibt keine ausreichend starke Candidate-Evidenz; visuelle Prüfung ist nötig."
@@ -232,23 +192,12 @@
           "score": null,
           "kind": "manual_input"
         }
-      ],
-      "resolution": {
-        "status": "OPEN",
-        "selected_choice": null,
-        "manual_value": null,
-        "manual_name": null,
-        "manual_alliance": null,
-        "comment": null,
-        "reviewer": null,
-        "resolved_at": null,
-        "resolution_source": "human_review"
-      }
+      ]
     },
     {
-      "history_key": "6df21bdcbc3d0504",
+      "history_key": "f59513724d0df129",
       "status": "OPEN",
-      "created_at": "2026-07-02T14:45:33+00:00",
+      "created_at": "2026-07-02T14:18:16+00:00",
       "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
       "review_id": "REV-003",
       "server": 554,
@@ -262,6 +211,20 @@
       "best_candidate": 167730565,
       "second_candidate": 159730565,
       "margin": 0.0185,
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      },
+      "review_identity": "554|total_hero_power|3|Screenshot_20260702-082210.png|power_ambiguous|ranking_guard_quarantine",
+      "last_seen_at": "2026-07-02T18:56:04+00:00",
+      "seen_count": 3,
       "why_bullets": [
         "OCR/Parser lieferte den Ausgangswert 767.730.565.",
         "Die besten Kandidaten liegen nah beieinander: 167.730.565 vs. 159.730.565.",
@@ -344,18 +307,7 @@
           "score": null,
           "kind": "manual_input"
         }
-      ],
-      "resolution": {
-        "status": "OPEN",
-        "selected_choice": null,
-        "manual_value": null,
-        "manual_name": null,
-        "manual_alliance": null,
-        "comment": null,
-        "reviewer": null,
-        "resolved_at": null,
-        "resolution_source": "human_review"
-      }
+      ]
     }
   ]
 }

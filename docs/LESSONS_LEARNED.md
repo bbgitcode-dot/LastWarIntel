@@ -161,3 +161,10 @@ Server 553 showed that close high-explosion candidates can differ by only one lo
 
 The 549–553 run proved that low THP truncation exists, but `scale_x10` and `insert_zero` candidates can be nearly indistinguishable. When digit preservation and segment order disagree, quarantine is preferable to a confident but wrong recovered value.
 
+## v0.9.5.60 - Review History Must Use Business Identity
+
+Review IDs generated inside a single run are not stable enough for persistent history. Runtime timestamps must not be part of review identity, otherwise the same unresolved issue becomes a new OPEN review every time the pipeline is rerun.
+
+The stable identity should describe the human problem: server, ranking type, rank, screenshot, problem type, and reason. Runtime metadata belongs in observation fields such as `last_seen_at`, `source_report_created_at`, and `seen_count`.
+
+A separate Review Center is useful only if it acts as the single human-in-the-loop entry point. Static output pages should be treated as run-detail/evidence pages, not as competing dashboards.

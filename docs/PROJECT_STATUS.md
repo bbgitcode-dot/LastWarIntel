@@ -248,3 +248,8 @@ v0.9.5.52 keeps the candidate recovery architecture from .51 but shifts the acti
 
 The strategic takeaway from Server 549–553 remains: Power recovery is now explainable and safe enough to continue, but the next quality gains require better screenshot segment reconstruction, not broader heuristic recovery.
 
+## Current Status - v0.9.5.60
+
+The Review UX foundation from v0.9.5.59 is now consolidated into the product navigation. The main operational issue discovered after v0.9.5.59 was review-history duplication: repeated runs of the same unresolved screenshots created additional OPEN reviews. v0.9.5.60 fixes this by introducing stable review identities and rerun-aware `last_seen_at` / `seen_count` tracking.
+
+The web surface is being organized around a clearer information architecture: Command Center for overall state, Imports for sources/runs, Quality for guards and metrics, Reviews for human decisions, and Reports for generated artifacts.

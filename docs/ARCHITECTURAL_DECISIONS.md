@@ -94,3 +94,9 @@ The Review Center is report-driven and read-only until manual override semantics
 **Reason:** Server 553 showed cases where legacy recovery selected a lower-scored or tied candidate.
 
 **Consequence:** v0.9.5.51 uses the candidate decision engine only. Ambiguous score margins quarantine the row.
+
+## ADR - Stable Review Identity and Navigation Consolidation
+
+Decision: Persistent review history uses stable business identity, not runtime-generated review IDs or report timestamps. The Review Center is the web entry point for human decisions, while static output HTML remains a transitional run-detail surface.
+
+Rationale: Sentinel must support repeated targeted test runs and future multi-source screenshot ingestion without multiplying unresolved reviews. The operator must see one durable issue with updated observations, not one issue per run.

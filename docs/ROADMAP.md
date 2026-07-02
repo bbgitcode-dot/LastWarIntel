@@ -187,3 +187,8 @@ Completed in v0.9.5.48.
 - Recommendation history.
 - Leadership reports.
 
+## v0.9.5.60 Update
+
+Completed: Command Center / Review Center consolidation foundation and review-history deduplication.
+
+Next recommended sprint: interactive review resolution model. The groundwork now exists for selecting a candidate or entering a manual value without creating duplicate history items on every rerun.

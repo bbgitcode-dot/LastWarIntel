@@ -1229,3 +1229,11 @@ git add .
 git commit -m "fix(ranking-guard): recover source-local leading digit power errors"
 git tag -a v0.9.5.45 -m "v0.9.5.45 Source-local Power Digit Recovery"
 ```
+
+## v0.9.5.60 - Command Center Consolidation
+
+This release consolidates Sentinel's operator-facing review workflow. Review history now uses a stable business identity based on server, ranking type, rank, screenshot, problem type, and reason. Re-running the same screenshots updates `last_seen_at` and `seen_count` instead of creating duplicate open reviews.
+
+The web navigation now exposes a dedicated Review Center at `/reviews`. Existing static output files remain available as run-detail/evidence views during the transition, but the intended operator path is now Command Center -> Reviews -> Evidence.
+
+No OCR, recovery, Ranking Guard, or Data Guard decision logic was changed.

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Sentinel Review Center{% endblock %}
+
+{% block content %}
+<header class="command-header">
+    <div>
+        <div class="eyebrow">REVIEW CENTER</div>
+        <div class="brand">Human Review Workspace</div>
+        <div class="subtitle">Open reviews, history, and evidence details are consolidated here. Data Guard remains the source of truth.</div>
+    </div>
+    <div class="server-status">
+        <div class="status-label">Review State</div>
+        {% if review_model.has_history %}
+        <div class="status-pill status-warning">● {{ review_model.open_count }} Open</div>
+        <div class="snapshot-label">{{ review_model.resolved_count }} resolved</div>
+        {% else %}
+        <div class="status-pill status-warning">● Pending</div>
+        <div class="snapshot-label">Run main.py to populate reviews</div>
+        {% endif %}
+    </div>
+</header>
+
+<main class="command-grid">
+    <section class="metrics-grid">
+        <article class="metric-card tone-warning">
+            <div class="metric-title">Open Reviews</div>
+            <div class="metric-value small-value">{{ review_model.open_count }}</div>
+            <div class="metric-subline">Persistent queue</div>
+        </article>
+        <article class="metric-card tone-success">
+            <div class="metric-title">Resolved</div>
+            <div class="metric-value small-value">{{ review_model.resolved_count }}</div>
+            <div class="metric-subline">Manual resolution foundation</div>
+        </article>
+        <article class="metric-card tone-info">
+            <div class="metric-title">Current Run</div>
+            <div class="metric-value small-value">{{ review_model.current_items|length }}</div>
+            <div class="metric-subline">Evidence items</div>
+        </article>
+        <article class="metric-card tone-info">
+            <div class="metric-title">History Store</div>
+            <div class="metric-value small-value">{{ review_model.history_items|length }}</div>
+            <div class="metric-subline">Last 200 entries displayed</div>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Review Navigation</h2>
+                <p>Use this as the single review entry point. Static output pages remain linked as run-detail views during consolidation.</p>
+            </div>
+            <span class="panel-badge">CONSOLIDATED</span>
+        </div>
+        <div class="quick-actions">
+            {% for link in review_model.output_links %}
+            <a class="quick-action" href="{{ link.href }}">
+                <strong>{{ link.label }}</strong>
+                <span>Latest generated output</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Open Reviews</h2>
+                <p>These unresolved issues block full Operational Truth promotion.</p>
+            </div>
+            <span class="panel-badge">{{ review_model.open_count }} OPEN</span>
+        </div>
+        <div class="attention-list">
+            {% for item in review_model.open_items %}
+            <article class="attention-item attention-warning">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>{{ item.review_id }} · {{ item.problem_type }}</h3>
+                    <p>{{ item.problem_statement }}</p>
+                    <small>Server {{ item.server }} · {{ item.ranking_type }} · Rank {{ item.rank }} · Seen {{ item.seen_count or 1 }}x · {{ item.screenshot }}</small>
+                    {% if item.why_bullets %}
+                    <ul>
+                        {% for bullet in item.why_bullets[:3] %}<li>{{ bullet }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                <strong>{{ item.status }}</strong>
+            </article>
+            {% else %}
+            <article class="attention-item attention-success">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>No open reviews</h3>
+                    <p>Latest history has no unresolved review items.</p>
+                </div>
+                <strong>Proceed</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Review History</h2>
+                <p>Deduplicated persistent history. Reruns should update <em>last seen</em>, not create duplicate open records.</p>
+            </div>
+            <span class="panel-badge">{{ review_model.history_items|length }} ITEMS</span>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Status</span><span>Review</span><span>Server</span><span>Ranking</span><span>Rank</span><span>Seen</span><span>Last Seen</span>
+            </div>
+            {% for item in review_model.history_items|reverse %}
+            <div class="quality-row">
+                <strong>{{ item.status }}</strong>
+                <span>{{ item.review_id }}</span>
+                <span>{{ item.server or '—' }}</span>
+                <span>{{ item.ranking_type }}</span>
+                <span>{{ item.rank }}</span>
+                <span>{{ item.seen_count or 1 }}</span>
+                <span>{{ item.last_seen_at or item.created_at }}</span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No review history found.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

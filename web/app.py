@@ -19,6 +19,7 @@ from web.routes.intelligence import router as intelligence_router
 from web.routes.players import router as players_router
 from web.routes.quality import router as quality_router
 from web.routes.reports import router as reports_router
+from web.routes.reviews import router as reviews_router
 from web.routes.operations import router as operations_router
 from web.routes.rankings import router as rankings_router
 from web.routes.servers import router as servers_router
@@ -46,6 +47,12 @@ def create_app() -> FastAPI:
         name="static",
     )
 
+    application.mount(
+        "/static-output",
+        StaticFiles(directory="output", html=True, check_dir=False),
+        name="static-output",
+    )
+
     application.include_router(system_router)
     application.include_router(command_center_router)
     application.include_router(feed_router)
@@ -57,6 +64,7 @@ def create_app() -> FastAPI:
     application.include_router(quality_router)
     application.include_router(players_router)
     application.include_router(reports_router)
+    application.include_router(reviews_router)
     application.include_router(rankings_router)
     application.include_router(intelligence_router)
     application.include_router(settings_router)

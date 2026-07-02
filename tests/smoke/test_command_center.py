@@ -231,3 +231,74 @@ def test_review_evidence_contains_human_problem_and_history(tmp_path: Path):
     assert history["items"][0]["why_bullets"]
     assert history["items"][0]["explainability_steps"]
     assert Path(result["review_history_store"]).exists()
+
+
+def test_review_history_deduplicates_reruns_and_updates_last_seen(tmp_path: Path):
+    data = tmp_path / "data"
+    output = tmp_path / "output"
+    data.mkdir()
+    report = {
+        "status": "Review",
+        "readiness": 50,
+        "created_at": "2026-07-02T14:45:33Z",
+        "review_item_count": 1,
+        "power_recovery": {"recovered": 0, "ambiguous": 1, "traces": [{
+            "server": None,
+            "ranking_type": "ranking_guard_quarantine",
+            "rank": 3,
+            "source_file": "shot.png",
+            "name": "Ambiguous Player",
+            "power_original": 767730565,
+            "power_selected": 767730565,
+            "status": "ambiguous",
+            "best_candidate": 167730565,
+            "second_candidate": 159730565,
+            "best_score": 0.7124,
+            "second_score": 0.6939,
+            "margin": 0.0185,
+            "candidate_count": 2,
+            "decision_reason": "quarantined_ambiguous_candidates",
+            "candidates": [
+                {"value": 167730565, "score": 0.7124, "reasons": ["ocr_error_model:leading_digit_to_1"]},
+                {"value": 159730565, "score": 0.6939, "reasons": ["source_local_bucket_match"]},
+            ],
+        }]},
+        "reviews": [{
+            "server": 554,
+            "ranking_type": "total_hero_power",
+            "expected_ranking_type": "total_hero_power",
+            "rank": 3,
+            "title": "Ranking Guard quarantine",
+            "reason": "ranking_guard_quarantine",
+            "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.712;margin=0.019",
+            "screenshot": "shot.png",
+        }],
+    }
+    report_path = data / "latest_import_report.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    first = generate_command_center(
+        output_dir=output,
+        import_report_path=report_path,
+        ground_truth_report_path=tmp_path / "missing_ground_truth.json",
+        inference_report_path=tmp_path / "missing_inference.json",
+    )
+    history = json.loads(Path(first["review_history_json"]).read_text(encoding="utf-8"))
+    assert history["open_count"] == 1
+    first_key = history["items"][0]["history_key"]
+
+    # Same review in a later runtime must update the existing history item.
+    report["created_at"] = "2026-07-02T15:00:00Z"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    second = generate_command_center(
+        output_dir=output,
+        import_report_path=report_path,
+        ground_truth_report_path=tmp_path / "missing_ground_truth.json",
+        inference_report_path=tmp_path / "missing_inference.json",
+    )
+    history = json.loads(Path(second["review_history_json"]).read_text(encoding="utf-8"))
+    assert history["open_count"] == 1
+    assert len(history["items"]) == 1
+    assert history["items"][0]["history_key"] == first_key
+    assert history["items"][0]["seen_count"] == 2
+    assert history["items"][0]["source_report_created_at"] == "2026-07-02T15:00:00Z"

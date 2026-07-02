@@ -1688,3 +1688,30 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.quick-action {
+    display: block;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.quick-action strong,
+.quick-action span {
+    display: block;
+}
+
+.quick-action span {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+}
