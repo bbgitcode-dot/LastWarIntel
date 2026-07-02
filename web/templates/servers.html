@@ -45,6 +45,17 @@
 </header>
 
 <main class="command-grid">
+    {% if status_filter %}
+    <section class="panel drilldown-notice">
+        <div class="panel-header compact">
+            <div>
+                <h2>Filtered drill-down: {{ status_filter }}</h2>
+                <p>This view was opened from Operational Readiness. Use the server cards to inspect the corresponding server detail.</p>
+            </div>
+            <span class="panel-badge">DRILL-DOWN</span>
+        </div>
+    </section>
+    {% endif %}
 
     <section class="metrics-grid">
 

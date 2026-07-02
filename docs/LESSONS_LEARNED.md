@@ -208,3 +208,13 @@ Showing the screenshot inline is useful, but a full-width screenshot can dominat
 Rank highlighting is a major usability gain because the reviewer no longer has to search the whole image manually. It must remain an overlay and an aid, not a source of truth. The original screenshot and Data Guard decision remain authoritative until a human explicitly resolves the review.
 
 Patch notes also need their own durable home. Consolidating patch summaries into `/docs/PATCH_SUMMARY.md` prevents release knowledge from becoming scattered across root-level files.
+
+## v0.9.5.65 - Visual Evidence Must Be Calibrated
+
+A useful visual cue becomes dangerous when it is precise-looking but geometrically wrong. Screenshot overlays must be calibrated per screenshot family and must expose approximation when Sentinel cannot confidently place the target. Evidence UX is part of Data Quality, not decoration.
+
+## v0.9.5.66 - Readiness Needs Actionable Drilldowns
+
+A Command Center KPI is useful only if it takes the operator to the reason behind the status. Counts like Operational, Pending Review, Missing Data, and Failed Imports must not be static decoration. They are routing decisions. Each status should link to the workflow where the issue can be inspected and resolved.
+
+Server readiness must also be evaluated at server level, not just row level. A server with both core ranking feeds and no open review is operational; a server with an open human decision is pending review; a server lacking a required feed is missing data. This creates a leadership-readable operational picture without weakening Data Guard.

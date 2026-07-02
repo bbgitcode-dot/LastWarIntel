@@ -48,41 +48,81 @@ def _screenshot_url(filename: str | None) -> str:
     return f"/screenshots/{name}"
 
 
-def _rank_highlight_style(item: dict[str, Any]) -> str:
-    """Return a conservative screenshot overlay for the reviewed rank.
+_RANK_OVERLAY_PROFILES: dict[str, dict[str, float]] = {
+    # Calibrated against the current Last War ranking screenshots.  Percentages
+    # are relative to the full screenshot image, not the browser card.
+    # v0.9.5.64 used a too-low first-row anchor which placed alliance rank 1
+    # around visual rank 3; these profiles use the real table row origin.
+    "alliance_power": {"top": 13.85, "step": 8.05, "height": 7.45, "left": 2.5, "right": 2.5},
+    "total_hero_power": {"top": 13.80, "step": 8.00, "height": 7.45, "left": 2.5, "right": 2.5},
+}
 
-    The first implementation intentionally uses ranking-type row heuristics instead
-    of OCR-dependent geometry. It gives the reviewer an immediate visual anchor
-    while keeping the original screenshot untouched and fully auditable.
+
+def _format_number(value: Any) -> str:
+    """Format a numeric value for human review without changing stored data."""
+    if value in (None, ""):
+        return ""
+    try:
+        return f"{int(value):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
+    """Return calibrated screenshot overlay metadata for the reviewed rank.
+
+    The overlay remains a visual aid only.  If the target rank would fall outside
+    the visible screenshot table, Sentinel marks the highlight as approximate
+    rather than pretending exact evidence exists.
     """
     try:
         rank = int(item.get("rank") or 0)
     except (TypeError, ValueError):
         rank = 0
     if rank <= 0:
-        return ""
+        return {"style": "", "label": "", "is_approximate": True}
 
     ranking_type = str(item.get("ranking_type") or "").lower()
-    if ranking_type == "alliance_power":
-        top_pct = 26.5 + (rank - 1) * 9.2
-        height_pct = 8.2
-    elif ranking_type == "total_hero_power":
-        top_pct = 18.5 + (rank - 1) * 6.25
-        height_pct = 5.6
-    else:
-        top_pct = 22.0 + (rank - 1) * 7.0
-        height_pct = 6.5
+    profile = _RANK_OVERLAY_PROFILES.get(
+        ranking_type,
+        {"top": 13.80, "step": 8.00, "height": 7.20, "left": 2.5, "right": 2.5},
+    )
+    top_pct = profile["top"] + (rank - 1) * profile["step"]
+    height_pct = profile["height"]
+    is_approximate = False
 
-    # Keep the badge visible even when the target row is outside the current crop.
-    top_pct = max(4.0, min(top_pct, 91.0))
-    height_pct = max(4.0, min(height_pct, 12.0))
-    return f"top:{top_pct:.2f}%;height:{height_pct:.2f}%;"
+    if top_pct < 4.0 or top_pct > 88.0:
+        is_approximate = True
+    top_pct = max(4.0, min(top_pct, 88.0))
+    height_pct = max(4.0, min(height_pct, 10.0))
+    left_pct = max(0.0, min(profile.get("left", 2.5), 20.0))
+    right_pct = max(0.0, min(profile.get("right", 2.5), 20.0))
+    style = f"top:{top_pct:.2f}%;height:{height_pct:.2f}%;left:{left_pct:.2f}%;right:{right_pct:.2f}%;"
+    label = f"Rank {rank}" + (" approx." if is_approximate else "")
+    return {"style": style, "label": label, "is_approximate": is_approximate}
+
+
+def _rank_highlight_style(item: dict[str, Any]) -> str:
+    """Backward-compatible helper used by smoke tests and templates."""
+    return str(_rank_highlight_meta(item).get("style") or "")
 
 
 def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(item)
     enriched["screenshot_url"] = _screenshot_url(enriched.get("screenshot"))
-    enriched["rank_highlight_style"] = _rank_highlight_style(enriched)
+    highlight = _rank_highlight_meta(enriched)
+    enriched["rank_highlight_style"] = highlight.get("style") or ""
+    enriched["rank_highlight_label"] = highlight.get("label") or ""
+    enriched["rank_highlight_is_approximate"] = bool(highlight.get("is_approximate"))
+    enriched["power_original_display"] = _format_number(enriched.get("power_original"))
+    enriched["best_candidate_display"] = _format_number(enriched.get("best_candidate"))
+    enriched["second_candidate_display"] = _format_number(enriched.get("second_candidate"))
+    enriched_choices = []
+    for choice in enriched.get("choices") or []:
+        choice_copy = dict(choice)
+        choice_copy["display_value"] = _format_number(choice_copy.get("value"))
+        enriched_choices.append(choice_copy)
+    enriched["choices"] = enriched_choices
     return enriched
 
 
@@ -209,6 +249,7 @@ def _find_history_item(history_key: str) -> dict[str, Any] | None:
 
 @router.get("/reviews")
 def reviews(request: Request):
+    status_filter = request.query_params.get("status", "")
     return templates.TemplateResponse(
         request=request,
         name="reviews.html",
@@ -217,6 +258,7 @@ def reviews(request: Request):
             "navigation": NAVIGATION,
             "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "reviews",
+            "status_filter": status_filter,
         },
     )
 

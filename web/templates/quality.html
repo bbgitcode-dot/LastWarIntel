@@ -22,6 +22,17 @@
 </header>
 
 <main class="command-grid">
+    {% if quality_filter %}
+    <section class="panel drilldown-notice">
+        <div class="panel-header compact">
+            <div>
+                <h2>Filtered drill-down: {{ quality_filter|replace('-', ' ') }}</h2>
+                <p>This view was opened from Operational Readiness to investigate blocked or missing data evidence.</p>
+            </div>
+            <span class="panel-badge">DRILL-DOWN</span>
+        </div>
+    </section>
+    {% endif %}
     <section class="panel">
         <div class="panel-header compact">
             <div>

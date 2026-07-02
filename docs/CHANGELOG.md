@@ -334,3 +334,30 @@ No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.
 - Updated smoke tests and version to `0.9.5.64`.
 
 No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.
+
+## v0.9.5.65 - Screenshot Highlight Calibration
+
+- Calibrated Review Detail screenshot overlays for `alliance_power` and `total_hero_power`.
+- Added approximate highlight metadata for out-of-range targets.
+- Improved review choice readability with dotted number formatting.
+- Updated smoke tests and version to `0.9.5.65`.
+
+## v0.9.5.66 - Operational Readiness Drilldown
+
+Focus: make the Command Center start page answer whether Sentinel's current server dataset is operational and where the Proud Owner must act next.
+
+### Added
+- Operational Readiness section on the Command Center start page.
+- Drill-down KPI cards for Servers Discovered, Operational, Pending Review, Missing Data, and Failed Imports.
+- Server health strip showing per-server operational state directly on the Command Center.
+- Links from each status card to the relevant workflow page: Servers, Reviews, Quality, or Imports.
+- Drill-down notices on Imports, Quality, Servers, and Reviews when opened from Operational Readiness filter links.
+
+### Guardrails
+- This sprint changes web visibility and navigation only.
+- OCR, Data Guard, Ranking Guard, recovery, quarantine, Operational Truth, and Excel exports remain unchanged.
+- Pending Review is intentionally counted before Missing Data because open human decisions block Operational Truth even when source coverage exists.
+
+### Validation
+- Added smoke coverage for the Operational Readiness cards, drill-down links, server health strip, and filter-aware destination pages.
+- Version updated to `0.9.5.66`.

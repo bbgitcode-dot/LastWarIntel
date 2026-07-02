@@ -59,7 +59,7 @@
                 {% for choice in item.choices or [] %}
                 <article class="review-choice-card">
                     <strong>{{ choice.label }}</strong>
-                    <span>{% if choice.value %}{{ choice.value }}{% else %}Manual input required{% endif %}</span>
+                    <span>{% if choice.display_value %}{{ choice.display_value }}{% elif choice.value %}{{ choice.value }}{% else %}Manual input required{% endif %}</span>
                     {% if choice.score is not none %}<span>Score {{ choice.score }}</span>{% endif %}
                     {% if choice.reasons %}<span>{{ choice.reasons|join(', ') }}</span>{% endif %}
                 </article>
@@ -81,7 +81,7 @@
                         <option value="">Manuelle Eingabe / keine Kandidatenwahl</option>
                         {% for choice in item.choices or [] %}
                             {% if choice.kind != 'manual_input' %}
-                            <option value="{{ choice.label }}">{{ choice.label }}{% if choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
+                            <option value="{{ choice.label }}">{{ choice.label }}{% if choice.display_value %} · {{ choice.display_value }}{% elif choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
@@ -146,7 +146,7 @@
             <div class="panel-header compact">
                 <div>
                     <h2>Screenshot Evidence</h2>
-                    <p>Target rank is highlighted. Open the original in a new tab for full resolution.</p>
+                    <p>{% if item.rank_highlight_is_approximate %}Target highlight is approximate. {% else %}Target rank is highlighted. {% endif %}Open the original in a new tab for full resolution.</p>
                 </div>
                 {% if item.screenshot_url %}<a class="panel-badge" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">OPEN SCREENSHOT ↗</a>{% endif %}
             </div>
@@ -155,12 +155,12 @@
                 <img class="screenshot-preview screenshot-preview-compact" src="{{ item.screenshot_url }}" alt="Screenshot evidence for {{ item.review_id }}">
                 {% if item.rank_highlight_style %}
                 <span class="rank-highlight-overlay" style="{{ item.rank_highlight_style }}">
-                    <span class="rank-highlight-badge">Rank {{ item.rank }}</span>
+                    <span class="rank-highlight-badge">{{ item.rank_highlight_label or ('Rank ' ~ item.rank) }}</span>
                 </span>
                 {% endif %}
             </a>
             <div class="screenshot-meta-grid">
-                <div><strong>Target</strong><span>{{ item.ranking_type }} · Rank {{ item.rank }}</span></div>
+                <div><strong>Target</strong><span>{{ item.ranking_type }} · Rank {{ item.rank }}{% if item.rank_highlight_is_approximate %} · approximate highlight{% endif %}</span></div>
                 <div><strong>File</strong><span>{{ item.screenshot }}</span></div>
                 <div><strong>Action</strong><span>Click preview to open full resolution.</span></div>
             </div>

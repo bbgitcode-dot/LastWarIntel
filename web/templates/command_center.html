@@ -35,6 +35,47 @@
         </div>
     </section>
 
+
+    <section class="panel operational-readiness-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Operational Readiness</h2>
+                <p>Server coverage across the latest import. Every card is a drill-down into the underlying action list.</p>
+            </div>
+            <span class="panel-badge">{{ command.operational_readiness.coverage_percent }}% COVERAGE</span>
+        </div>
+        <div class="readiness-summary-row">
+            <div class="readiness-ring tone-{% if command.operational_readiness.coverage_percent >= 85 %}success{% elif command.operational_readiness.coverage_percent >= 50 %}warning{% else %}danger{% endif %}">
+                <strong>{{ command.operational_readiness.coverage_percent }}%</strong>
+                <span>operational</span>
+            </div>
+            <div class="readiness-copy">
+                <h3>{{ command.operational_readiness.operational_servers }} of {{ command.operational_readiness.total_servers }} server(s) are operational</h3>
+                <p>Pending reviews, missing ranking feeds, and failed imports are separated so you can jump directly to the blocking evidence.</p>
+            </div>
+        </div>
+        <div class="operational-status-grid">
+            {% for card in command.operational_readiness.cards %}
+            <a class="operational-status-card tone-{{ card.tone }}" href="{{ card.href }}">
+                <span>{{ card.title }}</span>
+                <strong>{{ card.value }}</strong>
+                <small>{{ card.subtitle }}</small>
+                <em>{{ card.description }}</em>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="server-health-strip" aria-label="Server health matrix">
+            {% for server in command.operational_readiness.server_health %}
+            <a class="server-health-pill tone-{{ server.tone }}" href="{{ server.href }}" title="{{ server.detail }}">
+                <strong>{{ server.server }}</strong>
+                <span>{{ server.status }}</span>
+            </a>
+            {% else %}
+            <span class="server-health-empty">No server coverage data yet.</span>
+            {% endfor %}
+        </div>
+    </section>
+
     <section class="panel">
         <div class="panel-header compact">
             <div>

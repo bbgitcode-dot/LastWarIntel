@@ -46,6 +46,37 @@ class SystemComponent:
 
 
 @dataclass(slots=True, frozen=True)
+class OperationalStatusCard:
+    title: str
+    value: str
+    subtitle: str
+    tone: str
+    href: str
+    description: str
+
+
+@dataclass(slots=True, frozen=True)
+class ServerHealthItem:
+    server: int
+    status: str
+    tone: str
+    href: str
+    detail: str
+
+
+@dataclass(slots=True, frozen=True)
+class OperationalReadiness:
+    total_servers: int
+    operational_servers: int
+    pending_review_servers: int
+    missing_data_servers: int
+    failed_import_servers: int
+    coverage_percent: int
+    cards: list[OperationalStatusCard]
+    server_health: list[ServerHealthItem]
+
+
+@dataclass(slots=True, frozen=True)
 class ActivityItem:
     time: str
     title: str
@@ -62,6 +93,7 @@ class CommandCenterViewModel:
     readiness: int
     mission: MissionViewModel
     attention_items: list[AttentionItem]
+    operational_readiness: OperationalReadiness
     metrics: list[OperationalMetric]
     components: list[SystemComponent]
     activity: list[ActivityItem]

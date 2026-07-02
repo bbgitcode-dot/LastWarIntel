@@ -22,6 +22,17 @@
 </header>
 
 <main class="command-grid">
+    {% if status_filter %}
+    <section class="panel drilldown-notice">
+        <div class="panel-header compact">
+            <div>
+                <h2>Filtered drill-down: {{ status_filter }}</h2>
+                <p>This view was opened from the Command Center Operational Readiness dashboard. Inspect import groups and source evidence for matching states.</p>
+            </div>
+            <span class="panel-badge">DRILL-DOWN</span>
+        </div>
+    </section>
+    {% endif %}
     <section class="panel">
         <div class="panel-header compact">
             <div>

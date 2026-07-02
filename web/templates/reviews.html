@@ -22,6 +22,17 @@
 </header>
 
 <main class="command-grid">
+    {% if status_filter %}
+    <section class="panel drilldown-notice">
+        <div class="panel-header compact">
+            <div>
+                <h2>Filtered drill-down: {{ status_filter }}</h2>
+                <p>This view was opened from Operational Readiness. Start with Open Reviews when status is open or pending review.</p>
+            </div>
+            <span class="panel-badge">DRILL-DOWN</span>
+        </div>
+    </section>
+    {% endif %}
     <section class="metrics-grid">
         <article class="metric-card tone-warning">
             <div class="metric-title">Open Reviews</div>

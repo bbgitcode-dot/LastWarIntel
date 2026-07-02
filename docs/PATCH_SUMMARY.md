@@ -649,3 +649,81 @@ git add .
 git commit -m "feat(review): highlight target rank in screenshot evidence"
 git tag -a v0.9.5.64 -m "v0.9.5.64 Review Evidence Highlight Overlay"
 ```
+
+
+<!-- Source: PATCH_SUMMARY_v0.9.5.65.md -->
+
+# Sentinel v0.9.5.65 Patch Summary
+
+## Version
+
+v0.9.5.65 – Screenshot Highlight Calibration
+
+## Purpose
+
+Calibrates the Review Detail screenshot rank overlay so the marker aligns with the first visible ranking row instead of landing too low in the screenshot preview. Improves reviewer trust by treating the overlay as a visual aid with explicit approximate-state handling.
+
+## Changes
+
+- Replaced the naive v0.9.5.64 rank-to-y-position heuristic with ranking-type overlay profiles.
+- Calibrated `alliance_power` and `total_hero_power` first-row anchors and row spacing against current Last War screenshot geometry.
+- Added highlight metadata: label and approximate flag.
+- Added human-friendly dotted number formatting for review choices in Review Detail.
+- Kept screenshot links opening in a new tab.
+- Added smoke coverage for calibrated first-row overlay positions.
+- Updated documentation and version to v0.9.5.65.
+
+## Validation
+
+```text
+pytest tests/smoke -q
+compileall web/app.py web/navigation.py web/routes web/templates services/command_center.py version.py
+```
+
+## Commit
+
+```bash
+git add .
+git commit -m "fix(review): calibrate screenshot rank highlight overlay"
+git tag -a v0.9.5.65 -m "v0.9.5.65 Screenshot Highlight Calibration"
+```
+
+<!-- Source: PATCH_SUMMARY_v0.9.5.66.md -->
+
+# Sentinel v0.9.5.66 Patch Summary
+
+## Version
+
+v0.9.5.66 – Operational Readiness Drilldown
+
+## Purpose
+
+Adds a server-level Operational Readiness layer to the Command Center start page so the Proud Owner can immediately see how much of the server dataset is usable and where action is required.
+
+## Changes
+
+- Added Operational Readiness view models: status cards, server health items, and coverage summary.
+- Added Command Center KPI cards for discovered servers, operational servers, pending reviews, missing data, and failed imports.
+- Added drill-down links from KPI cards to Servers, Reviews, Quality, and Imports.
+- Added a compact server health strip on the Command Center start page.
+- Added drill-down banners to destination pages when filter links are used.
+- Updated documentation and version to v0.9.5.66.
+
+## Validation
+
+```text
+pytest tests/smoke/test_web_navigation_consolidation.py -q
+10 passed
+python -m compileall -q application/command_center web/app.py web/navigation.py web/routes web/templates services/command_center.py version.py
+passed
+```
+
+Note: full `pytest tests/smoke -q` still encounters pre-existing legacy collection errors in unrelated smoke files with command-line snippets or older OCR config imports.
+
+## Commit
+
+```bash
+git add .
+git commit -m "feat(command): add operational readiness drilldown"
+git tag -a v0.9.5.66 -m "v0.9.5.66 Operational Readiness Drilldown"
+```

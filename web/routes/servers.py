@@ -25,6 +25,7 @@ def server_landscape(
     request: Request,
 ):
     landscape = ServerLandscapeService().get_landscape()
+    status_filter = request.query_params.get("status", "")
 
     return templates.TemplateResponse(
         request=request,
@@ -34,6 +35,7 @@ def server_landscape(
             "navigation": NAVIGATION,
             "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "servers",
+            "status_filter": status_filter,
         },
     )
 

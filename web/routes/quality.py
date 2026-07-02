@@ -16,6 +16,7 @@ service = DataQualityService()
 @router.get("/quality")
 def quality(request: Request):
     quality_model = service.get_dashboard()
+    quality_filter = request.query_params.get("filter", "")
     return templates.TemplateResponse(
         request=request,
         name="quality.html",
@@ -24,6 +25,7 @@ def quality(request: Request):
             "navigation": NAVIGATION,
             "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "quality",
+            "quality_filter": quality_filter,
         },
     )
 

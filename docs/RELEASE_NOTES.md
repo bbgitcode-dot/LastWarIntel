@@ -1327,3 +1327,39 @@ Focus: make Review Detail faster for human operators by reducing screenshot domi
 ### Validation
 - Extended smoke coverage for Review Detail layout, rank highlight markup, and rank highlight URL enrichment.
 - Version updated to `0.9.5.64`.
+
+## v0.9.5.65 - Screenshot Highlight Calibration
+
+### Fixed
+
+- Corrected the screenshot rank-highlight overlay that could land too low in Review Detail.
+- Added ranking-type overlay profiles for alliance and hero ranking screenshots.
+
+### Improved
+
+- Review choices now display power values with German-style thousands separators for faster human review.
+- Highlight metadata can mark a target as approximate when the computed row would be outside the visible screenshot.
+
+### Version
+
+- Version updated to `0.9.5.65`.
+
+## v0.9.5.66 - Operational Readiness Drilldown
+
+Focus: make the Command Center start page answer whether Sentinel's current server dataset is operational and where the Proud Owner must act next.
+
+### Added
+- Operational Readiness section on the Command Center start page.
+- Drill-down KPI cards for Servers Discovered, Operational, Pending Review, Missing Data, and Failed Imports.
+- Server health strip showing per-server operational state directly on the Command Center.
+- Links from each status card to the relevant workflow page: Servers, Reviews, Quality, or Imports.
+- Drill-down notices on Imports, Quality, Servers, and Reviews when opened from Operational Readiness filter links.
+
+### Guardrails
+- This sprint changes web visibility and navigation only.
+- OCR, Data Guard, Ranking Guard, recovery, quarantine, Operational Truth, and Excel exports remain unchanged.
+- Pending Review is intentionally counted before Missing Data because open human decisions block Operational Truth even when source coverage exists.
+
+### Validation
+- Added smoke coverage for the Operational Readiness cards, drill-down links, server health strip, and filter-aware destination pages.
+- Version updated to `0.9.5.66`.

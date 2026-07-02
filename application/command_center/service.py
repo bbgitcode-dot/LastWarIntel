@@ -6,6 +6,7 @@ not read validator files, benchmark artifacts, or parser internals directly.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from application.data_quality.service import DataQualityService
@@ -18,6 +19,9 @@ from .models import (
     CommandCenterViewModel,
     MissionViewModel,
     OperationalMetric,
+    OperationalReadiness,
+    OperationalStatusCard,
+    ServerHealthItem,
     StatusBadge,
     SystemComponent,
 )
@@ -38,6 +42,7 @@ class CommandCenterService:
         latest_import = self._import_service.get_dashboard()
         quality = self._quality_service.get_dashboard()
         summary = quality.summary
+        operational_readiness = self._build_operational_readiness(latest_import)
 
         if latest_import.has_import:
             readiness = latest_import.readiness
@@ -153,6 +158,7 @@ class CommandCenterService:
             readiness=readiness,
             mission=mission,
             attention_items=attention_items,
+            operational_readiness=operational_readiness,
             metrics=metrics,
             components=[
                 SystemComponent("API", "Online", "FastAPI service responding", "success"),
@@ -161,6 +167,142 @@ class CommandCenterService:
                 SystemComponent("Cockpit", "Online", "Command Center active", "success"),
             ],
             activity=activity,
+        )
+
+
+    def _load_review_history(self) -> dict:
+        path = Path("data/review_history.json")
+        if not path.exists():
+            return {}
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _build_operational_readiness(self, latest_import) -> OperationalReadiness:
+        """Summarize server-level operational readiness for the Command Center.
+
+        Operational means Sentinel has both core ranking feeds for a server and no
+        open human review item for that server. Pending Review is intentionally
+        counted before Missing Data because human decisions block Operational
+        Truth even if the source coverage is otherwise complete.
+        """
+        required_rankings = {"alliance_power", "total_hero_power"}
+        ranking_by_server: dict[int, set[str]] = {}
+        failed_servers: set[int] = set()
+
+        for item in getattr(latest_import, "imports", []) or []:
+            server = getattr(item, "server", None)
+            if not server:
+                continue
+            normalized_ranking = str(getattr(item, "ranking_type", "") or "").lower().replace(" ", "_")
+            ranking_by_server.setdefault(int(server), set()).add(normalized_ranking)
+            if str(getattr(item, "status", "") or "").lower() in {"failed", "error", "critical"}:
+                failed_servers.add(int(server))
+
+        discovered_servers = set(int(server) for server in getattr(latest_import, "servers", []) or [] if int(server or 0))
+        discovered_servers.update(ranking_by_server)
+
+        review_history = self._load_review_history()
+        pending_servers: set[int] = set()
+        for item in review_history.get("items") or []:
+            if not isinstance(item, dict) or item.get("status") != "OPEN":
+                continue
+            try:
+                server = int(item.get("server") or 0)
+            except (TypeError, ValueError):
+                server = 0
+            if server:
+                pending_servers.add(server)
+                discovered_servers.add(server)
+
+        missing_servers = {
+            server for server in discovered_servers
+            if not required_rankings.issubset(ranking_by_server.get(server, set()))
+        }
+        operational_servers = {
+            server for server in discovered_servers
+            if server not in pending_servers
+            and server not in missing_servers
+            and server not in failed_servers
+        }
+
+        total = len(discovered_servers)
+        operational_count = len(operational_servers)
+        pending_count = len(pending_servers)
+        missing_count = len(missing_servers - pending_servers)
+        failed_count = len(failed_servers)
+        coverage = int(round((operational_count / total) * 100)) if total else 0
+
+        def status_for(server: int) -> tuple[str, str, str]:
+            rankings = ranking_by_server.get(server, set())
+            missing = sorted(required_rankings - rankings)
+            if server in failed_servers:
+                return "Import Failed", "danger", "Import produced a failed/error state"
+            if server in pending_servers:
+                return "Pending Review", "warning", "Human review blocks Operational Truth"
+            if missing:
+                return "Missing Data", "danger", "Missing " + ", ".join(missing)
+            return "Operational", "success", "Core rankings complete and no open review"
+
+        server_health = []
+        for server in sorted(discovered_servers):
+            status, tone, detail = status_for(server)
+            server_health.append(ServerHealthItem(server=server, status=status, tone=tone, href=f"/servers/{server}", detail=detail))
+
+        cards = [
+            OperationalStatusCard(
+                title="Servers discovered",
+                value=str(total),
+                subtitle="known from latest import/reviews",
+                tone="info",
+                href="/servers",
+                description="Open the monitored server landscape.",
+            ),
+            OperationalStatusCard(
+                title="Operational",
+                value=str(operational_count),
+                subtitle=f"{coverage}% coverage",
+                tone="success" if operational_count else "warning",
+                href="/servers?status=operational",
+                description="Servers with complete core rankings and no open reviews.",
+            ),
+            OperationalStatusCard(
+                title="Pending Review",
+                value=str(pending_count),
+                subtitle="human decision required",
+                tone="warning" if pending_count else "success",
+                href="/reviews?status=open",
+                description="Open review queue filtered to unresolved items.",
+            ),
+            OperationalStatusCard(
+                title="Missing Data",
+                value=str(missing_count),
+                subtitle="missing core ranking feed",
+                tone="danger" if missing_count else "success",
+                href="/quality?filter=missing-data",
+                description="Inspect missing or incomplete server evidence.",
+            ),
+            OperationalStatusCard(
+                title="Failed Imports",
+                value=str(failed_count),
+                subtitle="import error state",
+                tone="danger" if failed_count else "success",
+                href="/imports?status=failed",
+                description="Open import history and failed source groups.",
+            ),
+        ]
+
+        return OperationalReadiness(
+            total_servers=total,
+            operational_servers=operational_count,
+            pending_review_servers=pending_count,
+            missing_data_servers=missing_count,
+            failed_import_servers=failed_count,
+            coverage_percent=coverage,
+            cards=cards,
+            server_health=server_health,
         )
 
     @staticmethod

@@ -16,6 +16,7 @@ service = OperationalImportService()
 @router.get("/imports")
 def imports(request: Request):
     import_model = service.get_dashboard()
+    status_filter = request.query_params.get("status", "")
     return templates.TemplateResponse(
         request=request,
         name="imports.html",
@@ -24,6 +25,7 @@ def imports(request: Request):
             "navigation": NAVIGATION,
             "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "imports",
+            "status_filter": status_filter,
         },
     )
 

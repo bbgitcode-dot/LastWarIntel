@@ -296,3 +296,20 @@ The target rank is now highlighted directly on the screenshot preview. This is i
 This sprint also consolidates the historical `PATCH_SUMMARY_v...md` files into `/docs/PATCH_SUMMARY.md`. Going forward, patch-summary history should be maintained there rather than scattered across standalone files.
 
 Recommended next focus: refine review queue flow with previous/next navigation and begin connecting resolved review decisions to a guarded Manual Override Engine without silently mutating exports.
+
+
+## Current Status - v0.9.5.65
+
+v0.9.5.65 calibrates the Review Detail screenshot highlight overlay introduced in v0.9.5.64. The first implementation proved the value of visual evidence but placed the rank marker too low on alliance screenshots. The new implementation uses ranking-type overlay profiles for alliance and hero rankings, formats candidate values for human readability, and marks approximate highlights explicitly when needed.
+
+Next focus remains the Human Review workflow: improve source-row targeting, support better screenshot crops, and connect resolved review decisions to a guarded manual-override pipeline.
+
+## Current Status - v0.9.5.66
+
+v0.9.5.66 turns the Command Center into a true operational entry point. The start page now summarizes server-level readiness instead of only reporting the latest import or review count. The Proud Owner can see how many servers are known, how many are fully operational, how many are blocked by open reviews, where data is missing, and whether imports failed.
+
+Each KPI is intentionally clickable and routes to the workflow area that can explain the problem: operational servers go to Servers, pending reviews go to Reviews, missing data goes to Quality, and failed imports go to Imports. This keeps the Command Center focused on action rather than decoration.
+
+No extraction, recovery, guard, quarantine, Operational Truth, or export logic changed. The sprint is a web/navigation and readiness-model improvement.
+
+Recommended next focus: improve destination pages so their filters actually narrow the displayed rows rather than only showing a drill-down banner, and begin preparing a server-level Operational Readiness detail view.
