@@ -71,6 +71,104 @@
         </article>
     </section>
 
+
+    <section class="panel historical-import-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Historical Dataset Import</h2>
+                <p>Reference coverage loaded from /input Excel workbooks. This is a historical baseline and does not overwrite Operational Truth.</p>
+            </div>
+            <span class="panel-badge">{{ historical_import.status }}</span>
+        </div>
+        <div class="metrics-grid compact-metrics">
+            <article class="metric-card tone-info">
+                <div class="metric-title">Historical Servers</div>
+                <div class="metric-value small-value">{{ historical_import.server_count }}</div>
+                <div class="metric-subline">known baseline servers</div>
+            </article>
+            <article class="metric-card tone-success">
+                <div class="metric-title">Historical Rows</div>
+                <div class="metric-value small-value">{{ historical_import.rows_imported }}</div>
+                <div class="metric-subline">{{ historical_import.rows_skipped }} skipped</div>
+            </article>
+            <article class="metric-card tone-info">
+                <div class="metric-title">Collections</div>
+                <div class="metric-value small-value">{{ historical_import.collection_count }}</div>
+                <div class="metric-subline">Excel sheets mapped to snapshots</div>
+            </article>
+            <article class="metric-card tone-{% if historical_import.interrupted or historical_import.error %}danger{% else %}success{% endif %}">
+                <div class="metric-title">Import Runtime</div>
+                <div class="metric-value small-value">{{ "%.2f"|format(historical_import.duration_seconds) }}s</div>
+                <div class="metric-subline">{{ historical_import.report_path }}</div>
+            </article>
+        </div>
+        {% if historical_import.files_seen %}
+        <div class="server-health-strip import-source-strip">
+            {% for file in historical_import.files_seen %}
+            <span class="server-health-pill tone-info"><strong>{{ file }}</strong><span>historical source</span></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if historical_import.error %}
+        <div class="drilldown-notice danger-note">{{ historical_import.error }}</div>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Historical Source Collections</h2>
+                <p>Files, sheets, ranking types and row counts imported into the historical reference dataset.</p>
+            </div>
+            <span class="panel-badge">{{ historical_import.collections|length }} COLLECTION(S)</span>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Collection</span><span>File</span><span>Sheet</span><span>Ranking</span><span>Rows</span><span>Servers</span><span>Status</span>
+            </div>
+            {% for item in historical_import.collections %}
+            <div class="quality-row">
+                <strong>{{ item.collection }}</strong>
+                <span>{{ item.source_file }}</span>
+                <span>{{ item.sheet }}</span>
+                <span>{{ item.ranking_type }}</span>
+                <span>{{ item.rows_imported }}</span>
+                <span>{{ item.servers|length }}</span>
+                <span>{{ item.status }}</span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No historical import report found. Run python importer/historical_excel_import.py --input-dir input --report data/historical_import_report.json --verbose.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Historical Snapshot Coverage</h2>
+                <p>SQLite reference coverage by collection. Current-run reviews remain the operational blocker.</p>
+            </div>
+            <span class="panel-badge">{{ historical_import.snapshot_coverage|length }} SNAPSHOT(S)</span>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Snapshot</span><span>Type</span><span>Source</span><span>Servers</span><span>Rows</span><span>Ranking Feeds</span>
+            </div>
+            {% for item in historical_import.snapshot_coverage %}
+            <div class="quality-row">
+                <strong>{{ item.collection }}</strong>
+                <span>{{ item.collection_type }}</span>
+                <span>{{ item.source_file }}</span>
+                <span>{{ item.server_count }}</span>
+                <span>{{ item.row_count }}</span>
+                <span>{{ item.ranking_types|join(', ') }}</span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No historical SQLite snapshot coverage found.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+
     <section class="panel">
         <div class="panel-header compact">
             <div>

@@ -38,25 +38,41 @@
     <section class="panel">
         <div class="panel-header compact">
             <div>
-                <h2>Current Run Missing Data</h2>
-                <p>This drill-down uses the latest import and review state. Benchmark or ground-truth validation data is listed separately below only when opened without a drill-down filter.</p>
+                <h2>Operational Missing Data Drill-down</h2>
+                <p>This table is scoped to the operational coverage model: historical baseline + latest import + review state. Benchmark validation is intentionally excluded here.</p>
             </div>
             <span class="panel-badge">{{ current_missing_servers|length }} SERVER(S)</span>
         </div>
-        <div class="quality-table">
+        <div class="quality-table missing-data-table">
             <div class="quality-row quality-head">
-                <span>Server</span><span>Status</span><span>Reason</span><span>Action</span>
+                <span>Server</span><span>Status</span><span>Missing Evidence</span><span>Next Action</span>
             </div>
             {% for server in current_missing_servers %}
             <div class="quality-row">
                 <strong><a href="{{ server.href }}">{{ server.server }}</a></strong>
                 <span>{{ server.status }}</span>
                 <span>{{ server.detail }}</span>
-                <span><a href="/imports">Inspect import sources →</a></span>
+                <span><a href="/imports">Check historical/current import sources →</a></span>
             </div>
             {% else %}
-            <div class="quality-row"><span>No current-run server has missing core ranking data.</span></div>
+            <div class="quality-row"><span>No operational server is missing a core ranking feed.</span></div>
             {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel historical-import-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Historical Coverage Baseline</h2>
+                <p>Missing data above is measured against this reference dataset plus the latest import. Historical rows remain read-only reference data.</p>
+            </div>
+            <span class="panel-badge">{{ historical_import.server_count }} SERVER(S)</span>
+        </div>
+        <div class="metrics-grid compact-metrics">
+            <article class="metric-card tone-info"><div class="metric-title">Historical Rows</div><div class="metric-value small-value">{{ historical_import.rows_imported }}</div><div class="metric-subline">{{ historical_import.collection_count }} collections</div></article>
+            <article class="metric-card tone-success"><div class="metric-title">Files Seen</div><div class="metric-value small-value">{{ historical_import.files_seen|length }}</div><div class="metric-subline">/input Excel sources</div></article>
+            <article class="metric-card tone-info"><div class="metric-title">Skipped Rows</div><div class="metric-value small-value">{{ historical_import.rows_skipped }}</div><div class="metric-subline">usually summary/blank rows</div></article>
+            <article class="metric-card tone-{% if historical_import.interrupted or historical_import.error %}danger{% else %}success{% endif %}"><div class="metric-title">Historical Import</div><div class="metric-value small-value">{{ historical_import.status }}</div><div class="metric-subline"><a href="/imports">Open import details →</a></div></article>
         </div>
     </section>
     {% endif %}

@@ -6,12 +6,14 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from application.command_center.service import CommandCenterService
+from application.historical_import.service import HistoricalImportService
 from application.data_quality.service import DataQualityService
 from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["quality"])
 templates = Jinja2Templates(directory="web/templates")
 service = DataQualityService()
+historical_service = HistoricalImportService()
 
 
 @router.get("/quality")
@@ -19,6 +21,7 @@ def quality(request: Request):
     quality_model = service.get_dashboard()
     quality_filter = request.query_params.get("filter", "")
     operational_readiness = CommandCenterService().get_command_center().operational_readiness
+    historical_import = historical_service.get_dashboard()
     current_missing_servers = [item for item in operational_readiness.server_health if item.status == "Missing Data"]
     return templates.TemplateResponse(
         request=request,
@@ -31,6 +34,7 @@ def quality(request: Request):
             "quality_filter": quality_filter,
             "operational_readiness": operational_readiness,
             "current_missing_servers": current_missing_servers,
+            "historical_import": historical_import,
         },
     )
 

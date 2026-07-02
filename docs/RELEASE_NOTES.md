@@ -1457,3 +1457,19 @@ git add .
 git commit -m "fix(import): speed up historical excel import"
 git tag -a v0.9.5.69 -m "v0.9.5.69 Historical Import Performance Fix"
 ```
+
+## v0.9.5.70 - Historical Import Integrity & Coverage Drilldown
+
+This release makes the historical Excel baseline visible in the Command Center workflow. The Import Center now distinguishes current OCR imports from historical reference imports, and the Quality missing-data drilldown explains which servers are incomplete without mixing in benchmark/ground-truth validation views.
+
+- Added historical import dashboard service.
+- Added historical import report panels to Imports.
+- Added SQLite historical snapshot coverage table.
+- Added historical baseline metrics to Missing Data drilldown.
+- Preserved the rule that historical data is reference coverage, not automatic Operational Truth.
+
+```bash
+git add .
+git commit -m "feat(import): expose historical coverage drilldown"
+git tag -a v0.9.5.70 -m "v0.9.5.70 Historical Import Integrity and Coverage Drilldown"
+```

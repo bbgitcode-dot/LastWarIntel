@@ -831,3 +831,28 @@ git add .
 git commit -m "fix(import): speed up historical excel import"
 git tag -a v0.9.5.69 -m "v0.9.5.69 Historical Import Performance Fix"
 ```
+
+## v0.9.5.70 - Historical Import Integrity & Coverage Drilldown
+
+### Summary
+v0.9.5.70 closes the historical import UX gap after the performance fix. The Import Center now surfaces the historical Excel baseline directly, while Quality missing-data drilldowns explain missing operational coverage against the historical baseline plus latest import state.
+
+### Changes
+- Added a read-only Historical Import dashboard service for `data/historical_import_report.json` and SQLite historical collection coverage.
+- Added Import Center panels for historical files, sheets, collections, row counts, server counts, runtime, skipped rows and SQLite snapshot coverage.
+- Added Missing Data drilldown context that separates operational missing data from benchmark/ground-truth validation.
+- Added historical baseline metrics to the Quality drilldown.
+- Kept historical data explicitly read-only reference data; it does not overwrite Operational Truth.
+
+### Validation
+```text
+pytest tests/smoke/test_historical_import_dashboard.py tests/smoke/test_command_center.py
+compileall application/historical_import importer/historical_excel_import.py application/command_center/service.py web/routes web/templates version.py
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(import): expose historical coverage drilldown"
+git tag -a v0.9.5.70 -m "v0.9.5.70 Historical Import Integrity and Coverage Drilldown"
+```

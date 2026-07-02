@@ -236,3 +236,7 @@ Operational Truth should only change through explicit runtime import/review logi
 ## v0.9.5.69 - Importers Need Bulk Transactions
 
 Historical importers must not use per-row database helper methods that open and commit a new SQLite connection for each row. Even small historical workbooks become painfully slow. Batch imports should keep one transaction open per logical collection, cache identity lookups, emit visible progress, and always write a partial report when interrupted.
+
+## v0.9.5.70 - Historical Import UX Separation
+
+Historical Excel imports are valuable for server coverage, but they must stay visibly separate from current OCR imports and benchmark validation. The UI should always tell the user whether a KPI comes from current run state, historical reference data, or ground-truth validation. Mixing these layers creates misleading operational conclusions.

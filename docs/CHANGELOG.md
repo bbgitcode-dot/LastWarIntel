@@ -448,3 +448,17 @@ git add .
 git commit -m "fix(import): speed up historical excel import"
 git tag -a v0.9.5.69 -m "v0.9.5.69 Historical Import Performance Fix"
 ```
+
+## v0.9.5.70 - Historical Import Integrity & Coverage Drilldown
+
+- Added `application.historical_import` read-only dashboard service.
+- Exposed `data/historical_import_report.json` in the Import Center.
+- Added historical SQLite snapshot coverage to Imports.
+- Improved `/quality?filter=missing-data` with operational missing-data details and historical baseline context.
+- Updated version to `0.9.5.70`.
+
+```bash
+git add .
+git commit -m "feat(import): expose historical coverage drilldown"
+git tag -a v0.9.5.70 -m "v0.9.5.70 Historical Import Integrity and Coverage Drilldown"
+```

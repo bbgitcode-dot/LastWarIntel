@@ -338,3 +338,7 @@ Use the historical baseline to improve server drill-downs, Missing Data details,
 ## v0.9.5.69 Historical Import Performance Fix
 
 The historical Excel importer is now fast enough for iterative use. The S5/S6 historical workbooks import through cached SQLite bulk writes and verbose sheet-level progress, completing the bundled baseline import in seconds rather than minutes. Historical data remains reference coverage only and does not overwrite current-run Operational Truth.
+
+## v0.9.5.70 Status Update
+
+Historical imports are now fast and visible. The Import Center shows historical source files, collections, row counts and SQLite snapshot coverage. Missing-data drilldowns now use operational coverage and historical baseline context without presenting benchmark Server 551 validation as current operational quality.
