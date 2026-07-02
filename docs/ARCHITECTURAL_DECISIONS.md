@@ -1,166 +1,65 @@
-## ADR – Review Resolution Is Audit State Before Truth
-
-### Decision
-Manual review resolution is stored in persistent review history, but it does not directly mutate OCR evidence, quarantine state, Operational Truth, or Excel exports.
-
-### Rationale
-A human decision is strong evidence, but it still needs a guarded application layer. Separating resolution capture from override application preserves auditability and prevents accidental truth changes.
-
-### Consequence
-The Review Center may write `RESOLVED` state, selected candidate/manual values, reviewer, and comments. A future Manual Override Engine must explicitly consume those records before exports can change.
-
-## ADR – Review Center as Human-in-the-Loop Workspace
-
-### Decision
-The Review Center becomes the preferred review surface. Legacy static pages such as the Evidence Pack may remain available, but the Command Center should guide users into the integrated Review Center.
-
-### Rationale
-Review quality depends on explainability and persistent state, not more dashboard surface area. A single review workspace reduces confusion and prepares the system for future manual resolution.
-
-### Guardrail
-The Review Center is report-driven and read-only until manual override semantics are implemented. It must not mutate OCR evidence or Operational Truth.
-
-## ADR – Adaptive Review OCR before final quarantine
-
-**Status:** Accepted in v0.9.5.53
-
-**Context:** After .52, many remaining review rows were not solved by additional power scoring. They required better direct OCR evidence from the questionable visual row.
-
-**Decision:** Add a source-local adaptive OCR pass for review/quarantine rows. Generate row crops and enhanced variants; promote only when the second-pass OCR evidence is strong.
-
-**Consequence:** Review becomes an evidence-improvement stage. Quarantine remains the fallback when enhanced OCR is weak or ambiguous. Filename/order/upload order remain explicitly non-authoritative.
-
-
 # Sentinel Architectural Decisions
 
-**Version:** v0.9.5.52
+**Current version:** v0.9.5.72
 
----
+This file is the current canonical architectural-decision summary. The `/docs/ADR` directory contains historical ADRs and currently has duplicate numbering from earlier sprints; those files should be renumbered or superseded in a future documentation cleanup.
 
 ## ADR-001 – Screenshot order is not truth
 
-**Decision:** Sentinel must not rely on filename order, timestamp order, or upload order as truth.
-
-**Reason:** Production imports may combine screenshots from multiple users, devices, servers, and sessions.
-
-**Consequence:** Ranking reconstruction must use intrinsic evidence: server evidence, ranking type, source-local row shape, ranks, powers, and continuity.
-
----
+Screenshot filename, order, upload order and timestamp order must never be treated as authoritative. Runtime reconstruction must rely on intrinsic evidence: server evidence, ranking type, row shape, rank, power continuity and source-local context.
 
 ## ADR-002 – Ground Truth validates Sentinel but does not power runtime
 
-**Decision:** Ground Truth is development tooling only.
-
-**Reason:** Runtime must work without curated benchmark files.
-
-**Consequence:** Command Center and operational services read runtime repositories and import reports, not Ground Truth outputs.
-
----
+Ground Truth and benchmarks are development tools. They must not drive runtime Command Center, Quality, Operational Readiness or exports.
 
 ## ADR-003 – Data Guard protects Operational Truth
 
-**Decision:** The Data Guard may validate, warn, quarantine, or block. It may not guess.
-
-**Reason:** Silent repair creates false confidence.
-
-**Consequence:** Uncertain data must either go through recovery or review.
-
----
+Data Guard may validate, warn, quarantine or block. It may not guess. Uncertain evidence must be recovered with strong evidence or moved to review/quarantine.
 
 ## ADR-004 – Ranking Guard validates semantic fit
 
-**Decision:** Ranking Guard checks whether rows belong to their ranking type.
-
-**Reason:** THP rows and Alliance Power rows have different scales, fields, and row shapes.
-
-**Consequence:** Ranking-type contamination is treated as an integrity issue, not a cosmetic parsing issue.
-
----
+`alliance_power` and `total_hero_power` have different scales, fields and row shapes. Ranking-type contamination is a data-integrity issue.
 
 ## ADR-005 – Recovery must preserve original evidence
 
-**Decision:** Recovered values must retain original value and method metadata.
+Context-aware power recovery may suggest or promote candidates only under explicit confidence rules. Original OCR values, candidate list, scores and reasons must remain reportable.
 
-**Reason:** Recovered data is useful but must remain auditable.
+## ADR-006 – Human Review is an audit workflow
 
-**Consequence:** Exports and reports should preserve fields such as `power_original`, `power_recovered_from`, `power_recovery_method`, and future candidate scores.
+Resolving a review does not automatically rewrite Operational Truth. It records a human decision, comment and selected candidate/manual value. A future Manual Override Engine may consume those decisions under Data Guard control.
 
----
+## ADR-007 – UI is an observability and workflow layer, not a truth source
 
-## ADR-006 – Candidate recovery is required for power digits
+Command Center, Imports, Quality and Reviews read report/history/database artifacts. They must not silently re-score, re-rank or promote data.
 
-**Decision:** Future power recovery should score multiple candidates rather than replacing a single leading digit.
+## ADR-008 – Current, Historical and Benchmark contexts are separate
 
-**Reason:** `764M` may recover to `164M`, `224M`, `174M`, or another value depending on context.
+Sentinel must keep current run, review history, historical dataset and benchmark/ground-truth outputs separate. Cross-contamination produces misleading operational status.
 
-**Consequence:** v0.9.5.48 should implement context-aware candidate generation and scoring.
+## ADR-009 – Historical data is reference coverage
 
+Historical Excel imports provide baseline coverage and temporal context. They do not overwrite runtime Operational Truth and should be clearly labelled as historical/reference data.
 
----
+## ADR-010 – Snapshot is the future import container
 
-## ADR-007 – Legacy power recovery may not decide truth
+A Snapshot is a human-named container for one event/phase of data collection. Future screenshot uploads, reviews, exports and coverage should be bound to an active snapshot.
 
-**Decision:** Leading-digit recovery may generate candidates but may not select a recovered value by itself.
+Example snapshots:
 
-**Reason:** Server 553 showed cases where legacy recovery selected a lower-scored or tied candidate.
+- S5 pre Transfer
+- S5 post Transfer
+- S5 Gold Vein
+- S6 pre Season
+- S6 pre Transfer
 
-**Consequence:** v0.9.5.51 uses the candidate decision engine only. Ambiguous score margins quarantine the row.
+## ADR-011 – Data Quality before Intelligence
 
-## ADR - Stable Review Identity and Navigation Consolidation
+The Intelligence layer should not be expanded until import, review, snapshot and quality gates are reliable. Strategy built on unstable data creates false confidence.
 
-Decision: Persistent review history uses stable business identity, not runtime-generated review IDs or report timestamps. The Review Center is the web entry point for human decisions, while static output HTML remains a transitional run-detail surface.
+## Open architectural decisions
 
-Rationale: Sentinel must support repeated targeted test runs and future multi-source screenshot ingestion without multiplying unresolved reviews. The operator must see one durable issue with updated observations, not one issue per run.
-
-## ADR - v0.9.5.62 Visible Command Center Workflow
-
-### Decision
-
-The Sentinel web UI uses a single visible operator workflow: Command Center -> Imports -> Quality -> Reviews -> Exports. The sidebar and top workflow bar both expose this structure.
-
-### Rationale
-
-The previous implementation had technically valid pages, but the relationship between Command Center, Imports, Quality, Review Dashboard, Review Evidence Pack, and static output pages was not obvious. That made the Review workflow feel disconnected even though the data foundation existed.
-
-### Consequences
-
-- The web app becomes the primary operator surface.
-- Static output HTML remains available as latest-run evidence, not as a competing Command Center.
-- Review detail is reachable through `/reviews/{history_key}` and can later become the natural place for guarded human resolution.
-- CSS and navigation changes must keep new pages visually consistent with the existing Command Center design.
-
-## ADR - v0.9.5.63 Screenshot Evidence Links in Review UI
-
-**Decision:** Review UI mounts and links source screenshots through a dedicated `/screenshots` static route and renders screenshot evidence in Review Detail with open-in-new-tab behavior.
-
-**Reason:** The Review Center exists to let a human compare OCR hypotheses against source evidence. The screenshot is the evidence of record for a review item and must be available without navigating the filesystem manually.
-
-**Guardrails:** URL generation uses `Path(...).name` to avoid path traversal from persisted review data. The link is evidence access only and does not change Data Guard, Ranking Guard, Review History state, exports, or Operational Truth.
-
-## v0.9.5.67 - Current-run readiness is authoritative for Command Center drill-downs
-
-The Command Center Operational Readiness layer uses latest import/review state as its primary scope. Historical SQLite intelligence and benchmark validation are separate scopes and may enrich detail pages, but must not break navigation or be shown as current-run missing data.
-
-## v0.9.5.68 - Historical Excel imports are reference baseline collections
-
-Decision: historical Excel workbooks are imported into SQLite using `historical_*` collection types. Command Center Operational Readiness may use these collections to understand known servers and available ranking feeds, but current-run pending reviews and Data Guard blockers remain authoritative.
-
-Rationale:
-- Historical files provide valuable coverage context across many servers.
-- Mixing historical, benchmark, and current-run scopes caused confusing UI states in previous sprints.
-- A dedicated historical scope allows richer dashboards without contaminating Operational Truth.
-
-Consequences:
-- Historical import can be rerun idempotently.
-- Missing Data can now refer to gaps in the known historical/current server landscape.
-- Benchmark/Ground Truth remains a validation tool, not operational evidence.
-
-## ADR - Historical Importers Use Cached Bulk Writes
-
-Status: Accepted in v0.9.5.69.
-
-Historical reference imports may process thousands of rows across many servers. They must use cached identity resolution and sheet-level SQLite transactions instead of per-row helper calls. This keeps reference-data loading fast while preserving the separation between historical baseline, current run, benchmark/ground truth, and Operational Truth.
-
-## ADR – Managed snapshots are import context, not Operational Truth
-
-Sentinel v0.9.5.71 introduces managed snapshots as JSON-backed metadata (`data/managed_snapshots.json`). This is intentionally separate from SQLite server-specific ranking snapshots and from Operational Truth exports. The managed snapshot answers: `What operational phase does this upload belong to?` The ranking tables answer: `What data was observed?` Future upload assignment can bind the two, but creating or activating a managed snapshot must not modify ranking rows or promote quarantined data.
+- How resolved reviews become guarded export corrections.
+- Whether snapshots are JSON-backed, SQLite-backed or hybrid long term.
+- How screenshot upload UI enforces active snapshot selection.
+- How historical server/alliance/player timelines are normalized across name changes and alliance transfers.
+- How ADR numbering in `/docs/ADR` should be cleaned without losing history.

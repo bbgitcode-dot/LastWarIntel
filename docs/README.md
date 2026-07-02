@@ -1,38 +1,22 @@
-# Sentinel Documentation
+# Sentinel Documentation Index
 
-**Current Version:** v0.9.5.52
+**Current version:** v0.9.5.72
 
-Sentinel is an explainable strategic intelligence platform for Last War. It transforms noisy screenshots into guarded operational data and later into strategic decision support.
+Start here:
 
----
-
-## Current project phase
-
-Sentinel is in the **Data Integrity Fortress** phase.
-
-The active goal is not yet more intelligence. The active goal is to ensure that imported data can be trusted.
-
----
-
-## Core documents
-
-- `SENTINEL.md` – product philosophy.
-- `VISION.md` – long-term mission.
-- `ARCHITECTURE.md` – technical architecture and layer rules.
-- `PROJECT_STATUS.md` – current state, known problems, next sprint.
-- `ROADMAP.md` – near and mid-term roadmap.
+- `PROJECT_STATUS.md` – current state and immediate priorities.
 - `ROAD_TO_V1.md` – milestones to v1.0.0.
-- `SENTINEL_DATA_GUARD.md` – integrity doctrine.
-- `MODUS_OPERANDI.md` – working model between Proud Owner and Mimir.
-- `LESSONS_LEARNED.md` – knowledge captured from failed and successful hypotheses.
-- `ARCHITECTURAL_DECISIONS.md` – important architecture decisions.
-- `START_NEXT_CHAT.md` – handoff prompt for continuing in a new chat.
-- `RELEASE_NOTES.md` – consolidated release history.
-- `CHANGELOG.md` – milestone changelog.
+- `MODUS_OPERANDI.md` – how Proud Owner and Mimir work.
+- `ARCHITECTURE.md` – current technical architecture.
+- `ARCHITECTURAL_DECISIONS.md` – canonical ADR summary.
+- `SENTINEL_DATA_GUARD.md` – data integrity principles.
+- `RELEASE_NOTES.md` – canonical release notes.
+- `PATCH_SUMMARY.md` – canonical patch history.
+- `LESSONS_LEARNED.md` – durable lessons from recent sprints.
+- `NEXT_CHAT.md` – handoff prompt for the next chat.
 
----
+Current project philosophy:
 
-## Current open technical focus
+> Data Quality before Intelligence.
 
-v0.9.5.51 removes the legacy power recovery fallback and quarantines ambiguous candidate ties. The next open technical focus is import session and segment integrity so mixed screenshot batches can be validated without trusting filename or upload order.
-
+Sentinel must first produce reliable, explainable Operational Truth. Intelligence and recommendations come after the data foundation is stable.

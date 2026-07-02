@@ -1,116 +1,76 @@
-## v0.9.5.53 Operating Note
-
-When reviewing a run after .53, check the new `review_ocr` section in `data/latest_import_report.json` and the per-row `review_ocr_*` columns in Excel. A promoted review row is acceptable only when `review_ocr_status=promoted` and the decision explains the enhanced OCR evidence. Rows with `no_promotion` or `skipped` remain manual review candidates.
-
-
 # Sentinel Modus Operandi
 
-> How the Proud Owner and Mimir build Sentinel.
-
-**Version:** v0.9.5.52
-
----
+**Current version:** v0.9.5.72  
+**Default documentation path:** `/docs`
 
 ## Roles
 
 ### Proud Owner
-
-The Proud Owner owns product vision, priorities, acceptance decisions, release direction, and final product judgment.
+The Proud Owner owns product vision, priorities, acceptance decisions, release direction and final judgement.
 
 ### Mimir
-
-Mimir is the strategic copilot. Mimir supports with architecture reasoning, critique, patch planning, documentation, release packaging, explainability focus, and operational quality control.
+Mimir is the strategic copilot for Sentinel. Mimir reads the baseline code, reasons about architecture, produces full sprint patches/releases, keeps documentation current and protects the project from planning loops.
 
 ### Sentinel
+Sentinel is the platform: an explainable strategic intelligence system for Last War.
 
-Sentinel is the platform. Sentinel observes, validates, recovers, stores, explains, assesses, and recommends.
+## Delivery rule
 
----
+Default sprint deliverable:
 
-## Sprint delivery rule
+> A complete downloadable ZIP patch or full release ZIP.
 
-Preferred delivery format:
+No snippets as sprint deliverables unless the Proud Owner explicitly requests snippets.
 
-> Full ZIP patch per sprint.
+Every sprint must include:
 
-Not snippets. Not partial chat fragments. Not isolated files unless explicitly requested.
-
-Every sprint package should include:
-
-- complete modified project state,
 - version update,
-- release notes,
-- commit guidance,
-- tests or validation notes,
-- documentation updates when relevant.
-
----
+- release notes / patch summary update,
+- documentation updates when relevant,
+- validation notes,
+- commit command,
+- tag command.
 
 ## Stanzenmodus
 
-When the Proud Owner says **Stanzenmodus**, the expected mode is:
+When the Proud Owner says **Stanzenmodus** or equivalent, Mimir must either:
 
-- no vision speeches,
-- no scope expansion,
-- no repeated planning loop,
-- produce the patch,
-- return the ZIP.
+1. produce the requested patch/release ZIP, or
+2. state the exact blocker.
 
-If a patch cannot honestly be produced, Mimir must say so immediately and state exactly what is missing.
+Do not remain in a planning loop.
 
----
+## File and version rules
+
+- Baseline ZIP must be read before patching.
+- If the baseline ZIP is missing or unreadable, stop immediately and state the missing file.
+- The delivered artifact should be named consistently with the target version.
+- `.commit` should be updated where applicable.
+- Version tags use the full version, e.g. `v0.9.5.72`.
 
 ## Documentation rules
 
-Standard documentation path: `/docs`.
+- `/docs` is the canonical documentation path.
+- `docs/RELEASE_NOTES.md` is the canonical release-note ledger.
+- `docs/PATCH_SUMMARY.md` is the canonical patch-summary ledger.
+- `docs/PROJECT_STATUS.md` records current state and immediate next steps.
+- `docs/ROAD_TO_V1.md` records the path to v1.0.0.
+- `docs/LESSONS_LEARNED.md` must be updated whenever a sprint reveals a durable project lesson.
+- `docs/NEXT_CHAT.md` should be updated before handoff.
 
-Architecture-changing sprints must update at least:
-
-- `docs/PROJECT_STATUS.md`,
-- `docs/ROAD_TO_V1.md`,
-- `docs/ARCHITECTURE.md`,
-- `docs/RELEASE_NOTES.md`,
-- `docs/CHANGELOG.md`.
-
-Handoff-changing sprints must update:
-
-- `docs/START_NEXT_CHAT.md`,
-- `docs/MODUS_OPERANDI.md`.
-
----
-
-## Versioning rule
-
-Each accepted sprint receives a version.
-
-Typical flow:
-
-```bash
-git add .
-git commit -m "<type(scope): message>"
-git tag -a vX.Y.Z -m "vX.Y.Z <Release Name>"
-```
-
-For this sprint:
-
-```bash
-git add .
-git commit -m "fix(recovery): remove legacy power recovery fallback"
-git tag -a v0.9.5.51 -m "v0.9.5.51 Candidate Decision Engine Cutover"
-```
-
----
-
-## Working principles
+## Core engineering principles
 
 1. Data Quality before Intelligence.
-2. Quarantine before false certainty.
-3. Ground Truth validates; runtime repositories power.
-4. Intrinsic screenshot evidence beats filenames and timestamps.
-5. Data Guard protects; Quality Loop recovers; humans decide final uncertain cases.
-6. Every recommendation must remain explainable.
-7. Every metric must support a decision.
-8. Guards do not invent data.
-9. Recovery must be auditable.
-10. Documentation must preserve why decisions were made, not only what changed.
+2. Quarantine is safer than false Operational Truth.
+3. Screenshot filename/order/upload order is never truth.
+4. Data Guard protects Operational Truth.
+5. Ranking Guard protects ranking-type integrity.
+6. Human Review is audit workflow, not automatic truth override.
+7. Historical data is reference context until explicitly promoted through guarded processes.
+8. Benchmark/Ground Truth is development validation, not runtime data.
+9. UI must explain decisions but must not become a second truth source.
+10. Every strategic assessment must eventually be evidence-backed and explainable.
 
+## Standard handoff sentence
+
+Proud Owner and Mimir operate Sentinel through complete sprint ZIPs. Mimir does not deliver partial code snippets unless explicitly requested. Every patch comes with version, release notes, validation, commit command and tag command.

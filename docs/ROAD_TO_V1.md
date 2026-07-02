@@ -1,213 +1,177 @@
-**Current Version:** v0.9.5.54  
-
-## v0.9.5.54 – Contextual Row Reconstruction
-
-The Road to v1 now includes active review remediation. Adaptive Review OCR alone was insufficient for the 549–553 regression set because the hard cases are bounded row gaps: OCR sees nearby rows, but the missing or truncated row must be reconstructed using trusted source-local anchors.
-
-v0.9.5.54 adds conservative source-local bounded-gap reconstruction for low/truncated THP review rows. This is still not a general inference engine. Runtime promotion is allowed only when visual-row evidence, digit preservation, and neighboring source powers agree.
-
-Next Road-to-v1 work should improve explicit ranking-session metadata and row-y geometry so bounded gaps can be explained without relying on accidental parsed rank fields.
-
-**Current Version:** v0.9.5.53  
-
-## v0.9.5.53 – Adaptive Review OCR Pipeline
-
-Review/Quarantine is now an active quality stage. Sentinel can attempt row-local enhanced OCR before leaving a row in quarantine. This is an important Road-to-v1 capability because v1 requires explainable remediation, not just detection.
-
-Next work should measure how many review rows are truly improved by enhanced crops and whether ensemble OCR should be added after the OpenCV-based stage.
-
-
 # Road to Sentinel v1.0.0
 
-> From screenshot import to trusted strategic decision support.
-
-**Current Version:** v0.9.5.52  
-**Current Phase:** Data Integrity Fortress
-
----
+**Current version:** v0.9.5.72  
+**Current phase:** Data Integrity Fortress → Snapshot Management  
+**North Star:** Explainable strategic intelligence for Last War alliance leadership.
 
 ## North Star
 
-Sentinel v1.0.0 is ready when alliance leadership can open the Command Center and quickly answer:
+Sentinel v1.0.0 is ready when alliance leadership can open the Command Center and answer:
 
-- What changed?
-- Can I trust the data?
-- What still needs review?
-- Which opportunity deserves attention?
-- What should we do next?
+- What data do we have?
+- Can we trust it?
+- What changed since the last snapshot?
+- What needs human review?
+- Which servers, alliances or players are strategically relevant?
+- What action is recommended and why?
 
----
+## Phase 1 – Operational Truth Foundation
 
-## Milestone 1 – Data Integrity Fortress
+**Status:** Largely complete.
 
-**Target:** v0.9.5.x → v0.9.6.0  
-**Status:** Active
-
-### Goal
-
-Make screenshot-derived data safe enough to become Operational Truth.
-
-### Completed capabilities
+Delivered:
 
 - OCR provider architecture.
-- Parser and ranking row extraction.
-- Ground Truth validation framework.
-- Command Center foundation.
-- Runtime import report.
-- Sentinel Data Guard.
-- Sentinel Data Quality Loop.
+- Parser and ranking extraction.
+- Data Guard.
 - Ranking Guard.
-- Source-local Power Sanity Guard.
-- Leading-digit Power Recovery metadata.
+- Power Sanity Guard.
+- Context-aware power recovery.
+- Quarantine and Review queues.
+- Ground Truth validator.
+- Import reports and Excel export.
 
-### Remaining capabilities
+Principle:
 
-#### v0.9.5.47 – Context-aware Power Candidate Recovery
+> No false Operational Truth. Uncertain evidence must recover, review or quarantine.
 
-Status: Completed.
+## Phase 2 – Data Integrity Fortress
 
-Delivered:
+**Status:** Active.
 
-- Candidate scoring engine for suspicious THP and Alliance Power values.
-- Candidate metadata on recovered and ambiguous rows.
-- Server 553 regression coverage, including a context case where `764M` recovers to `224M` instead of the legacy `164M`.
-
-#### v0.9.5.48 – Source Context Recovery Reportability
-
-Status: Completed.
+Goal: reduce the remaining OCR/upload/data-quality risk before building Intelligence.
 
 Delivered:
 
-- Excel export metadata for recovered and ambiguous power candidates.
-- Import-report candidate traces with selected value, best/second score, margin, confidence, and reason.
-- Corrected global review-count aggregation.
+- Review Evidence Pack.
+- Persistent Review History.
+- Explainable review problem statements.
+- Candidate choices and explainability steps.
+- Screenshot preview and rank highlight overlay.
+- Operational Readiness dashboard.
+- Historical import and coverage drilldown.
 
-#### v0.9.5.51 – Import Session and Segment Integrity
+Remaining:
 
-Create explicit import sessions and ranking-session metadata.
+- Active snapshot enforcement for all uploads/imports.
+- Screenshot quality preflight.
+- Duplicate screenshot detection.
+- Row geometry and crop confidence.
+- Manual Review Override Engine under Data Guard control.
+- Clear snapshot-level completeness gates.
 
-Exit criteria:
+## Phase 3 – Snapshot Management
 
-- Screenshot sets can be grouped without trusting filename order.
-- Missing, duplicate, and mixed ranking segments are visible.
-- Segment continuity warnings are explainable.
+**Status:** Foundation present in v0.9.5.71; must be hardened next.
 
-#### v0.9.5.51 – Quarantine Center Foundation
+Snapshots become the primary temporal container:
 
-Make review visible and actionable in the Command Center.
+```text
+Snapshot
+ ├── Screenshots
+ ├── OCR evidence
+ ├── Ranking feeds
+ ├── Review items
+ ├── Historical coverage
+ ├── Exports
+ └── Operational status
+```
 
-Exit criteria:
+Required milestones:
 
-- Every quarantined row shows screenshot, reason, suspected field, and next action.
-- Human review can accept, reject, or mark for recovery.
+1. Create Snapshot in Import Center.
+2. Active Snapshot required for screenshot upload/import.
+3. Snapshot-level coverage and missing-feed report.
+4. Snapshot-level review queue.
+5. Snapshot close/freeze semantics.
+6. Snapshot compare foundation.
 
-#### v0.9.6.0 – Data Stability Baseline
+Example:
 
-Declare a baseline only after repeated 549–553 regression runs are stable.
+```text
+S5 pre Transfer
+S5 post Transfer
+S5 Gold Vein
+S6 pre Season
+S6 pre Transfer
+```
 
-Exit criteria:
+## Phase 4 – Historical Intelligence
 
-- No silent server contamination.
-- No silent ranking-type contamination.
-- No unrecovered false 7xxM/77B values in Operational Truth.
-- Ground Truth Server 551 remains stable.
-- Reports distinguish clean, recovered, and quarantined rows.
+**Status:** Planned after Data Integrity and Snapshot Management.
 
----
+Goal: make time visible.
 
-## Milestone 2 – Historical Data Foundation
+Milestones:
 
-**Target:** v0.9.6.x
+- Server historical timeline.
+- Alliance historical timeline.
+- Player historical timeline.
+- Snapshot-to-snapshot diff.
+- Growth/decline detection.
+- Server completeness over time.
 
-### Goal
+Questions Sentinel should answer:
 
-Persist trusted snapshots and make changes measurable.
+- Which servers grew since the last snapshot?
+- Which alliances changed rank?
+- Which players changed alliance?
+- Which data is stale or missing?
 
-### Required capabilities
+## Phase 5 – Assessment Engine
 
-- Snapshot repository.
-- Import session table.
-- Player identity resolution.
-- Alliance identity resolution.
-- Deduplication and replacement rules.
-- Snapshot comparison by server, alliance, player, and ranking type.
+**Status:** Existing prototype/architecture exists; strategic activation should wait until data integrity is reliable.
 
-### Exit criteria
+Goal: convert observed data into explainable strategic assessments.
 
-- Sentinel can compare two trusted imports from the same server.
-- Sentinel can track a player despite minor OCR name noise.
-- Sentinel can identify joined, left, moved, and renamed entities with evidence.
+Milestones:
 
----
+- Threat scoring.
+- Opportunity scoring.
+- Transfer-value analysis.
+- Server strength classification.
+- Alliance stability assessment.
+- Explainability trace for every assessment.
 
-## Milestone 3 – Operational Intelligence
+## Phase 6 – Recommendation Engine
 
-**Target:** v0.9.7.x
+**Status:** Planned.
 
-### Goal
+Goal: turn assessments into decision support.
 
-Turn trusted differences into operational facts.
+Examples:
 
-### Required capabilities
+- Which server should be scouted next?
+- Which alliance is a transfer candidate?
+- Which missing screenshot gives the biggest confidence gain?
+- Which review blocks the most important server?
 
-- Difference detection.
-- Fact generation.
-- WatchTarget model.
-- Server and alliance overview pages.
-- Change severity scoring.
+## V1.0.0 Definition
 
-### Exit criteria
+Sentinel reaches v1.0.0 when:
 
-- Sentinel can state what changed since the last trusted snapshot.
-- Every change is traceable to source observations.
-- Command Center highlights important operational changes.
+- Operational Truth is guarded and explainable.
+- Snapshot workflow is enforced.
+- Historical and current data are separated and comparable.
+- Review workflow is auditable.
+- Command Center provides operational and strategic status.
+- Intelligence recommendations are evidence-backed and explainable.
+- The platform can be handed to alliance leadership without requiring developer interpretation of JSON, OCR logs or raw Excel files.
 
----
+## Near-term roadmap
 
-## Milestone 4 – Strategic Assessments
+### v0.9.5.73 candidate – Snapshot Upload Binding
+- Require/select active snapshot before screenshot import.
+- Bind current import report and review history to snapshot id/name.
+- Show snapshot-level feed completeness.
 
-**Target:** v0.9.8.x
+### v0.9.5.74 candidate – Screenshot Quality Preflight
+- Detect low-quality screenshots before OCR.
+- Flag wrong orientation, cropped ranking area, duplicate upload and unreadable power column.
 
-### Goal
+### v0.9.5.75 candidate – Manual Override Guardrails
+- Allow resolved reviews to produce guarded export corrections.
+- Preserve original OCR evidence and reviewer audit trail.
 
-Convert facts and indicators into explainable assessments.
-
-### Candidate assessments
-
-- Recruitment window.
-- Alliance collapse risk.
-- Whale movement.
-- Transfer opportunity.
-- Transfer risk.
-- Hidden alliance instability.
-
-### Exit criteria
-
-- Assessments include evidence, reasoning, confidence, and recommended action.
-- No assessment is generated from untrusted or quarantined data.
-
----
-
-## Milestone 5 – Decision Center
-
-**Target:** v0.9.9.x → v1.0.0
-
-### Goal
-
-Make Sentinel useful for daily leadership decisions.
-
-### Required capabilities
-
-- Morning Briefing.
-- Priority queue.
-- Recommendation history.
-- Decision snapshots.
-- Watchlist workflows.
-- Exportable leadership reports.
-
-### v1.0.0 definition
-
-Sentinel v1.0.0 is not defined by feature count. It is defined by trust.
-
-> Trusted observations create trusted intelligence. Trusted intelligence supports better human decisions.
-
+### v0.9.6.0 candidate – Data Integrity Fortress Freeze
+- Stabilize import, review, snapshot and quality gates before deeper intelligence work.

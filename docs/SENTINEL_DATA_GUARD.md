@@ -1,91 +1,35 @@
-## v0.9.5.53 Review OCR Guardrail
+# Sentinel Data Guard
 
-Data Guard now allows a controlled post-quarantine review OCR attempt. This does not weaken quarantine: it gives Sentinel one more source-local chance to obtain better OCR evidence from the same row.
+**Current version:** v0.9.5.72
 
-Guardrails:
-- only rows already isolated for review are processed,
-- only the original source screenshot and row-local crop are used,
-- no filename/order/upload-order truth is introduced,
-- promotion requires strong direct OCR evidence,
-- otherwise the row remains quarantine.
+Sentinel Data Guard is the integrity layer that protects Operational Truth.
 
+## Mission
 
-# Sentinel Data Guard – Die Integritätsschicht von Sentinel
+Prevent false operational data from entering exports, dashboards or strategic decisions.
 
-**Version:** v0.9.5.52
+## Principles
 
----
+1. Do not guess.
+2. Preserve original OCR evidence.
+3. Recover only with explainable confidence.
+4. Quarantine ambiguity.
+5. Let Human Review record decisions without silently mutating truth.
+6. Keep current, historical and benchmark contexts separate.
 
-## Aufgabe
+## Current protected areas
 
-Der Sentinel Data Guard schützt **Operational Truth**.
+- Server assignment.
+- Ranking type classification.
+- Power sanity and digit explosions.
+- Context-aware candidate recovery.
+- Review/quarantine routing.
+- Current-run vs historical vs benchmark separation.
 
-Alle späteren Komponenten – Command Center, Historie, Intelligence, Assessments und Empfehlungen – verlassen sich darauf, dass die Daten, die den Data Guard verlassen, vertrauenswürdig und nachvollziehbar sind.
+## Relationship with Human Review
 
----
+Human Review is not a bypass. It produces auditable resolution evidence. A later Manual Override Engine must decide how resolved reviews may affect exports.
 
-## Grundprinzip
+## Relationship with Snapshots
 
-> Lieber eine Zeile zu viel in Quarantäne als eine einzige falsche Zeile in der Operational Truth.
-
----
-
-## Warum der Data Guard entstanden ist
-
-Die Entwicklung zeigte, dass OCR-Fehler selten das einzige Problem sind. Gefährlicher waren stille Datenfehler:
-
-- Screenshots wurden dem falschen Server zugeordnet.
-- Einzelne Ranking-Blöcke wurden automatisch falsch gemerged.
-- THP-Zeilen tauchten im Alliance-Power-Ranking auf.
-- Korrekte OCR-Ergebnisse wurden durch falsche nachgelagerte Entscheidungen verfälscht.
-- Power-OCR-Explosionen wirkten plausibel, waren aber falsch.
-
----
-
-## Was der Data Guard darf
-
-- validieren,
-- Konflikte erkennen,
-- Unsicherheit erklären,
-- Daten blockieren,
-- Daten in Quarantäne verschieben,
-- Recovery anstoßen, wenn bessere Evidenz möglich ist.
-
----
-
-## Was der Data Guard nicht darf
-
-- raten,
-- Daten erfinden,
-- widersprüchliche Daten automatisch zusammenführen,
-- Dateinamen oder Zeitstempel als Wahrheit interpretieren,
-- Unsicherheit verstecken.
-
----
-
-## Zusammenspiel mit Recovery
-
-```text
-Unsicher
-    ↓
-Data Guard
-    ↓
-Recovery / Quality Loop
-    ↓
-Guard recheck
-    ↓
-Trusted recovered row or quarantine
-```
-
-Recovery darf Felder nur verändern, wenn die Veränderung nachvollziehbar und metadatenpflichtig ist.
-
----
-
-## Aktuelle Erweiterung
-
-v0.9.5.51 entfernt die letzte Legacy-Entscheidung der leading-digit recovery. Recovery darf Kandidaten erzeugen, aber nur bei klarem Kontext-Score und ausreichender Margin automatisch recovern. Ambiguität bleibt Quarantäne.
-
-## v0.9.5.52 Segment Guardrail
-
-Data Guard doctrine remains unchanged: candidate recovery may improve a field only when evidence is clear. Segment order can break close high-explosion ties, but low-truncation conflicts are quarantined when digit preservation and local rank context disagree.
-
+Future Data Guard decisions should be snapshot-aware. A row should be evaluated in the context of its snapshot, source screenshot, ranking feed and expected server coverage.
