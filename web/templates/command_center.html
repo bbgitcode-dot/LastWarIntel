@@ -40,7 +40,7 @@
         <div class="panel-header compact">
             <div>
                 <h2>Operational Readiness</h2>
-                <p>Server coverage across the latest import. Every card is a drill-down into the underlying action list.</p>
+                <p>Server coverage across historical baseline, latest import and review state. Every card is a drill-down into the underlying action list.</p>
             </div>
             <span class="panel-badge">{{ command.operational_readiness.coverage_percent }}% COVERAGE</span>
         </div>
@@ -51,7 +51,7 @@
             </div>
             <div class="readiness-copy">
                 <h3>{{ command.operational_readiness.operational_servers }} of {{ command.operational_readiness.total_servers }} server(s) are operational</h3>
-                <p>Pending reviews, missing ranking feeds, and failed imports are separated so you can jump directly to the blocking evidence.</p>
+                <p>Pending reviews, missing ranking feeds, historical coverage gaps, and failed imports are separated so you can jump directly to the blocking evidence.</p>
             </div>
         </div>
         <div class="operational-status-grid">

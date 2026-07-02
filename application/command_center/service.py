@@ -7,6 +7,7 @@ not read validator files, benchmark artifacts, or parser internals directly.
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 
 from application.data_quality.service import DataQualityService
@@ -186,6 +187,45 @@ class CommandCenterService:
             return {}
         return payload if isinstance(payload, dict) else {}
 
+    def _load_historical_ranking_coverage(self) -> dict[int, set[str]]:
+        """Return server -> ranking types from historical SQLite collections.
+
+        Historical coverage is reference data. It can prove that Sentinel knows a
+        server/ranking feed exists, but current-run pending reviews still block
+        Operational Truth. Benchmark/Ground Truth files are intentionally not
+        read here.
+        """
+        if not self._database_path.exists() or self._database_path.stat().st_size == 0:
+            return {}
+        try:
+            with sqlite3.connect(self._database_path) as conn:
+                conn.row_factory = sqlite3.Row
+                rows = conn.execute(
+                    """
+                    SELECT s.server AS server, rt.name AS ranking_type, COUNT(re.id) AS rows
+                    FROM snapshots s
+                    JOIN collections c ON c.id = s.collection_id
+                    JOIN ranking_entries re ON re.snapshot_id = s.id
+                    JOIN ranking_types rt ON rt.id = re.ranking_type_id
+                    WHERE c.type LIKE 'historical_%'
+                    GROUP BY s.server, rt.name
+                    HAVING COUNT(re.id) > 0
+                    """
+                ).fetchall()
+        except (OSError, sqlite3.DatabaseError):
+            return {}
+
+        coverage: dict[int, set[str]] = {}
+        for row in rows:
+            try:
+                server = int(row["server"])
+            except (TypeError, ValueError):
+                continue
+            ranking_type = str(row["ranking_type"] or "").lower().replace(" ", "_")
+            if ranking_type:
+                coverage.setdefault(server, set()).add(ranking_type)
+        return coverage
+
     def _build_operational_readiness(self, latest_import) -> OperationalReadiness:
         """Summarize server-level operational readiness for the Command Center.
 
@@ -197,6 +237,10 @@ class CommandCenterService:
         required_rankings = {"alliance_power", "total_hero_power"}
         ranking_by_server: dict[int, set[str]] = {}
         failed_servers: set[int] = set()
+
+        historical_ranking_by_server = self._load_historical_ranking_coverage()
+        for server, rankings in historical_ranking_by_server.items():
+            ranking_by_server.setdefault(server, set()).update(rankings)
 
         for item in getattr(latest_import, "imports", []) or []:
             server = getattr(item, "server", None)
@@ -261,7 +305,7 @@ class CommandCenterService:
             OperationalStatusCard(
                 title="Servers discovered",
                 value=str(total),
-                subtitle="known from latest import/reviews",
+                subtitle="known from historical dataset, latest import, or reviews",
                 tone="info",
                 href="/servers",
                 description="Open the monitored server landscape.",

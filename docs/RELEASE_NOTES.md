@@ -1390,3 +1390,70 @@ Focus: make the Command Center readiness drill-downs technically safe and semant
 - Added smoke coverage for Operational Readiness drill-down routes with an empty database.
 - Added smoke coverage ensuring current-run Missing Data does not show benchmark Server 551.
 - Version updated to `0.9.5.67`.
+
+## v0.9.5.68 - Historical Dataset Import & Coverage Baseline
+
+This release adds a dedicated historical Excel import path so Sentinel can build a broader server coverage baseline from the existing `/input` workbooks.
+
+### Highlights
+- Added `importer/historical_excel_import.py`.
+- Imports supported historical sheets from:
+  - `LastWarS5_post_Transfer.xlsx`
+  - `LastWarS6_pre-season.xlsx`
+- Writes an audit report to `data/historical_import_report.json`.
+- Stores historical rankings in SQLite collections with `historical_*` collection types.
+- Command Center Operational Readiness can now include historical server/ranking coverage in addition to latest import and review state.
+
+### Why it matters
+The Command Center can now answer a broader question: not only what happened in the latest OCR run, but which servers are known in the historical dataset and which core ranking feeds are still missing.
+
+### Safety
+Historical data is reference data. It does not replace current-run OCR evidence and it does not automatically change Operational Truth.
+
+### Validation
+```text
+5 passed
+compileall importer/historical_excel_import.py application/command_center/service.py web/templates/command_center.html version.py passed
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(import): load historical Excel coverage baseline"
+git tag -a v0.9.5.68 -m "v0.9.5.68 Historical Dataset Import and Coverage Baseline"
+```
+
+## v0.9.5.69 - Historical Import Performance Fix
+
+Focus: make historical Excel import fast, observable, and safe for the S5/S6 baseline workbooks.
+
+### Fixed
+- Replaced per-row SQLite writes with cached bulk writes inside a sheet-level transaction.
+- Added `--verbose` progress output for file/sheet-level import visibility.
+- Removed the slow computed-rank monkey-patch flow and computes ranks directly in memory.
+- Writes a partial import report even when an import is interrupted or fails.
+
+### Improved
+- Caches collections, ranking types, snapshots, and entities during import.
+- Limits processing to the explicitly supported historical workbook sheets.
+- Reports per-collection duration, status, imported rows, skipped rows, and covered servers.
+- Keeps historical imports as reference data only; no Operational Truth, latest OCR report, review history, or export behavior is changed.
+
+### Validation
+```text
+2 passed tests/smoke/test_historical_excel_import.py
+Actual workbook import: 3024 rows, 128 servers, importer duration 1.16s
+compileall importer/historical_excel_import.py version.py passed
+```
+
+### Command
+```bash
+python importer/historical_excel_import.py --input-dir input --report data/historical_import_report.json --verbose
+```
+
+### Commit
+```bash
+git add .
+git commit -m "fix(import): speed up historical excel import"
+git tag -a v0.9.5.69 -m "v0.9.5.69 Historical Import Performance Fix"
+```

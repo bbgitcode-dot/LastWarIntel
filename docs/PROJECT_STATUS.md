@@ -319,3 +319,22 @@ Recommended next focus: improve destination pages so their filters actually narr
 - Fixed Command Center drill-down routes so empty or ZIP-packed SQLite databases no longer cause Internal Server Errors.
 - Clarified the distinction between current-run Operational Coverage, historical intelligence, and benchmark/ground-truth validation.
 - Current-run Missing Data now links to current import/review evidence instead of surfacing benchmark Server 551 as operational state.
+
+## v0.9.5.68 Historical Dataset Import & Coverage Baseline
+
+Sentinel now has a dedicated historical Excel importer for the existing S5/S6 workbooks in `/input`. The importer loads historical alliance-power, THP, and server-strength reference data into SQLite and writes `data/historical_import_report.json`.
+
+Command Center Operational Readiness can now use three explicitly separated scopes:
+
+1. latest current-run import evidence,
+2. historical SQLite coverage baseline,
+3. human review history.
+
+Benchmark/Ground Truth artifacts remain separate and are not shown as current operational data.
+
+### Next Step
+Use the historical baseline to improve server drill-downs, Missing Data details, and future server-completeness views.
+
+## v0.9.5.69 Historical Import Performance Fix
+
+The historical Excel importer is now fast enough for iterative use. The S5/S6 historical workbooks import through cached SQLite bulk writes and verbose sheet-level progress, completing the bundled baseline import in seconds rather than minutes. Historical data remains reference coverage only and does not overwrite current-run Operational Truth.

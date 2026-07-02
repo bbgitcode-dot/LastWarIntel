@@ -388,3 +388,63 @@ Focus: make the Command Center readiness drill-downs technically safe and semant
 - Added smoke coverage for Operational Readiness drill-down routes with an empty database.
 - Added smoke coverage ensuring current-run Missing Data does not show benchmark Server 551.
 - Version updated to `0.9.5.67`.
+
+## v0.9.5.68 - Historical Dataset Import & Coverage Baseline
+
+Focus: import the existing historical Excel workbooks into SQLite as a reference dataset and let Command Center readiness use that historical baseline without mixing it with benchmark artifacts.
+
+### Added
+- New `importer/historical_excel_import.py` loader for `input/LastWarS5_post_Transfer.xlsx` and `input/LastWarS6_pre-season.xlsx`.
+- Historical import report written to `data/historical_import_report.json`.
+- Support for S5 post-transfer summary, S5 pre/post transfer alliance rankings, S5 Gold Vein alliance/THP sheets, and S6 preseason alliance/THP sheets.
+- Command Center historical coverage lookup from SQLite `historical_%` collections.
+
+### Improved
+- Operational Readiness can now use known historical servers and historical ranking coverage as the server landscape baseline.
+- Current-run pending reviews still override historical completeness and continue to block Operational Truth.
+- Command Center wording now states that readiness can reflect historical baseline, latest import, and review state.
+
+### Guardrails
+- Historical imports are reference data only; they do not overwrite Operational Truth, latest OCR imports, review history, or exports.
+- Benchmark/Ground Truth reports remain separate from historical coverage and are not used as operational data.
+- OCR, Data Guard, Ranking Guard, power recovery, review resolution, and Excel export behavior remain unchanged.
+
+### Validation
+- Added smoke coverage for historical Excel import into SQLite.
+- Added smoke coverage confirming Command Center can calculate operational coverage from historical SQLite data.
+- Version updated to `0.9.5.68`.
+
+## v0.9.5.69 - Historical Import Performance Fix
+
+Focus: make historical Excel import fast, observable, and safe for the S5/S6 baseline workbooks.
+
+### Fixed
+- Replaced per-row SQLite writes with cached bulk writes inside a sheet-level transaction.
+- Added `--verbose` progress output for file/sheet-level import visibility.
+- Removed the slow computed-rank monkey-patch flow and computes ranks directly in memory.
+- Writes a partial import report even when an import is interrupted or fails.
+
+### Improved
+- Caches collections, ranking types, snapshots, and entities during import.
+- Limits processing to the explicitly supported historical workbook sheets.
+- Reports per-collection duration, status, imported rows, skipped rows, and covered servers.
+- Keeps historical imports as reference data only; no Operational Truth, latest OCR report, review history, or export behavior is changed.
+
+### Validation
+```text
+2 passed tests/smoke/test_historical_excel_import.py
+Actual workbook import: 3024 rows, 128 servers, importer duration 1.16s
+compileall importer/historical_excel_import.py version.py passed
+```
+
+### Command
+```bash
+python importer/historical_excel_import.py --input-dir input --report data/historical_import_report.json --verbose
+```
+
+### Commit
+```bash
+git add .
+git commit -m "fix(import): speed up historical excel import"
+git tag -a v0.9.5.69 -m "v0.9.5.69 Historical Import Performance Fix"
+```

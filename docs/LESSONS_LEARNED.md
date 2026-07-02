@@ -222,3 +222,17 @@ Server readiness must also be evaluated at server level, not just row level. A s
 ## v0.9.5.67 - Operational dashboards must not mix data scopes
 
 Operational dashboards must separate current-run state, historical database state, and benchmark/ground-truth validation. A server appearing in benchmark validation is not automatically part of the current operational import. Drill-down pages must degrade safely when the historical SQLite database is empty or still locked during ZIP packaging.
+
+## v0.9.5.68 - Historical data must be scoped as reference, not runtime truth
+
+Historical Excel workbooks are valuable for Command Center coverage and missing-data visibility, but they must remain separate from current-run OCR evidence and benchmark/ground-truth validation. The correct model is:
+
+- Current Run: latest OCR/import evidence and active review blockers.
+- Historical Dataset: reference coverage and baseline intelligence.
+- Benchmark/Ground Truth: validator-only quality measurement.
+
+Operational Truth should only change through explicit runtime import/review logic, not merely because historical files exist.
+
+## v0.9.5.69 - Importers Need Bulk Transactions
+
+Historical importers must not use per-row database helper methods that open and commit a new SQLite connection for each row. Even small historical workbooks become painfully slow. Batch imports should keep one transaction open per logical collection, cache identity lookups, emit visible progress, and always write a partial report when interrupted.

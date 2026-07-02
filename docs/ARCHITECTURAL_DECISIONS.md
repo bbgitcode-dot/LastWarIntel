@@ -140,3 +140,23 @@ The previous implementation had technically valid pages, but the relationship be
 ## v0.9.5.67 - Current-run readiness is authoritative for Command Center drill-downs
 
 The Command Center Operational Readiness layer uses latest import/review state as its primary scope. Historical SQLite intelligence and benchmark validation are separate scopes and may enrich detail pages, but must not break navigation or be shown as current-run missing data.
+
+## v0.9.5.68 - Historical Excel imports are reference baseline collections
+
+Decision: historical Excel workbooks are imported into SQLite using `historical_*` collection types. Command Center Operational Readiness may use these collections to understand known servers and available ranking feeds, but current-run pending reviews and Data Guard blockers remain authoritative.
+
+Rationale:
+- Historical files provide valuable coverage context across many servers.
+- Mixing historical, benchmark, and current-run scopes caused confusing UI states in previous sprints.
+- A dedicated historical scope allows richer dashboards without contaminating Operational Truth.
+
+Consequences:
+- Historical import can be rerun idempotently.
+- Missing Data can now refer to gaps in the known historical/current server landscape.
+- Benchmark/Ground Truth remains a validation tool, not operational evidence.
+
+## ADR - Historical Importers Use Cached Bulk Writes
+
+Status: Accepted in v0.9.5.69.
+
+Historical reference imports may process thousands of rows across many servers. They must use cached identity resolution and sheet-level SQLite transactions instead of per-row helper calls. This keeps reference-data loading fast while preserving the separation between historical baseline, current run, benchmark/ground truth, and Operational Truth.
