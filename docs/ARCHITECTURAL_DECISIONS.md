@@ -1,3 +1,14 @@
+## ADR – Review Center as Human-in-the-Loop Workspace
+
+### Decision
+The Review Center becomes the preferred review surface. Legacy static pages such as the Evidence Pack may remain available, but the Command Center should guide users into the integrated Review Center.
+
+### Rationale
+Review quality depends on explainability and persistent state, not more dashboard surface area. A single review workspace reduces confusion and prepares the system for future manual resolution.
+
+### Guardrail
+The Review Center is report-driven and read-only until manual override semantics are implemented. It must not mutate OCR evidence or Operational Truth.
+
 ## ADR – Adaptive Review OCR before final quarantine
 
 **Status:** Accepted in v0.9.5.53

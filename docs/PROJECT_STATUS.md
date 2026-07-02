@@ -1,3 +1,18 @@
+## v0.9.5.59 Status – Review UX & Explainability Foundation
+
+Current focus has shifted from improving OCR heuristics to improving review trust and explainability.
+
+### Current State
+
+- Data Guard and Ranking Guard continue to protect Operational Truth.
+- Review Evidence Pack is now backed by human-readable problem statements and candidate choices.
+- Review Center is introduced as the integrated review workspace.
+- Review History is becoming the persistent foundation for future manual resolution.
+
+### Next Step
+
+v0.9.5.60 should implement the first read/write review resolution model: accepting a candidate, entering a manual value, saving a comment, and marking the review as resolved without mutating raw OCR evidence.
+
 **Current Version:** v0.9.5.58  
 **Runtime Baseline:** v0.9.5.58 – Human Review Guidance
 

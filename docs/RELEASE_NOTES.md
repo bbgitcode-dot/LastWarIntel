@@ -1,3 +1,20 @@
+# Sentinel v0.9.5.59 – Review UX & Explainability Foundation
+
+Sentinel v0.9.5.59 improves the human review workflow. Reviews now explain what is uncertain, why Sentinel refused automatic promotion, what candidates are available, and which decision a human needs to make.
+
+## Highlights
+
+- New integrated Review Center (`output/review_center.html`).
+- Human-readable review problem statements.
+- "Warum?" explainability notes for each review item.
+- Decision-path trace from OCR through Data Guard and Human Review.
+- Review History visualization prepared for future resolution workflows.
+- Resolution template fields for selected candidate, manual value, reviewer, comment, and resolved timestamp.
+
+## Guardrails
+
+The sprint is intentionally UI/report-driven only. It does not change OCR, power recovery, ranking guard, Data Guard, or export behavior.
+
 # Sentinel v0.9.5.58 – Human Review Guidance
 
 This release turns the Review Evidence Pack from a technical trace viewer into a human review guide. Each review item now says what Sentinel could not determine, lists the strongest candidate choices, and always offers manual input as a safe path.

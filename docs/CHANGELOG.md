@@ -1,3 +1,19 @@
+## [0.9.5.59] - Review UX & Explainability Foundation
+
+### Added
+- Added integrated `review_center.html` as the human-in-the-loop review workspace.
+- Added explainability notes (`why_bullets`) and decision path traces (`explainability_steps`) for review evidence.
+- Added persistent review-history visualization with OPEN/RESOLVED status foundation.
+- Added resolution template fields for future browser-based review completion.
+
+### Changed
+- Command Center now links to the Review Center as the preferred review path.
+- Review Evidence Pack remains available as a legacy evidence detail page.
+
+### Safety
+- No OCR, Data Guard, Ranking Guard, or Operational Truth promotion logic changed.
+- Review UI remains read-only.
+
 ## [0.9.5.58] - Human Review Guidance
 
 ### Added

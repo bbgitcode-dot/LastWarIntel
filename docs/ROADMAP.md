@@ -1,3 +1,16 @@
+## v0.9.5.59 Roadmap Update
+
+### Completed
+- Integrated Review Center foundation.
+- Explainable review cards.
+- Persistent review-history visualization.
+- Resolution data model preparation.
+
+### Next
+- v0.9.5.60: Manual Review Resolution Model.
+- v0.9.5.61: Editable Review UI.
+- v0.9.5.62: Manual Override Engine and guarded re-export.
+
 # Sentinel Roadmap
 
 **Version:** v0.9.5.58

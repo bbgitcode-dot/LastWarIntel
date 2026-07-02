@@ -79,10 +79,12 @@ def test_generate_command_center_from_reports(tmp_path: Path):
     )
 
     command_center = Path(result["command_center"])
+    review_center = Path(result["review_center"])
     review_dashboard = Path(result["review_dashboard"])
     evidence_pack = Path(result["review_evidence_pack"])
     evidence_json = Path(result["review_evidence_json"])
     assert command_center.exists()
+    assert review_center.exists()
     assert review_dashboard.exists()
     assert evidence_pack.exists()
     assert evidence_json.exists()
@@ -91,6 +93,7 @@ def test_generate_command_center_from_reports(tmp_path: Path):
     assert "Server 553" in html
     assert "ThorNord" in html
     assert "Ground Truth" in html
+    assert "Review Center" in review_center.read_text(encoding="utf-8")
     assert "Review Dashboard" in review_dashboard.read_text(encoding="utf-8")
     evidence_html = evidence_pack.read_text(encoding="utf-8")
     assert "Sentinel Review Evidence Pack" in evidence_html
@@ -216,7 +219,15 @@ def test_review_evidence_contains_human_problem_and_history(tmp_path: Path):
     html = Path(result["review_evidence_pack"]).read_text(encoding="utf-8")
     assert "Problem:" in html
     assert "Review choices" in html
+    assert "Warum?" in html
+    assert "Explainability trace" in html
+    center_html = Path(result["review_center"]).read_text(encoding="utf-8")
+    assert "Sentinel Review Center" in center_html
+    assert "Entscheidungspfad" in center_html
     history = json.loads(Path(result["review_history_json"]).read_text(encoding="utf-8"))
     assert history["schema"] == "sentinel.review_history.v1"
     assert history["open_count"] == 1
+    assert history["items"][0]["resolution"]["status"] == "OPEN"
+    assert history["items"][0]["why_bullets"]
+    assert history["items"][0]["explainability_steps"]
     assert Path(result["review_history_store"]).exists()

@@ -70,6 +70,7 @@ def _artifact_links(import_report: dict[str, Any] | None) -> str:
         (str(DEFAULT_IMPORT_REPORT), "Import Report JSON"),
         (str(DEFAULT_GROUND_TRUTH_REPORT), "Ground Truth JSON"),
         (str(DEFAULT_INFERENCE_REPORT), "Inference JSON"),
+        ("review_center.html", "Review Center"),
         ("review_dashboard.html", "Review Dashboard"),
         ("review_evidence_pack.html", "Evidence Pack"),
         ("review_history.json", "Review History"),
@@ -195,6 +196,9 @@ def _base_css() -> str:
     .links a { display:inline-block; color:#bae6fd; margin:6px 10px 0 0; text-decoration:none; border:1px solid var(--line); padding:8px 10px; border-radius:10px; background:rgba(56,189,248,.08); }
     .notice { border-left:4px solid var(--accent); padding:12px 14px; background:rgba(56,189,248,.09); border-radius:10px; margin-top:14px; }
     .evidence-card { margin-bottom:16px; } .evidence-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:14px 0; }
+    .trace-list { list-style:none; padding:0; margin:10px 0 0; } .trace-list li { padding:9px 10px; border-left:3px solid var(--accent); background:var(--panel2); margin:8px 0; border-radius:8px; }
+    .tabs { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0; } .tabs a { color:#bae6fd; text-decoration:none; border:1px solid var(--line); border-radius:999px; padding:8px 12px; background:rgba(56,189,248,.08); }
+    .status-open { color:#fcd34d; font-weight:700; } .status-resolved { color:#86efac; font-weight:700; }
     .evidence-grid > div, .decision, .action, .screenshot-ref { background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px; margin-top:10px; }
     .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; } .action { border-left:4px solid var(--warn); } details { margin-top:12px; } summary { cursor:pointer; color:#bae6fd; font-weight:700; } .small { max-height:360px; margin-top:10px; }
     """
@@ -474,7 +478,10 @@ def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) 
             "best_candidate": item.get("best_candidate"),
             "second_candidate": item.get("second_candidate"),
             "margin": item.get("margin"),
-            "resolution": None,
+            "why_bullets": item.get("why_bullets") or [],
+            "explainability_steps": item.get("explainability_steps") or [],
+            "choices": item.get("choices") or [],
+            "resolution": item.get("resolution_template") or _resolution_template(),
         })
         known.add(key)
     return {
@@ -501,6 +508,63 @@ def _suggested_action(review: dict[str, Any], trace: dict[str, Any] | None) -> s
     return "Manual visual review recommended before changing Operational Truth."
 
 
+def _why_bullets(review: dict[str, Any], trace: dict[str, Any] | None, problem_type: str) -> list[str]:
+    description = str(review.get("description") or "")
+    bullets: list[str] = []
+    if trace and trace.get("power_original") is not None:
+        bullets.append(f"OCR/Parser lieferte den Ausgangswert {_fmt_power(trace.get('power_original'))}.")
+    if trace and trace.get("best_candidate") is not None and trace.get("second_candidate") is not None:
+        bullets.append(f"Die besten Kandidaten liegen nah beieinander: {_fmt_power(trace.get('best_candidate'))} vs. {_fmt_power(trace.get('second_candidate'))}.")
+    if trace and trace.get("margin") is not None:
+        bullets.append(f"Der Score-Abstand beträgt nur {_num(trace.get('margin'), 'n/a')} und liegt unter der sicheren Auto-Promotion-Schwelle.")
+    if trace and trace.get("candidates"):
+        first = (trace.get("candidates") or [{}])[0]
+        reasons = ", ".join(str(v) for v in first.get("reasons") or [])
+        if reasons:
+            bullets.append(f"Der führende Kandidat wurde durch folgende Evidenz gestützt: {reasons}.")
+    if problem_type == "alliance_power_outlier":
+        bullets.append("Der Wert weicht stark vom lokalen Allianz-Power-Kontext ab.")
+        bullets.append("Es gibt keine ausreichend starke Candidate-Evidenz; visuelle Prüfung ist nötig.")
+    if problem_type == "server_assignment_unclear":
+        bullets.append("Der Screenshot-Block kollidiert mit der erwarteten Server-Zuordnung.")
+    if "power_recovery_candidates_ambiguous" in description and not any("Kandidaten" in b for b in bullets):
+        bullets.append("Mehrere plausible Power-Kandidaten wurden gefunden, aber keiner ist eindeutig dominant.")
+    if not bullets:
+        bullets.append("Sentinel konnte diesen Datensatz nicht ohne menschliche Prüfung in Operational Truth übernehmen.")
+    return bullets
+
+
+def _explainability_steps(review: dict[str, Any], trace: dict[str, Any] | None) -> list[dict[str, Any]]:
+    steps = [
+        {"stage": "OCR", "status": "captured", "detail": f"Screenshot {review.get('screenshot') or 'n/a'} wurde gelesen."},
+        {"stage": "Normalization", "status": "applied", "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."},
+    ]
+    if trace:
+        steps.append({"stage": "Power Recovery", "status": str(trace.get("status") or "evaluated"), "detail": f"{trace.get('candidate_count') or 0} Kandidat(en), bester Score {_num(trace.get('best_score'), 'n/a')}, Margin {_num(trace.get('margin'), 'n/a')}."})
+    else:
+        steps.append({"stage": "Power Recovery", "status": "not_available", "detail": "Keine Candidate-Spur für diesen Review vorhanden."})
+    steps.extend([
+        {"stage": "Ranking Guard", "status": "quarantine", "detail": str(review.get("description") or review.get("reason") or "Review erforderlich")},
+        {"stage": "Data Guard", "status": "protected", "detail": "Operational Truth wurde nicht verändert."},
+        {"stage": "Human Review", "status": "open", "detail": "Menschliche Entscheidung erforderlich."},
+    ])
+    return steps
+
+
+def _resolution_template() -> dict[str, Any]:
+    return {
+        "status": "OPEN",
+        "selected_choice": None,
+        "manual_value": None,
+        "manual_name": None,
+        "manual_alliance": None,
+        "comment": None,
+        "reviewer": None,
+        "resolved_at": None,
+        "resolution_source": "human_review",
+    }
+
+
 def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
     reviews = list(import_report.get("reviews") or [])
     trace_index = _build_trace_index(import_report)
@@ -510,6 +574,8 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
         review_id = f"REV-{idx:03d}"
         problem_type = _problem_type(review, trace)
         choices = _choice_list(trace)
+        why_bullets = _why_bullets(review, trace, problem_type)
+        explainability_steps = _explainability_steps(review, trace)
         items.append({
             "id": review_id,
             "problem_type": problem_type,
@@ -517,6 +583,9 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "problem_statement": _human_problem_statement(review_id, review, trace),
             "confidence_label": _confidence_label(trace),
             "choices": choices,
+            "why_bullets": why_bullets,
+            "explainability_steps": explainability_steps,
+            "resolution_template": _resolution_template(),
             "server": review.get("server"),
             "candidate_server": review.get("candidate_server"),
             "ranking_type": review.get("ranking_type"),
@@ -601,13 +670,97 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
           </div>
           {img}
           <div class="decision"><b>Needed decision:</b> Wähle einen Vorschlag, gib einen Wert manuell ein, oder lasse den Datensatz in Review.</div>
+          <details open><summary>Warum?</summary>{_bullet_list(item.get('why_bullets') or [])}</details>
           <details open><summary>Review choices</summary><div class="table-wrap small"><table><thead><tr><th>Option</th><th>Value</th><th>Score</th><th>Reason</th></tr></thead><tbody>{_choice_rows(item)}</tbody></table></div></details>
+          <details><summary>Explainability trace</summary>{_trace_steps(item.get('explainability_steps') or [])}</details>
           <div class="decision"><b>Decision evidence:</b> {_e(item.get('decision_reason') or '')}</div>
           <div class="action"><b>Suggested action:</b> {_e(item.get('suggested_action') or '')}</div>
           <details><summary>Candidate details</summary><div class="table-wrap small"><table><thead><tr><th>#</th><th>Candidate</th><th>Score</th><th>Digit</th><th>Reasons</th></tr></thead><tbody>{_candidate_rows(trace)}</tbody></table></div></details>
         </section>
         """)
     return "".join(cards)
+
+
+def _bullet_list(values: list[Any]) -> str:
+    if not values:
+        return '<p class="muted">No explainability notes recorded.</p>'
+    return '<ul>' + ''.join(f'<li>{_e(value)}</li>' for value in values) + '</ul>'
+
+
+def _trace_steps(steps: list[dict[str, Any]]) -> str:
+    if not steps:
+        return '<p class="muted">No explainability trace recorded.</p>'
+    return '<ul class="trace-list">' + ''.join(
+        f'<li><b>{_e(step.get("stage"))}</b> · <span class="badge {_badge_class(str(step.get("status") or ""))}">{_e(step.get("status"))}</span><div class="hint">{_e(step.get("detail"))}</div></li>'
+        for step in steps
+    ) + '</ul>'
+
+
+def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
+    items = list((history or {}).get("items") or [])[-limit:]
+    if not items:
+        return '<tr><td colspan="9" class="muted">No historical reviews recorded.</td></tr>'
+    rendered = []
+    for item in reversed(items):
+        status = str(item.get("status") or "OPEN")
+        cls = "status-resolved" if status == "RESOLVED" else "status-open"
+        rendered.append(f"""
+        <tr>
+          <td><span class="{cls}">{_e(status)}</span></td>
+          <td>{_e(item.get('history_key') or '')}</td>
+          <td>{_e(item.get('server') or '')}</td>
+          <td>{_e(item.get('ranking_type') or '')}</td>
+          <td>{_e(item.get('rank') or '')}</td>
+          <td>{_e(item.get('problem_type') or '')}</td>
+          <td>{_e(item.get('problem_statement') or '')}</td>
+          <td>{_e(item.get('screenshot') or '')}</td>
+          <td>{_e(item.get('created_at') or '')}</td>
+        </tr>
+        """)
+    return ''.join(rendered)
+
+
+def _review_center_cards(import_report: dict[str, Any]) -> str:
+    items = _evidence_items(import_report)
+    if not items:
+        return '<section class="card"><p class="muted">No open review items.</p></section>'
+    rendered = []
+    for item in items:
+        rendered.append(f"""
+        <section class="card evidence-card" id="center-{_e(item.get('id'))}">
+          <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label'))}</h3><span class="badge warn">OPEN</span></div>
+          <div class="action"><b>Problem:</b> {_e(item.get('problem_statement'))}</div>
+          <details open><summary>Warum?</summary>{_bullet_list(item.get('why_bullets') or [])}</details>
+          <details><summary>Entscheidungspfad</summary>{_trace_steps(item.get('explainability_steps') or [])}</details>
+          <details open><summary>Optionen</summary><div class="table-wrap small"><table><thead><tr><th>Option</th><th>Value</th><th>Score</th><th>Reason</th></tr></thead><tbody>{_choice_rows(item)}</tbody></table></div></details>
+          <div class="decision"><b>Nächster Schritt:</b> Diese Karte ist read-only vorbereitet. In einem späteren Sprint wird hier Kandidat übernehmen / manuelle Eingabe / Kommentar gespeichert.</div>
+        </section>
+        """)
+    return ''.join(rendered)
+
+
+def render_review_center(import_report: dict[str, Any] | None, history: dict[str, Any] | None) -> str:
+    report = import_report or {}
+    status = report.get("status") or "No report"
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    open_count = (history or {}).get("open_count", report.get("review_item_count", 0))
+    resolved_count = (history or {}).get("resolved_count", 0)
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sentinel Review Center</title><style>{_base_css()}</style></head>
+<body><header><h1>Sentinel Review Center</h1><div class="muted">Generated {generated_at} · <span class="badge {_badge_class(status)}">{_e(status)}</span></div>
+<div class="links"><a href="command_center.html">Command Center</a><a href="review_dashboard.html">Review Dashboard</a><a href="review_evidence_pack.html">Legacy Evidence Pack</a></div></header><main>
+<section class="grid">
+{_metric_card('Open Reviews', open_count, 'persistent review history')}
+{_metric_card('Resolved Reviews', resolved_count, 'manual resolution foundation')}
+{_metric_card('Current Run Items', report.get('review_item_count', 0), 'latest report')}
+{_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
+</section>
+<div class="tabs"><a href="#open">Open Reviews</a><a href="#history">History</a><a href="command_center.html">Back to Command Center</a></div>
+<div class="notice">The Review Center is the future human-in-the-loop workspace. v0.9.5.59 is read-only and focuses on explainability and persistent review state.</div>
+<h2 id="open">Open Reviews</h2>{_review_center_cards(report)}
+<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Created</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
+</main></body></html>"""
 
 
 def render_review_evidence_pack(import_report: dict[str, Any] | None) -> str:
@@ -656,6 +809,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <div class="notice">Data Quality remains the source of truth: this dashboard visualizes reports only. It does not change OCR, recovery, quarantine, or export decisions.</div>
 <h2>Server Overview</h2><section class="server-grid">{_server_cards(report)}</section>
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
+<h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Legacy Evidence Pack</a></div></section>
 <h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
@@ -702,17 +856,20 @@ def generate_command_center(
     history_path.write_text(json.dumps(history_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     command_center = output_path / "command_center.html"
+    review_center = output_path / "review_center.html"
     review_dashboard = output_path / "review_dashboard.html"
     review_evidence_pack = output_path / "review_evidence_pack.html"
     review_evidence_json = output_path / "review_evidence_pack.json"
     review_history_json = output_path / "review_history.json"
     command_center.write_text(render_command_center(import_report, ground_truth, inference), encoding="utf-8")
+    review_center.write_text(render_review_center(import_report, history_payload), encoding="utf-8")
     review_dashboard.write_text(render_review_dashboard(import_report), encoding="utf-8")
     review_evidence_pack.write_text(render_review_evidence_pack(import_report), encoding="utf-8")
     review_evidence_json.write_text(json.dumps(evidence_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     review_history_json.write_text(json.dumps(history_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return {
         "command_center": str(command_center),
+        "review_center": str(review_center),
         "review_dashboard": str(review_dashboard),
         "review_evidence_pack": str(review_evidence_pack),
         "review_evidence_json": str(review_evidence_json),

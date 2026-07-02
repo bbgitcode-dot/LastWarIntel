@@ -1,3 +1,11 @@
+## v0.9.5.59 – Review UX & Explainability
+
+- A correct quarantine is only useful if a human can understand it quickly.
+- Review pages should say explicitly what is uncertain: power, alliance power, server assignment, rank, row, or name.
+- Human review needs candidate choices and a clear "why not auto-promoted" explanation, not just internal guard labels.
+- Review history is not merely a report artifact; it is the beginning of a persistent workflow state.
+- Review UI must remain report-driven and read-only until manual override semantics are fully defined.
+
 # Lessons Learned – v0.9.5.58
 
 A review card must point the human directly at the uncertainty. Technical traces are necessary, but not sufficient. The reviewer needs a plain statement like: “I could not determine this power value; choose candidate A, candidate B, or enter manually.”
