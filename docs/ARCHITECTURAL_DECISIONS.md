@@ -111,3 +111,20 @@ The Review Center is report-driven and read-only until manual override semantics
 Decision: Persistent review history uses stable business identity, not runtime-generated review IDs or report timestamps. The Review Center is the web entry point for human decisions, while static output HTML remains a transitional run-detail surface.
 
 Rationale: Sentinel must support repeated targeted test runs and future multi-source screenshot ingestion without multiplying unresolved reviews. The operator must see one durable issue with updated observations, not one issue per run.
+
+## ADR - v0.9.5.62 Visible Command Center Workflow
+
+### Decision
+
+The Sentinel web UI uses a single visible operator workflow: Command Center -> Imports -> Quality -> Reviews -> Exports. The sidebar and top workflow bar both expose this structure.
+
+### Rationale
+
+The previous implementation had technically valid pages, but the relationship between Command Center, Imports, Quality, Review Dashboard, Review Evidence Pack, and static output pages was not obvious. That made the Review workflow feel disconnected even though the data foundation existed.
+
+### Consequences
+
+- The web app becomes the primary operator surface.
+- Static output HTML remains available as latest-run evidence, not as a competing Command Center.
+- Review detail is reachable through `/reviews/{history_key}` and can later become the natural place for guarded human resolution.
+- CSS and navigation changes must keep new pages visually consistent with the existing Command Center design.

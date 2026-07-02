@@ -11,7 +11,10 @@
     <aside class="side-nav">
         <a class="side-brand" href="/" aria-label="Sentinel Command Center">
             <div class="side-brand-icon">🐺</div>
-            <div class="side-brand-text">SENTINEL</div>
+            <div>
+                <div class="side-brand-text">SENTINEL</div>
+                <div class="side-brand-subtitle">Command Center</div>
+            </div>
         </a>
 
         <nav class="nav-list" aria-label="Main navigation">
@@ -20,12 +23,15 @@
                 {% if item.group != nav.current_group %}
                     {% if not loop.first %}</div>{% endif %}
                     <div class="nav-group">
-                    <div class="nav-group-label">{{ item.group|upper }}</div>
+                    <div class="nav-group-label">{{ item.group|replace('_', ' ')|upper }}</div>
                     {% set nav.current_group = item.group %}
                 {% endif %}
                 <a href="{{ item.url }}" class="nav-item {% if active_page == item.key %}active{% endif %}">
                     <span class="nav-icon">{{ item.icon }}</span>
-                    <strong>{{ item.title }}</strong>
+                    <span class="nav-copy">
+                        <strong>{{ item.title }}</strong>
+                        {% if item.description %}<small>{{ item.description }}</small>{% endif %}
+                    </span>
                 </a>
                 {% if loop.last %}</div>{% endif %}
             {% endfor %}
@@ -33,6 +39,15 @@
     </aside>
 
     <div class="app-shell">
+        <nav class="workflow-bar" aria-label="Command Center workflow">
+            {% for item in workflow_navigation %}
+            <a class="workflow-step {% if active_page == item.key %}active{% endif %}" href="{{ item.url }}">
+                <span>{{ item.icon }}</span>
+                <strong>{{ item.title }}</strong>
+                <small>{{ item.description }}</small>
+            </a>
+            {% endfor %}
+        </nav>
         {% block content %}{% endblock %}
     </div>
 </div>

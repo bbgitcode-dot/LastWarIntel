@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["feed"])
 templates = Jinja2Templates(directory="web/templates")
@@ -20,6 +20,7 @@ def intelligence_feed(request: Request):
             "title": "Intelligence Feed",
             "icon": "🧠",
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "intel",
         },
     )

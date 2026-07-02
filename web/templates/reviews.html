@@ -49,7 +49,7 @@
         <div class="panel-header compact">
             <div>
                 <h2>Review Navigation</h2>
-                <p>Use this as the single review entry point. Static output pages remain linked as run-detail views during consolidation.</p>
+                <p>Reviews are now part of the visible Command Center workflow. Open an item to see evidence, choices, why-bullets, and trace.</p>
             </div>
             <span class="panel-badge">CONSOLIDATED</span>
         </div>
@@ -84,6 +84,7 @@
                         {% for bullet in item.why_bullets[:3] %}<li>{{ bullet }}</li>{% endfor %}
                     </ul>
                     {% endif %}
+                    <a class="detail-link" href="/reviews/{{ item.history_key }}">Review Detail / Evidence öffnen →</a>
                     <form class="review-resolution-form" method="post" action="/reviews/{{ item.history_key }}/resolve">
                         <div class="form-row">
                             <label>Entscheidung</label>

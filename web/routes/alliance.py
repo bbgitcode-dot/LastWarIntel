@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from analytics.services.alliance_service import AllianceService
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter()
 
@@ -34,6 +34,7 @@ def alliance_file(
         context={
             "report": report,
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "alliances",
         },
     )

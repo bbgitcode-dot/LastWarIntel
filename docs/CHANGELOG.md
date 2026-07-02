@@ -302,3 +302,15 @@ Full historical notes are consolidated in `docs/RELEASE_NOTES.md`.
 - Mounted latest static output reports under `/static-output` for transitional run-detail access.
 - Updated navigation taxonomy around Command Center, Imports, Quality, Reviews, Operations, and Intelligence.
 - Kept OCR, Data Guard, Ranking Guard, and recovery logic unchanged.
+
+## v0.9.5.62 - Visible Navigation Consolidation
+
+- Added a persistent Command Center workflow bar across the web UI: Command, Imports, Quality, Reviews, Exports.
+- Expanded the sidebar from icon-only navigation to readable grouped navigation with labels and descriptions.
+- Added Review Detail pages under `/reviews/{history_key}` so review evidence can be reached from the web app instead of only from static output HTML.
+- Added page-to-page cross-links between Command Center, Imports, Quality, Reviews, Exports, and latest static run reports.
+- Added shared CSS for workflow cards, review evidence details, resolution forms, and responsive layout.
+- Added smoke coverage for visible navigation and Review Detail routing.
+- Updated version to `0.9.5.62`.
+
+No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.

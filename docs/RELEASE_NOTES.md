@@ -1253,3 +1253,39 @@ This release consolidates Sentinel's operator-facing review workflow. Review his
 The web navigation now exposes a dedicated Review Center at `/reviews`. Existing static output files remain available as run-detail/evidence views during the transition, but the intended operator path is now Command Center -> Reviews -> Evidence.
 
 No OCR, recovery, Ranking Guard, or Data Guard decision logic was changed.
+
+---
+
+## v0.9.5.62 - Visible Navigation Consolidation
+
+### Focus
+
+Make the Command Center information architecture visible and navigable for operators.
+
+### Added
+
+- A persistent top workflow bar across web pages: Command -> Imports -> Quality -> Reviews -> Exports.
+- Wider sidebar navigation with readable labels, descriptions, and grouped sections.
+- Cross-links from Command Center to Imports, Quality, and Reviews.
+- Cross-links from Imports to Quality, Reviews, and the latest static run report.
+- Cross-links from Quality back to Imports, into Reviews, and onward to Exports.
+- Review detail route at `/reviews/{history_key}` with choices, why-bullets, resolution form, and explainability trace.
+- CSS for consistent workflow cards, review detail cards, forms, and responsive navigation.
+
+### Changed
+
+- Review Evidence is no longer only a static-output concept; the web app now has a first-class detail route for persistent review-history entries.
+- The visible operator flow now matches the intended architecture: ingestion evidence, trust assessment, human decision, then export/reporting.
+- Version updated to `0.9.5.62`.
+
+### Guardrail
+
+This sprint changes presentation and navigation only. It does not alter OCR, Data Guard, Ranking Guard, recovery, quarantine, Operational Truth, or Excel export logic.
+
+### Validation
+
+```text
+pytest tests/smoke/test_web_navigation_consolidation.py tests/smoke/test_command_center.py -q
+9 passed
+python -m compileall -q web/app.py web/navigation.py web/routes web/templates version.py
+```

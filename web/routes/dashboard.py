@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from analytics.services.dashboard_service import DashboardService
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter()
 
@@ -31,6 +31,7 @@ def dashboard(
         context={
             "dashboard": dashboard_data,
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "dashboard",
         },
     )

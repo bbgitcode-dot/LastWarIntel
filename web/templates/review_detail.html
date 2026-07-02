@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.review_id }} · Sentinel Review Detail{% endblock %}
+
+{% block content %}
+<header class="command-header">
+    <div>
+        <div class="eyebrow">REVIEW DETAIL</div>
+        <div class="brand">{{ item.review_id }} · {{ item.problem_type }}</div>
+        <div class="subtitle">{{ item.problem_statement }}</div>
+    </div>
+    <div class="server-status">
+        <div class="status-label">Review Status</div>
+        <div class="status-pill status-warning">● {{ item.status }}</div>
+        <div class="snapshot-label">Seen {{ item.seen_count or 1 }}x · {{ item.last_seen_at or item.created_at }}</div>
+    </div>
+</header>
+
+<main class="command-grid">
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Human Decision Required</h2>
+                <p>Data Guard has protected Operational Truth. Pick a candidate or enter the correct value manually.</p>
+            </div>
+            <a class="panel-badge" href="/reviews">BACK TO REVIEWS</a>
+        </div>
+        <div class="review-detail-grid">
+            <div class="page-link-card">
+                <strong>Server</strong>
+                <span>{{ item.server or '—' }}</span>
+            </div>
+            <div class="page-link-card">
+                <strong>Ranking</strong>
+                <span>{{ item.ranking_type }} · Rank {{ item.rank }}</span>
+            </div>
+            <div class="page-link-card">
+                <strong>Screenshot</strong>
+                <span>{{ item.screenshot or 'No screenshot reference' }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Review Choices</h2>
+                <p>These are the available decisions for this review.</p>
+            </div>
+            <span class="panel-badge">{{ item.choices|length }} OPTIONS</span>
+        </div>
+        <div class="review-detail-grid">
+            {% for choice in item.choices or [] %}
+            <article class="review-choice-card">
+                <strong>{{ choice.label }}</strong>
+                <span>{% if choice.value %}{{ choice.value }}{% else %}Manual input required{% endif %}</span>
+                {% if choice.score is not none %}<span>Score {{ choice.score }}</span>{% endif %}
+                {% if choice.reasons %}<span>{{ choice.reasons|join(', ') }}</span>{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Resolve Review</h2>
+                <p>This stores an auditable human decision. It does not directly modify Operational Truth or exports.</p>
+            </div>
+        </div>
+        <form class="review-resolution-form" method="post" action="/reviews/{{ item.history_key }}/resolve">
+            <div class="form-row">
+                <label>Entscheidung</label>
+                <select name="selected_choice">
+                    <option value="">Manuelle Eingabe / keine Kandidatenwahl</option>
+                    {% for choice in item.choices or [] %}
+                        {% if choice.kind != 'manual_input' %}
+                        <option value="{{ choice.label }}">{{ choice.label }}{% if choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-row compact-inputs">
+                <input name="manual_value" placeholder="Manueller Power-Wert">
+                <input name="manual_name" placeholder="Name korrigieren">
+                <input name="manual_alliance" placeholder="Allianz korrigieren">
+            </div>
+            <div class="form-row compact-inputs">
+                <input name="reviewer" placeholder="Reviewer">
+                <input name="comment" placeholder="Kommentar / Begründung">
+                <button type="submit">Als RESOLVED speichern</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Warum?</h2>
+                <p>Explainability bullets written for the human reviewer.</p>
+            </div>
+        </div>
+        <div class="attention-list">
+            {% for bullet in item.why_bullets or [] %}
+            <article class="attention-item attention-warning">
+                <div class="attention-severity"></div>
+                <div><p>{{ bullet }}</p></div>
+            </article>
+            {% else %}
+            <article class="attention-item attention-info">
+                <div class="attention-severity"></div>
+                <div><p>No explainability bullets recorded.</p></div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Explainability Trace</h2>
+                <p>Decision path from OCR evidence to Human Review.</p>
+            </div>
+        </div>
+        <div class="trace-list">
+            {% for step in item.explainability_steps or [] %}
+            <article class="trace-step-card">
+                <strong>{{ step.stage }} · {{ step.status }}</strong>
+                <span>{{ step.detail }}</span>
+            </article>
+            {% else %}
+            <article class="trace-step-card"><strong>No trace</strong><span>No detailed trace is available for this review.</span></article>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

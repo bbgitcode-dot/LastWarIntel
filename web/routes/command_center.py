@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
 from application.command_center.service import CommandCenterService
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["command-center"])
 templates = Jinja2Templates(directory="web/templates")
@@ -21,6 +21,7 @@ def command_center(request: Request):
         context={
             "command": command,
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "command",
         },
     )

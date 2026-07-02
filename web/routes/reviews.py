@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["reviews"])
 templates = Jinja2Templates(directory="web/templates")
@@ -145,6 +145,14 @@ def _review_model() -> dict[str, Any]:
     }
 
 
+def _find_history_item(history_key: str) -> dict[str, Any] | None:
+    model = _review_model()
+    for item in model.get("history_items") or []:
+        if item.get("history_key") == history_key:
+            return item
+    return None
+
+
 @router.get("/reviews")
 def reviews(request: Request):
     return templates.TemplateResponse(
@@ -153,6 +161,24 @@ def reviews(request: Request):
         context={
             "review_model": _review_model(),
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
+            "active_page": "reviews",
+        },
+    )
+
+
+@router.get("/reviews/{history_key}")
+def review_detail(history_key: str, request: Request):
+    item = _find_history_item(history_key)
+    if item is None:
+        return RedirectResponse(url="/reviews", status_code=303)
+    return templates.TemplateResponse(
+        request=request,
+        name="review_detail.html",
+        context={
+            "item": item,
+            "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "reviews",
         },
     )

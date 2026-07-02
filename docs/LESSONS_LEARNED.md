@@ -181,3 +181,16 @@ Review IDs generated inside a single run are not stable enough for persistent hi
 The stable identity should describe the human problem: server, ranking type, rank, screenshot, problem type, and reason. Runtime metadata belongs in observation fields such as `last_seen_at`, `source_report_created_at`, and `seen_count`.
 
 A separate Review Center is useful only if it acts as the single human-in-the-loop entry point. Static output pages should be treated as run-detail/evidence pages, not as competing dashboards.
+
+## v0.9.5.62 - Navigation Must Match the Mental Model
+
+A feature can be technically present and still feel absent if the navigation does not expose it. The Review Center already existed, but operators could not clearly see how it related to Imports, Quality, and the Command Center.
+
+The stable mental model is:
+
+1. Imports explain what evidence entered the system.
+2. Quality explains whether that evidence is trustworthy.
+3. Reviews explain what a human must decide.
+4. Exports show what was produced.
+
+Static output pages are useful run artifacts, but they should not compete with the web application as a second Command Center. They should be reachable as evidence/detail views from the main web flow.

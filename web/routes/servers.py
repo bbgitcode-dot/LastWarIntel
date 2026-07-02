@@ -11,7 +11,7 @@ from analytics.services.server_landscape_service import (
     ServerLandscapeService,
 )
 from analytics.services.server_service import ServerService
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter()
 
@@ -32,6 +32,7 @@ def server_landscape(
         context={
             "landscape": landscape,
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "servers",
         },
     )
@@ -52,6 +53,7 @@ def server_overview(
         context={
             "overview": overview,
             "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW,
             "active_page": "servers",
         },
     )

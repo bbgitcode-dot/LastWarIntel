@@ -1,9 +1,10 @@
 """
 Sentinel web navigation.
 
-User-facing navigation follows the Command Center product language.  It is
-intentionally broader than the currently implemented feature set so the UI can
-expand without changing its information architecture every sprint.
+The visible information architecture is deliberately centered on the
+Command Center workflow: Imports -> Quality -> Reviews -> Exports.  The
+sidebar and workflow bar use the same navigation model so the user never has
+to guess where review evidence or quality diagnostics live.
 """
 
 from __future__ import annotations
@@ -20,18 +21,27 @@ class NavigationItem:
     url: str
     key: str
     group: str = "main"
+    description: str = ""
 
 
 NAVIGATION = [
-    NavigationItem("Command Center", "🎯", "/", "command", "mission"),
-    NavigationItem("Imports", "📦", "/imports", "imports", "pipeline"),
-    NavigationItem("Quality", "🛡️", "/quality", "quality", "pipeline"),
-    NavigationItem("Reviews", "🔎", "/reviews", "reviews", "pipeline"),
-    NavigationItem("Operations", "📥", "/operations", "operations", "pipeline"),
-    NavigationItem("Servers", "🌍", "/servers", "servers", "intelligence"),
-    NavigationItem("Alliances", "🤝", "/alliances", "alliances", "intelligence"),
-    NavigationItem("Players", "👤", "/players", "players", "intelligence"),
-    NavigationItem("Intelligence", "🧠", "/intel", "intel", "intelligence"),
-    NavigationItem("Reports", "📈", "/reports", "reports", "reports"),
-    NavigationItem("Administration", "⚙️", "/settings", "settings", "admin"),
+    NavigationItem("Command Center", "🎯", "/", "command", "command", "Executive overview and next action"),
+    NavigationItem("Imports", "📦", "/imports", "imports", "workflow", "Runs, sources, screenshots"),
+    NavigationItem("Quality", "🛡️", "/quality", "quality", "workflow", "Data Guard and validation"),
+    NavigationItem("Reviews", "🔎", "/reviews", "reviews", "workflow", "Open reviews, history, evidence"),
+    NavigationItem("Exports", "📈", "/reports", "reports", "workflow", "Excel and generated reports"),
+    NavigationItem("Operations", "📥", "/operations", "operations", "operations", "Operational import actions"),
+    NavigationItem("Servers", "🌍", "/servers", "servers", "intelligence", "Server-level intelligence"),
+    NavigationItem("Alliances", "🤝", "/alliances", "alliances", "intelligence", "Alliance profiles and signals"),
+    NavigationItem("Players", "👤", "/players", "players", "intelligence", "Player profiles and ranks"),
+    NavigationItem("Intelligence", "🧠", "/intel", "intel", "intelligence", "Strategic assessment"),
+    NavigationItem("Administration", "⚙️", "/settings", "settings", "admin", "Settings and system controls"),
+]
+
+COMMAND_WORKFLOW = [
+    NavigationItem("Command", "🎯", "/", "command", "workflow", "Overview"),
+    NavigationItem("Imports", "📦", "/imports", "imports", "workflow", "What was processed"),
+    NavigationItem("Quality", "🛡️", "/quality", "quality", "workflow", "How trustworthy it is"),
+    NavigationItem("Reviews", "🔎", "/reviews", "reviews", "workflow", "What needs a human"),
+    NavigationItem("Exports", "📈", "/reports", "reports", "workflow", "What was produced"),
 ]

@@ -1,0 +1,44 @@
+from pathlib import Path
+
+from web.navigation import COMMAND_WORKFLOW, NAVIGATION
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_visible_command_workflow_navigation_model_is_present():
+    titles = [item.title for item in COMMAND_WORKFLOW]
+    assert titles == ["Command", "Imports", "Quality", "Reviews", "Exports"]
+    assert any(item.title == "Reviews" and item.url == "/reviews" for item in NAVIGATION)
+    assert any(item.title == "Exports" and item.url == "/reports" for item in NAVIGATION)
+
+
+def test_base_template_renders_sidebar_and_workflow_bar():
+    html = (ROOT / "web/templates/base.html").read_text(encoding="utf-8")
+    assert "workflow-bar" in html
+    assert "workflow_navigation" in html
+    assert "side-brand-subtitle" in html
+    assert "nav-copy" in html
+
+
+def test_command_import_quality_templates_cross_link_workflow_pages():
+    command = (ROOT / "web/templates/command_center.html").read_text(encoding="utf-8")
+    imports = (ROOT / "web/templates/imports.html").read_text(encoding="utf-8")
+    quality = (ROOT / "web/templates/quality.html").read_text(encoding="utf-8")
+    assert "Command Center Workflow" in command
+    assert "href=\"/imports\"" in command
+    assert "href=\"/quality\"" in command
+    assert "href=\"/reviews\"" in command
+    assert "Import Workflow Links" in imports
+    assert "Quality Workflow Links" in quality
+
+
+def test_review_detail_template_exists_and_is_linked():
+    reviews = (ROOT / "web/templates/reviews.html").read_text(encoding="utf-8")
+    detail = (ROOT / "web/templates/review_detail.html").read_text(encoding="utf-8")
+    routes = (ROOT / "web/routes/reviews.py").read_text(encoding="utf-8")
+    assert "Review Detail / Evidence" in reviews
+    assert "REVIEW DETAIL" in detail
+    assert "Review Choices" in detail
+    assert "Explainability Trace" in detail
+    assert '@router.get("/reviews/{history_key}")' in routes

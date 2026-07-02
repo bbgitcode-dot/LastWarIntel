@@ -268,3 +268,13 @@ The strategic takeaway from Server 549–553 remains: Power recovery is now expl
 The Review UX foundation from v0.9.5.59 is now consolidated into the product navigation. The main operational issue discovered after v0.9.5.59 was review-history duplication: repeated runs of the same unresolved screenshots created additional OPEN reviews. v0.9.5.60 fixes this by introducing stable review identities and rerun-aware `last_seen_at` / `seen_count` tracking.
 
 The web surface is being organized around a clearer information architecture: Command Center for overall state, Imports for sources/runs, Quality for guards and metrics, Reviews for human decisions, and Reports for generated artifacts.
+
+## Current Status - v0.9.5.62
+
+v0.9.5.62 turns the intended web information architecture into visible navigation. The operator can now follow a clear workflow from Command Center to Imports, Quality, Reviews, and Exports. The sidebar is no longer icon-only; it exposes grouped product areas with labels and descriptions.
+
+Review evidence has also moved closer to the real web application. Persistent reviews can now be opened through `/reviews/{history_key}` to see the human problem statement, candidate choices, why-bullets, resolution form, and explainability trace. Static HTML output remains available as run-detail evidence, but it is no longer the only practical way to inspect review detail.
+
+This release is intentionally UI/navigation-only. Data Guard, Ranking Guard, OCR, recovery, quarantine, Operational Truth, and Excel exports remain unchanged.
+
+Next recommended sprint: strengthen the Review Detail and Resolution workflow so a resolved review can be safely consumed by a future guarded Manual Override Engine without silent mutation of Operational Truth.

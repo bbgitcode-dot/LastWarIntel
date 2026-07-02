@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-from web.navigation import NAVIGATION
+from web.navigation import NAVIGATION, COMMAND_WORKFLOW
 
 router = APIRouter(tags=["players"])
 templates = Jinja2Templates(directory="web/templates")
@@ -13,4 +13,5 @@ templates = Jinja2Templates(directory="web/templates")
 
 @router.get("/players")
 def players(request: Request):
-    return templates.TemplateResponse(request=request, name="coming_soon.html", context={"title": "Players", "icon": "👤", "navigation": NAVIGATION, "active_page": "players"})
+    return templates.TemplateResponse(request=request, name="coming_soon.html", context={"title": "Players", "icon": "👤", "navigation": NAVIGATION,
+            "workflow_navigation": COMMAND_WORKFLOW, "active_page": "players"})
