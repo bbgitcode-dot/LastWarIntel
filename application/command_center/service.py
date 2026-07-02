@@ -45,13 +45,19 @@ class CommandCenterService:
         operational_readiness = self._build_operational_readiness(latest_import)
 
         if latest_import.has_import:
-            readiness = latest_import.readiness
-            if latest_import.review_count > 0:
-                status = StatusBadge("Review Required", "warning", f"{latest_import.review_count} Data Guard review items open")
-            else:
+            readiness = operational_readiness.coverage_percent
+            open_review_count = len([item for item in self._load_review_history().get("items", []) if isinstance(item, dict) and item.get("status") == "OPEN"])
+            human_review_count = open_review_count or len(latest_import.reviews)
+            if human_review_count > 0:
+                status = StatusBadge("Review Required", "warning", f"{human_review_count} human review item(s) open")
+            elif operational_readiness.missing_data_servers > 0:
+                status = StatusBadge("Missing Data", "warning", f"{operational_readiness.missing_data_servers} server(s) missing core rankings")
+            elif operational_readiness.operational_servers == operational_readiness.total_servers and operational_readiness.total_servers:
                 status = StatusBadge("Ready", "success", "Latest import operational")
+            else:
+                status = StatusBadge("Review Required", "warning", "Operational coverage incomplete")
 
-            mission = self._build_import_mission(latest_import.status, latest_import.review_count, latest_import.server_count)
+            mission = self._build_import_mission(latest_import.status, human_review_count, latest_import.server_count)
             attention_items = [
                 AttentionItem(
                     title=item.title,
@@ -72,10 +78,10 @@ class CommandCenterService:
                 ]
 
             metrics = [
-                OperationalMetric("Operational Readiness", f"{readiness}%", latest_import.status, "success" if readiness >= 90 else "warning"),
+                OperationalMetric("Operational Coverage", f"{readiness}%", f"{operational_readiness.operational_servers}/{operational_readiness.total_servers} servers operational", "success" if readiness >= 90 else "warning"),
                 OperationalMetric("Latest Import", f"{latest_import.server_count} servers", f"{latest_import.screenshots} screenshots · {latest_import.runtime_seconds:.2f}s", "success"),
                 OperationalMetric("Rows Imported", str(latest_import.rows), latest_import.output_file or "latest export", "info"),
-                OperationalMetric("Data Guard", latest_import.data_guard.status, f"{latest_import.data_guard.warnings} warning(s)", "success" if latest_import.data_guard.warnings == 0 else "warning"),
+                OperationalMetric("Data Guard", latest_import.data_guard.status, f"{latest_import.data_guard.warnings} raw warning(s)", "success" if latest_import.data_guard.warnings == 0 else "warning"),
             ]
             activity = [
                 ActivityItem(str(op.get("time", "latest")), str(op.get("title", "Operation")), str(op.get("detail", "")), str(op.get("severity", "info")))
@@ -313,7 +319,7 @@ class CommandCenterService:
                 description=f"Latest import processed {server_count} server(s), but Data Guard blocked suspicious assignment evidence.",
                 action="Open Imports and review server assignment conflicts",
                 tone="warning",
-                effort="2–5 min",
+                effort="Estimated review effort: 2–5 min",
             )
         return MissionViewModel(
             title="Latest import ready",
@@ -331,7 +337,7 @@ class CommandCenterService:
                 description=f"Latest validation is usable, but {unresolved_rows} rows still need targeted screenshot review.",
                 action="Open Data Quality and capture the suggested rank blocks",
                 tone="warning",
-                effort="2–5 min",
+                effort="Estimated review effort: 2–5 min",
             )
         if readiness >= 90:
             return MissionViewModel(

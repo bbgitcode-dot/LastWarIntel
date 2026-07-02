@@ -313,3 +313,9 @@ Each KPI is intentionally clickable and routes to the workflow area that can exp
 No extraction, recovery, guard, quarantine, Operational Truth, or export logic changed. The sprint is a web/navigation and readiness-model improvement.
 
 Recommended next focus: improve destination pages so their filters actually narrow the displayed rows rather than only showing a drill-down banner, and begin preparing a server-level Operational Readiness detail view.
+
+## v0.9.5.67 Operational Readiness Correctness
+
+- Fixed Command Center drill-down routes so empty or ZIP-packed SQLite databases no longer cause Internal Server Errors.
+- Clarified the distinction between current-run Operational Coverage, historical intelligence, and benchmark/ground-truth validation.
+- Current-run Missing Data now links to current import/review evidence instead of surfacing benchmark Server 551 as operational state.

@@ -218,3 +218,7 @@ A useful visual cue becomes dangerous when it is precise-looking but geometrical
 A Command Center KPI is useful only if it takes the operator to the reason behind the status. Counts like Operational, Pending Review, Missing Data, and Failed Imports must not be static decoration. They are routing decisions. Each status should link to the workflow where the issue can be inspected and resolved.
 
 Server readiness must also be evaluated at server level, not just row level. A server with both core ranking feeds and no open review is operational; a server with an open human decision is pending review; a server lacking a required feed is missing data. This creates a leadership-readable operational picture without weakening Data Guard.
+
+## v0.9.5.67 - Operational dashboards must not mix data scopes
+
+Operational dashboards must separate current-run state, historical database state, and benchmark/ground-truth validation. A server appearing in benchmark validation is not automatically part of the current operational import. Drill-down pages must degrade safely when the historical SQLite database is empty or still locked during ZIP packaging.

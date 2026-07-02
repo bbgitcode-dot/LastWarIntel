@@ -138,3 +138,30 @@ def test_operational_readiness_model_counts_pending_and_missing_servers():
     assert any(card.href == "/quality?filter=missing-data" for card in readiness.cards)
     assert readiness.pending_review_servers >= 1
     assert readiness.missing_data_servers >= 1
+
+
+def test_operational_drilldown_routes_do_not_crash_with_empty_database():
+    from fastapi.testclient import TestClient
+    from web.app import app
+
+    client = TestClient(app)
+    for path in [
+        "/servers",
+        "/servers?status=operational",
+        "/quality?filter=missing-data",
+        "/imports?status=failed",
+        "/reviews?status=open",
+    ]:
+        response = client.get(path)
+        assert response.status_code == 200, path
+
+
+def test_missing_data_drilldown_uses_current_run_not_benchmark_server_551():
+    from fastapi.testclient import TestClient
+    from web.app import app
+
+    response = TestClient(app).get("/quality?filter=missing-data")
+    assert response.status_code == 200
+    assert "Current Run Missing Data" in response.text
+    assert "Server 551" not in response.text
+    assert "Benchmark / Ground Truth" not in response.text

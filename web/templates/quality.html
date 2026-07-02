@@ -33,6 +33,34 @@
         </div>
     </section>
     {% endif %}
+
+    {% if quality_filter == 'missing-data' %}
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Current Run Missing Data</h2>
+                <p>This drill-down uses the latest import and review state. Benchmark or ground-truth validation data is listed separately below only when opened without a drill-down filter.</p>
+            </div>
+            <span class="panel-badge">{{ current_missing_servers|length }} SERVER(S)</span>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head">
+                <span>Server</span><span>Status</span><span>Reason</span><span>Action</span>
+            </div>
+            {% for server in current_missing_servers %}
+            <div class="quality-row">
+                <strong><a href="{{ server.href }}">{{ server.server }}</a></strong>
+                <span>{{ server.status }}</span>
+                <span>{{ server.detail }}</span>
+                <span><a href="/imports">Inspect import sources →</a></span>
+            </div>
+            {% else %}
+            <div class="quality-row"><span>No current-run server has missing core ranking data.</span></div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <section class="panel">
         <div class="panel-header compact">
             <div>
@@ -48,6 +76,7 @@
         </div>
     </section>
 
+    {% if quality_filter != 'missing-data' %}
     <section class="metrics-grid">
         <article class="metric-card tone-success">
             <div class="metric-title">Valid Matches</div>
@@ -70,7 +99,9 @@
             <div class="metric-subline">Resolved gap rows</div>
         </article>
     </section>
+    {% endif %}
 
+    {% if quality_filter != 'missing-data' %}
     <section class="panel">
         <div class="panel-header compact">
             <div>
@@ -102,11 +133,13 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if quality_filter != 'missing-data' %}
     <section class="panel">
         <div class="panel-header compact">
             <div>
-                <h2>Server Coverage</h2>
+                <h2>Benchmark / Ground Truth Server Coverage</h2>
                 <p>Coverage and missing rank blocks by server.</p>
             </div>
         </div>
@@ -134,5 +167,6 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 </main>
 {% endblock %}

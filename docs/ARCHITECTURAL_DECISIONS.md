@@ -136,3 +136,7 @@ The previous implementation had technically valid pages, but the relationship be
 **Reason:** The Review Center exists to let a human compare OCR hypotheses against source evidence. The screenshot is the evidence of record for a review item and must be available without navigating the filesystem manually.
 
 **Guardrails:** URL generation uses `Path(...).name` to avoid path traversal from persisted review data. The link is evidence access only and does not change Data Guard, Ranking Guard, Review History state, exports, or Operational Truth.
+
+## v0.9.5.67 - Current-run readiness is authoritative for Command Center drill-downs
+
+The Command Center Operational Readiness layer uses latest import/review state as its primary scope. Historical SQLite intelligence and benchmark validation are separate scopes and may enrich detail pages, but must not break navigation or be shown as current-run missing data.

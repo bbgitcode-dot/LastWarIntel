@@ -1363,3 +1363,30 @@ Focus: make the Command Center start page answer whether Sentinel's current serv
 ### Validation
 - Added smoke coverage for the Operational Readiness cards, drill-down links, server health strip, and filter-aware destination pages.
 - Version updated to `0.9.5.66`.
+
+## v0.9.5.67 - Operational Readiness Correctness
+
+Focus: make the Command Center readiness drill-downs technically safe and semantically aligned with current-run Operational Truth.
+
+### Fixed
+- Server drill-down cards no longer crash when the historical SQLite database is empty or missing runtime tables.
+- `/servers` and `/servers?status=operational` now degrade to a current-run server landscape instead of requiring historical ranking tables.
+- `/servers/{server}` now has a safe current-run fallback when historical intelligence is unavailable.
+- `Missing Data` drill-down no longer surfaces benchmark/ground-truth Server 551 as if it belonged to the current import.
+
+### Improved
+- Command Center readiness now uses operational server coverage, not raw import readiness.
+- The old ambiguous 50% Operational Readiness card now reads as Operational Coverage and shows operational servers versus total servers.
+- Mission review count now prefers open human-review history / review items instead of raw Data Guard warning counts.
+- Review effort label now says `Estimated review effort: 2–5 min` so the time estimate is explicit.
+- Data Guard metric labels raw warning counts as raw warnings to avoid confusing row-level warnings with human review items.
+
+### Guardrails
+- Benchmark and ground-truth quality reports remain available, but they are no longer used as the visible current-run missing-data drill-down.
+- Historical intelligence remains optional; empty ZIP-packed SQLite files no longer break operational navigation.
+- OCR, Ranking Guard, Data Guard, recovery, review decisions, Operational Truth, and exports remain unchanged.
+
+### Validation
+- Added smoke coverage for Operational Readiness drill-down routes with an empty database.
+- Added smoke coverage ensuring current-run Missing Data does not show benchmark Server 551.
+- Version updated to `0.9.5.67`.
