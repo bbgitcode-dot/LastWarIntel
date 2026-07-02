@@ -1,3 +1,9 @@
+# Lessons Learned – v0.9.5.58
+
+A review card must point the human directly at the uncertainty. Technical traces are necessary, but not sufficient. The reviewer needs a plain statement like: “I could not determine this power value; choose candidate A, candidate B, or enter manually.”
+
+Historical review state must be separated from latest-run reports. `latest_import_report.json` describes the current run; `review_history.json` begins the path toward durable open/resolved review management across multiple screenshot sources.
+
 # Sentinel Lessons Learned
 
 **Version:** v0.9.5.57

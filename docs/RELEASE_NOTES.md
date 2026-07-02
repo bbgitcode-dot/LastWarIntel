@@ -1,3 +1,14 @@
+# Sentinel v0.9.5.58 – Human Review Guidance
+
+This release turns the Review Evidence Pack from a technical trace viewer into a human review guide. Each review item now says what Sentinel could not determine, lists the strongest candidate choices, and always offers manual input as a safe path.
+
+The sprint also introduces `data/review_history.json` as the first persistent foundation for historical reviews. Current runs remain read-only, but reviews no longer have to be treated as purely ephemeral output artifacts.
+
+## Validation
+
+- `pytest tests/smoke/test_command_center.py -q`
+- `python -m compileall services/command_center.py main.py version.py`
+
 # Sentinel v0.9.5.57 – Evidence Trace Binding
 
 ## Focus

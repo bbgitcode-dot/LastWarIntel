@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-02T13:23:57.450078+00:00",
-  "runtime_seconds": 417.25,
+  "created_at": "2026-07-02T13:52:10.576252+00:00",
+  "runtime_seconds": 407.07,
   "screenshots": 5,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -512,7 +512,7 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "5 screenshots · 2 servers · 45 rows · 417.25s",
+      "detail": "5 screenshots · 2 servers · 45 rows · 407.07s",
       "severity": "warning"
     },
     {

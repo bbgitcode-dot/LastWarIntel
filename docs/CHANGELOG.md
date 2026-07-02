@@ -1,3 +1,14 @@
+## [0.9.5.58] - Human Review Guidance
+
+### Added
+- Review Evidence Pack now states the human-facing problem explicitly for each review item.
+- Evidence choices list Vorschlag 1/2/3 plus manual input as the next decision options.
+- Persistent `data/review_history.json` foundation for historical open/resolved review tracking.
+
+### Changed
+- Review cards now separate problem, decision needed, candidate choices, and raw trace details.
+- Version updated to `0.9.5.58`.
+
 ## [0.9.5.57] - Evidence Trace Binding
 
 ### Added

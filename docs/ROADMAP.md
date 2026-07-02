@@ -1,5 +1,19 @@
 # Sentinel Roadmap
 
+**Version:** v0.9.5.58
+
+## Current focus
+
+Review Quality is now moving from explanation to human-in-the-loop resolution. v0.9.5.58 added human-readable review problem statements, candidate choices, and persistent review history groundwork.
+
+## Next
+
+- v0.9.5.59: Review Resolution Model
+- v0.9.5.60: Editable Review Dashboard
+- v0.9.5.61: Manual Override Engine
+
+# Sentinel Roadmap
+
 **Version:** v0.9.5.57
 
 ## Current phase: Data Integrity Fortress / Evidence-Driven Review

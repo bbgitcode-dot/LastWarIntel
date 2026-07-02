@@ -1,3 +1,16 @@
+**Current Version:** v0.9.5.58  
+**Runtime Baseline:** v0.9.5.58 – Human Review Guidance
+
+## v0.9.5.58 sprint result
+
+The Review Evidence Pack now explicitly tells the human reviewer what is uncertain: power value, alliance power outlier, server assignment, row/rank ambiguity, name ambiguity, or generic manual review. Candidate choices are exposed as review options, not Operational Truth.
+
+A persistent review history foundation was added via `data/review_history.json`, mirrored to `output/review_history.json`. This prepares Sentinel for future multi-source screenshot ingestion and resolved-review workflows without bypassing Data Guard.
+
+## Next recommended sprint
+
+`v0.9.5.59 – Review Resolution Model`: add review states (`OPEN`, `IN_REVIEW`, `RESOLVED`, `DISMISSED`) and manual override/audit structures.
+
 **Current Version:** v0.9.5.57  
 **Runtime Baseline:** v0.9.5.57 – Evidence Trace Binding  
 **Sprint Focus:** Make Review Evidence Pack cards explain candidate decisions instead of showing empty trace fields.

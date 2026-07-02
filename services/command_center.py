@@ -7,6 +7,7 @@ must not duplicate OCR, Data Guard, or recovery logic.
 
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 from datetime import datetime, timezone
@@ -18,6 +19,7 @@ DEFAULT_OUTPUT_DIR = Path("output")
 DEFAULT_IMPORT_REPORT = Path("data/latest_import_report.json")
 DEFAULT_GROUND_TRUTH_REPORT = Path("benchmarks/ground_truth_validation_report.json")
 DEFAULT_INFERENCE_REPORT = Path("benchmarks/inference_report.json")
+DEFAULT_REVIEW_HISTORY = Path("data/review_history.json")
 
 
 def _load_json(path: Path) -> dict[str, Any] | None:
@@ -70,6 +72,7 @@ def _artifact_links(import_report: dict[str, Any] | None) -> str:
         (str(DEFAULT_INFERENCE_REPORT), "Inference JSON"),
         ("review_dashboard.html", "Review Dashboard"),
         ("review_evidence_pack.html", "Evidence Pack"),
+        ("review_history.json", "Review History"),
     ]
     return "".join(f'<a href="{_e(href)}">{_e(label)}</a>' for href, label in links)
 
@@ -320,6 +323,169 @@ def _review_trace_for(review: dict[str, Any], trace_index: dict[str, Any]) -> di
         return candidates[0]
     return None
 
+
+
+def _fmt_power(value: Any) -> str:
+    if value in (None, ""):
+        return "n/a"
+    try:
+        return f"{int(value):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _problem_type(review: dict[str, Any], trace: dict[str, Any] | None) -> str:
+    reason = str(review.get("reason") or "")
+    description = str(review.get("description") or "")
+    title = str(review.get("title") or "")
+    if reason == "data_guard_quarantine" or "server_assignment_conflict" in description:
+        return "server_assignment_unclear"
+    if "alliance_power_outlier" in description:
+        return "alliance_power_outlier"
+    if trace and trace.get("status") == "ambiguous":
+        if str(review.get("ranking_type") or "") == "alliance_power":
+            return "alliance_power_ambiguous"
+        return "power_ambiguous"
+    if "rank" in description.lower() or "Ranking Guard" in title:
+        return "rank_or_row_unclear"
+    if "name" in description.lower():
+        return "name_unclear"
+    return "manual_review_required"
+
+
+def _problem_label(problem_type: str) -> str:
+    labels = {
+        "server_assignment_unclear": "Server-Zuordnung unklar",
+        "alliance_power_outlier": "Allianzstärke-Ausreißer",
+        "alliance_power_ambiguous": "Allianzstärke nicht eindeutig",
+        "power_ambiguous": "Power-Wert nicht eindeutig",
+        "rank_or_row_unclear": "Rang oder Zeile nicht eindeutig",
+        "name_unclear": "Name nicht eindeutig",
+        "manual_review_required": "Manuelle Prüfung nötig",
+    }
+    return labels.get(problem_type, "Manuelle Prüfung nötig")
+
+
+def _choice_list(trace: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not trace:
+        return [{"label": "Manuelle Eingabe", "value": None, "score": None, "kind": "manual_input"}]
+    choices: list[dict[str, Any]] = []
+    candidates = list(trace.get("candidates") or [])
+    for idx, candidate in enumerate(candidates[:3], start=1):
+        choices.append({
+            "label": f"Vorschlag {idx}",
+            "value": candidate.get("value"),
+            "score": candidate.get("score"),
+            "digit_preservation_score": candidate.get("digit_preservation_score"),
+            "reasons": candidate.get("reasons") or [],
+            "kind": "candidate",
+        })
+    choices.append({"label": "Manuelle Eingabe", "value": None, "score": None, "kind": "manual_input"})
+    return choices
+
+
+def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict[str, Any] | None) -> str:
+    problem_type = _problem_type(review, trace)
+    ranking_type = str(review.get("ranking_type") or "Ranking")
+    rank = review.get("rank") or "?"
+    server = review.get("server") or review.get("candidate_server") or "unbekannt"
+    subject = "Datensatz"
+    if ranking_type == "alliance_power":
+        subject = "Allianzstärke der Allianz"
+    elif ranking_type == "total_hero_power":
+        subject = "Spieler-Power des Eintrags"
+
+    if problem_type in {"alliance_power_ambiguous", "power_ambiguous"} and trace:
+        choices = _choice_list(trace)
+        candidate_bits = []
+        for choice in choices[:2]:
+            if choice.get("value") is not None:
+                candidate_bits.append(f"{choice['label']}: {_fmt_power(choice.get('value'))}")
+        candidates = ", ".join(candidate_bits) if candidate_bits else "keine sichere Kandidatenliste"
+        return f"{review_id}: Ich konnte die {subject} auf Server {server}, Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe."
+
+    if problem_type == "alliance_power_outlier":
+        return f"{review_id}: Die Allianzstärke auf Server {server}, Rang {rank}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen."
+
+    if problem_type == "server_assignment_unclear":
+        return f"{review_id}: Ich konnte den Screenshot-Block nicht eindeutig einem Server zuordnen. Bitte Serverkopf prüfen und den Datensatz nur übernehmen, wenn Server {server} visuell bestätigt ist."
+
+    if problem_type == "name_unclear":
+        return f"{review_id}: Der Name des Eintrags auf Server {server}, Rang {rank}, ist nicht eindeutig lesbar. Bitte Name manuell prüfen oder ergänzen."
+
+    if problem_type == "rank_or_row_unclear":
+        return f"{review_id}: Rang oder Zeilenposition auf Server {server}, Rang {rank}, ist nicht eindeutig. Bitte Nachbarzeilen prüfen."
+
+    return f"{review_id}: Dieser Datensatz auf Server {server}, Rang {rank}, braucht eine manuelle Prüfung, bevor er Operational Truth werden darf."
+
+
+def _confidence_label(trace: dict[str, Any] | None) -> str:
+    if not trace:
+        return "Keine Candidate-Evidenz"
+    margin = trace.get("margin")
+    try:
+        margin_value = float(margin)
+    except (TypeError, ValueError):
+        return "Candidate-Evidenz vorhanden"
+    if margin_value >= 0.12:
+        return "stark"
+    if margin_value >= 0.06:
+        return "mittel"
+    return "zu knapp für Auto-Promotion"
+
+
+def _history_key(source_created_at: Any, item: dict[str, Any]) -> str:
+    raw = "|".join(str(v) for v in [
+        source_created_at,
+        item.get("server"),
+        item.get("ranking_type"),
+        item.get("rank"),
+        item.get("screenshot"),
+        item.get("reason"),
+        item.get("power_original"),
+        item.get("best_candidate"),
+    ])
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+
+
+def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) -> dict[str, Any]:
+    payload = existing if isinstance(existing, dict) else {}
+    items = list(payload.get("items") or [])
+    known = {str(item.get("history_key")) for item in items}
+    source_created_at = evidence.get("source_report_created_at")
+    for item in evidence.get("items") or []:
+        key = _history_key(source_created_at, item)
+        if key in known:
+            continue
+        items.append({
+            "history_key": key,
+            "status": "OPEN",
+            "created_at": evidence.get("created_at"),
+            "source_report_created_at": source_created_at,
+            "review_id": item.get("id"),
+            "server": item.get("server"),
+            "ranking_type": item.get("ranking_type"),
+            "rank": item.get("rank"),
+            "reason": item.get("reason"),
+            "problem_type": item.get("problem_type"),
+            "problem_statement": item.get("problem_statement"),
+            "screenshot": item.get("screenshot"),
+            "power_original": item.get("power_original"),
+            "best_candidate": item.get("best_candidate"),
+            "second_candidate": item.get("second_candidate"),
+            "margin": item.get("margin"),
+            "resolution": None,
+        })
+        known.add(key)
+    return {
+        "schema": "sentinel.review_history.v1",
+        "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "open_count": sum(1 for item in items if item.get("status") == "OPEN"),
+        "resolved_count": sum(1 for item in items if item.get("status") == "RESOLVED"),
+        "items": items[-500:],
+    }
+
+
 def _suggested_action(review: dict[str, Any], trace: dict[str, Any] | None) -> str:
     reason = str(review.get("reason") or "")
     description = str(review.get("description") or "")
@@ -341,8 +507,16 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
     items = []
     for idx, review in enumerate(reviews, start=1):
         trace = _review_trace_for(review, trace_index)
+        review_id = f"REV-{idx:03d}"
+        problem_type = _problem_type(review, trace)
+        choices = _choice_list(trace)
         items.append({
-            "id": f"REV-{idx:03d}",
+            "id": review_id,
+            "problem_type": problem_type,
+            "problem_label": _problem_label(problem_type),
+            "problem_statement": _human_problem_statement(review_id, review, trace),
+            "confidence_label": _confidence_label(trace),
+            "choices": choices,
             "server": review.get("server"),
             "candidate_server": review.get("candidate_server"),
             "ranking_type": review.get("ranking_type"),
@@ -385,6 +559,25 @@ def _evidence_json(import_report: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+
+def _choice_rows(item: dict[str, Any]) -> str:
+    choices = item.get("choices") or []
+    if not choices:
+        return '<tr><td colspan="4" class="muted">No review choices recorded.</td></tr>'
+    rendered = []
+    for choice in choices:
+        value = _fmt_power(choice.get("value")) if choice.get("value") is not None else "Manuelle Eingabe"
+        reasons = ", ".join(str(v) for v in choice.get("reasons") or [])
+        rendered.append(f"""
+        <tr>
+          <td>{_e(choice.get('label') or '')}</td>
+          <td><b>{_e(value)}</b></td>
+          <td>{_num(choice.get('score'), 'n/a')}</td>
+          <td>{_e(reasons)}</td>
+        </tr>
+        """)
+    return "".join(rendered)
+
 def _evidence_cards(import_report: dict[str, Any]) -> str:
     items = _evidence_items(import_report)
     if not items:
@@ -397,15 +590,18 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
             img = f'<div class="screenshot-ref"><div class="label">Screenshot</div><a href="{_e(item.get("screenshot_path"))}">{_e(item.get("screenshot"))}</a></div>'
         cards.append(f"""
         <section class="card evidence-card" id="{_e(item.get('id'))}">
-          <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
+          <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label') or item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
+          <div class="action"><b>Problem:</b> {_e(item.get('problem_statement') or '')}</div>
           <div class="evidence-grid">
             <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · rank {_e(item.get('rank'))}</div></div>
-            <div><div class="label">Power</div><b>{_e(item.get('power_original') or 'n/a')}</b><div class="hint">selected {_e(item.get('power_selected') or 'n/a')}</div></div>
-            <div><div class="label">Best vs second</div><b>{_e(item.get('best_candidate') or 'n/a')} / {_e(item.get('second_candidate') or 'n/a')}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')}</div></div>
+            <div><div class="label">OCR / Original</div><b>{_e(_fmt_power(item.get('power_original')))}</b><div class="hint">selected {_e(_fmt_power(item.get('power_selected')))}</div></div>
+            <div><div class="label">Best vs second</div><b>{_e(_fmt_power(item.get('best_candidate')))} / {_e(_fmt_power(item.get('second_candidate')))}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')} · {_e(item.get('confidence_label') or '')}</div></div>
             <div><div class="label">Review status</div><b>{_e(item.get('review_ocr_status') or 'n/a')}</b><div class="hint">row recon {_e(item.get('row_reconstruction_status') or 'n/a')}</div></div>
             <div><div class="label">Trace</div><b>{_e(item.get('trace_status') or 'not bound')}</b><div class="hint">{_e(item.get('trace_source_file') or 'no trace source')} · candidates {_e(item.get('candidate_count') or 'n/a')}</div></div>
           </div>
           {img}
+          <div class="decision"><b>Needed decision:</b> Wähle einen Vorschlag, gib einen Wert manuell ein, oder lasse den Datensatz in Review.</div>
+          <details open><summary>Review choices</summary><div class="table-wrap small"><table><thead><tr><th>Option</th><th>Value</th><th>Score</th><th>Reason</th></tr></thead><tbody>{_choice_rows(item)}</tbody></table></div></details>
           <div class="decision"><b>Decision evidence:</b> {_e(item.get('decision_reason') or '')}</div>
           <div class="action"><b>Suggested action:</b> {_e(item.get('suggested_action') or '')}</div>
           <details><summary>Candidate details</summary><div class="table-wrap small"><table><thead><tr><th>#</th><th>Candidate</th><th>Score</th><th>Digit</th><th>Reasons</th></tr></thead><tbody>{_candidate_rows(trace)}</tbody></table></div></details>
@@ -497,18 +693,29 @@ def generate_command_center(
     import_report = _load_json(Path(import_report_path))
     ground_truth = _load_json(Path(ground_truth_report_path))
     inference = _load_json(Path(inference_report_path))
+    evidence_payload = _evidence_json(import_report)
+
+    history_path = Path(import_report_path).parent / "review_history.json"
+    existing_history = _load_json(history_path)
+    history_payload = _history_payload(existing_history, evidence_payload)
+    history_path.parent.mkdir(parents=True, exist_ok=True)
+    history_path.write_text(json.dumps(history_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     command_center = output_path / "command_center.html"
     review_dashboard = output_path / "review_dashboard.html"
     review_evidence_pack = output_path / "review_evidence_pack.html"
     review_evidence_json = output_path / "review_evidence_pack.json"
+    review_history_json = output_path / "review_history.json"
     command_center.write_text(render_command_center(import_report, ground_truth, inference), encoding="utf-8")
     review_dashboard.write_text(render_review_dashboard(import_report), encoding="utf-8")
     review_evidence_pack.write_text(render_review_evidence_pack(import_report), encoding="utf-8")
-    review_evidence_json.write_text(json.dumps(_evidence_json(import_report), ensure_ascii=False, indent=2), encoding="utf-8")
+    review_evidence_json.write_text(json.dumps(evidence_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    review_history_json.write_text(json.dumps(history_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return {
         "command_center": str(command_center),
         "review_dashboard": str(review_dashboard),
         "review_evidence_pack": str(review_evidence_pack),
         "review_evidence_json": str(review_evidence_json),
+        "review_history_json": str(review_history_json),
+        "review_history_store": str(history_path),
     }
