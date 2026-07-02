@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Version:** v0.9.5.51  
+**Version:** v0.9.5.52  
 **Status:** Living Document
 
 ---
@@ -159,3 +159,14 @@ The recovery layer may still generate candidates from known OCR digit confusions
 ## v0.9.5.51 recovery extension
 
 The recovery layer now treats OCR power errors as bidirectional. High explosions (`798M -> 198M`) and low truncations (`32M -> 320M`) both enter the same candidate-decision engine. Candidate generation is ranking-type aware, source-local, and margin-gated. Ground Truth does not power runtime decisions.
+
+
+## v0.9.5.52 recovery extension
+
+The recovery decision engine now includes two explicit guardrails:
+
+1. **Segment-order tie-breaker** – for close high-explosion THP candidates only, a candidate that better preserves prior/following rank order may be selected if the score gap is small and no order break exists.
+2. **Conservative low-truncation gate** – low/truncated THP recovery requires stronger digit preservation and candidate margin evidence. If `scale_x10` and `insert_zero` remain too close, the row is quarantined.
+
+These guardrails are intentionally source-local. They do not use screenshot filename order, upload order, or Ground Truth as runtime truth.
+

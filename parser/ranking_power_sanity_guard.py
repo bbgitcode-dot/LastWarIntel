@@ -360,6 +360,36 @@ def _score_power_recovery_candidates(
     return candidates
 
 
+def _candidate_order_strength(candidate: PowerRecoveryCandidate) -> int:
+    """Return a small, explainable segment-order score for a candidate.
+
+    v0.9.5.52 uses this only as a tie-breaker.  Context scoring can produce
+    near-ties for 7xxM rows where one candidate is slightly closer to the local
+    median but another candidate preserves the visible rank segment order.  We
+    prefer the order-consistent candidate only when scores are already close.
+    """
+    strength = 0
+    for reason in candidate.reasons:
+        if reason.startswith("fits_prior_neighbour_order") or reason.startswith("fits_following_neighbour_order"):
+            strength += 2
+        elif reason.startswith("near_prior_neighbour") or reason.startswith("near_following_neighbour"):
+            strength += 1
+        elif reason.startswith("breaks_prior_neighbour_order") or reason.startswith("breaks_following_neighbour_order"):
+            strength -= 3
+    return strength
+
+
+def _has_order_break(candidate: PowerRecoveryCandidate) -> bool:
+    return any(reason.startswith("breaks_") for reason in candidate.reasons)
+
+
+def _candidate_method(candidate: PowerRecoveryCandidate) -> str:
+    for reason in candidate.reasons:
+        if reason.startswith("ocr_error_model:"):
+            return reason.split(":", 1)[1]
+    return ""
+
+
 def _recover_context_power(
     row: dict[str, Any],
     *,
@@ -387,15 +417,68 @@ def _recover_context_power(
         observed=_power(row) or 0,
         source_powers=source_powers,
     )
+
+    if is_low_truncation:
+        # Low-truncation was the main risk introduced in .50/.51: it improved
+        # recall, but it can turn a row-gap into a confident false recovery.
+        # Keep single-candidate scale recoveries, but require a stronger margin
+        # when multiple digit-preserving candidates compete.
+        high_digit_alternative = any(
+            candidate is not best and candidate.digit_preservation_score >= 0.84
+            for candidate in candidates
+        )
+        if best.digit_preservation_score < 0.80 and high_digit_alternative:
+            return None, candidates, (
+                f"segment_digit_conflict:best={best.score:.3f};"
+                f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
+            )
+        if len(candidates) == 1 and best.score >= 0.75 and best.digit_preservation_score >= 0.80:
+            return best.value, candidates, (
+                f"selected_single_digit_preserving_candidate:score={best.score:.3f};"
+                f"digit={best.digit_preservation_score:.3f}"
+            )
+        if (
+            _candidate_method(best) == "scale_x10_truncated_digit"
+            and not _has_order_break(best)
+            and best.score >= 1.00
+            and margin >= 0.035
+            and best.digit_preservation_score >= 0.80
+        ):
+            return best.value, candidates, (
+                f"selected_segment_consistent_scale_candidate:score={best.score:.3f};"
+                f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
+            )
+        if best.score >= 0.75 and margin >= 0.05 and best.digit_preservation_score >= 0.80:
+            return best.value, candidates, (
+                f"selected_digit_preserving_candidate:score={best.score:.3f};"
+                f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
+            )
+        return None, candidates, f"ambiguous_low_truncation_candidates:best={best.score:.3f};margin={margin:.3f}"
+
+    # Segment-order tie-breaker for high OCR explosions.  This recovers rows
+    # that .51 quarantined because the OCR error-model and the local median
+    # disagreed by only ~0.02, while the second candidate preserved the visible
+    # rank segment ordering.  The guard remains conservative: no order-breaker is
+    # promoted and candidates must be close in absolute value and score.
+    if ranking_type == "total_hero_power" and len(candidates) > 1 and margin < 0.05:
+        scale = 1_000_000
+        best_order = _candidate_order_strength(best)
+        for candidate in candidates[1:]:
+            if candidate.score < best.score - 0.055:
+                continue
+            if abs(candidate.value - best.value) > 2 * scale:
+                continue
+            if _has_order_break(candidate):
+                continue
+            if _candidate_order_strength(candidate) >= best_order + 1 and candidate.score >= 0.65:
+                return candidate.value, candidates, (
+                    f"selected_segment_order_candidate:score={candidate.score:.3f};"
+                    f"margin={best.score - candidate.score:.3f};"
+                    f"order={_candidate_order_strength(candidate)}>{best_order}"
+                )
+
     if best.score >= 0.58 and margin >= 0.10:
         return best.value, candidates, f"selected_clear_candidate:score={best.score:.3f};margin={margin:.3f}"
-    if (
-        is_low_truncation
-        and best.score >= 0.75
-        and margin >= 0.025
-        and best.digit_preservation_score >= 0.80
-    ):
-        return best.value, candidates, f"selected_digit_preserving_candidate:score={best.score:.3f};margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
     return None, candidates, f"ambiguous_candidates:best={best.score:.3f};margin={margin:.3f}"
 
 
@@ -433,7 +516,7 @@ def _set_power(row: dict[str, Any], value: int) -> None:
         row["alliance_power"] = value
 
 
-# v0.9.5.49 intentionally removes the old leading-digit recovery decision path. v0.9.5.51 adds low-truncation candidates to the same decision engine.
+# v0.9.5.49 intentionally removes the old leading-digit recovery decision path. v0.9.5.52 adds segment-order tie-breaks and conservative low-truncation acceptance to the same decision engine.
 # Leading-digit transforms may still contribute candidate values, but no row may
 # be recovered unless the context candidate decision engine selects a clear
 # winner. Ambiguous candidates are quarantined for review.
@@ -464,7 +547,7 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_score"] = round(selected.score, 4)
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.51"
+        recovered["power_recovery_decision_version"] = "v0.9.5.52"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -476,7 +559,7 @@ def _apply_recovered_power(
         recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
     else:
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.51"
+        recovered["power_recovery_decision_version"] = "v0.9.5.52"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -700,7 +783,7 @@ def _mark_quarantined(
         quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
-        quarantined["power_recovery_decision_version"] = "v0.9.5.51"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.52"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)

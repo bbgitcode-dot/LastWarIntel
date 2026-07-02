@@ -1,8 +1,44 @@
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.51
+**Current Version:** v0.9.5.52
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
+
+---
+
+## v0.9.5.52 – Segment Order Recovery Guardrails
+
+### Focus
+
+Moves the recovery sprint from pure power scoring into segment integrity. v0.9.5.52 keeps the v0.9.5.51 digit-preserving model, but adds a conservative segment-order tie-breaker for close high-explosion candidates and tightens low-truncation acceptance so row-gap ambiguity does not become false Operational Truth.
+
+### Added
+
+- Segment-order tie-breaker for close 7xxM THP candidate margins.
+- Conservative low-truncation acceptance gate: multi-candidate low recovery now needs stronger digit preservation and margin evidence.
+- Candidate decision metadata updated to `v0.9.5.52`.
+- Regression coverage for Server 553-style close high-explosion candidates and low-truncation ambiguity.
+
+### Changed
+
+- High OCR explosions can recover a near-tie candidate when it better preserves visible rank-segment order.
+- Low/truncated THP candidates with close `scale_x10` vs `insert_zero` evidence are quarantined unless the segment is clearly consistent.
+- Recovery remains source-local and does not use screenshot filename order, upload order, or Ground Truth as runtime truth.
+
+### Validation
+
+```text
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_operational_import_repository.py tests/smoke/test_ground_truth_validator.py tests/smoke/test_inference_context_engine.py tests/smoke/test_sentinel_data_guard.py -q
+31 passed
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(recovery): add segment-order guardrails for power candidates"
+git tag -a v0.9.5.52 -m "v0.9.5.52 Segment Order Recovery Guardrails"
+```
 
 ---
 

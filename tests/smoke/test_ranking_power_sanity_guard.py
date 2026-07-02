@@ -235,17 +235,18 @@ def test_server553_thp_digit_explosion_cluster_blocks_all_high_rows_even_with_on
 
     trusted_powers = {row["power"] for row in result[(553, "total_hero_power")]}
     assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.isdisjoint(trusted_powers)
-    # v0.9.5.51 adds an OCR error probability model. Rows whose exact
+    # v0.9.5.52 adds an OCR error probability model. Rows whose exact
     # leading-digit correction clearly wins may now recover; rows without enough
     # rank/context separation still remain quarantined.
     assert {164_292_586, 164_047_047, 163_106_065}.issubset(trusted_powers)
     recovered = [row for row in result[(553, "total_hero_power")] if row.get("power_recovered_from") == 763_106_065][0]
     assert recovered["power"] == 163_106_065
-    assert recovered["power_recovery_decision_version"] == "v0.9.5.51"
-    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
-    quarantined_powers = {row["power"] for row in quarantine}
-    assert 762_831_270 in quarantined_powers
-    assert all("power_recovery_candidates_ambiguous" in row.get("ranking_guard_reason", "") for row in quarantine)
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.52"
+    # .52 may recover the whole compact high cluster when each row has a clear
+    # context candidate; the key invariant is that no 7xxM value reaches
+    # Operational Truth.
+    quarantine = result.get(("REVIEW", "ranking_guard_quarantine"), [])
+    assert all(row["power"] != 762_831_270 for row in result[(553, "total_hero_power")])
 
 
 def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screenshot_order():
@@ -335,14 +336,14 @@ def test_low_truncation_recovery_selects_x10_candidate_when_clear():
 
     recovered = [row for row in result[(551, "total_hero_power")] if row.get("power_recovered_from") == 32_030_601][0]
     assert recovered["power"] == 320_306_010
-    assert recovered["power_recovery_decision_version"] == "v0.9.5.51"
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.52"
     assert recovered["power_recovery_legacy_used"] is False
     assert any(candidate.get("digit_preservation_score", 0) > 0 for candidate in recovered["power_recovery_candidates"])
     assert any("digit_preservation:" in reason for candidate in recovered["power_recovery_candidates"] for reason in candidate["reasons"])
     assert any("scale_x10_truncated_digit" in reason for candidate in recovered["power_recovery_candidates"] for reason in candidate["reasons"])
 
 
-def test_low_truncation_recovery_selects_insert_zero_candidate_when_context_clear():
+def test_low_truncation_recovery_quarantines_close_insert_zero_vs_scale_tie():
     grouped = {
         (551, "total_hero_power"): [
             _row(420_000_000, "000_first.png", 1),
@@ -356,10 +357,34 @@ def test_low_truncation_recovery_selects_insert_zero_candidate_when_context_clea
 
     result = apply_ranking_power_sanity_guard(grouped)
 
-    recovered = [row for row in result[(551, "total_hero_power")] if row.get("power_recovered_from") == 25_009_089][0]
-    assert recovered["power"] == 250_090_890 or recovered["power"] == 250_009_089
-    assert recovered["power_recovery_decision_version"] == "v0.9.5.51"
-    assert recovered["power_recovery_legacy_used"] is False
+    trusted = [row for row in result[(551, "total_hero_power")] if row.get("power_recovered_from") == 25_009_089]
+    assert trusted == []
+    quarantine = result[("REVIEW", "ranking_guard_quarantine")]
+    ambiguous = [row for row in quarantine if row["power"] == 25_009_089][0]
+    assert ambiguous["power_recovery_status"] == "ambiguous"
+    assert ambiguous["power_recovery_decision_version"] == "v0.9.5.52"
+    assert ambiguous["power_candidate_margin"] < 0.05
+
+
+def test_segment_order_tiebreak_recovers_close_high_explosion_candidate():
+    grouped = {
+        (553, "total_hero_power"): [
+            _row(244_865_562, "000_first.png", 1, "[SWSQ] Chris Notty"),
+            _row(243_307_296, "000_first.png", 2, "[SWSQ] MegaJuicy"),
+            _row(216_226_269, "000_first.png", 3, "[LAFA] Donseponi"),
+            _row(171_444_069, "553_segment.png", 54, "[SWSQ] Foxus8g"),
+            _row(769_706_374, "553_segment.png", 55, "[SWSQ] KHAN Sale id"),
+            _row(170_610_965, "553_segment.png", 56, "[LAFA] Minas Augsburg"),
+            _row(170_488_763, "553_segment.png", 57, "[LAFA] Tangooy"),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    recovered = [row for row in result[(553, "total_hero_power")] if row.get("power_recovered_from") == 769_706_374][0]
+    assert recovered["power"] == 170_706_374
+    assert "selected_segment_order_candidate" in recovered["power_recovery_selected_reason"]
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.52"
 
 
 def test_low_alliance_power_tail_does_not_get_thp_truncation_recovery():

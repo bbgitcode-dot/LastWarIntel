@@ -2,7 +2,7 @@
 
 > Transforming observations into operational truth and explainable strategic intelligence.
 
-**Version:** v0.9.5.51
+**Version:** v0.9.5.52
 
 ---
 

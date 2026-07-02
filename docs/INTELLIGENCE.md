@@ -1,6 +1,6 @@
 # Sentinel Intelligence Concepts
 
-**Version:** v0.9.5.51
+**Version:** v0.9.5.52
 
 ---
 

@@ -4,6 +4,18 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.52] - Segment Order Recovery Guardrails
+
+### Added
+- Segment-order tie-breaker for close high-explosion THP candidate scores.
+- Conservative low-truncation ambiguity gate for `scale_x10` vs `insert_zero` candidate ties.
+- Regression coverage for Server 553 segment-order recovery and low-truncation quarantine behavior.
+
+### Changed
+- Recovery decision version updated to `v0.9.5.52`.
+- Low-truncation recovery now prefers quarantine over false confidence when digit evidence and segment order conflict.
+- Version updated to `0.9.5.52`.
+
 ## [0.9.5.51] - Digit-Preserving Power Recovery
 
 ### Added

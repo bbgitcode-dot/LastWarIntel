@@ -1,8 +1,8 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.51  
+**Current Version:** v0.9.5.52  
 **Sprint Type:** Digit-Preserving Power Recovery  
-**Runtime Baseline:** v0.9.5.51 – Digit-Preserving Power Recovery  
+**Runtime Baseline:** v0.9.5.52 – Segment Order Recovery Guardrails  
 **Current Phase:** Data Integrity Fortress / Operational Data Stability  
 **Next Planned Sprint:** v0.9.5.52 – Import Session and Segment Integrity
 
@@ -142,3 +142,10 @@ Observed result:
 ```text
 23 passed
 ```
+
+## v0.9.5.52 sprint result
+
+v0.9.5.52 keeps the candidate recovery architecture from .51 but shifts the active risk control from pure power scoring to segment integrity. The patch adds a segment-order tie-breaker for close high-explosion THP candidates and tightens low-truncation recovery so ambiguous `scale_x10`/`insert_zero` candidates are quarantined instead of forced into Operational Truth.
+
+The strategic takeaway from Server 549–553 remains: Power recovery is now explainable and safe enough to continue, but the next quality gains require better screenshot segment reconstruction, not broader heuristic recovery.
+

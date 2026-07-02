@@ -2,7 +2,7 @@
 
 > From screenshot import to trusted strategic decision support.
 
-**Current Version:** v0.9.5.51  
+**Current Version:** v0.9.5.52  
 **Current Phase:** Data Integrity Fortress
 
 ---

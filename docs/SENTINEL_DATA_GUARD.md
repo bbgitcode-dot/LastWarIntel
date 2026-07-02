@@ -1,6 +1,6 @@
 # Sentinel Data Guard – Die Integritätsschicht von Sentinel
 
-**Version:** v0.9.5.51
+**Version:** v0.9.5.52
 
 ---
 
@@ -72,4 +72,8 @@ Recovery darf Felder nur verändern, wenn die Veränderung nachvollziehbar und m
 ## Aktuelle Erweiterung
 
 v0.9.5.51 entfernt die letzte Legacy-Entscheidung der leading-digit recovery. Recovery darf Kandidaten erzeugen, aber nur bei klarem Kontext-Score und ausreichender Margin automatisch recovern. Ambiguität bleibt Quarantäne.
+
+## v0.9.5.52 Segment Guardrail
+
+Data Guard doctrine remains unchanged: candidate recovery may improve a field only when evidence is clear. Segment order can break close high-explosion ties, but low-truncation conflicts are quarantined when digit preservation and local rank context disagree.
 

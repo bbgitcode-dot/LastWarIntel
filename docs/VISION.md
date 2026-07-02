@@ -2,7 +2,7 @@
 
 > Building the strategic intelligence platform for Last War.
 
-**Version:** v0.9.5.51
+**Version:** v0.9.5.52
 
 ---
 

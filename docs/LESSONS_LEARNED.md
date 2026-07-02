@@ -1,6 +1,6 @@
 # Sentinel Lessons Learned
 
-**Version:** v0.9.5.51
+**Version:** v0.9.5.52
 
 ---
 
@@ -58,4 +58,15 @@ The next solution must use candidate scoring, not a single replacement rule.
 ## 7. Ground Truth remains essential
 
 Visual screenshot comparison and Ground Truth validation caught several false assumptions. Automated success status is not enough when recovered values are involved.
+---
+
+## 8. Segment order is evidence, but only as a tie-breaker
+
+Server 553 showed that close high-explosion candidates can differ by only one local bucket. In those cases, the visible rank segment can identify the safer candidate, but it must not override a large score gap or a hard order break.
+
+---
+
+## 9. Low-truncation recovery must stay conservative
+
+The 549–553 run proved that low THP truncation exists, but `scale_x10` and `insert_zero` candidates can be nearly indistinguishable. When digit preservation and segment order disagree, quarantine is preferable to a confident but wrong recovered value.
 
