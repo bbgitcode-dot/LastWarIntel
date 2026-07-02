@@ -1,5 +1,23 @@
 # Sentinel Lessons Learned
 
+**Version:** v0.9.5.57
+
+## 18. Evidence must bind to the real decision trace
+
+A review card without the candidate trace is only a label, not evidence. v0.9.5.57 showed that the data was often present but stored under a synthetic quarantine ranking type. Review UX must bridge that reporting indirection without changing Operational Truth.
+
+## 19. Fallback matching is acceptable for display, not for promotion
+
+Screenshot-local trace binding can safely improve explanation, but it must not become a hidden promotion path. Any fallback match used for UI evidence remains read-only until a separate audited review-resolution model exists.
+
+## 20. Review detail should be reachable by click path
+
+The Evidence Pack should eventually be a detail view inside the Command Center flow, not another loose artifact in the output folder. The top-level dashboard should answer “what happened?”; the detail page should answer “why is this row in review?”
+
+---
+
+# Sentinel Lessons Learned
+
 **Version:** v0.9.5.56
 
 ## 15. A dashboard is not the same as an evidence pack

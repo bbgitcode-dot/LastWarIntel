@@ -1,5 +1,22 @@
 # Sentinel Roadmap
 
+**Version:** v0.9.5.57
+
+## Current phase: Data Integrity Fortress / Evidence-Driven Review
+
+Recent milestone: v0.9.5.57 binds review evidence cards to the underlying recovery traces, including ambiguous candidate lists and margins. This makes individual review items explainable without opening raw JSON.
+
+Next planned direction:
+
+- Add crop/visual assets for each evidence item.
+- Integrate `review_evidence_pack.html` as a detail view reachable from the broader Command Center click path.
+- Design Manual Review Resolution with audit-safe overrides before making any UI editable.
+- Keep Command Center high-level and Evidence Pack item-centered.
+
+---
+
+# Sentinel Roadmap
+
 **Version:** v0.9.5.56
 
 ## Current phase: Data Integrity Fortress / Review Quality

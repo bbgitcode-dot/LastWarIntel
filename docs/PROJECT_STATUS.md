@@ -1,3 +1,17 @@
+**Current Version:** v0.9.5.57  
+**Runtime Baseline:** v0.9.5.57 – Evidence Trace Binding  
+**Sprint Focus:** Make Review Evidence Pack cards explain candidate decisions instead of showing empty trace fields.
+
+## v0.9.5.57 sprint result
+
+v0.9.5.56 created `review_evidence_pack.html` and `.json`, but targeted 554 review showed that some cards lacked `power_original`, best/second candidate, margin, and trace data. The issue was not missing recovery data; it was that review rows often represent expected ranking types while their detailed candidate traces are emitted under `ranking_guard_quarantine`.
+
+v0.9.5.57 adds conservative Evidence Trace Binding. Review cards first try exact trace matching, then screenshot-local fallback using rank, expected ranking type, `best=` and `margin=` hints from the review description. This keeps the Evidence Pack read-only while making review decisions understandable.
+
+The Command Center remains a run overview; the Evidence Pack becomes the detail surface. A later sprint should integrate this detail surface into the broader Command Center click path instead of treating it as a loose output file.
+
+Next likely sprint: Review crop assets / visual row evidence, or Manual Review Resolution Model once the evidence is complete enough.
+
 **Current Version:** v0.9.5.56  
 **Runtime Baseline:** v0.9.5.56 – Review Evidence Pack  
 **Sprint Focus:** Make review items actionable without expanding the Command Center into another noisy dashboard.

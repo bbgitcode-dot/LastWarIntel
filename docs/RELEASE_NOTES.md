@@ -1,3 +1,32 @@
+# Sentinel v0.9.5.57 – Evidence Trace Binding
+
+## Focus
+
+Make the Review Evidence Pack explain *why* a row is in review. v0.9.5.56 created evidence cards, but some cards had empty candidate fields because the review row described the expected ranking while the recovery trace lived under `ranking_guard_quarantine`. v0.9.5.57 binds these together conservatively.
+
+## Added
+
+- Trace binding between review items and `power_recovery.traces`.
+- Fallback matching by screenshot, rank, expected ranking type, best-score hint, and margin hint.
+- Evidence-card fields for trace status, trace source, candidate count, digit-preservation score, and candidate reasons.
+- Direct links from review tables to evidence-card anchors.
+
+## Guardrails
+
+- Evidence Trace Binding is read-only.
+- Fallback trace matching is only used for display evidence.
+- Operational Truth, quarantine state, and export rows are not changed.
+
+## Validation
+
+```text
+pytest tests/smoke/test_command_center.py -q
+2 passed
+python -m compileall -q services/command_center.py main.py version.py
+```
+
+---
+
 # Sentinel v0.9.5.56 – Review Evidence Pack
 
 ## Focus

@@ -110,11 +110,14 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
     if limit is not None:
         reviews = reviews[:limit]
     if not reviews:
-        return '<tr><td colspan="10" class="muted">No review items.</td></tr>'
+        return '<tr><td colspan="11" class="muted">No review items.</td></tr>'
     rendered = []
-    for item in reviews:
+    for idx, item in enumerate(reviews, start=1):
+        review_id = f"REV-{idx:03d}"
+        evidence_link = f'<a href="review_evidence_pack.html#{review_id}">{review_id}</a>'
         rendered.append(f"""
         <tr>
+          <td>{evidence_link}</td>
           <td>{_e(item.get('server') or '')}</td>
           <td>{_e(item.get('ranking_type') or '')}</td>
           <td>{_e(item.get('rank') or '')}</td>
@@ -128,7 +131,6 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
         </tr>
         """)
     return "".join(rendered)
-
 
 def _power_trace_rows(import_report: dict[str, Any], limit: int = 25) -> str:
     traces = list(((import_report.get("power_recovery") or {}).get("traces") or []))[:limit]
@@ -199,7 +201,7 @@ def _base_css() -> str:
 def _candidate_rows(trace: dict[str, Any]) -> str:
     candidates = trace.get("candidates") or []
     if not candidates:
-        return '<tr><td colspan="4" class="muted">No candidate list recorded.</td></tr>'
+        return '<tr><td colspan="5" class="muted">No candidate list recorded.</td></tr>'
     rendered = []
     for idx, candidate in enumerate(candidates[:8], start=1):
         reasons = ", ".join(str(v) for v in candidate.get("reasons") or [])
@@ -208,6 +210,7 @@ def _candidate_rows(trace: dict[str, Any]) -> str:
           <td>{idx}</td>
           <td><b>{_e(candidate.get('value') or '')}</b></td>
           <td>{_num(candidate.get('score'), '')}</td>
+          <td>{_num(candidate.get('digit_preservation_score'), '')}</td>
           <td>{_e(reasons)}</td>
         </tr>
         """)
@@ -222,22 +225,100 @@ def _trace_key(trace: dict[str, Any]) -> tuple[str, str, str]:
     )
 
 
-def _build_trace_index(import_report: dict[str, Any]) -> dict[tuple[str, str, str], dict[str, Any]]:
+def _build_trace_index(import_report: dict[str, Any]) -> dict[str, Any]:
+    """Build exact and screenshot-local indexes for power recovery traces.
+
+    Review rows may describe the user-facing expected ranking type while the
+    underlying trace was produced in the synthetic ranking_guard_quarantine
+    group.  Exact matching alone therefore drops the most useful evidence.
+    """
     traces = (import_report.get("power_recovery") or {}).get("traces") or []
-    index: dict[tuple[str, str, str], dict[str, Any]] = {}
+    exact: dict[tuple[str, str, str], dict[str, Any]] = {}
+    by_screenshot: dict[str, list[dict[str, Any]]] = {}
     for trace in traces:
-        index[_trace_key(trace)] = trace
-    return index
+        exact[_trace_key(trace)] = trace
+        by_screenshot.setdefault(str(trace.get("source_file") or ""), []).append(trace)
+    return {"exact": exact, "by_screenshot": by_screenshot}
 
 
-def _review_trace_for(review: dict[str, Any], trace_index: dict[tuple[str, str, str], dict[str, Any]]) -> dict[str, Any] | None:
+def _extract_numeric_hint(text: str, prefix: str) -> float | None:
+    marker = f"{prefix}="
+    if marker not in text:
+        return None
+    tail = text.split(marker, 1)[1]
+    value = []
+    for char in tail:
+        if char.isdigit() or char == ".":
+            value.append(char)
+        else:
+            break
+    try:
+        return float("".join(value)) if value else None
+    except ValueError:
+        return None
+
+
+def _trace_match_score(review: dict[str, Any], trace: dict[str, Any]) -> float:
+    score = 0.0
+    if str(review.get("screenshot") or "") == str(trace.get("source_file") or ""):
+        score += 4.0
+    if str(review.get("rank") or "") == str(trace.get("rank") or ""):
+        score += 2.0
+    review_type = str(review.get("ranking_type") or "")
+    expected_type = str(review.get("expected_ranking_type") or "")
+    trace_type = str(trace.get("ranking_type") or "")
+    if trace_type in {review_type, expected_type}:
+        score += 2.0
+    elif trace_type == "ranking_guard_quarantine" and review.get("reason") == "ranking_guard_quarantine":
+        score += 1.0
+
+    description = str(review.get("description") or "")
+    best_hint = _extract_numeric_hint(description, "best")
+    margin_hint = _extract_numeric_hint(description, "margin")
+    if best_hint is not None and trace.get("best_score") is not None:
+        if abs(float(trace.get("best_score")) - best_hint) < 0.01:
+            score += 2.0
+    if margin_hint is not None and trace.get("margin") is not None:
+        if abs(float(trace.get("margin")) - margin_hint) < 0.01:
+            score += 2.0
+    return score
+
+
+def _review_trace_for(review: dict[str, Any], trace_index: dict[str, Any]) -> dict[str, Any] | None:
+    exact = trace_index.get("exact") or {}
     key = (
         str(review.get("screenshot") or ""),
         str(review.get("ranking_type") or ""),
         str(review.get("rank") or ""),
     )
-    return trace_index.get(key)
+    if key in exact:
+        return exact[key]
 
+    expected_key = (
+        str(review.get("screenshot") or ""),
+        str(review.get("expected_ranking_type") or ""),
+        str(review.get("rank") or ""),
+    )
+    if expected_key in exact:
+        return exact[expected_key]
+
+    quarantine_key = (
+        str(review.get("screenshot") or ""),
+        "ranking_guard_quarantine",
+        str(review.get("rank") or ""),
+    )
+    if quarantine_key in exact:
+        return exact[quarantine_key]
+
+    candidates = list((trace_index.get("by_screenshot") or {}).get(str(review.get("screenshot") or ""), []))
+    if not candidates:
+        return None
+    ranked = sorted(((_trace_match_score(review, trace), trace) for trace in candidates), key=lambda item: item[0], reverse=True)
+    if ranked and ranked[0][0] >= 4.0:
+        return ranked[0][1]
+    if len(candidates) == 1:
+        return candidates[0]
+    return None
 
 def _suggested_action(review: dict[str, Any], trace: dict[str, Any] | None) -> str:
     reason = str(review.get("reason") or "")
@@ -283,6 +364,9 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "margin": trace.get("margin") if trace else None,
             "decision_reason": trace.get("decision_reason") if trace else review.get("description"),
             "suggested_action": _suggested_action(review, trace),
+            "trace_status": trace.get("status") if trace else None,
+            "trace_source_file": trace.get("source_file") if trace else None,
+            "candidate_count": trace.get("candidate_count") if trace else None,
             "trace": trace,
         })
     return items
@@ -312,18 +396,19 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
         if item.get("screenshot"):
             img = f'<div class="screenshot-ref"><div class="label">Screenshot</div><a href="{_e(item.get("screenshot_path"))}">{_e(item.get("screenshot"))}</a></div>'
         cards.append(f"""
-        <section class="card evidence-card">
+        <section class="card evidence-card" id="{_e(item.get('id'))}">
           <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
           <div class="evidence-grid">
             <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · rank {_e(item.get('rank'))}</div></div>
             <div><div class="label">Power</div><b>{_e(item.get('power_original') or 'n/a')}</b><div class="hint">selected {_e(item.get('power_selected') or 'n/a')}</div></div>
             <div><div class="label">Best vs second</div><b>{_e(item.get('best_candidate') or 'n/a')} / {_e(item.get('second_candidate') or 'n/a')}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')}</div></div>
             <div><div class="label">Review status</div><b>{_e(item.get('review_ocr_status') or 'n/a')}</b><div class="hint">row recon {_e(item.get('row_reconstruction_status') or 'n/a')}</div></div>
+            <div><div class="label">Trace</div><b>{_e(item.get('trace_status') or 'not bound')}</b><div class="hint">{_e(item.get('trace_source_file') or 'no trace source')} · candidates {_e(item.get('candidate_count') or 'n/a')}</div></div>
           </div>
           {img}
           <div class="decision"><b>Decision evidence:</b> {_e(item.get('decision_reason') or '')}</div>
           <div class="action"><b>Suggested action:</b> {_e(item.get('suggested_action') or '')}</div>
-          <details><summary>Candidate details</summary><div class="table-wrap small"><table><thead><tr><th>#</th><th>Candidate</th><th>Score</th><th>Reasons</th></tr></thead><tbody>{_candidate_rows(trace)}</tbody></table></div></details>
+          <details><summary>Candidate details</summary><div class="table-wrap small"><table><thead><tr><th>#</th><th>Candidate</th><th>Score</th><th>Digit</th><th>Reasons</th></tr></thead><tbody>{_candidate_rows(trace)}</tbody></table></div></details>
         </section>
         """)
     return "".join(cards)
@@ -375,7 +460,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <div class="notice">Data Quality remains the source of truth: this dashboard visualizes reports only. It does not change OCR, recovery, quarantine, or export decisions.</div>
 <h2>Server Overview</h2><section class="server-grid">{_server_cards(report)}</section>
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
-<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
+<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
 </main></body></html>"""
@@ -395,7 +480,7 @@ def render_review_dashboard(import_report: dict[str, Any] | None) -> str:
 {_metric_card('Import Review Count', report.get('import_review_count', 0), 'guard warnings')}
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
 </section>
-<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
+<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
 </main></body></html>"""
 
 

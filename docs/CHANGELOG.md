@@ -1,3 +1,21 @@
+## [0.9.5.57] - Evidence Trace Binding
+
+### Added
+
+- Review Evidence Pack now binds review rows to matching `power_recovery.traces` even when the trace was emitted under `ranking_guard_quarantine` rather than the expected ranking type.
+- Evidence cards now expose trace status, source file, candidate count, digit-preservation score, best/second candidate, margin, and candidate reasons where available.
+- Command Center and Review Dashboard review rows now link directly into the matching evidence card (`review_evidence_pack.html#REV-xxx`).
+- Smoke coverage for quarantine-trace binding by screenshot and ambiguous margin hints.
+
+### Changed
+
+- Evidence matching now uses exact keys first, then conservative screenshot-local fallback with rank, ranking type, best-score, and margin hints.
+- Version updated to `0.9.5.57`.
+
+### Guardrail
+
+- Trace binding is visualization only. It does not promote rows, alter export data, or resolve review items.
+
 ## [0.9.5.56] - Review Evidence Pack
 
 ### Added
