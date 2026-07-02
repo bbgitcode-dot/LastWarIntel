@@ -1,3 +1,37 @@
+# Sentinel v0.9.5.55 – Command Center MVP
+
+## Focus
+
+Make every run visually reviewable without opening raw JSON or Excel first. This is an observability sprint, not an OCR-core sprint.
+
+## Added
+
+- `output/command_center.html` with run summary, readiness, server cards, recovery counters, review rows, power traces, ground-truth metrics, and artifact links.
+- `output/review_dashboard.html` with the first table-oriented review surface for quarantine/review items.
+- `services.command_center` as a static HTML renderer.
+- Automatic dashboard generation at the end of `main.py`.
+- Smoke test coverage for dashboard generation.
+
+## Guardrails
+
+- The dashboard reads existing reports only:
+  - `data/latest_import_report.json`
+  - `benchmarks/ground_truth_validation_report.json`
+  - `benchmarks/inference_report.json`
+- No OCR logic is duplicated.
+- No manual review decision is written back to Operational Truth.
+- No screenshot filename/order/upload order is treated as truth.
+
+## Validation
+
+```text
+pytest tests/smoke/test_command_center.py -q
+1 passed
+python -m compileall -q services/command_center.py main.py version.py
+```
+
+---
+
 
 ---
 

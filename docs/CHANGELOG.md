@@ -1,3 +1,21 @@
+## [0.9.5.55] - Command Center MVP
+
+### Added
+
+- Static Sentinel Command Center generated after each import run.
+- Static Review Dashboard generated after each import run.
+- Report-driven HTML renderer in `services.command_center`.
+- Smoke coverage for dashboard generation from import, ground-truth, and inference reports.
+
+### Changed
+
+- `main.py` now writes `output/command_center.html` and `output/review_dashboard.html` after `data/latest_import_report.json`.
+- Version updated to `0.9.5.55`.
+
+### Guardrail
+
+- Command Center reads reports only; it does not duplicate OCR, recovery, Data Guard, or quarantine logic.
+
 
 ## [0.9.5.54] - Contextual Row Reconstruction
 

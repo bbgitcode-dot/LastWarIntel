@@ -1,5 +1,21 @@
 # Sentinel Roadmap
 
+**Version:** v0.9.5.55
+
+## Current phase: Data Integrity Fortress / Operational Observability
+
+Recent milestone: v0.9.5.55 adds a static Command Center and Review Dashboard so every run can be assessed visually from report artifacts.
+
+Next planned direction:
+
+- Review Center with row/image crops and zoomable evidence.
+- Better separation of dangerous quarantine, ambiguous recovery, and human-review-needed items.
+- Continue keeping Data Quality ahead of Intelligence.
+
+---
+
+# Sentinel Roadmap
+
 **Version:** v0.9.5.52
 
 ---

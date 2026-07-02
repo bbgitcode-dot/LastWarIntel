@@ -1,26 +1,27 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-02T09:23:41.863525+00:00",
-  "runtime_seconds": 2316.77,
-  "screenshots": 83,
+  "created_at": "2026-07-02T11:40:10.546916+00:00",
+  "runtime_seconds": 3406.03,
+  "screenshots": 99,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
     549,
     550,
     551,
     552,
-    553
+    553,
+    554
   ],
-  "server_count": 5,
-  "rows": 591,
+  "server_count": 6,
+  "rows": 724,
   "status": "Review",
   "readiness": 50,
-  "review_count": 324,
-  "review_item_count": 12,
-  "import_review_count": 324,
+  "review_count": 455,
+  "review_item_count": 13,
+  "import_review_count": 455,
   "data_guard": {
     "status": "Warning",
-    "warnings": 324,
+    "warnings": 455,
     "critical": 0,
     "checks": [
       "server_assignment",
@@ -34,14 +35,14 @@
     "attempts": 0,
     "success": 0,
     "calibrated_pass": 0,
-    "rejected": 12,
+    "rejected": 13,
     "confidence_avg": 0
   },
   "power_recovery": {
-    "candidate_traces": 36,
-    "recovered": 25,
+    "candidate_traces": 46,
+    "recovered": 35,
     "ambiguous": 11,
-    "confidence_avg": 0.7932,
+    "confidence_avg": 0.8074,
     "traces": [
       {
         "server": null,
@@ -165,117 +166,109 @@
       {
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-194308.png",
+        "source_file": "Screenshot_20260702-082010.png",
         "rank": 2,
-        "ocr_rank": null,
-        "name": "[kk7] 3arb Rlemow 驺",
-        "power_original": 77739565950,
-        "power_selected": 77739565950,
+        "ocr_rank": 8,
+        "name": "[TOs] tigris rte@R09#B Of shadow",
+        "power_original": 77756681920,
+        "power_selected": 77756681920,
         "status": "ambiguous",
         "method": "",
         "confidence": 0.0,
-        "candidate_count": 8,
-        "best_candidate": 10739565950,
-        "best_score": 0.9343,
-        "second_candidate": 9739565950,
-        "second_score": 0.918,
-        "margin": 0.0162,
+        "candidate_count": 9,
+        "best_candidate": 4756681920,
+        "best_score": 0.5501,
+        "second_candidate": 5756681920,
+        "second_score": 0.5132,
+        "margin": 0.0369,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
         "decision_version": "v0.9.5.52",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 10739565950,
-            "score": 0.9343,
+            "value": 4756681920,
+            "score": 0.5501,
             "reasons": [
-              "local_median_distance:0.378",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
+              "local_median_distance:0.036",
               "source_local_bucket_match",
               "non_top_alliance_context"
             ],
             "digit_preservation_score": 0.28
           },
           {
-            "value": 9739565950,
-            "score": 0.918,
+            "value": 5756681920,
+            "score": 0.5132,
             "reasons": [
-              "local_median_distance:0.436",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
+              "local_median_distance:0.167",
               "source_local_bucket_match",
               "non_top_alliance_context"
             ],
             "digit_preservation_score": 0.28
           },
           {
-            "value": 17739565950,
-            "score": 0.9121,
+            "value": 3756681920,
+            "score": 0.4933,
             "reasons": [
-              "local_median_distance:0.028",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
+              "local_median_distance:0.238",
               "source_local_bucket_match",
+              "non_top_alliance_context"
+            ],
+            "digit_preservation_score": 0.28
+          },
+          {
+            "value": 6756681920,
+            "score": 0.4564,
+            "reasons": [
+              "local_median_distance:0.370",
+              "source_local_bucket_match",
+              "non_top_alliance_context"
+            ],
+            "digit_preservation_score": 0.28
+          },
+          {
+            "value": 10756681920,
+            "score": 0.28,
+            "reasons": [
+              "local_median_distance:1.181",
+              "source_local_bucket_match",
+              "non_top_alliance_context"
+            ],
+            "digit_preservation_score": 0.28
+          },
+          {
+            "value": 20756681920,
+            "score": 0.28,
+            "reasons": [
+              "local_median_distance:3.209",
+              "source_local_bucket_match",
+              "non_top_alliance_context"
+            ],
+            "digit_preservation_score": 0.28
+          },
+          {
+            "value": 17756681920,
+            "score": 0.1,
+            "reasons": [
+              "local_median_distance:2.600",
               "non_top_alliance_context"
             ],
             "digit_preservation_score": 0.3273
           },
           {
-            "value": 25739565950,
-            "score": 0.9023,
+            "value": 27756681920,
+            "score": 0.1,
             "reasons": [
-              "local_median_distance:0.492",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 18739565950,
-            "score": 0.8959,
-            "reasons": [
-              "local_median_distance:0.086",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 27739565950,
-            "score": 0.8699,
-            "reasons": [
-              "local_median_distance:0.608",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
+              "local_median_distance:4.628",
               "non_top_alliance_context"
             ],
             "digit_preservation_score": 0.3273
           },
           {
-            "value": 3739565950,
-            "score": 0.8207,
+            "value": 37756681920,
+            "score": 0.1,
             "reasons": [
-              "local_median_distance:0.783",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 37739565950,
-            "score": 0.16,
-            "reasons": [
-              "local_median_distance:1.187",
-              "breaks_prior_neighbour_order",
-              "fits_following_neighbour_order",
+              "local_median_distance:6.656",
               "non_top_alliance_context"
             ],
             "digit_preservation_score": 0.3273
@@ -510,7 +503,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "Screenshot_20260701-194413.png",
-        "rank": 6,
+        "rank": 7,
         "ocr_rank": 3,
         "name": "[EWY] umar712233",
         "power_original": 798830284,
@@ -597,80 +590,142 @@
       {
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
-        "source_file": "2026-06-29 14_45_10-Window.png",
-        "rank": 7,
-        "ocr_rank": 8,
-        "name": "[IVE] MEITTi X 叫@1",
-        "power_original": 32030601,
-        "power_selected": 32030601,
+        "source_file": "Screenshot_20260702-082140.png",
+        "rank": 8,
+        "ocr_rank": null,
+        "name": "[KOLT] 5oh9o3588",
+        "power_original": 776246374,
+        "power_selected": 776246374,
         "status": "ambiguous",
         "method": "",
         "confidence": 0.0,
         "candidate_count": 5,
-        "best_candidate": 302030601,
-        "best_score": 0.8419,
-        "second_candidate": 320306010,
-        "second_score": 0.4974,
-        "margin": 0.3446,
+        "best_candidate": 176246374,
+        "best_score": 0.7136,
+        "second_candidate": 172246374,
+        "second_score": 0.6999,
+        "margin": 0.0137,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
         "decision_version": "v0.9.5.52",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 302030601,
-            "score": 0.8419,
+            "value": 176246374,
+            "score": 0.7136,
             "reasons": [
-              "local_median_distance:0.025",
+              "local_median_distance:0.023",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3289
+          },
+          {
+            "value": 172246374,
+            "score": 0.6999,
+            "reasons": [
+              "local_median_distance:0.000",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2578
+          },
+          {
+            "value": 171246374,
+            "score": 0.6983,
+            "reasons": [
+              "local_median_distance:0.006",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2578
+          },
+          {
+            "value": 170246374,
+            "score": 0.5767,
+            "reasons": [
+              "local_median_distance:0.012",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2578
+          },
+          {
+            "value": 276246374,
+            "score": 0.4111,
+            "reasons": [
+              "local_median_distance:0.603",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3289
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260702-082210.png",
+        "rank": 9,
+        "ocr_rank": 6,
+        "name": "[MBM] yochic Rfeoezome#A",
+        "power_original": 767730565,
+        "power_selected": 767730565,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 4,
+        "best_candidate": 167730565,
+        "best_score": 0.7124,
+        "second_candidate": 159730565,
+        "second_score": 0.6939,
+        "margin": 0.0185,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 167730565,
+            "score": 0.7124,
+            "reasons": [
+              "local_median_distance:0.027",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3289
+          },
+          {
+            "value": 159730565,
+            "score": 0.6939,
+            "reasons": [
+              "local_median_distance:0.022",
               "fits_prior_neighbour_order",
-              "digit_preservation:0.620",
-              "ocr_error_model:insert_zero"
+              "source_local_bucket_match"
             ],
-            "digit_preservation_score": 0.62
+            "digit_preservation_score": 0.2578
           },
           {
-            "value": 320306010,
-            "score": 0.4974,
+            "value": 158730565,
+            "score": 0.6922,
             "reasons": [
-              "local_median_distance:0.087",
-              "breaks_prior_neighbour_order",
-              "digit_preservation:0.840",
-              "ocr_error_model:scale_x10_truncated_digit"
+              "local_median_distance:0.028",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match"
             ],
-            "digit_preservation_score": 0.84
+            "digit_preservation_score": 0.2578
           },
           {
-            "value": 320030601,
-            "score": 0.4576,
+            "value": 267730565,
+            "score": -0.019,
             "reasons": [
-              "local_median_distance:0.086",
+              "local_median_distance:0.639",
               "breaks_prior_neighbour_order",
-              "digit_preservation:0.840",
-              "ocr_error_model:insert_zero"
+              "ocr_error_model:leading_digit_to_2"
             ],
-            "digit_preservation_score": 0.84
-          },
-          {
-            "value": 320300601,
-            "score": 0.3278,
-            "reasons": [
-              "local_median_distance:0.086",
-              "breaks_prior_neighbour_order",
-              "digit_preservation:0.800",
-              "ocr_error_model:low_truncation_candidate"
-            ],
-            "digit_preservation_score": 0.8
-          },
-          {
-            "value": 320306001,
-            "score": 0.3038,
-            "reasons": [
-              "local_median_distance:0.087",
-              "breaks_prior_neighbour_order",
-              "digit_preservation:0.700",
-              "ocr_error_model:low_truncation_candidate"
-            ],
-            "digit_preservation_score": 0.7
+            "digit_preservation_score": 0.3289
           }
         ]
       },
@@ -678,7 +733,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "2026-06-29 14_45_40-Window.png",
-        "rank": 8,
+        "rank": 10,
         "ocr_rank": null,
         "name": "[IVE] Kg Thunder 升孕)",
         "power_original": 25009089,
@@ -758,7 +813,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "2026-06-29 14_46_26-Window.png",
-        "rank": 9,
+        "rank": 11,
         "ocr_rank": null,
         "name": "[IVE] M0/X HUNI",
         "power_original": 23956100,
@@ -850,7 +905,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "2026-06-29 14_47_24-Window.png",
-        "rank": 10,
+        "rank": 12,
         "ocr_rank": null,
         "name": "瓯 Kriegspiel",
         "power_original": 21900298,
@@ -945,7 +1000,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "Screenshot_20260701-194413.png",
-        "rank": 11,
+        "rank": 13,
         "ocr_rank": null,
         "name": "[SWSQ] Sven the Van",
         "power_original": 20312700,
@@ -1021,125 +1076,6 @@
               "source_local_bucket_match",
               "digit_preservation:0.620",
               "ocr_error_model:low_truncation_candidate"
-            ],
-            "digit_preservation_score": 0.62
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "2026-06-28 13_34_46-Window.png",
-        "rank": 12,
-        "ocr_rank": null,
-        "name": "[WARF] Trigano47",
-        "power_original": 13683364,
-        "power_selected": 13683364,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 8,
-        "best_candidate": 136083364,
-        "best_score": 1.0704,
-        "second_candidate": 136833640,
-        "second_score": 1.0208,
-        "margin": 0.0497,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.52",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 136083364,
-            "score": 1.0704,
-            "reasons": [
-              "local_median_distance:0.006",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "digit_preservation:0.800",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.8
-          },
-          {
-            "value": 136833640,
-            "score": 1.0208,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "digit_preservation:0.920",
-              "ocr_error_model:scale_x10_truncated_digit"
-            ],
-            "digit_preservation_score": 0.92
-          },
-          {
-            "value": 136803364,
-            "score": 0.9567,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "digit_preservation:0.820",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.82
-          },
-          {
-            "value": 136833604,
-            "score": 0.9376,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "digit_preservation:0.740",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.74
-          },
-          {
-            "value": 136833064,
-            "score": 0.9328,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "digit_preservation:0.720",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.72
-          },
-          {
-            "value": 136830364,
-            "score": 0.9279,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "digit_preservation:0.700",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.7
-          },
-          {
-            "value": 130683364,
-            "score": 0.841,
-            "reasons": [
-              "local_median_distance:0.045",
-              "fits_prior_neighbour_order",
-              "digit_preservation:0.640",
-              "ocr_error_model:insert_zero"
-            ],
-            "digit_preservation_score": 0.64
-          },
-          {
-            "value": 103683364,
-            "score": 0.7809,
-            "reasons": [
-              "local_median_distance:0.242",
-              "fits_prior_neighbour_order",
-              "digit_preservation:0.620",
-              "ocr_error_model:insert_zero"
             ],
             "digit_preservation_score": 0.62
           }
@@ -1368,7 +1304,7 @@
         "server": 550,
         "ranking_type": "total_hero_power",
         "source_file": "2026-06-28 13_34_32-Window.png",
-        "rank": 41,
+        "rank": 50,
         "ocr_rank": null,
         "name": "[WARF] Prenns",
         "power_original": 13861884,
@@ -1480,6 +1416,86 @@
               "ocr_error_model:insert_zero"
             ],
             "digit_preservation_score": 0.62
+          }
+        ]
+      },
+      {
+        "server": 550,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_34_46-Window.png",
+        "rank": 57,
+        "ocr_rank": null,
+        "name": "[WARF] Trigano47",
+        "power_original": 13683364,
+        "power_selected": 136833640,
+        "status": "recovered",
+        "method": "total_hero_power_contextual_row_reconstruction",
+        "confidence": 1.09,
+        "candidate_count": 1,
+        "best_candidate": 136833640,
+        "best_score": 1.09,
+        "second_candidate": 136833640,
+        "second_score": 1.0208,
+        "margin": 1.09,
+        "decision_reason": "contextual_row_reconstruction:bounded_by_source_anchors;fits_anchor_power_gap;near_expected_gap_band;strong_digit_preservation:0.920;scale_x10_candidate;row_identity_present;source_file_present;not_duplicate_power",
+        "decision_strategy": "contextual_row_reconstruction",
+        "decision_version": "v0.9.5.54",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 136833640,
+            "score": 1.09,
+            "reasons": [
+              "bounded_by_source_anchors",
+              "fits_anchor_power_gap",
+              "near_expected_gap_band",
+              "strong_digit_preservation:0.920",
+              "scale_x10_candidate",
+              "row_identity_present",
+              "source_file_present",
+              "not_duplicate_power"
+            ],
+            "digit_preservation_score": 0.92
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_45_10-Window.png",
+        "rank": 2,
+        "ocr_rank": 8,
+        "name": "[IVE] MEITTi X 叫@1",
+        "power_original": 32030601,
+        "power_selected": 320306010,
+        "status": "recovered",
+        "method": "total_hero_power_contextual_row_reconstruction",
+        "confidence": 1.05,
+        "candidate_count": 1,
+        "best_candidate": 320306010,
+        "best_score": 1.05,
+        "second_candidate": 320306010,
+        "second_score": 0.4974,
+        "margin": 1.05,
+        "decision_reason": "contextual_row_reconstruction:bounded_by_source_anchors;fits_anchor_power_gap;near_expected_gap_band;digit_preservation:0.840;scale_x10_candidate;row_identity_present;source_file_present;not_duplicate_power",
+        "decision_strategy": "contextual_row_reconstruction",
+        "decision_version": "v0.9.5.54",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 320306010,
+            "score": 1.05,
+            "reasons": [
+              "bounded_by_source_anchors",
+              "fits_anchor_power_gap",
+              "near_expected_gap_band",
+              "digit_preservation:0.840",
+              "scale_x10_candidate",
+              "row_identity_present",
+              "source_file_present",
+              "not_duplicate_power"
+            ],
+            "digit_preservation_score": 0.84
           }
         ]
       },
@@ -2732,38 +2748,735 @@
             "digit_preservation_score": 0.3067
           }
         ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082120.png",
+        "rank": 10,
+        "ocr_rank": null,
+        "name": "[FMN] Bfe@2oce#E8 卜3夕",
+        "power_original": 788267493,
+        "power_selected": 188267493,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8341,
+        "candidate_count": 8,
+        "best_candidate": 188267493,
+        "best_score": 0.8341,
+        "second_candidate": 183267493,
+        "second_score": 0.6983,
+        "margin": 0.1358,
+        "decision_reason": "selected_clear_candidate:score=0.834;margin=0.136",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 188267493,
+            "score": 0.8341,
+            "reasons": [
+              "local_median_distance:0.021",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3067
+          },
+          {
+            "value": 183267493,
+            "score": 0.6983,
+            "reasons": [
+              "local_median_distance:0.006",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 182267493,
+            "score": 0.6968,
+            "reasons": [
+              "local_median_distance:0.011",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 184267493,
+            "score": 0.5798,
+            "reasons": [
+              "local_median_distance:0.001",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 186267493,
+            "score": 0.5771,
+            "reasons": [
+              "local_median_distance:0.010",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 187267493,
+            "score": 0.5756,
+            "reasons": [
+              "local_median_distance:0.016",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 181267493,
+            "score": 0.5753,
+            "reasons": [
+              "local_median_distance:0.017",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 288267493,
+            "score": 0.4222,
+            "reasons": [
+              "local_median_distance:0.563",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3067
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082120.png",
+        "rank": 14,
+        "ocr_rank": null,
+        "name": "[KOLT] SAMAT Bfeg2one#C8",
+        "power_original": 785383681,
+        "power_selected": 185383681,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8385,
+        "candidate_count": 8,
+        "best_candidate": 185383681,
+        "best_score": 0.8385,
+        "second_candidate": 184383681,
+        "second_score": 0.7,
+        "margin": 0.1385,
+        "decision_reason": "selected_clear_candidate:score=0.838;margin=0.138",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 185383681,
+            "score": 0.8385,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.2844
+          },
+          {
+            "value": 184383681,
+            "score": 0.7,
+            "reasons": [
+              "local_median_distance:0.000",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 183383681,
+            "score": 0.6985,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 182383681,
+            "score": 0.697,
+            "reasons": [
+              "local_median_distance:0.011",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 186383681,
+            "score": 0.577,
+            "reasons": [
+              "local_median_distance:0.011",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 181383681,
+            "score": 0.5754,
+            "reasons": [
+              "local_median_distance:0.016",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 187383681,
+            "score": 0.5754,
+            "reasons": [
+              "local_median_distance:0.016",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2578
+          },
+          {
+            "value": 285383681,
+            "score": 0.4266,
+            "reasons": [
+              "local_median_distance:0.548",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.2844
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082131.png",
+        "rank": 19,
+        "ocr_rank": null,
+        "name": "[FMN] brbts Rfeqo#8",
+        "power_original": 780754195,
+        "power_selected": 180754195,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8364,
+        "candidate_count": 6,
+        "best_candidate": 180754195,
+        "best_score": 0.8364,
+        "second_candidate": 178754195,
+        "second_score": 0.6995,
+        "margin": 0.1369,
+        "decision_reason": "selected_clear_candidate:score=0.836;margin=0.137",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 180754195,
+            "score": 0.8364,
+            "reasons": [
+              "local_median_distance:0.013",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3067
+          },
+          {
+            "value": 178754195,
+            "score": 0.6995,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2578
+          },
+          {
+            "value": 179754195,
+            "score": 0.6979,
+            "reasons": [
+              "local_median_distance:0.007",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 176754195,
+            "score": 0.6974,
+            "reasons": [
+              "local_median_distance:0.009",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 177754195,
+            "score": 0.5789,
+            "reasons": [
+              "local_median_distance:0.004",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 280754195,
+            "score": 0.4194,
+            "reasons": [
+              "local_median_distance:0.573",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3067
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082154.png",
+        "rank": 36,
+        "ocr_rank": null,
+        "name": "[TOS] KU NE Ko &e@709rU",
+        "power_original": 770207560,
+        "power_selected": 170207560,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8353,
+        "candidate_count": 6,
+        "best_candidate": 170207560,
+        "best_score": 0.8353,
+        "second_candidate": 167207560,
+        "second_score": 0.6997,
+        "margin": 0.1356,
+        "decision_reason": "selected_clear_candidate:score=0.835;margin=0.136",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 170207560,
+            "score": 0.8353,
+            "reasons": [
+              "local_median_distance:0.017",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3511
+          },
+          {
+            "value": 167207560,
+            "score": 0.6997,
+            "reasons": [
+              "local_median_distance:0.001",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.28
+          },
+          {
+            "value": 166207560,
+            "score": 0.578,
+            "reasons": [
+              "local_median_distance:0.007",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 169207560,
+            "score": 0.577,
+            "reasons": [
+              "local_median_distance:0.011",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 165207560,
+            "score": 0.5764,
+            "reasons": [
+              "local_median_distance:0.013",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 270207560,
+            "score": 0.408,
+            "reasons": [
+              "local_median_distance:0.614",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3511
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082210.png",
+        "rank": 40,
+        "ocr_rank": null,
+        "name": "[763] lchan Bfeg2oce#8",
+        "power_original": 767529557,
+        "power_selected": 167529557,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.7128,
+        "candidate_count": 4,
+        "best_candidate": 167529557,
+        "best_score": 0.7128,
+        "second_candidate": 159529557,
+        "second_score": 0.5735,
+        "margin": 0.1392,
+        "decision_reason": "selected_clear_candidate:score=0.713;margin=0.139",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 167529557,
+            "score": 0.7128,
+            "reasons": [
+              "local_median_distance:0.026",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3067
+          },
+          {
+            "value": 159529557,
+            "score": 0.5735,
+            "reasons": [
+              "local_median_distance:0.023",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 158529557,
+            "score": 0.5718,
+            "reasons": [
+              "local_median_distance:0.029",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 267529557,
+            "score": 0.4013,
+            "reasons": [
+              "local_median_distance:0.638",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3067
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082202.png",
+        "rank": 46,
+        "ocr_rank": null,
+        "name": "[MBM] Bdeeszoo#R ')RR",
+        "power_original": 763064567,
+        "power_selected": 164064567,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.6993,
+        "candidate_count": 4,
+        "best_candidate": 164064567,
+        "best_score": 0.6993,
+        "second_candidate": 163064567,
+        "second_score": 0.719,
+        "margin": -0.0196,
+        "decision_reason": "selected_segment_order_candidate:score=0.699;margin=0.020;order=2>1",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 163064567,
+            "score": 0.719,
+            "reasons": [
+              "local_median_distance:0.004",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3067
+          },
+          {
+            "value": 164064567,
+            "score": 0.6993,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 162064567,
+            "score": 0.5773,
+            "reasons": [
+              "local_median_distance:0.010",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 263064567,
+            "score": 0.41,
+            "reasons": [
+              "local_median_distance:0.607",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3067
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082210.png",
+        "rank": 52,
+        "ocr_rank": null,
+        "name": "[TOS] haru Bifeoezome#k UowoU",
+        "power_original": 760293871,
+        "power_selected": 160293871,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8348,
+        "candidate_count": 5,
+        "best_candidate": 160293871,
+        "best_score": 0.8348,
+        "second_candidate": 159293871,
+        "second_score": 0.6931,
+        "margin": 0.1417,
+        "decision_reason": "selected_clear_candidate:score=0.835;margin=0.142",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 160293871,
+            "score": 0.8348,
+            "reasons": [
+              "local_median_distance:0.018",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.3067
+          },
+          {
+            "value": 159293871,
+            "score": 0.6931,
+            "reasons": [
+              "local_median_distance:0.025",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 167293871,
+            "score": 0.5732,
+            "reasons": [
+              "local_median_distance:0.024",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 158293871,
+            "score": 0.5714,
+            "reasons": [
+              "local_median_distance:0.031",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 260293871,
+            "score": 0.4137,
+            "reasons": [
+              "local_median_distance:0.594",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.3067
+          }
+        ]
+      },
+      {
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260702-082301.png",
+        "rank": 78,
+        "ocr_rank": 5,
+        "name": "[MBM] /T2野郎",
+        "power_original": 749538818,
+        "power_selected": 150538818,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.6972,
+        "candidate_count": 7,
+        "best_candidate": 150538818,
+        "best_score": 0.6972,
+        "second_candidate": 149538818,
+        "second_score": 0.7191,
+        "margin": -0.0219,
+        "decision_reason": "selected_segment_order_candidate:score=0.697;margin=0.022;order=2>1",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.52",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 149538818,
+            "score": 0.7191,
+            "reasons": [
+              "local_median_distance:0.003",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ],
+            "digit_preservation_score": 0.2844
+          },
+          {
+            "value": 150538818,
+            "score": 0.6972,
+            "reasons": [
+              "local_median_distance:0.010",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 249538818,
+            "score": 0.3912,
+            "reasons": [
+              "local_median_distance:0.674",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ],
+            "digit_preservation_score": 0.2844
+          },
+          {
+            "value": 148538818,
+            "score": 0.279,
+            "reasons": [
+              "local_median_distance:0.003",
+              "breaks_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 147538818,
+            "score": 0.2771,
+            "reasons": [
+              "local_median_distance:0.010",
+              "breaks_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2356
+          },
+          {
+            "value": 146538818,
+            "score": 0.2753,
+            "reasons": [
+              "local_median_distance:0.017",
+              "breaks_following_neighbour_order",
+              "source_local_bucket_match"
+            ],
+            "digit_preservation_score": 0.2133
+          },
+          {
+            "value": 349538818,
+            "score": 0.27,
+            "reasons": [
+              "local_median_distance:1.345",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_3"
+            ],
+            "digit_preservation_score": 0.2844
+          }
+        ]
       }
     ]
   },
   "review_ocr": {
     "enabled": true,
-    "attempted": 12,
-    "promoted": 0,
-    "no_promotion": 12,
+    "attempted": 15,
+    "promoted": 2,
+    "no_promotion": 13,
     "skipped": 0,
-    "confidence_avg": 0,
+    "confidence_avg": 1.07,
     "strategy": "adaptive_row_crop_zoom_clahe_sharpen_voting"
+  },
+  "row_reconstruction": {
+    "enabled": true,
+    "attempted": 9,
+    "promoted": 2,
+    "no_promotion": 7,
+    "confidence_avg": 1.07,
+    "strategy": "source_local_anchor_bounded_gap_reconstruction"
   },
   "imports": [
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 12,
+      "rows": 13,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 12,
-      "screenshots": 10,
+      "review_count": 13,
+      "screenshots": 11,
       "source_files": [
         "2026-06-28 13_15_08-Window.png",
-        "2026-06-28 13_34_46-Window.png",
-        "2026-06-29 14_45_10-Window.png",
         "2026-06-29 14_45_40-Window.png",
         "2026-06-29 14_46_26-Window.png",
         "2026-06-29 14_47_24-Window.png",
         "Screenshot_20260701-003252.png",
         "Screenshot_20260701-003328.png",
-        "Screenshot_20260701-194308.png",
-        "Screenshot_20260701-194413.png"
+        "Screenshot_20260701-194413.png",
+        "Screenshot_20260702-082010.png",
+        "Screenshot_20260702-082020.png",
+        "Screenshot_20260702-082140.png",
+        "Screenshot_20260702-082210.png"
       ],
       "source": "REVIEW_ranking_guard_quarantine",
       "power_recovery_count": 0,
@@ -2824,16 +3537,17 @@
     {
       "server": 550,
       "ranking_type": "alliance_power",
-      "rows": 25,
+      "rows": 34,
       "status": "Review",
       "confidence": 90,
-      "review_count": 25,
-      "screenshots": 4,
+      "review_count": 34,
+      "screenshots": 5,
       "source_files": [
         "2026-06-28 13_32_15-Window.png",
         "2026-06-28 13_32_29-Window.png",
         "2026-06-28 13_32_41-Window.png",
-        "2026-06-28 13_32_57-Window.png"
+        "2026-06-28 13_32_57-Window.png",
+        "Screenshot_20260702-082028.png"
       ],
       "source": "550_alliance_power",
       "power_recovery_count": 0,
@@ -2843,11 +3557,11 @@
     {
       "server": 550,
       "ranking_type": "total_hero_power",
-      "rows": 57,
+      "rows": 67,
       "status": "Review",
       "confidence": 90,
-      "review_count": 20,
-      "screenshots": 9,
+      "review_count": 29,
+      "screenshots": 10,
       "source_files": [
         "2026-06-28 13_33_09-Window.png",
         "2026-06-28 13_33_23-Window.png",
@@ -2857,11 +3571,12 @@
         "2026-06-28 13_34_13-Window.png",
         "2026-06-28 13_34_32-Window.png",
         "2026-06-28 13_34_46-Window.png",
-        "2026-06-28 13_35_00-Window.png"
+        "2026-06-28 13_35_00-Window.png",
+        "Screenshot_20260702-082112.png"
       ],
       "source": "550_total_hero_power",
-      "power_recovery_count": 1,
-      "power_candidate_trace_count": 1,
+      "power_recovery_count": 2,
+      "power_candidate_trace_count": 2,
       "power_ambiguous_count": 0
     },
     {
@@ -2885,7 +3600,7 @@
     {
       "server": 551,
       "ranking_type": "total_hero_power",
-      "rows": 94,
+      "rows": 95,
       "status": "Review",
       "confidence": 90,
       "review_count": 45,
@@ -2908,8 +3623,8 @@
         "2026-06-29 14_49_13-Window.png"
       ],
       "source": "551_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
+      "power_recovery_count": 1,
+      "power_candidate_trace_count": 1,
       "power_ambiguous_count": 0
     },
     {
@@ -3002,6 +3717,50 @@
       "power_recovery_count": 15,
       "power_candidate_trace_count": 15,
       "power_ambiguous_count": 0
+    },
+    {
+      "server": 554,
+      "ranking_type": "alliance_power",
+      "rows": 25,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 25,
+      "screenshots": 3,
+      "source_files": [
+        "Screenshot_20260702-082010.png",
+        "Screenshot_20260702-082020.png",
+        "Screenshot_20260702-082043.png"
+      ],
+      "source": "554_alliance_power",
+      "power_recovery_count": 0,
+      "power_candidate_trace_count": 0,
+      "power_ambiguous_count": 0
+    },
+    {
+      "server": 554,
+      "ranking_type": "total_hero_power",
+      "rows": 87,
+      "status": "Review",
+      "confidence": 90,
+      "review_count": 87,
+      "screenshots": 11,
+      "source_files": [
+        "Screenshot_20260702-082057.png",
+        "Screenshot_20260702-082120.png",
+        "Screenshot_20260702-082131.png",
+        "Screenshot_20260702-082140.png",
+        "Screenshot_20260702-082154.png",
+        "Screenshot_20260702-082202.png",
+        "Screenshot_20260702-082210.png",
+        "Screenshot_20260702-082220.png",
+        "Screenshot_20260702-082231.png",
+        "Screenshot_20260702-082242.png",
+        "Screenshot_20260702-082301.png"
+      ],
+      "source": "554_total_hero_power",
+      "power_recovery_count": 8,
+      "power_candidate_trace_count": 8,
+      "power_ambiguous_count": 0
     }
   ],
   "reviews": [
@@ -3019,23 +3778,29 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
-      "server": 553,
+      "server": 554,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "alliance_power",
       "rank": 2,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.934;margin=0.016",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.550;margin=0.037",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194308.png",
+      "screenshot": "Screenshot_20260702-082010.png",
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 552,
@@ -3051,7 +3816,10 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 552,
@@ -3067,13 +3835,35 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
+    },
+    {
+      "server": 554,
+      "ranking_type": "alliance_power",
+      "expected_ranking_type": "alliance_power",
+      "rank": 5,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.00",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260702-082020.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 549,
       "ranking_type": "alliance_power",
       "expected_ranking_type": "unknown",
-      "rank": 5,
+      "rank": 6,
       "title": "Ranking Guard quarantine",
       "description": "ranking_type_conflict:missing_alliance_name",
       "severity": "warning",
@@ -3083,13 +3873,16 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 6,
+      "rank": 7,
       "title": "Ranking Guard quarantine",
       "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.459;margin=0.001",
       "severity": "warning",
@@ -3099,29 +3892,54 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
-      "server": 551,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 7,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;segment_digit_conflict:best=0.842;margin=0.345;digit=0.620",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_45_10-Window.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
-    },
-    {
-      "server": 551,
+      "server": 554,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 8,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.714;margin=0.014",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260702-082140.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
+    },
+    {
+      "server": 554,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 9,
+      "title": "Ranking Guard quarantine",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.712;margin=0.019",
+      "severity": "warning",
+      "action": "Review row ranking-type assignment",
+      "reason": "ranking_guard_quarantine",
+      "screenshot": "Screenshot_20260702-082210.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
+    },
+    {
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 10,
       "title": "Ranking Guard quarantine",
       "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_low_truncation_candidates:best=0.934;margin=0.026",
       "severity": "warning",
@@ -3131,13 +3949,16 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 551,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 9,
+      "rank": 11,
       "title": "Ranking Guard quarantine",
       "description": "power_sanity:power_recovery_candidates_ambiguous;segment_digit_conflict:best=1.032;margin=0.217;digit=0.640",
       "severity": "warning",
@@ -3147,13 +3968,16 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 551,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 10,
+      "rank": 12,
       "title": "Ranking Guard quarantine",
       "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_low_truncation_candidates:best=1.120;margin=0.021",
       "severity": "warning",
@@ -3163,13 +3987,16 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     },
     {
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 11,
+      "rank": 13,
       "title": "Ranking Guard quarantine",
       "description": "power_sanity:power_recovery_candidates_ambiguous;segment_digit_conflict:best=1.042;margin=0.024;digit=0.680",
       "severity": "warning",
@@ -3179,36 +4006,23 @@
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
-    },
-    {
-      "server": 550,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 12,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_low_truncation_candidates:best=1.070;margin=0.050",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_34_46-Window.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0
+      "review_ocr_score": 0.0,
+      "row_reconstruction_status": "no_promotion",
+      "row_reconstruction_reason": "",
+      "row_reconstruction_score": 0.0
     }
   ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "83 screenshots · 5 servers · 591 rows · 2316.77s",
+      "detail": "99 screenshots · 6 servers · 724 rows · 3406.03s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "324 review item(s) detected",
+      "detail": "455 review item(s) detected",
       "severity": "warning"
     }
   ]

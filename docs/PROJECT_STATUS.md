@@ -1,3 +1,15 @@
+**Current Version:** v0.9.5.55  
+**Runtime Baseline:** v0.9.5.55 – Command Center MVP  
+**Sprint Focus:** Make run outcomes visible through static dashboards generated from existing reports.
+
+## v0.9.5.55 sprint result
+
+v0.9.5.55 adds the first operational Command Center. After `main.py` writes the import report, Sentinel now generates `output/command_center.html` and `output/review_dashboard.html`. The dashboards summarize readiness, Data Guard status, server/ranking groups, power recovery traces, review items, and ground-truth metrics.
+
+This sprint intentionally leaves OCR, Recovery, Data Guard, Ranking Guard, and Row Reconstruction untouched. The dashboards are report-driven views only. This preserves report artifacts as the single source of truth while making the result of a long import run understandable in seconds.
+
+Next likely sprint: Review Center with crop/image evidence and richer manual review ergonomics.
+
 **Current Version:** v0.9.5.54  
 **Runtime Baseline:** v0.9.5.54 – Contextual Row Reconstruction  
 **Sprint Focus:** Review rows can now be promoted only when source-local anchor rows bound a safe reconstructed row.

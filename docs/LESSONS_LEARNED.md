@@ -1,5 +1,19 @@
 # Sentinel Lessons Learned
 
+**Version:** v0.9.5.55
+
+## 13. Run observability is part of data quality
+
+A trustworthy pipeline is not enough if its state can only be understood by reading JSON and Excel manually. v0.9.5.55 adds a report-driven Command Center so the Proud Owner can see readiness, recoveries, review items, and guard state immediately after a run.
+
+## 14. Dashboards must not become a second truth source
+
+The Command Center reads existing report artifacts only. It does not re-score, re-rank, OCR, recover, or promote anything. This prevents UI drift from Operational Truth and keeps Data Guard as the authority.
+
+---
+
+# Sentinel Lessons Learned
+
 **Version:** v0.9.5.54
 
 ## 10. Review OCR is necessary but not sufficient

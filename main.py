@@ -13,6 +13,7 @@ from parser.ranking_power_sanity_guard import apply_ranking_power_sanity_guard
 from parser.review_ocr import run_adaptive_review_ocr
 from parser.quality_loop import run_server_quality_loop
 from services.import_repository import JsonImportRunRepository, build_import_run_report
+from services.command_center import generate_command_center
 from parser.debug import draw_debug_boxes
 from parser.ranking import (
     parse_ranking_rows,
@@ -224,6 +225,9 @@ def main():
     import_report = build_import_run_report(final_grouped, screenshots=len(screenshots), runtime_seconds=duration, output_file=output_file)
     JsonImportRunRepository().save_latest_import(import_report)
     print("Import report geschrieben nach data/latest_import_report.json")
+    command_center_files = generate_command_center()
+    print(f"Command Center geschrieben nach {command_center_files['command_center']}")
+    print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
     print(f"\nRuntime: {duration:.2f}s")
 
 
