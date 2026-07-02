@@ -16,144 +16,158 @@
     </div>
 </header>
 
-<main class="command-grid">
-    <section class="panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Human Decision Required</h2>
-                <p>Data Guard has protected Operational Truth. Pick a candidate or enter the correct value manually.</p>
+<main class="command-grid review-workspace-grid">
+    <div class="review-main-column">
+        <section class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Human Decision Required</h2>
+                    <p>Data Guard has protected Operational Truth. Pick a candidate or enter the correct value manually.</p>
+                </div>
+                <a class="panel-badge" href="/reviews">BACK TO REVIEWS</a>
             </div>
-            <a class="panel-badge" href="/reviews">BACK TO REVIEWS</a>
-        </div>
-        <div class="review-detail-grid">
-            <div class="page-link-card">
-                <strong>Server</strong>
-                <span>{{ item.server or '—' }}</span>
+            <div class="review-detail-grid review-context-grid">
+                <div class="page-link-card">
+                    <strong>Server</strong>
+                    <span>{{ item.server or '—' }}</span>
+                </div>
+                <div class="page-link-card">
+                    <strong>Ranking</strong>
+                    <span>{{ item.ranking_type }} · Rank {{ item.rank }}</span>
+                </div>
+                <div class="page-link-card screenshot-link-card">
+                    <strong>Screenshot</strong>
+                    {% if item.screenshot_url %}
+                    <a class="screenshot-open-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">📷 {{ item.screenshot }} ↗</a>
+                    <span>Open source evidence in a new tab</span>
+                    {% else %}
+                    <span>No screenshot reference</span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="page-link-card">
-                <strong>Ranking</strong>
-                <span>{{ item.ranking_type }} · Rank {{ item.rank }}</span>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Review Choices</h2>
+                    <p>These are the available decisions for this review.</p>
+                </div>
+                <span class="panel-badge">{{ item.choices|length }} OPTIONS</span>
             </div>
-            <div class="page-link-card screenshot-link-card">
-                <strong>Screenshot</strong>
-                {% if item.screenshot_url %}
-                <a class="screenshot-open-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">📷 {{ item.screenshot }} ↗</a>
-                <span>Open source evidence in a new tab</span>
+            <div class="review-detail-grid review-choice-grid">
+                {% for choice in item.choices or [] %}
+                <article class="review-choice-card">
+                    <strong>{{ choice.label }}</strong>
+                    <span>{% if choice.value %}{{ choice.value }}{% else %}Manual input required{% endif %}</span>
+                    {% if choice.score is not none %}<span>Score {{ choice.score }}</span>{% endif %}
+                    {% if choice.reasons %}<span>{{ choice.reasons|join(', ') }}</span>{% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Resolve Review</h2>
+                    <p>This stores an auditable human decision. It does not directly modify Operational Truth or exports.</p>
+                </div>
+            </div>
+            <form class="review-resolution-form" method="post" action="/reviews/{{ item.history_key }}/resolve">
+                <div class="form-row">
+                    <label>Entscheidung</label>
+                    <select name="selected_choice">
+                        <option value="">Manuelle Eingabe / keine Kandidatenwahl</option>
+                        {% for choice in item.choices or [] %}
+                            {% if choice.kind != 'manual_input' %}
+                            <option value="{{ choice.label }}">{{ choice.label }}{% if choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row compact-inputs">
+                    <input name="manual_value" placeholder="Manueller Power-Wert">
+                    <input name="manual_name" placeholder="Name korrigieren">
+                    <input name="manual_alliance" placeholder="Allianz korrigieren">
+                </div>
+                <div class="form-row compact-inputs">
+                    <input name="reviewer" placeholder="Reviewer">
+                    <input name="comment" placeholder="Kommentar / Begründung">
+                    <button type="submit">Als RESOLVED speichern</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Warum?</h2>
+                    <p>Explainability bullets written for the human reviewer.</p>
+                </div>
+            </div>
+            <div class="attention-list">
+                {% for bullet in item.why_bullets or [] %}
+                <article class="attention-item attention-warning">
+                    <div class="attention-severity"></div>
+                    <div><p>{{ bullet }}</p></div>
+                </article>
                 {% else %}
-                <span>No screenshot reference</span>
+                <article class="attention-item attention-info">
+                    <div class="attention-severity"></div>
+                    <div><p>No explainability bullets recorded.</p></div>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Explainability Trace</h2>
+                    <p>Decision path from OCR evidence to Human Review.</p>
+                </div>
+            </div>
+            <div class="trace-list">
+                {% for step in item.explainability_steps or [] %}
+                <article class="trace-step-card">
+                    <strong>{{ step.stage }} · {{ step.status }}</strong>
+                    <span>{{ step.detail }}</span>
+                </article>
+                {% else %}
+                <article class="trace-step-card"><strong>No trace</strong><span>No detailed trace is available for this review.</span></article>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <aside class="review-evidence-column">
+        <section class="panel screenshot-evidence-panel compact-preview-panel">
+            <div class="panel-header compact">
+                <div>
+                    <h2>Screenshot Evidence</h2>
+                    <p>Target rank is highlighted. Open the original in a new tab for full resolution.</p>
+                </div>
+                {% if item.screenshot_url %}<a class="panel-badge" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">OPEN SCREENSHOT ↗</a>{% endif %}
+            </div>
+            {% if item.screenshot_url %}
+            <a class="screenshot-preview-link screenshot-highlight-shell" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer" aria-label="Open screenshot evidence for {{ item.review_id }} in a new tab">
+                <img class="screenshot-preview screenshot-preview-compact" src="{{ item.screenshot_url }}" alt="Screenshot evidence for {{ item.review_id }}">
+                {% if item.rank_highlight_style %}
+                <span class="rank-highlight-overlay" style="{{ item.rank_highlight_style }}">
+                    <span class="rank-highlight-badge">Rank {{ item.rank }}</span>
+                </span>
                 {% endif %}
+            </a>
+            <div class="screenshot-meta-grid">
+                <div><strong>Target</strong><span>{{ item.ranking_type }} · Rank {{ item.rank }}</span></div>
+                <div><strong>File</strong><span>{{ item.screenshot }}</span></div>
+                <div><strong>Action</strong><span>Click preview to open full resolution.</span></div>
             </div>
-        </div>
-    </section>
-
-    <section class="panel screenshot-evidence-panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Screenshot Evidence</h2>
-                <p>The original screenshot is the primary source for manual review. Open it in a new tab when deciding.</p>
-            </div>
-            {% if item.screenshot_url %}<a class="panel-badge" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">OPEN SCREENSHOT ↗</a>{% endif %}
-        </div>
-        {% if item.screenshot_url %}
-        <a class="screenshot-preview-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">
-            <img class="screenshot-preview" src="{{ item.screenshot_url }}" alt="Screenshot evidence for {{ item.review_id }}">
-        </a>
-        {% else %}
-        <div class="screenshot-missing">No screenshot reference available for this review.</div>
-        {% endif %}
-    </section>
-
-    <section class="panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Review Choices</h2>
-                <p>These are the available decisions for this review.</p>
-            </div>
-            <span class="panel-badge">{{ item.choices|length }} OPTIONS</span>
-        </div>
-        <div class="review-detail-grid">
-            {% for choice in item.choices or [] %}
-            <article class="review-choice-card">
-                <strong>{{ choice.label }}</strong>
-                <span>{% if choice.value %}{{ choice.value }}{% else %}Manual input required{% endif %}</span>
-                {% if choice.score is not none %}<span>Score {{ choice.score }}</span>{% endif %}
-                {% if choice.reasons %}<span>{{ choice.reasons|join(', ') }}</span>{% endif %}
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Resolve Review</h2>
-                <p>This stores an auditable human decision. It does not directly modify Operational Truth or exports.</p>
-            </div>
-        </div>
-        <form class="review-resolution-form" method="post" action="/reviews/{{ item.history_key }}/resolve">
-            <div class="form-row">
-                <label>Entscheidung</label>
-                <select name="selected_choice">
-                    <option value="">Manuelle Eingabe / keine Kandidatenwahl</option>
-                    {% for choice in item.choices or [] %}
-                        {% if choice.kind != 'manual_input' %}
-                        <option value="{{ choice.label }}">{{ choice.label }}{% if choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-row compact-inputs">
-                <input name="manual_value" placeholder="Manueller Power-Wert">
-                <input name="manual_name" placeholder="Name korrigieren">
-                <input name="manual_alliance" placeholder="Allianz korrigieren">
-            </div>
-            <div class="form-row compact-inputs">
-                <input name="reviewer" placeholder="Reviewer">
-                <input name="comment" placeholder="Kommentar / Begründung">
-                <button type="submit">Als RESOLVED speichern</button>
-            </div>
-        </form>
-    </section>
-
-    <section class="panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Warum?</h2>
-                <p>Explainability bullets written for the human reviewer.</p>
-            </div>
-        </div>
-        <div class="attention-list">
-            {% for bullet in item.why_bullets or [] %}
-            <article class="attention-item attention-warning">
-                <div class="attention-severity"></div>
-                <div><p>{{ bullet }}</p></div>
-            </article>
             {% else %}
-            <article class="attention-item attention-info">
-                <div class="attention-severity"></div>
-                <div><p>No explainability bullets recorded.</p></div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="panel">
-        <div class="panel-header compact">
-            <div>
-                <h2>Explainability Trace</h2>
-                <p>Decision path from OCR evidence to Human Review.</p>
-            </div>
-        </div>
-        <div class="trace-list">
-            {% for step in item.explainability_steps or [] %}
-            <article class="trace-step-card">
-                <strong>{{ step.stage }} · {{ step.status }}</strong>
-                <span>{{ step.detail }}</span>
-            </article>
-            {% else %}
-            <article class="trace-step-card"><strong>No trace</strong><span>No detailed trace is available for this review.</span></article>
-            {% endfor %}
-        </div>
-    </section>
+            <div class="screenshot-missing">No screenshot reference available for this review.</div>
+            {% endif %}
+        </section>
+    </aside>
 </main>
 {% endblock %}

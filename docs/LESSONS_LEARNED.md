@@ -200,3 +200,11 @@ Static output pages are useful run artifacts, but they should not compete with t
 A human reviewer should never have to hunt for the source screenshot. The screenshot is the primary evidence behind any review decision, so filename-only display is insufficient. Review pages should link directly to the evidence, open it in a separate tab, and make the visual source obvious without breaking Data Guard separation.
 
 Screenshot links must be treated as UI evidence links, not truth. They help the human decide; they do not alter Operational Truth or bypass quarantine.
+
+## v0.9.5.64 - Evidence Should Guide, Not Overwhelm
+
+Showing the screenshot inline is useful, but a full-width screenshot can dominate the review page and hide the actual decision controls. Human Review works best when the evidence is immediately visible, compact, and anchored to the problem.
+
+Rank highlighting is a major usability gain because the reviewer no longer has to search the whole image manually. It must remain an overlay and an aid, not a source of truth. The original screenshot and Data Guard decision remain authoritative until a human explicitly resolves the review.
+
+Patch notes also need their own durable home. Consolidating patch summaries into `/docs/PATCH_SUMMARY.md` prevents release knowledge from becoming scattered across root-level files.

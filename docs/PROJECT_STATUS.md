@@ -286,3 +286,13 @@ v0.9.5.63 closes a visible Human Review usability gap found after v0.9.5.62: Rev
 This sprint does not change extraction, recovery, Data Guard, Ranking Guard, or Operational Truth. It improves the operator's ability to resolve reviews quickly and safely by keeping the original screenshot one click away.
 
 Next likely focus: continue Human Review workflow hardening by improving review queue navigation, previous/next review movement, and eventually guarded application of resolved review decisions.
+
+## Current Status - v0.9.5.64
+
+v0.9.5.64 improves the Human Review Detail experience after the first screenshot-preview implementation proved directionally correct but too visually dominant. The detail page now separates decision work from visual evidence: problem statement, choices, resolution form, why-bullets, and trace remain in the main column while screenshot evidence sits in a compact sticky side column.
+
+The target rank is now highlighted directly on the screenshot preview. This is intentionally a UI overlay, not a data decision. It helps the reviewer find the relevant row faster while preserving the original screenshot as the source of evidence and keeping Data Guard in control of Operational Truth.
+
+This sprint also consolidates the historical `PATCH_SUMMARY_v...md` files into `/docs/PATCH_SUMMARY.md`. Going forward, patch-summary history should be maintained there rather than scattered across standalone files.
+
+Recommended next focus: refine review queue flow with previous/next navigation and begin connecting resolved review decisions to a guarded Manual Override Engine without silently mutating exports.

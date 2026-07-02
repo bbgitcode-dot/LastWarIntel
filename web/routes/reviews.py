@@ -48,9 +48,41 @@ def _screenshot_url(filename: str | None) -> str:
     return f"/screenshots/{name}"
 
 
+def _rank_highlight_style(item: dict[str, Any]) -> str:
+    """Return a conservative screenshot overlay for the reviewed rank.
+
+    The first implementation intentionally uses ranking-type row heuristics instead
+    of OCR-dependent geometry. It gives the reviewer an immediate visual anchor
+    while keeping the original screenshot untouched and fully auditable.
+    """
+    try:
+        rank = int(item.get("rank") or 0)
+    except (TypeError, ValueError):
+        rank = 0
+    if rank <= 0:
+        return ""
+
+    ranking_type = str(item.get("ranking_type") or "").lower()
+    if ranking_type == "alliance_power":
+        top_pct = 26.5 + (rank - 1) * 9.2
+        height_pct = 8.2
+    elif ranking_type == "total_hero_power":
+        top_pct = 18.5 + (rank - 1) * 6.25
+        height_pct = 5.6
+    else:
+        top_pct = 22.0 + (rank - 1) * 7.0
+        height_pct = 6.5
+
+    # Keep the badge visible even when the target row is outside the current crop.
+    top_pct = max(4.0, min(top_pct, 91.0))
+    height_pct = max(4.0, min(height_pct, 12.0))
+    return f"top:{top_pct:.2f}%;height:{height_pct:.2f}%;"
+
+
 def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched = dict(item)
     enriched["screenshot_url"] = _screenshot_url(enriched.get("screenshot"))
+    enriched["rank_highlight_style"] = _rank_highlight_style(enriched)
     return enriched
 
 

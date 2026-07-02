@@ -1307,3 +1307,23 @@ Focus: make visual evidence directly reachable from the Review Center and Review
 ### Validation
 - Added smoke coverage for screenshot links, preview markup, and the `/screenshots` static mount.
 - Version updated to `0.9.5.63`.
+
+## v0.9.5.64 - Review Evidence Highlight Overlay
+
+Focus: make Review Detail faster for human operators by reducing screenshot dominance and visually highlighting the affected rank.
+
+### Added
+- Two-column Review Detail layout: decision workflow on the left, screenshot evidence on the right.
+- Compact screenshot preview that keeps the review problem, candidates, and resolve form visible.
+- Target-rank highlight overlay on screenshot previews using the review's rank and ranking type.
+- Screenshot evidence metadata panel showing target ranking, filename, and full-resolution action.
+- Consolidated `/docs/PATCH_SUMMARY.md` as the canonical patch-summary register for future releases.
+
+### Guardrails
+- The overlay is a UI guide only. It does not crop, mutate, reinterpret, or replace the source screenshot.
+- The original screenshot remains available through an open-in-new-tab link.
+- OCR, Data Guard, Ranking Guard, recovery, quarantine, Operational Truth, and Excel exports remain unchanged.
+
+### Validation
+- Extended smoke coverage for Review Detail layout, rank highlight markup, and rank highlight URL enrichment.
+- Version updated to `0.9.5.64`.

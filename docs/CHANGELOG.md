@@ -323,3 +323,14 @@ No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.
 - Hardened screenshot URL generation by using screenshot basenames only.
 - Updated CSS so screenshot evidence panels match the consolidated Command Center design.
 - Updated version to `0.9.5.63`.
+
+## v0.9.5.64 - Review Evidence Highlight Overlay
+
+- Reworked Review Detail into a two-column human-review workspace.
+- Added compact screenshot evidence preview so the screenshot no longer overwhelms the decision workflow.
+- Added target rank highlight overlay and badge based on review `ranking_type` and `rank`.
+- Kept full-resolution screenshot links opening in a new tab.
+- Added `/docs/PATCH_SUMMARY.md` as the consolidated patch-summary document.
+- Updated smoke tests and version to `0.9.5.64`.
+
+No OCR, Data Guard, Ranking Guard, recovery, or export logic changed.
