@@ -1,20 +1,34 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.50  
-**Sprint Type:** Bidirectional Power Error Model  
-**Runtime Baseline:** v0.9.5.50 – Bidirectional Power Error Model  
+**Current Version:** v0.9.5.51  
+**Sprint Type:** Digit-Preserving Power Recovery  
+**Runtime Baseline:** v0.9.5.51 – Digit-Preserving Power Recovery  
 **Current Phase:** Data Integrity Fortress / Operational Data Stability  
-**Next Planned Sprint:** v0.9.5.51 – Import Session and Segment Integrity
+**Next Planned Sprint:** v0.9.5.52 – Import Session and Segment Integrity
 
 ---
 
 ## Executive summary
 
-Sentinel v0.9.5.50 extends the candidate decision engine with a bidirectional OCR power error model. v0.9.5.49 made high power explosion recovery safe by removing legacy fallback decisions; v0.9.5.50 adds the missing opposite direction: low/truncated THP powers such as 32M, 25M, 23M, 19M, and 13M can now generate x10, x100, and inserted-zero candidates.
+Sentinel v0.9.5.51 hardens the v0.9.5.50 candidate decision engine with digit-preserving recovery metadata and scoring. v0.9.5.49 made high power explosion recovery safe by removing legacy fallback decisions; v0.9.5.50 adds the missing opposite direction: low/truncated THP powers such as 32M, 25M, 23M, 19M, and 13M can now generate x10, x100, and inserted-zero candidates.
 
 The sprint keeps the same doctrine: recovery is allowed only when source-local context and OCR-error probability produce a clear candidate margin. Ambiguous values remain quarantined.
 
 ---
+
+## What changed in v0.9.5.51
+
+Sentinel now adds an explicit digit-preservation score to low/truncated THP power recovery. This addresses the .50 finding that a candidate can be locally plausible but still distort the visible OCR digit sequence.
+
+### Added
+
+- `digit_preservation_score` in power recovery candidate metadata.
+- `digit_preservation:*` reasons in candidate traces and export/report metadata.
+- A digit-preserving low-truncation decision path for narrow but clear candidate margins.
+
+### Guardrail
+
+Digit preservation is a scoring signal, not a truth override. Data Guard, Ranking Guard, source-local context, and quarantine-first behavior remain authoritative.
 
 ## What changed in v0.9.5.50
 

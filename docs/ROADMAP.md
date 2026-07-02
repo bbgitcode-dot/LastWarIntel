@@ -1,6 +1,6 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.50
+**Version:** v0.9.5.51
 
 ---
 
@@ -60,13 +60,13 @@ Completed in v0.9.5.48.
 - Adds candidate traces to the import report.
 - Fixes review-count aggregation.
 
-### v0.9.5.50 – Import Session and Segment Integrity
+### v0.9.5.51 – Import Session and Segment Integrity
 
 - Introduce explicit import sessions.
 - Detect missing, duplicate, mixed, and out-of-order segments.
 - Avoid filename/order assumptions.
 
-### v0.9.5.50 – Quarantine Center Foundation
+### v0.9.5.51 – Quarantine Center Foundation
 
 - Surface quarantined rows in Command Center.
 - Include source screenshot, field, reason, and proposed action.

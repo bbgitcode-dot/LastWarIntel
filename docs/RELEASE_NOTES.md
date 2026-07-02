@@ -1,8 +1,51 @@
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.50
+**Current Version:** v0.9.5.51
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
+
+---
+
+## v0.9.5.51 – Digit-Preserving Power Recovery
+
+### Focus
+
+Hardens the v0.9.5.50 bidirectional OCR power error model by adding explicit digit-preservation scoring to low/truncated THP candidate recovery. The sprint targets the Server 551/553-style failure mode where a numerically plausible inserted-zero candidate can beat the candidate that better preserves the visible OCR digit evidence.
+
+### Added
+
+- `digit_preservation_score` for power recovery candidates.
+- Candidate reasons such as `digit_preservation:0.xxx` in recovery metadata.
+- Digit-preserving low-truncation cutover for clear but narrow candidate margins.
+- Regression coverage for low-truncation candidate selection.
+
+### Changed
+
+- Low/truncated THP recovery now scores visible digit preservation in addition to local median distance, neighbour order, source-local buckets, rank context, and OCR error model reason.
+- Recovery decision metadata now reports `v0.9.5.51`.
+- Ambiguous high-explosion and Alliance Power candidates remain margin-gated and quarantined when unclear.
+
+### Guardrail
+
+Digit preservation is not allowed to bypass Data Guard doctrine. It only strengthens candidate scoring for source-local low THP truncation. Runtime still does not use Ground Truth, screenshot filename order, or upload order as truth.
+
+### Validation
+
+```text
+python -m compileall -q parser services main.py ground_truth_validator.py sentinel.py version.py
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_thp_power_sanity_guard.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py tests/smoke/test_operational_import_repository.py -q
+30 passed
+```
+
+Note: full `pytest tests/smoke -q` still collects pre-existing invalid/hotfix smoke files unrelated to this sprint. Targeted Data Guard / Ranking Guard / Recovery tests pass.
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(recovery): add digit-preserving power candidate scoring"
+git tag -a v0.9.5.51 -m "v0.9.5.51 Digit-Preserving Power Recovery"
+```
 
 ---
 

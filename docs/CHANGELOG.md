@@ -4,6 +4,22 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.51] - Digit-Preserving Power Recovery
+
+### Added
+
+- Digit-preservation scoring for low/truncated THP recovery candidates.
+- Candidate metadata field `digit_preservation_score`.
+- Candidate reason traces for digit-preservation decisions.
+
+### Changed
+
+- Low THP recovery now prefers candidates that preserve visible OCR digit evidence when context margins are narrow.
+- Recovery decision version updated to `v0.9.5.51`.
+- Version updated to `0.9.5.51`.
+
+---
+
 ## [0.9.5.50] - Bidirectional Power Error Model
 
 ### Added

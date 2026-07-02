@@ -2,7 +2,7 @@
 
 > How the Proud Owner and Mimir build Sentinel.
 
-**Version:** v0.9.5.50
+**Version:** v0.9.5.51
 
 ---
 
@@ -91,7 +91,7 @@ For this sprint:
 ```bash
 git add .
 git commit -m "fix(recovery): remove legacy power recovery fallback"
-git tag -a v0.9.5.50 -m "v0.9.5.50 Candidate Decision Engine Cutover"
+git tag -a v0.9.5.51 -m "v0.9.5.51 Candidate Decision Engine Cutover"
 ```
 
 ---

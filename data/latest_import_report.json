@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-02T00:24:43.824750+00:00",
-  "runtime_seconds": 2110.61,
+  "created_at": "2026-07-02T06:40:14.536263+00:00",
+  "runtime_seconds": 2270.36,
   "screenshots": 83,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -12,15 +12,15 @@
     553
   ],
   "server_count": 5,
-  "rows": 594,
+  "rows": 593,
   "status": "Review",
   "readiness": 50,
-  "review_count": 328,
-  "review_item_count": 21,
-  "import_review_count": 328,
+  "review_count": 325,
+  "review_item_count": 13,
+  "import_review_count": 325,
   "data_guard": {
     "status": "Warning",
-    "warnings": 328,
+    "warnings": 325,
     "critical": 0,
     "checks": [
       "server_assignment",
@@ -34,14 +34,14 @@
     "attempts": 0,
     "success": 0,
     "calibrated_pass": 0,
-    "rejected": 21,
+    "rejected": 13,
     "confidence_avg": 0
   },
   "power_recovery": {
-    "candidate_traces": 25,
-    "recovered": 5,
-    "ambiguous": 20,
-    "confidence_avg": 0.6989,
+    "candidate_traces": 36,
+    "recovered": 24,
+    "ambiguous": 12,
+    "confidence_avg": 0.8081,
     "traces": [
       {
         "server": null,
@@ -63,7 +63,7 @@
         "margin": 0.0244,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
@@ -174,7 +174,7 @@
         "margin": 0.0162,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
@@ -286,7 +286,7 @@
         "margin": 0.054,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
@@ -389,7 +389,7 @@
         "margin": 0.0416,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
@@ -493,7 +493,7 @@
         "margin": 0.0014,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
@@ -538,16 +538,18 @@
           },
           {
             "value": 198830284,
-            "score": 0.2766,
+            "score": 0.4166,
             "reasons": [
-              "local_median_distance:0.012"
+              "local_median_distance:0.012",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
             "value": 298830284,
-            "score": 0.1443,
+            "score": 0.2043,
             "reasons": [
-              "local_median_distance:0.485"
+              "local_median_distance:0.485",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
@@ -558,30 +560,1196 @@
         "source_file": "Screenshot_20260701-003631.png",
         "rank": 7,
         "ocr_rank": null,
-        "name": "[NUS] 廿-R夕一",
-        "power_original": 796877074,
-        "power_selected": 796877074,
+        "name": "[PHL] 锗葛仁 Wteqnes8",
+        "power_original": 796718651,
+        "power_selected": 796718651,
         "status": "ambiguous",
         "method": "",
         "confidence": 0.0,
         "candidate_count": 3,
-        "best_candidate": 196877074,
-        "best_score": 0.6998,
-        "second_candidate": 197877074,
-        "second_score": 0.6988,
-        "margin": 0.0009,
+        "best_candidate": 196718651,
+        "best_score": 0.7195,
+        "second_candidate": 197718651,
+        "second_score": 0.699,
+        "margin": 0.0205,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 196718651,
+            "score": 0.7195,
+            "reasons": [
+              "local_median_distance:0.002",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 197718651,
+            "score": 0.699,
+            "reasons": [
+              "local_median_distance:0.003",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 296718651,
+            "score": 0.4384,
+            "reasons": [
+              "local_median_distance:0.506",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260701-194444.png",
+        "rank": 8,
+        "ocr_rank": 88,
+        "name": "[SWSQ] Gokingoong",
+        "power_original": 783060407,
+        "power_selected": 783060407,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 5,
+        "best_candidate": 183060407,
+        "best_score": 0.8192,
+        "second_candidate": 182060407,
+        "second_score": 0.7977,
+        "margin": 0.0215,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 183060407,
+            "score": 0.8192,
+            "reasons": [
+              "local_median_distance:0.003",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "late_thp_rank:88",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 182060407,
+            "score": 0.7977,
+            "reasons": [
+              "local_median_distance:0.008",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "late_thp_rank:88"
+            ]
+          },
+          {
+            "value": 186060407,
+            "score": 0.7962,
+            "reasons": [
+              "local_median_distance:0.014",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "late_thp_rank:88"
+            ]
+          },
+          {
+            "value": 184060407,
+            "score": 0.6792,
+            "reasons": [
+              "local_median_distance:0.003",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "late_thp_rank:88"
+            ]
+          },
+          {
+            "value": 283060407,
+            "score": 0.1082,
+            "reasons": [
+              "local_median_distance:0.542",
+              "breaks_prior_neighbour_order",
+              "late_thp_rank:88",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260701-194540.png",
+        "rank": 9,
+        "ocr_rank": 5,
+        "name": "[SWSQ] KHAN Sale id",
+        "power_original": 769706374,
+        "power_selected": 769706374,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 3,
+        "best_candidate": 169706374,
+        "best_score": 0.7189,
+        "second_candidate": 170706374,
+        "second_score": 0.6995,
+        "margin": 0.0194,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 169706374,
+            "score": 0.7189,
+            "reasons": [
+              "local_median_distance:0.004",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 170706374,
+            "score": 0.6995,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 269706374,
+            "score": 0.4168,
+            "reasons": [
+              "local_median_distance:0.583",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260701-194611.png",
+        "rank": 10,
+        "ocr_rank": null,
+        "name": "[SBRO] roooobi [teomwe 免",
+        "power_original": 766771153,
+        "power_selected": 766771153,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 4,
+        "best_candidate": 166771153,
+        "best_score": 0.7197,
+        "second_candidate": 167771153,
+        "second_score": 0.698,
+        "margin": 0.0217,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 166771153,
+            "score": 0.7197,
+            "reasons": [
+              "local_median_distance:0.001",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 167771153,
+            "score": 0.698,
+            "reasons": [
+              "local_median_distance:0.007",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 165771153,
+            "score": 0.5787,
+            "reasons": [
+              "local_median_distance:0.005",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 266771153,
+            "score": 0.4115,
+            "reasons": [
+              "local_median_distance:0.602",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260701-194611.png",
+        "rank": 11,
+        "ocr_rank": null,
+        "name": "[LAFA] Spyyyy",
+        "power_original": 765892947,
+        "power_selected": 765892947,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 4,
+        "best_candidate": 165892947,
+        "best_score": 0.7189,
+        "second_candidate": 166892947,
+        "second_score": 0.6994,
+        "margin": 0.0194,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 165892947,
+            "score": 0.7189,
+            "reasons": [
+              "local_median_distance:0.004",
+              "near_following_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 166892947,
+            "score": 0.6994,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 167892947,
+            "score": 0.6978,
+            "reasons": [
+              "local_median_distance:0.008",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 265892947,
+            "score": 0.413,
+            "reasons": [
+              "local_median_distance:0.596",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "Screenshot_20260701-194413.png",
+        "rank": 12,
+        "ocr_rank": null,
+        "name": "[SWSQ] Sven the Van",
+        "power_original": 20312700,
+        "power_selected": 20312700,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 5,
+        "best_candidate": 200312700,
+        "best_score": 0.9186,
+        "second_candidate": 203127000,
+        "second_score": 0.9175,
+        "margin": 0.0012,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 200312700,
+            "score": 0.9186,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 203127000,
+            "score": 0.9175,
+            "reasons": [
+              "local_median_distance:0.009",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 203012700,
+            "score": 0.6576,
+            "reasons": [
+              "local_median_distance:0.009",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 203102700,
+            "score": 0.6575,
+            "reasons": [
+              "local_median_distance:0.009",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 203120700,
+            "score": 0.6575,
+            "reasons": [
+              "local_median_distance:0.009",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          }
+        ]
+      },
+      {
+        "server": null,
+        "ranking_type": "ranking_guard_quarantine",
+        "source_file": "2026-06-28 13_34_46-Window.png",
+        "rank": 13,
+        "ocr_rank": null,
+        "name": "[WARF] Trigano47",
+        "power_original": 13683364,
+        "power_selected": 13683364,
+        "status": "ambiguous",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 8,
+        "best_candidate": 136833640,
+        "best_score": 0.92,
+        "second_candidate": 136083364,
+        "second_score": 0.9184,
+        "margin": 0.0015,
+        "decision_reason": "quarantined_ambiguous_candidates",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 136833640,
+            "score": 0.92,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 136083364,
+            "score": 0.9184,
+            "reasons": [
+              "local_median_distance:0.006",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 136833604,
+            "score": 0.8,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 136833064,
+            "score": 0.8,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 136830364,
+            "score": 0.7999,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 136803364,
+            "score": 0.7999,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 130683364,
+            "score": 0.7274,
+            "reasons": [
+              "local_median_distance:0.045",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 103683364,
+            "score": 0.6721,
+            "reasons": [
+              "local_median_distance:0.242",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 549,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_17_22-Window.png",
+        "rank": 17,
+        "ocr_rank": null,
+        "name": "[ACEU] chapppppy",
+        "power_original": 2300299,
+        "power_selected": 230029900,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.9373,
+        "candidate_count": 1,
+        "best_candidate": 230029900,
+        "best_score": 0.9373,
+        "second_candidate": null,
+        "second_score": 0.0,
+        "margin": 0.9373,
+        "decision_reason": "selected_clear_candidate:score=0.937;margin=0.937",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 230029900,
+            "score": 0.9373,
+            "reasons": [
+              "local_median_distance:0.010",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x100_truncated_digit"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 549,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_19_30-Window.png",
+        "rank": 65,
+        "ocr_rank": null,
+        "name": "殂",
+        "power_original": 1970137,
+        "power_selected": 197013700,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.817,
+        "candidate_count": 1,
+        "best_candidate": 197013700,
+        "best_score": 0.817,
+        "second_candidate": null,
+        "second_score": 0.0,
+        "margin": 0.817,
+        "decision_reason": "selected_clear_candidate:score=0.817;margin=0.817",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 197013700,
+            "score": 0.817,
+            "reasons": [
+              "local_median_distance:0.011",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x100_truncated_digit"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 549,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_19_45-Window.png",
+        "rank": 70,
+        "ocr_rank": null,
+        "name": "[ACEU] L t3人",
+        "power_original": 1957162,
+        "power_selected": 195716200,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8197,
+        "candidate_count": 1,
+        "best_candidate": 195716200,
+        "best_score": 0.8197,
+        "second_candidate": null,
+        "second_score": 0.0,
+        "margin": 0.8197,
+        "decision_reason": "selected_clear_candidate:score=0.820;margin=0.820",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 195716200,
+            "score": 0.8197,
+            "reasons": [
+              "local_median_distance:0.001",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x100_truncated_digit"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 549,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_20_25-Window.png",
+        "rank": 86,
+        "ocr_rank": null,
+        "name": "[HKF] 5+芒芒七0",
+        "power_original": 19047783,
+        "power_selected": 190477830,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.99,
+        "candidate_count": 7,
+        "best_candidate": 190477830,
+        "best_score": 1.0394,
+        "second_candidate": 190047783,
+        "second_score": 0.7999,
+        "margin": 0.2395,
+        "decision_reason": "selected_clear_candidate:score=1.039;margin=0.239",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 190477830,
+            "score": 1.0394,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 190047783,
+            "score": 0.7999,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 190407783,
+            "score": 0.7795,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 190470783,
+            "score": 0.7794,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 190477083,
+            "score": 0.7794,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 190477803,
+            "score": 0.7794,
+            "reasons": [
+              "local_median_distance:0.002",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 109047783,
+            "score": 0.6206,
+            "reasons": [
+              "local_median_distance:0.426",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 550,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-28 13_34_32-Window.png",
+        "rank": 41,
+        "ocr_rank": null,
+        "name": "[WARF] Prenns",
+        "power_original": 13861884,
+        "power_selected": 138618840,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.99,
+        "candidate_count": 8,
+        "best_candidate": 138618840,
+        "best_score": 1.039,
+        "second_candidate": 138601884,
+        "second_score": 0.919,
+        "margin": 0.12,
+        "decision_reason": "selected_clear_candidate:score=1.039;margin=0.120",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 138618840,
+            "score": 1.039,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 138601884,
+            "score": 0.919,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 138610884,
+            "score": 0.919,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 138618084,
+            "score": 0.919,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 138618804,
+            "score": 0.919,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 138061884,
+            "score": 0.7999,
+            "reasons": [
+              "local_median_distance:0.000",
+              "near_prior_neighbour",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 130861884,
+            "score": 0.7253,
+            "reasons": [
+              "local_median_distance:0.052",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 103861884,
+            "score": 0.6706,
+            "reasons": [
+              "local_median_distance:0.248",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_45_10-Window.png",
+        "rank": 3,
+        "ocr_rank": 8,
+        "name": "[IVE] MEITTi X 叫@1",
+        "power_original": 32030601,
+        "power_selected": 302030601,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.7331,
+        "candidate_count": 5,
+        "best_candidate": 302030601,
+        "best_score": 0.7331,
+        "second_candidate": 320306010,
+        "second_score": 0.4158,
+        "margin": 0.3174,
+        "decision_reason": "selected_clear_candidate:score=0.733;margin=0.317",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 302030601,
+            "score": 0.7331,
+            "reasons": [
+              "local_median_distance:0.025",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 320306010,
+            "score": 0.4158,
+            "reasons": [
+              "local_median_distance:0.087",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 320030601,
+            "score": 0.296,
+            "reasons": [
+              "local_median_distance:0.086",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 320300601,
+            "score": 0.1558,
+            "reasons": [
+              "local_median_distance:0.086",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 320306001,
+            "score": 0.1558,
+            "reasons": [
+              "local_median_distance:0.087",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_45_40-Window.png",
+        "rank": 21,
+        "ocr_rank": null,
+        "name": "[IVE] Kg Thunder 升孕)",
+        "power_original": 25009089,
+        "power_selected": 250090890,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8519,
+        "candidate_count": 5,
+        "best_candidate": 250090890,
+        "best_score": 0.8519,
+        "second_candidate": 250009089,
+        "second_score": 0.7319,
+        "margin": 0.1201,
+        "decision_reason": "selected_clear_candidate:score=0.852;margin=0.120",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 250090890,
+            "score": 0.8519,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 250009089,
+            "score": 0.7319,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 205009089,
+            "score": 0.6829,
+            "reasons": [
+              "local_median_distance:0.204",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 250090809,
+            "score": 0.5919,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 250090089,
+            "score": 0.5919,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_46_26-Window.png",
+        "rank": 36,
+        "ocr_rank": null,
+        "name": "[IVE] M0/X HUNI",
+        "power_original": 23956100,
+        "power_selected": 230956100,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.9182,
+        "candidate_count": 6,
+        "best_candidate": 230956100,
+        "best_score": 0.9182,
+        "second_candidate": 203956100,
+        "second_score": 0.7057,
+        "margin": 0.2125,
+        "decision_reason": "selected_clear_candidate:score=0.918;margin=0.213",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 230956100,
+            "score": 0.9182,
+            "reasons": [
+              "local_median_distance:0.006",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 203956100,
+            "score": 0.7057,
+            "reasons": [
+              "local_median_distance:0.122",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 239561000,
+            "score": 0.4314,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 239056100,
+            "score": 0.312,
+            "reasons": [
+              "local_median_distance:0.029",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 239506100,
+            "score": 0.3115,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 239560100,
+            "score": 0.3114,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_47_24-Window.png",
+        "rank": 54,
+        "ocr_rank": null,
+        "name": "瓯 Kriegspiel",
+        "power_original": 21900298,
+        "power_selected": 219002980,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.99,
+        "candidate_count": 6,
+        "best_candidate": 219002980,
+        "best_score": 1.0385,
+        "second_candidate": 219000298,
+        "second_score": 0.9185,
+        "margin": 0.12,
+        "decision_reason": "selected_clear_candidate:score=1.039;margin=0.120",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 219002980,
+            "score": 1.0385,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ]
+          },
+          {
+            "value": 219000298,
+            "score": 0.9185,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 219002908,
+            "score": 0.7785,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 219002098,
+            "score": 0.7785,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:low_truncation_candidate"
+            ]
+          },
+          {
+            "value": 210900298,
+            "score": 0.7282,
+            "reasons": [
+              "local_median_distance:0.042",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          },
+          {
+            "value": 201900298,
+            "score": 0.7168,
+            "reasons": [
+              "local_median_distance:0.083",
+              "fits_prior_neighbour_order",
+              "ocr_error_model:insert_zero"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 552,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260701-003622.png",
+        "rank": 73,
+        "ocr_rank": 8,
+        "name": "[NLS] 尤与+3 Bfeg2ome#88",
+        "power_original": 798645778,
+        "power_selected": 199645778,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.6983,
+        "candidate_count": 5,
+        "best_candidate": 199645778,
+        "best_score": 0.6983,
+        "second_candidate": 198645778,
+        "second_score": 0.5397,
+        "margin": 0.1586,
+        "decision_reason": "selected_clear_candidate:score=0.698;margin=0.159",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 199645778,
+            "score": 0.6983,
+            "reasons": [
+              "local_median_distance:0.006",
+              "near_prior_neighbour",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 198645778,
+            "score": 0.5397,
+            "reasons": [
+              "local_median_distance:0.001",
+              "near_prior_neighbour",
+              "breaks_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 197645778,
+            "score": 0.5188,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_prior_neighbour_order",
+              "breaks_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 200645778,
+            "score": 0.5169,
+            "reasons": [
+              "local_median_distance:0.011",
+              "breaks_prior_neighbour_order",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 298645778,
+            "score": 0.2587,
+            "reasons": [
+              "local_median_distance:0.505",
+              "breaks_prior_neighbour_order",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
+            ]
+          }
+        ]
+      },
+      {
+        "server": 552,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260701-003631.png",
+        "rank": 82,
+        "ocr_rank": null,
+        "name": "[NUS] 廿-R夕一",
+        "power_original": 796877074,
+        "power_selected": 196877074,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8398,
+        "candidate_count": 3,
+        "best_candidate": 196877074,
+        "best_score": 0.8398,
+        "second_candidate": 197877074,
+        "second_score": 0.6988,
+        "margin": 0.1409,
+        "decision_reason": "selected_clear_candidate:score=0.840;margin=0.141",
+        "decision_strategy": "context_candidate_margin",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 196877074,
-            "score": 0.6998,
+            "score": 0.8398,
             "reasons": [
               "local_median_distance:0.001",
               "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -595,44 +1763,46 @@
           },
           {
             "value": 296877074,
-            "score": 0.3781,
+            "score": 0.4381,
             "reasons": [
               "local_median_distance:0.507",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 552,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-003631.png",
-        "rank": 8,
+        "rank": 85,
         "ocr_rank": null,
         "name": "[OAO] 乙3匕芒<九",
         "power_original": 796580718,
-        "power_selected": 796580718,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 196580718,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.7193,
         "candidate_count": 3,
         "best_candidate": 196580718,
-        "best_score": 0.5793,
+        "best_score": 0.7193,
         "second_candidate": 197580718,
         "second_score": 0.5792,
-        "margin": 0.0001,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.1401,
+        "decision_reason": "selected_clear_candidate:score=0.719;margin=0.140",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 196580718,
-            "score": 0.5793,
+            "score": 0.7193,
             "reasons": [
               "local_median_distance:0.002",
               "near_following_neighbour",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -646,57 +1816,50 @@
           },
           {
             "value": 296580718,
-            "score": 0.3786,
+            "score": 0.4386,
             "reasons": [
               "local_median_distance:0.505",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 552,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-003641.png",
-        "rank": 9,
-        "ocr_rank": 5,
-        "name": "[PHL] o九乏九42",
-        "power_original": 795684798,
-        "power_selected": 795684798,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "rank": 89,
+        "ocr_rank": null,
+        "name": "[OAO] +书尤35708",
+        "power_original": 794585828,
+        "power_selected": 194585828,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8399,
         "candidate_count": 4,
-        "best_candidate": 194684798,
-        "best_score": 0.6999,
-        "second_candidate": 195684798,
-        "second_score": 0.6985,
-        "margin": 0.0014,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "best_candidate": 194585828,
+        "best_score": 0.8399,
+        "second_candidate": 195585828,
+        "second_score": 0.5786,
+        "margin": 0.2613,
+        "decision_reason": "selected_clear_candidate:score=0.840;margin=0.261",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 194684798,
-            "score": 0.6999,
+            "value": 194585828,
+            "score": 0.8399,
             "reasons": [
               "local_median_distance:0.000",
               "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
-            "value": 195684798,
-            "score": 0.6985,
-            "reasons": [
-              "local_median_distance:0.005",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 193684798,
+            "value": 195585828,
             "score": 0.5786,
             "reasons": [
               "local_median_distance:0.005",
@@ -705,45 +1868,56 @@
             ]
           },
           {
-            "value": 295684798,
-            "score": 0.3746,
+            "value": 193585828,
+            "score": 0.5785,
             "reasons": [
-              "local_median_distance:0.519",
-              "fits_following_neighbour_order"
+              "local_median_distance:0.005",
+              "near_following_neighbour",
+              "source_local_bucket_match"
+            ]
+          },
+          {
+            "value": 294585828,
+            "score": 0.4362,
+            "reasons": [
+              "local_median_distance:0.514",
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194430.png",
-        "rank": 10,
+        "rank": 17,
         "ocr_rank": null,
         "name": "[LAFA] ThorNord Bfeg2ofe*8",
         "power_original": 793262033,
-        "power_selected": 793262033,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 193262033,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8383,
         "candidate_count": 6,
         "best_candidate": 193262033,
-        "best_score": 0.6983,
+        "best_score": 0.8383,
         "second_candidate": 190262033,
         "second_score": 0.6973,
-        "margin": 0.0011,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.1411,
+        "decision_reason": "selected_clear_candidate:score=0.838;margin=0.141",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 193262033,
-            "score": 0.6983,
+            "score": 0.8383,
             "reasons": [
               "local_median_distance:0.006",
               "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -784,125 +1958,53 @@
           },
           {
             "value": 293262033,
-            "score": 0.3726,
+            "score": 0.4326,
             "reasons": [
               "local_median_distance:0.526",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-194444.png",
-        "rank": 11,
-        "ocr_rank": 88,
-        "name": "[SWSQ] Gokingoong",
-        "power_original": 783060407,
-        "power_selected": 783060407,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 5,
-        "best_candidate": 182060407,
-        "best_score": 0.7977,
-        "second_candidate": 186060407,
-        "second_score": 0.7962,
-        "margin": 0.0015,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 182060407,
-            "score": 0.7977,
-            "reasons": [
-              "local_median_distance:0.008",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ]
-          },
-          {
-            "value": 186060407,
-            "score": 0.7962,
-            "reasons": [
-              "local_median_distance:0.014",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ]
-          },
-          {
-            "value": 184060407,
-            "score": 0.6792,
-            "reasons": [
-              "local_median_distance:0.003",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ]
-          },
-          {
-            "value": 183060407,
-            "score": 0.6792,
-            "reasons": [
-              "local_median_distance:0.003",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ]
-          },
-          {
-            "value": 283060407,
-            "score": 0.0482,
-            "reasons": [
-              "local_median_distance:0.542",
-              "breaks_prior_neighbour_order",
-              "late_thp_rank:88"
-            ]
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194459.png",
-        "rank": 12,
+        "rank": 42,
         "ocr_rank": null,
         "name": "[LAFA] Cukubik Wteqmne F",
         "power_original": 776377077,
-        "power_selected": 776377077,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 176377077,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8373,
         "candidate_count": 5,
-        "best_candidate": 179377077,
-        "best_score": 0.698,
-        "second_candidate": 176377077,
-        "second_score": 0.6973,
-        "margin": 0.0006,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "best_candidate": 176377077,
+        "best_score": 0.8373,
+        "second_candidate": 179377077,
+        "second_score": 0.698,
+        "margin": 0.1394,
+        "decision_reason": "selected_clear_candidate:score=0.837;margin=0.139",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
+          {
+            "value": 176377077,
+            "score": 0.8373,
+            "reasons": [
+              "local_median_distance:0.010",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
           {
             "value": 179377077,
             "score": 0.698,
             "reasons": [
               "local_median_distance:0.007",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 176377077,
-            "score": 0.6973,
-            "reasons": [
-              "local_median_distance:0.010",
               "fits_following_neighbour_order",
               "source_local_bucket_match"
             ]
@@ -927,37 +2029,48 @@
           },
           {
             "value": 276377077,
-            "score": 0.3654,
+            "score": 0.4254,
             "reasons": [
               "local_median_distance:0.552",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194540.png",
-        "rank": 13,
+        "rank": 61,
         "ocr_rank": null,
         "name": "[SWSQ] ole9301 rt@moo#8",
         "power_original": 769647856,
-        "power_selected": 769647856,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 169647856,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8388,
         "candidate_count": 3,
-        "best_candidate": 170647856,
-        "best_score": 0.6996,
-        "second_candidate": 169647856,
-        "second_score": 0.6988,
-        "margin": 0.0008,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "best_candidate": 169647856,
+        "best_score": 0.8388,
+        "second_candidate": 170647856,
+        "second_score": 0.6996,
+        "margin": 0.1392,
+        "decision_reason": "selected_clear_candidate:score=0.839;margin=0.139",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
+          {
+            "value": 169647856,
+            "score": 0.8388,
+            "reasons": [
+              "local_median_distance:0.004",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
           {
             "value": 170647856,
             "score": 0.6996,
@@ -968,54 +2081,47 @@
             ]
           },
           {
-            "value": 169647856,
-            "score": 0.6988,
-            "reasons": [
-              "local_median_distance:0.004",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
             "value": 269647856,
-            "score": 0.3569,
+            "score": 0.4169,
             "reasons": [
               "local_median_distance:0.582",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194558.png",
-        "rank": 14,
+        "rank": 65,
         "ocr_rank": null,
         "name": "[LAFA] DAFU Bteef&g",
         "power_original": 768617931,
-        "power_selected": 768617931,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 168617931,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8395,
         "candidate_count": 3,
         "best_candidate": 168617931,
-        "best_score": 0.6995,
+        "best_score": 0.8395,
         "second_candidate": 169617931,
         "second_score": 0.6978,
-        "margin": 0.0017,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.1417,
+        "decision_reason": "selected_clear_candidate:score=0.840;margin=0.142",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 168617931,
-            "score": 0.6995,
+            "score": 0.8395,
             "reasons": [
               "local_median_distance:0.002",
               "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -1029,103 +2135,98 @@
           },
           {
             "value": 268617931,
-            "score": 0.3532,
+            "score": 0.4132,
             "reasons": [
               "local_median_distance:0.596",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-194611.png",
-        "rank": 15,
+        "server": 553,
+        "ranking_type": "total_hero_power",
+        "source_file": "Screenshot_20260701-194558.png",
+        "rank": 66,
         "ocr_rank": null,
-        "name": "[LAFA] Spyyyy",
-        "power_original": 765892947,
-        "power_selected": 765892947,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 4,
-        "best_candidate": 166892947,
-        "best_score": 0.6994,
-        "second_candidate": 167892947,
-        "second_score": 0.6978,
-        "margin": 0.0017,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "name": "[LAFA] DESTROY8g",
+        "power_original": 768417176,
+        "power_selected": 168417176,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.8398,
+        "candidate_count": 3,
+        "best_candidate": 168417176,
+        "best_score": 0.8398,
+        "second_candidate": 169417176,
+        "second_score": 0.6982,
+        "margin": 0.1417,
+        "decision_reason": "selected_clear_candidate:score=0.840;margin=0.142",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 166892947,
-            "score": 0.6994,
+            "value": 168417176,
+            "score": 0.8398,
             "reasons": [
-              "local_median_distance:0.002",
+              "local_median_distance:0.001",
+              "fits_following_neighbour_order",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
+          {
+            "value": 169417176,
+            "score": 0.6982,
+            "reasons": [
+              "local_median_distance:0.007",
               "fits_following_neighbour_order",
               "source_local_bucket_match"
             ]
           },
           {
-            "value": 167892947,
-            "score": 0.6978,
+            "value": 268417176,
+            "score": 0.4135,
             "reasons": [
-              "local_median_distance:0.008",
+              "local_median_distance:0.595",
               "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 165892947,
-            "score": 0.5789,
-            "reasons": [
-              "local_median_distance:0.004",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 265892947,
-            "score": 0.353,
-            "reasons": [
-              "local_median_distance:0.596",
-              "fits_following_neighbour_order"
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194622.png",
-        "rank": 16,
+        "rank": 77,
         "ocr_rank": 8,
         "name": "[LAFA] DonMigo Rfeomom恶?",
         "power_original": 765600009,
-        "power_selected": 765600009,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 165600009,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.5997,
         "candidate_count": 3,
         "best_candidate": 165600009,
-        "best_score": 0.4597,
+        "best_score": 0.5997,
         "second_candidate": 164600009,
         "second_score": 0.4586,
-        "margin": 0.001,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.141,
+        "decision_reason": "selected_clear_candidate:score=0.600;margin=0.141",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 165600009,
-            "score": 0.4597,
+            "score": 0.5997,
             "reasons": [
               "local_median_distance:0.001",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -1138,43 +2239,45 @@
           },
           {
             "value": 265600009,
-            "score": 0.1104,
+            "score": 0.1704,
             "reasons": [
-              "local_median_distance:0.606"
+              "local_median_distance:0.606",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194622.png",
-        "rank": 17,
+        "rank": 79,
         "ocr_rank": null,
         "name": "[LAFA] SnitchyDevil",
         "power_original": 765167882,
-        "power_selected": 765167882,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 165167882,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.7196,
         "candidate_count": 3,
         "best_candidate": 165167882,
-        "best_score": 0.5796,
+        "best_score": 0.7196,
         "second_candidate": 164167882,
         "second_score": 0.5779,
-        "margin": 0.0017,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.1417,
+        "decision_reason": "selected_clear_candidate:score=0.720;margin=0.142",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 165167882,
-            "score": 0.5796,
+            "score": 0.7196,
             "reasons": [
               "local_median_distance:0.001",
               "near_following_neighbour",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -1188,37 +2291,47 @@
           },
           {
             "value": 265167882,
-            "score": 0.3511,
+            "score": 0.4111,
             "reasons": [
               "local_median_distance:0.603",
-              "fits_following_neighbour_order"
+              "fits_following_neighbour_order",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194631.png",
-        "rank": 18,
+        "rank": 83,
         "ocr_rank": 5,
-        "name": "[LAFA] chris7Tl Bfeg2one#E3",
+        "name": "[SWSQ] Bubellee Bdegezomo#83",
         "power_original": 764292586,
-        "power_selected": 764292586,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 164292586,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.5987,
         "candidate_count": 3,
-        "best_candidate": 163292586,
-        "best_score": 0.4595,
-        "second_candidate": 164292586,
-        "second_score": 0.4587,
-        "margin": 0.0008,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "best_candidate": 164292586,
+        "best_score": 0.5987,
+        "second_candidate": 163292586,
+        "second_score": 0.4595,
+        "margin": 0.1392,
+        "decision_reason": "selected_clear_candidate:score=0.599;margin=0.139",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
+          {
+            "value": 164292586,
+            "score": 0.5987,
+            "reasons": [
+              "local_median_distance:0.004",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
           {
             "value": 163292586,
             "score": 0.4595,
@@ -1228,53 +2341,47 @@
             ]
           },
           {
-            "value": 164292586,
-            "score": 0.4587,
-            "reasons": [
-              "local_median_distance:0.004",
-              "source_local_bucket_match"
-            ]
-          },
-          {
             "value": 264292586,
-            "score": 0.1076,
+            "score": 0.1676,
             "reasons": [
-              "local_median_distance:0.616"
+              "local_median_distance:0.616",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194631.png",
-        "rank": 19,
+        "rank": 84,
         "ocr_rank": 58,
         "name": "[LAFA] Pel Cowboy from Hell",
         "power_original": 764047047,
-        "power_selected": 764047047,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 164047047,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.9392,
         "candidate_count": 3,
         "best_candidate": 164047047,
-        "best_score": 0.7992,
+        "best_score": 0.9392,
         "second_candidate": 163047047,
         "second_score": 0.7991,
-        "margin": 0.0,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.14,
+        "decision_reason": "selected_clear_candidate:score=0.939;margin=0.140",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 164047047,
-            "score": 0.7992,
+            "score": 0.9392,
             "reasons": [
               "local_median_distance:0.003",
               "fits_prior_neighbour_order",
               "source_local_bucket_match",
-              "late_thp_rank:58"
+              "late_thp_rank:58",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -1289,44 +2396,46 @@
           },
           {
             "value": 264047047,
-            "score": 0.028,
+            "score": 0.088,
             "reasons": [
               "local_median_distance:0.614",
               "breaks_prior_neighbour_order",
-              "late_thp_rank:58"
+              "late_thp_rank:58",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194631.png",
-        "rank": 20,
+        "rank": 88,
         "ocr_rank": 5,
         "name": "[SWSQ] st3ykmyn",
         "power_original": 763106065,
-        "power_selected": 763106065,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 163106065,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.5992,
         "candidate_count": 3,
         "best_candidate": 163106065,
-        "best_score": 0.4592,
+        "best_score": 0.5992,
         "second_candidate": 164106065,
         "second_score": 0.4591,
-        "margin": 0.0002,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "margin": 0.1402,
+        "decision_reason": "selected_clear_candidate:score=0.599;margin=0.140",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
           {
             "value": 163106065,
-            "score": 0.4592,
+            "score": 0.5992,
             "reasons": [
               "local_median_distance:0.003",
-              "source_local_bucket_match"
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
             ]
           },
           {
@@ -1339,49 +2448,51 @@
           },
           {
             "value": 263106065,
-            "score": 0.1096,
+            "score": 0.1696,
             "reasons": [
-              "local_median_distance:0.609"
+              "local_median_distance:0.609",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
       },
       {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
+        "server": 553,
+        "ranking_type": "total_hero_power",
         "source_file": "Screenshot_20260701-194631.png",
-        "rank": 21,
+        "rank": 89,
         "ocr_rank": 5,
         "name": "[SWSQ] Crank4o Rfeooo#S3",
         "power_original": 762831270,
-        "power_selected": 762831270,
-        "status": "ambiguous",
-        "method": "",
-        "confidence": 0.0,
+        "power_selected": 162831270,
+        "status": "recovered",
+        "method": "total_hero_power_context_candidate_recovery",
+        "confidence": 0.5988,
         "candidate_count": 4,
-        "best_candidate": 163831270,
-        "best_score": 0.4595,
-        "second_candidate": 162831270,
-        "second_score": 0.4588,
-        "margin": 0.0008,
-        "decision_reason": "quarantined_ambiguous_candidates",
+        "best_candidate": 162831270,
+        "best_score": 0.5988,
+        "second_candidate": 163831270,
+        "second_score": 0.4595,
+        "margin": 0.1392,
+        "decision_reason": "selected_clear_candidate:score=0.599;margin=0.139",
         "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
+        "decision_version": "v0.9.5.50",
         "legacy_used": false,
         "candidates": [
+          {
+            "value": 162831270,
+            "score": 0.5988,
+            "reasons": [
+              "local_median_distance:0.004",
+              "source_local_bucket_match",
+              "ocr_error_model:leading_digit_to_1"
+            ]
+          },
           {
             "value": 163831270,
             "score": 0.4595,
             "reasons": [
               "local_median_distance:0.002",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 162831270,
-            "score": 0.4588,
-            "reasons": [
-              "local_median_distance:0.004",
               "source_local_bucket_match"
             ]
           },
@@ -1395,305 +2506,10 @@
           },
           {
             "value": 262831270,
-            "score": 0.1101,
+            "score": 0.1701,
             "reasons": [
-              "local_median_distance:0.607"
-            ]
-          }
-        ]
-      },
-      {
-        "server": 552,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-003622.png",
-        "rank": 73,
-        "ocr_rank": 8,
-        "name": "[NLS] 尤与+3 Bfeg2ome#88",
-        "power_original": 798645778,
-        "power_selected": 199645778,
-        "status": "recovered",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.6983,
-        "candidate_count": 5,
-        "best_candidate": 199645778,
-        "best_score": 0.6983,
-        "second_candidate": 197645778,
-        "second_score": 0.5188,
-        "margin": 0.1795,
-        "decision_reason": "selected_clear_candidate:score=0.698;margin=0.179",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 199645778,
-            "score": 0.6983,
-            "reasons": [
-              "local_median_distance:0.006",
-              "near_prior_neighbour",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 197645778,
-            "score": 0.5188,
-            "reasons": [
-              "local_median_distance:0.004",
-              "fits_prior_neighbour_order",
-              "breaks_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 200645778,
-            "score": 0.5169,
-            "reasons": [
-              "local_median_distance:0.011",
-              "breaks_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 198645778,
-            "score": 0.3997,
-            "reasons": [
-              "local_median_distance:0.001",
-              "near_prior_neighbour",
-              "breaks_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 298645778,
-            "score": 0.1987,
-            "reasons": [
-              "local_median_distance:0.505",
-              "breaks_prior_neighbour_order",
-              "fits_following_neighbour_order"
-            ]
-          }
-        ]
-      },
-      {
-        "server": 552,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-003631.png",
-        "rank": 80,
-        "ocr_rank": null,
-        "name": "[PHL] 锗葛仁 Wteqnes8",
-        "power_original": 796718651,
-        "power_selected": 197718651,
-        "status": "recovered",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.699,
-        "candidate_count": 3,
-        "best_candidate": 197718651,
-        "best_score": 0.699,
-        "second_candidate": 196718651,
-        "second_score": 0.5795,
-        "margin": 0.1195,
-        "decision_reason": "selected_clear_candidate:score=0.699;margin=0.120",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 197718651,
-            "score": 0.699,
-            "reasons": [
-              "local_median_distance:0.003",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 196718651,
-            "score": 0.5795,
-            "reasons": [
-              "local_median_distance:0.002",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 296718651,
-            "score": 0.3784,
-            "reasons": [
-              "local_median_distance:0.506",
-              "fits_following_neighbour_order"
-            ]
-          }
-        ]
-      },
-      {
-        "server": 552,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-003641.png",
-        "rank": 88,
-        "ocr_rank": null,
-        "name": "[OAO] +书尤35708",
-        "power_original": 794585828,
-        "power_selected": 194585828,
-        "status": "recovered",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.6999,
-        "candidate_count": 4,
-        "best_candidate": 194585828,
-        "best_score": 0.6999,
-        "second_candidate": 195585828,
-        "second_score": 0.5786,
-        "margin": 0.1213,
-        "decision_reason": "selected_clear_candidate:score=0.700;margin=0.121",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 194585828,
-            "score": 0.6999,
-            "reasons": [
-              "local_median_distance:0.000",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 195585828,
-            "score": 0.5786,
-            "reasons": [
-              "local_median_distance:0.005",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 193585828,
-            "score": 0.5785,
-            "reasons": [
-              "local_median_distance:0.005",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 294585828,
-            "score": 0.3762,
-            "reasons": [
-              "local_median_distance:0.514",
-              "fits_following_neighbour_order"
-            ]
-          }
-        ]
-      },
-      {
-        "server": 553,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-194540.png",
-        "rank": 54,
-        "ocr_rank": 5,
-        "name": "[SWSQ] KHAN Sale id",
-        "power_original": 769706374,
-        "power_selected": 170706374,
-        "status": "recovered",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.6995,
-        "candidate_count": 3,
-        "best_candidate": 170706374,
-        "best_score": 0.6995,
-        "second_candidate": 169706374,
-        "second_score": 0.5789,
-        "margin": 0.1206,
-        "decision_reason": "selected_clear_candidate:score=0.699;margin=0.121",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 170706374,
-            "score": 0.6995,
-            "reasons": [
-              "local_median_distance:0.002",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 169706374,
-            "score": 0.5789,
-            "reasons": [
-              "local_median_distance:0.004",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 269706374,
-            "score": 0.3568,
-            "reasons": [
-              "local_median_distance:0.583",
-              "fits_following_neighbour_order"
-            ]
-          }
-        ]
-      },
-      {
-        "server": 553,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-194611.png",
-        "rank": 65,
-        "ocr_rank": null,
-        "name": "[SBRO] roooobi [teomwe 免",
-        "power_original": 766771153,
-        "power_selected": 167771153,
-        "status": "recovered",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.698,
-        "candidate_count": 4,
-        "best_candidate": 167771153,
-        "best_score": 0.698,
-        "second_candidate": 166771153,
-        "second_score": 0.5797,
-        "margin": 0.1183,
-        "decision_reason": "selected_clear_candidate:score=0.698;margin=0.118",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.49",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 167771153,
-            "score": 0.698,
-            "reasons": [
-              "local_median_distance:0.007",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 166771153,
-            "score": 0.5797,
-            "reasons": [
-              "local_median_distance:0.001",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 165771153,
-            "score": 0.5787,
-            "reasons": [
-              "local_median_distance:0.005",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ]
-          },
-          {
-            "value": 266771153,
-            "score": 0.3515,
-            "reasons": [
-              "local_median_distance:0.602",
-              "fits_following_neighbour_order"
+              "local_median_distance:0.607",
+              "ocr_error_model:leading_digit_to_2"
             ]
           }
         ]
@@ -1704,32 +2520,27 @@
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 21,
+      "rows": 13,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 21,
-      "screenshots": 15,
+      "review_count": 13,
+      "screenshots": 10,
       "source_files": [
         "2026-06-28 13_15_08-Window.png",
+        "2026-06-28 13_34_46-Window.png",
         "Screenshot_20260701-003252.png",
         "Screenshot_20260701-003328.png",
         "Screenshot_20260701-003631.png",
-        "Screenshot_20260701-003641.png",
         "Screenshot_20260701-194308.png",
         "Screenshot_20260701-194413.png",
-        "Screenshot_20260701-194430.png",
         "Screenshot_20260701-194444.png",
-        "Screenshot_20260701-194459.png",
         "Screenshot_20260701-194540.png",
-        "Screenshot_20260701-194558.png",
-        "Screenshot_20260701-194611.png",
-        "Screenshot_20260701-194622.png",
-        "Screenshot_20260701-194631.png"
+        "Screenshot_20260701-194611.png"
       ],
       "source": "REVIEW_ranking_guard_quarantine",
       "power_recovery_count": 0,
-      "power_candidate_trace_count": 20,
-      "power_ambiguous_count": 20
+      "power_candidate_trace_count": 12,
+      "power_ambiguous_count": 12
     },
     {
       "server": 549,
@@ -1778,8 +2589,8 @@
         "2026-06-28 13_20_25-Window.png"
       ],
       "source": "549_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
+      "power_recovery_count": 4,
+      "power_candidate_trace_count": 4,
       "power_ambiguous_count": 0
     },
     {
@@ -1804,7 +2615,7 @@
     {
       "server": 550,
       "ranking_type": "total_hero_power",
-      "rows": 58,
+      "rows": 57,
       "status": "Review",
       "confidence": 90,
       "review_count": 20,
@@ -1821,8 +2632,8 @@
         "2026-06-28 13_35_00-Window.png"
       ],
       "source": "550_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
+      "power_recovery_count": 1,
+      "power_candidate_trace_count": 1,
       "power_ambiguous_count": 0
     },
     {
@@ -1869,8 +2680,8 @@
         "2026-06-29 14_49_13-Window.png"
       ],
       "source": "551_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
+      "power_recovery_count": 4,
+      "power_candidate_trace_count": 4,
       "power_ambiguous_count": 0
     },
     {
@@ -1895,7 +2706,7 @@
     {
       "server": 552,
       "ranking_type": "total_hero_power",
-      "rows": 91,
+      "rows": 92,
       "status": "Review",
       "confidence": 90,
       "review_count": 34,
@@ -1915,8 +2726,8 @@
         "Screenshot_20260701-003641.png"
       ],
       "source": "552_total_hero_power",
-      "power_recovery_count": 3,
-      "power_candidate_trace_count": 3,
+      "power_recovery_count": 4,
+      "power_candidate_trace_count": 4,
       "power_ambiguous_count": 0
     },
     {
@@ -1940,10 +2751,10 @@
     {
       "server": 553,
       "ranking_type": "total_hero_power",
-      "rows": 82,
+      "rows": 89,
       "status": "Review",
       "confidence": 90,
-      "review_count": 29,
+      "review_count": 34,
       "screenshots": 12,
       "source_files": [
         "Screenshot_20260701-194402.png",
@@ -1960,8 +2771,8 @@
         "Screenshot_20260701-194631.png"
       ],
       "source": "553_total_hero_power",
-      "power_recovery_count": 2,
-      "power_candidate_trace_count": 2,
+      "power_recovery_count": 11,
+      "power_candidate_trace_count": 11,
       "power_ambiguous_count": 0
     }
   ],
@@ -2044,55 +2855,19 @@
       "expected_ranking_type": "total_hero_power",
       "rank": 7,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.700;margin=0.001",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.720;margin=0.020",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
       "screenshot": "Screenshot_20260701-003631.png"
     },
     {
-      "server": 552,
+      "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 8,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.579;margin=0.000",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003631.png"
-    },
-    {
-      "server": 552,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 9,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.700;margin=0.001",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003641.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 10,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.698;margin=0.001",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194430.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 11,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.798;margin=0.002",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.819;margin=0.022",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -2102,21 +2877,9 @@
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 12,
+      "rank": 9,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.698;margin=0.001",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194459.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 13,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.700;margin=0.001",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.719;margin=0.019",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -2126,21 +2889,9 @@
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 14,
+      "rank": 10,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.700;margin=0.002",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194558.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 15,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.699;margin=0.002",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.720;margin=0.022",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
@@ -2150,86 +2901,50 @@
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 16,
+      "rank": 11,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.460;margin=0.001",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.719;margin=0.019",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194622.png"
+      "screenshot": "Screenshot_20260701-194611.png"
     },
     {
       "server": 553,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 17,
+      "rank": 12,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.580;margin=0.002",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.919;margin=0.001",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194622.png"
+      "screenshot": "Screenshot_20260701-194413.png"
     },
     {
-      "server": 553,
+      "server": 550,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 18,
+      "rank": 13,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.460;margin=0.001",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.920;margin=0.002",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194631.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 19,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.799;margin=0.000",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194631.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 20,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.459;margin=0.000",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194631.png"
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 21,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.460;margin=0.001",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194631.png"
+      "screenshot": "2026-06-28 13_34_46-Window.png"
     }
   ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "83 screenshots · 5 servers · 594 rows · 2110.61s",
+      "detail": "83 screenshots · 5 servers · 593 rows · 2270.36s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "328 review item(s) detected",
+      "detail": "325 review item(s) detected",
       "severity": "warning"
     }
   ]

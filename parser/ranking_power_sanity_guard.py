@@ -20,6 +20,7 @@ class PowerRecoveryCandidate:
     value: int
     score: float
     reasons: list[str] = field(default_factory=list)
+    digit_preservation_score: float = 0.0
 
 
 def _candidate_dict(candidate: PowerRecoveryCandidate) -> dict[str, Any]:
@@ -27,7 +28,65 @@ def _candidate_dict(candidate: PowerRecoveryCandidate) -> dict[str, Any]:
         "value": candidate.value,
         "score": round(candidate.score, 4),
         "reasons": list(candidate.reasons),
+        "digit_preservation_score": round(candidate.digit_preservation_score, 4),
     }
+
+
+
+def _common_prefix_length(left: str, right: str) -> int:
+    count = 0
+    for a, b in zip(left, right):
+        if a != b:
+            break
+        count += 1
+    return count
+
+
+def _common_suffix_length(left: str, right: str) -> int:
+    count = 0
+    for a, b in zip(reversed(left), reversed(right)):
+        if a != b:
+            break
+        count += 1
+    return count
+
+
+def _digit_preservation_score(observed: int, candidate: int) -> float:
+    """Score how well a recovery candidate preserves visible OCR digits.
+
+    Context decides whether a value is plausible, but OCR recovery should still
+    prefer candidates that keep the observed digit evidence in-place. This avoids
+    low-truncation false recoveries such as 32030601 -> 302030601 when the
+    candidate 320306010 preserves the visible leading sequence more faithfully.
+    """
+    source = str(observed)
+    target = str(candidate)
+    if not source or not target:
+        return 0.0
+
+    prefix = _common_prefix_length(source, target) / max(len(source), 1)
+    suffix = _common_suffix_length(source, target) / max(len(source), 1)
+
+    # Subsequence preservation catches insert-zero candidates without rewarding
+    # arbitrary reshuffles.
+    cursor = 0
+    matched = 0
+    for digit in target:
+        if cursor < len(source) and digit == source[cursor]:
+            cursor += 1
+            matched += 1
+    subsequence = matched / max(len(source), 1)
+
+    score = (0.48 * prefix) + (0.32 * suffix) + (0.20 * subsequence)
+
+    if target.startswith(source):
+        score += 0.16
+    if target.startswith(source[:3]) and target.endswith(source[-4:]):
+        score += 0.14
+    if len(target) == len(source) + 1 and target.replace("0", "", 1) == source:
+        score += 0.08
+
+    return round(min(1.0, max(0.0, score)), 6)
 
 
 def _source_low_powers_for_recovery(*, ranking_type: str, source_powers: list[int], observed: int) -> list[int]:
@@ -252,18 +311,23 @@ def _score_power_recovery_candidates(
             score += 0.10
             reasons.append("non_top_alliance_context")
 
+        digit_preservation = _digit_preservation_score(observed, value) if is_low_truncation else 0.0
+
         if is_low_truncation:
+            if digit_preservation:
+                score += digit_preservation * 0.24
+                reasons.append(f"digit_preservation:{digit_preservation:.3f}")
             if value == observed * 10:
-                score += 0.34
+                score += 0.22
                 reasons.append("ocr_error_model:scale_x10_truncated_digit")
             elif value == observed * 100:
-                score += 0.24
+                score += 0.18
                 reasons.append("ocr_error_model:scale_x100_truncated_digit")
             elif str(value).replace("0", "", 1) == text:
-                score += 0.22
+                score += 0.18
                 reasons.append("ocr_error_model:insert_zero")
             else:
-                score += 0.08
+                score += 0.06
                 reasons.append("ocr_error_model:low_truncation_candidate")
         elif ranking_type == "total_hero_power" and 500_000_000 <= observed < 1_000_000_000:
             value_text = str(value)
@@ -284,7 +348,13 @@ def _score_power_recovery_candidates(
             score -= 0.12
             reasons.append("too_close_to_observed_explosion")
 
-        candidates.append(PowerRecoveryCandidate(value=value, score=round(score, 6), reasons=reasons))
+        digit_preservation = _digit_preservation_score(observed, value)
+        candidates.append(PowerRecoveryCandidate(
+            value=value,
+            score=round(score, 6),
+            reasons=reasons,
+            digit_preservation_score=digit_preservation,
+        ))
 
     candidates.sort(key=lambda candidate: (candidate.score, -abs(candidate.value - (low_median or candidate.value))), reverse=True)
     return candidates
@@ -312,8 +382,20 @@ def _recover_context_power(
     second_score = candidates[1].score if len(candidates) > 1 else 0.0
     margin = best.score - second_score
 
+    is_low_truncation = _looks_like_low_truncation_candidate(
+        ranking_type=ranking_type,
+        observed=_power(row) or 0,
+        source_powers=source_powers,
+    )
     if best.score >= 0.58 and margin >= 0.10:
         return best.value, candidates, f"selected_clear_candidate:score={best.score:.3f};margin={margin:.3f}"
+    if (
+        is_low_truncation
+        and best.score >= 0.75
+        and margin >= 0.025
+        and best.digit_preservation_score >= 0.80
+    ):
+        return best.value, candidates, f"selected_digit_preserving_candidate:score={best.score:.3f};margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
     return None, candidates, f"ambiguous_candidates:best={best.score:.3f};margin={margin:.3f}"
 
 
@@ -351,7 +433,7 @@ def _set_power(row: dict[str, Any], value: int) -> None:
         row["alliance_power"] = value
 
 
-# v0.9.5.49 intentionally removes the old leading-digit recovery decision path. v0.9.5.50 adds low-truncation candidates to the same decision engine.
+# v0.9.5.49 intentionally removes the old leading-digit recovery decision path. v0.9.5.51 adds low-truncation candidates to the same decision engine.
 # Leading-digit transforms may still contribute candidate values, but no row may
 # be recovered unless the context candidate decision engine selects a clear
 # winner. Ambiguous candidates are quarantined for review.
@@ -382,7 +464,7 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_score"] = round(selected.score, 4)
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.50"
+        recovered["power_recovery_decision_version"] = "v0.9.5.51"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -394,7 +476,7 @@ def _apply_recovered_power(
         recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
     else:
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.50"
+        recovered["power_recovery_decision_version"] = "v0.9.5.51"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -618,7 +700,7 @@ def _mark_quarantined(
         quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
-        quarantined["power_recovery_decision_version"] = "v0.9.5.50"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.51"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)

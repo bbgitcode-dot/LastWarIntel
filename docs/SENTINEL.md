@@ -2,7 +2,7 @@
 
 > Transforming observations into operational truth and explainable strategic intelligence.
 
-**Version:** v0.9.5.50
+**Version:** v0.9.5.51
 
 ---
 
@@ -60,7 +60,7 @@ Command Center
 
 ## Current sprint status
 
-v0.9.5.50 is a recovery decision cutover sprint. It removes the legacy leading-digit decision fallback and requires clear candidate-score margins before automatic recovery.
+v0.9.5.51 is a recovery decision cutover sprint. It removes the legacy leading-digit decision fallback and requires clear candidate-score margins before automatic recovery.
 
 The next development focus is import session and segment integrity.
 

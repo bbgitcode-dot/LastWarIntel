@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Version:** v0.9.5.50  
+**Version:** v0.9.5.51  
 **Status:** Living Document
 
 ---
@@ -139,7 +139,7 @@ Recovery remains source-local and auditable:
 
 ## Current recovery decision model
 
-v0.9.5.50 removes the final legacy leading-digit recovery fallback. Power recovery now follows a candidate-decision model:
+v0.9.5.51 removes the final legacy leading-digit recovery fallback. Power recovery now follows a candidate-decision model:
 
 ```text
 Suspicious power value
@@ -156,6 +156,6 @@ Margin threshold
 The recovery layer may still generate candidates from known OCR digit confusions, but it may not select a candidate without a clear score margin.
 
 
-## v0.9.5.50 recovery extension
+## v0.9.5.51 recovery extension
 
 The recovery layer now treats OCR power errors as bidirectional. High explosions (`798M -> 198M`) and low truncations (`32M -> 320M`) both enter the same candidate-decision engine. Candidate generation is ranking-type aware, source-local, and margin-gated. Ground Truth does not power runtime decisions.
