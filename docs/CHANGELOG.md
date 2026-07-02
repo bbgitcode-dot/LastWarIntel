@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
+
+- Enforced active `screenshot_upload` snapshot before screenshot imports.
+- Bound latest import report, generated exports and review history to the active snapshot.
+- Added Import Center snapshot coverage with expected/imported/missing feed visibility.
+- Added smoke tests for snapshot context enforcement.
+
+
 ## [0.9.5.72] - Documentation Consolidation & Project Handover
 
 ### Added

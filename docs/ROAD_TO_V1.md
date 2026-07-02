@@ -1,7 +1,7 @@
 # Road to Sentinel v1.0.0
 
-**Current version:** v0.9.5.72  
-**Current phase:** Data Integrity Fortress → Snapshot Management  
+**Current version:** v0.9.5.73  
+**Current phase:** Data Integrity Fortress → Snapshot Management Hardening  
 **North Star:** Explainable strategic intelligence for Last War alliance leadership.
 
 ## North Star
@@ -53,7 +53,7 @@ Delivered:
 
 Remaining:
 
-- Active snapshot enforcement for all uploads/imports.
+- Snapshot close/freeze semantics.
 - Screenshot quality preflight.
 - Duplicate screenshot detection.
 - Row geometry and crop confidence.
@@ -62,7 +62,7 @@ Remaining:
 
 ## Phase 3 – Snapshot Management
 
-**Status:** Foundation present in v0.9.5.71; must be hardened next.
+**Status:** Upload binding enforced in v0.9.5.73; close/freeze and comparison still planned.
 
 Snapshots become the primary temporal container:
 
@@ -79,10 +79,10 @@ Snapshot
 
 Required milestones:
 
-1. Create Snapshot in Import Center.
-2. Active Snapshot required for screenshot upload/import.
-3. Snapshot-level coverage and missing-feed report.
-4. Snapshot-level review queue.
+1. Create Snapshot in Import Center. ✅
+2. Active Snapshot required for screenshot upload/import. ✅
+3. Snapshot-level coverage and missing-feed report. ✅
+4. Snapshot-level review queue binding. ✅
 5. Snapshot close/freeze semantics.
 6. Snapshot compare foundation.
 

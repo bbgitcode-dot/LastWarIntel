@@ -74,3 +74,8 @@ Do not remain in a planning loop.
 ## Standard handoff sentence
 
 Proud Owner and Mimir operate Sentinel through complete sprint ZIPs. Mimir does not deliver partial code snippets unless explicitly requested. Every patch comes with version, release notes, validation, commit command and tag command.
+
+
+## v0.9.5.73 operating rule
+
+Before running screenshot import, create or activate the correct snapshot in Import Center. If the active snapshot is missing or wrong, stop the sprint/import and fix the context first. Do not use filenames, upload order or chat upload sequence as a substitute for snapshot context.

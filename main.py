@@ -22,6 +22,7 @@ from parser.ranking import (
 )
 from parser.player_ranking import build_player_ranking_snapshot
 from parser.excel import export
+from application.snapshots.service import SnapshotContextError, SnapshotService
 
 
 CONFIG_FILE = Path("config_pc.json")
@@ -53,7 +54,16 @@ def _safe_print(*values) -> None:
 def main():
     _configure_stdout()
     config = load_config()
+    snapshot_service = SnapshotService()
+    try:
+        active_snapshot = snapshot_service.require_active_import_snapshot()
+    except SnapshotContextError as exc:
+        print(f"SNAPSHOT BLOCKER | {exc}")
+        return
+    snapshot_service.update_status(active_snapshot.id, "importing")
+    active_snapshot = snapshot_service.require_active_import_snapshot()
     start_time = time.perf_counter()
+    print(f"Active Snapshot: {active_snapshot.name} ({active_snapshot.id})")
     reader = create_reader()
     print(f"OCR Provider: {reader.info.engine} ({reader.info.name})")
     print(f"OCR Metadata Languages: {list(reader.info.metadata_languages)}")
@@ -219,11 +229,16 @@ def main():
         for row in merged:
             _safe_print(row["rank"], row["name"], row["power"])
 
-    output_file = os.getenv("SENTINEL_OUTPUT_FILE", "output/lastwar_export.xlsx")
+    output_file = os.getenv("SENTINEL_OUTPUT_FILE") or str(snapshot_service.snapshot_output_dir(active_snapshot) / "lastwar_export.xlsx")
     export(final_grouped, filename=output_file)
     duration = time.perf_counter() - start_time
     import_report = build_import_run_report(final_grouped, screenshots=len(screenshots), runtime_seconds=duration, output_file=output_file)
+    import_report = snapshot_service.bind_import_report(import_report, active_snapshot)
+    snapshot_export_file = snapshot_service.mirror_export_to_snapshot(output_file, active_snapshot)
+    if snapshot_export_file:
+        import_report["snapshot_export_file"] = snapshot_export_file
     JsonImportRunRepository().save_latest_import(import_report)
+    snapshot_service.update_status(active_snapshot.id, "review" if import_report.get("review_count") else "complete")
     print("Import report geschrieben nach data/latest_import_report.json")
     command_center_files = generate_command_center()
     print(f"Command Center geschrieben nach {command_center_files['command_center']}")

@@ -1,10 +1,49 @@
 # Sentinel Release Notes
 
-**Current release:** v0.9.5.72 – Documentation Consolidation & Project Handover  
-**Baseline:** v0.9.5.71 – Snapshot Management Foundation  
-**Updated:** 2026-07-02
+**Current release:** v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement  
+**Baseline:** v0.9.5.72 – Documentation Consolidation & Project Handover  
+**Updated:** 2026-07-03
 
 This file is now the canonical release-note ledger for Sentinel. Older release-note fragments in `/docs` are legacy sources; future releases should update this document directly.
+
+
+## v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
+
+### Focus
+Make managed snapshots unavoidable for screenshot imports and bind Current Run artifacts to the active import context before any strategic interpretation.
+
+### Added
+- Active snapshot gate in `main.py` for screenshot import.
+- Snapshot-bound default export path under `output/snapshots/<snapshot_id>/lastwar_export.xlsx`.
+- Import report snapshot binding metadata with schema `sentinel.import_run.v2`.
+- Snapshot-level coverage model for expected rankings, expected servers, imported feeds, missing combinations and open reviews.
+- Import Center active snapshot coverage panel and unbound-report warning.
+- Review evidence and persistent Review History snapshot id/name propagation.
+- Smoke tests for snapshot requirement, report binding, missing-feed coverage and review-history binding.
+
+### Changed
+- Screenshot import now blocks when no active `screenshot_upload` snapshot exists.
+- Closed, complete or non-screenshot snapshots cannot receive screenshot imports.
+- Latest import report is no longer treated as current phase evidence when it is not bound to the active snapshot.
+- Snapshot creation can optionally record expected servers, allowing server/ranking missing-feed checks.
+
+### Guardrail
+Snapshot binding is audit context only. It does not promote rows into Operational Truth, does not merge Historical Dataset with Current Run, and does not use screenshot filename/order/upload order as truth.
+
+### Validation
+```text
+pytest tests/smoke/test_snapshot_management.py tests/smoke/test_snapshot_upload_binding.py tests/smoke/test_command_center.py -q
+10 passed
+
+python -m compileall -q application/snapshots services/command_center.py web/routes/imports.py main.py tests/smoke/test_snapshot_upload_binding.py
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(import): enforce snapshot-bound screenshot imports"
+git tag -a v0.9.5.73 -m "v0.9.5.73 Snapshot Upload Binding and Import Context Enforcement"
+```
 
 ## v0.9.5.72 – Documentation Consolidation & Project Handover
 

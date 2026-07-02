@@ -1,8 +1,8 @@
 # Sentinel Project Status
 
-**Current version:** v0.9.5.72  
-**Current sprint:** Documentation Consolidation & Project Handover  
-**Baseline code:** v0.9.5.71  
+**Current version:** v0.9.5.73  
+**Current sprint:** Snapshot Upload Binding & Import Context Enforcement  
+**Baseline code:** v0.9.5.72  
 **Primary focus:** Data integrity before intelligence
 
 ## Current Philosophy
@@ -32,7 +32,8 @@ Operational Truth may only emerge through guarded validation, Data Guard, Rankin
 - Command Center with Operational Readiness, drilldowns, Imports, Quality and Review navigation.
 - Historical Excel importer with fast bulk import and report output.
 - Historical coverage baseline from `input/LastWarS5_post_Transfer.xlsx` and `input/LastWarS6_pre-season.xlsx`.
-- Managed Snapshot foundation with JSON-backed active snapshot context.
+- Managed Snapshot foundation with enforced screenshot upload binding and JSON-backed active snapshot context.
+- Snapshot-level coverage for expected feeds, imported feeds, missing combinations and open reviews.
 
 ### Current data-source separation
 
@@ -81,19 +82,27 @@ Server 551 benchmark data must not appear as current-run quality unless it is ac
 - Added active snapshot display in Command Center and Import Center.
 - Introduced Snapshot as the planned container for future screenshot uploads.
 
+### v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
+- Screenshot import now requires an active `screenshot_upload` snapshot.
+- Latest import report is bound to the active snapshot and upgraded to `sentinel.import_run.v2`.
+- Default screenshot export path is snapshot-scoped under `output/snapshots/<snapshot_id>/`.
+- Review evidence and persistent review history keep snapshot id/name context.
+- Import Center shows active snapshot coverage, missing expected feeds and open reviews bound to the snapshot.
+- Unbound latest reports are explicitly warned against so phases such as `S6 pre Transfer` cannot be silently mixed with another event.
+
 ## Immediate next steps
 
-### Next development focus: Snapshot workflow hardening
+### Next development focus: Snapshot completeness and close semantics
 
-The snapshot concept exists, but it must become the default import context.
+The active snapshot context is now enforced for screenshot imports. The next hardening step is to make snapshot lifecycle decisions explicit.
 
 Required next work:
 
-1. Make **Create Snapshot** visible and natural in Import Center.
-2. Require or prompt for an active snapshot before screenshot upload/import.
-3. Bind `latest_import_report.json`, review history entries and generated exports to the active snapshot.
-4. Show snapshot-level coverage: expected servers, received servers, missing ranking feeds and open reviews.
-5. Prevent accidental mixing of screenshots from different events/phases.
+1. Add snapshot close/freeze semantics with a protected read-only state.
+2. Add screenshot quality preflight before OCR import.
+3. Add duplicate screenshot detection inside the active snapshot.
+4. Add clearer source-local missing-data causes.
+5. Prepare snapshot-to-snapshot compare without mixing Current Run, Historical Dataset, Benchmark/Ground Truth or Operational Truth.
 
 Example target snapshot:
 

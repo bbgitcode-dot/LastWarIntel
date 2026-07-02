@@ -471,6 +471,9 @@ def _history_record_from_evidence(item: dict[str, Any], *, created_at: Any, sour
         "last_seen_at": created_at,
         "seen_count": 1,
         "source_report_created_at": source_created_at,
+        "snapshot": item.get("snapshot") if isinstance(item.get("snapshot"), dict) else {},
+        "snapshot_id": item.get("snapshot_id"),
+        "snapshot_name": item.get("snapshot_name"),
         "review_id": item.get("id"),
         "server": item.get("server"),
         "ranking_type": item.get("ranking_type"),
@@ -635,6 +638,7 @@ def _resolution_template() -> dict[str, Any]:
 
 def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
     reviews = list(import_report.get("reviews") or [])
+    snapshot_binding = import_report.get("snapshot") if isinstance(import_report.get("snapshot"), dict) else {}
     trace_index = _build_trace_index(import_report)
     items = []
     for idx, review in enumerate(reviews, start=1):
@@ -679,6 +683,9 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "trace_source_file": trace.get("source_file") if trace else None,
             "candidate_count": trace.get("candidate_count") if trace else None,
             "trace": trace,
+            "snapshot": snapshot_binding,
+            "snapshot_id": snapshot_binding.get("id") or import_report.get("snapshot_id"),
+            "snapshot_name": snapshot_binding.get("name") or import_report.get("snapshot_name"),
         })
     return items
 
@@ -692,6 +699,9 @@ def _evidence_json(import_report: dict[str, Any] | None) -> dict[str, Any]:
         "status": report.get("status"),
         "readiness": report.get("readiness"),
         "review_item_count": report.get("review_item_count", 0),
+        "snapshot": report.get("snapshot") if isinstance(report.get("snapshot"), dict) else {},
+        "snapshot_id": report.get("snapshot_id"),
+        "snapshot_name": report.get("snapshot_name"),
         "items": _evidence_items(report),
     }
 

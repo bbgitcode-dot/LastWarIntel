@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Current version:** v0.9.5.72
+**Current version:** v0.9.5.73
 
 Sentinel is an explainable strategic intelligence platform for Last War. Its current architecture is built around guarded data ingestion before strategic intelligence.
 
@@ -25,6 +25,20 @@ Operational Truth / Export / Historical Reference
         ↓
 Command Center / Intelligence Layer
 ```
+
+
+## Snapshot binding enforcement
+
+v0.9.5.73 makes managed snapshots part of the screenshot import boundary:
+
+- `main.py` requires an active `screenshot_upload` snapshot before processing screenshots.
+- Closed, complete or non-screenshot snapshots block screenshot imports.
+- `data/latest_import_report.json` includes `snapshot`, `snapshot_id`, `snapshot_name`, expected rankings and expected servers.
+- Generated screenshot exports default to `output/snapshots/<snapshot_id>/lastwar_export.xlsx`.
+- Review evidence and persistent Review History carry the snapshot binding so review work is phase-aware.
+- Import Center displays active snapshot coverage and warns when the latest report is not bound to the active snapshot.
+
+Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth remain separate. Snapshot binding is context and audit metadata, not truth promotion.
 
 ## Runtime components
 

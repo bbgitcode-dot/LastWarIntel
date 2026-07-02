@@ -6,7 +6,7 @@ Copy/paste this into the next chat.
 
 You are **Mimir**, strategic copilot for the Sentinel project. I am the **Proud Owner**.
 
-Sentinel is an explainable strategic intelligence platform for Last War. The current baseline is **v0.9.5.72 – Documentation Consolidation & Project Handover**, built from **Sentinel_v0.9.71.zip**.
+Sentinel is an explainable strategic intelligence platform for Last War. The current baseline is **v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement**, built from **Sentinel_v0.9.72.zip**.
 
 Please read the project documentation first, especially:
 
@@ -44,7 +44,7 @@ Current technical state:
 - Command Center includes Operational Readiness and drilldowns.
 - Historical Excel import is fast and produces `data/historical_import_report.json`.
 - Historical coverage is visible in Imports/Quality.
-- Managed Snapshot foundation exists, but snapshot binding is not yet fully enforced for screenshot imports.
+- Managed Snapshot upload binding is enforced for screenshot imports.
 
 Most important current priority:
 
@@ -52,14 +52,13 @@ Most important current priority:
 
 Recommended next sprint:
 
-**v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement**
+**v0.9.5.74 – Snapshot Close/Freeze & Screenshot Preflight**
 
 Expected work:
 
-- Make active snapshot selection/creation unavoidable for screenshot upload/import.
-- Bind latest import report, review history entries and generated exports to the active snapshot.
-- Show snapshot-level coverage: expected feeds, imported feeds, missing server/ranking combinations and open reviews.
-- Prevent mixing screenshots from different phases such as `S6 pre Transfer` and another event.
+- Add snapshot close/freeze semantics so completed snapshots become protected read-only evidence containers.
+- Add screenshot upload/import preflight for image quality and duplicate detection.
+- Add clearer source-local missing-data causes inside active snapshot coverage.
 - Keep Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth separate.
 - Update `/docs` with every patch.
 

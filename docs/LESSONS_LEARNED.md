@@ -41,3 +41,8 @@ As soon as multiple screenshot batches or users exist, “latest run” is not e
 ## 10. Documentation is part of the product
 
 After many rapid sprints, undocumented architecture becomes operational risk. Consolidated docs, release notes, patch summaries and next-chat handoff are necessary for continuity.
+
+
+## v0.9.5.73 – Snapshot context must be enforced, not remembered
+
+A human can intend that a screenshot batch belongs to `S6 pre Transfer`, but Sentinel must not rely on that intent being remembered later. The import boundary now requires an active snapshot and writes the binding into import reports, exports and review history. This keeps Current Run evidence phase-aware without turning context into Operational Truth.

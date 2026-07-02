@@ -63,3 +63,8 @@ The Intelligence layer should not be expanded until import, review, snapshot and
 - How screenshot upload UI enforces active snapshot selection.
 - How historical server/alliance/player timelines are normalized across name changes and alliance transfers.
 - How ADR numbering in `/docs/ADR` should be cleaned without losing history.
+
+
+## ADR – v0.9.5.73 Snapshot import binding is mandatory
+
+Screenshot imports must have an active managed `screenshot_upload` snapshot. A missing, closed, complete or wrong-type snapshot blocks import instead of allowing evidence to enter the Current Run without phase context. This prevents accidental mixing of events such as `S6 pre Transfer` with another phase. Snapshot metadata is audit context only and never overrides Data Guard, Ranking Guard or Human Review.

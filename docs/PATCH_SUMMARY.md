@@ -1,14 +1,45 @@
 # Sentinel Patch Summary
 
-**Current release:** v0.9.5.72 – Documentation Consolidation & Project Handover  
-**Updated:** 2026-07-02
+**Current release:** v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement  
+**Updated:** 2026-07-03
 
 This is the canonical patch-summary document. Future sprint patches should update this file instead of creating loose `PATCH_SUMMARY_v*.md` files, unless a temporary root-level file is needed inside a delivered patch package.
+
+## v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
+
+### Purpose
+Harden managed snapshots from a visible UI foundation into an enforced screenshot-import context. This sprint prevents unbound Current Run evidence and binds reports, exports and review state to the active snapshot before any operational interpretation.
+
+### Included changes
+- Added mandatory active `screenshot_upload` snapshot gate in `main.py`.
+- Blocked screenshot imports when the active snapshot is missing, closed, complete or not a screenshot-upload snapshot.
+- Bound `data/latest_import_report.json` to the active snapshot with `sentinel.import_run.v2` metadata.
+- Changed default screenshot export destination to `output/snapshots/<snapshot_id>/lastwar_export.xlsx`.
+- Mirrored generated export metadata into the snapshot-bound import report.
+- Added snapshot coverage view models for expected rankings, expected servers, imported feeds, missing server/ranking combinations and open reviews.
+- Added active snapshot coverage panel and unbound-report warning to Import Center.
+- Propagated snapshot id/name into Review Evidence Pack and persistent Review History.
+- Added smoke tests for active snapshot requirement, report binding, missing-feed coverage and review-history snapshot binding.
+
+### Validation
+```text
+pytest tests/smoke/test_snapshot_management.py tests/smoke/test_snapshot_upload_binding.py tests/smoke/test_command_center.py -q
+10 passed
+
+python -m compileall -q application/snapshots services/command_center.py web/routes/imports.py main.py tests/smoke/test_snapshot_upload_binding.py
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(import): enforce snapshot-bound screenshot imports"
+git tag -a v0.9.5.73 -m "v0.9.5.73 Snapshot Upload Binding and Import Context Enforcement"
+```
 
 ## v0.9.5.72 – Documentation Consolidation & Project Handover
 
 ### Purpose
-Consolidate Sentinel project knowledge after the v0.9.5.47–v0.9.5.71 sprint sequence. This sprint locks down the current architecture, operating rules, known risks and next milestones before the next development chat.
+Consolidate Sentinel project knowledge after the v0.9.5.47–v0.9.5.71 sprint sequence. This sprint locked down the current architecture, operating rules, known risks and next milestones before the next development chat.
 
 ### Included changes
 - Updated `/docs/RELEASE_NOTES.md` as the canonical release-note ledger.

@@ -33,3 +33,8 @@ Human Review is not a bypass. It produces auditable resolution evidence. A later
 ## Relationship with Snapshots
 
 Future Data Guard decisions should be snapshot-aware. A row should be evaluated in the context of its snapshot, source screenshot, ranking feed and expected server coverage.
+
+
+## Snapshot binding and Data Guard
+
+v0.9.5.73 adds an import-context gate before screenshot OCR. The gate prevents unbound Current Run evidence from entering the workflow. Data Guard remains responsible for server assignment, quarantine and protection of Operational Truth; snapshot binding only answers which named phase the evidence belongs to. If evidence is unbound or bound to a different active snapshot, it must not be interpreted as current operational completeness.

@@ -26,6 +26,41 @@ class ManagedSnapshot:
 
 
 @dataclass(slots=True, frozen=True)
+class SnapshotFeedCoverage:
+    server: int | None
+    ranking_type: str
+    rows: int
+    screenshots: int
+    status: str
+    source: str = ""
+
+
+@dataclass(slots=True, frozen=True)
+class SnapshotMissingFeed:
+    server: int | None
+    ranking_type: str
+    reason: str
+
+
+@dataclass(slots=True, frozen=True)
+class SnapshotCoverage:
+    snapshot: ManagedSnapshot | None
+    is_bound: bool
+    bound_snapshot_id: str
+    bound_snapshot_name: str
+    report_created_at: str
+    expected_rankings: list[str]
+    expected_servers: list[int]
+    imported_servers: list[int]
+    imported_rankings: list[str]
+    imported_feeds: list[SnapshotFeedCoverage]
+    missing_feeds: list[SnapshotMissingFeed]
+    open_review_count: int
+    output_file: str
+    warning: str = ""
+
+
+@dataclass(slots=True, frozen=True)
 class SnapshotDashboard:
     has_active: bool
     active: ManagedSnapshot | None
@@ -33,3 +68,4 @@ class SnapshotDashboard:
     open_count: int
     total_count: int
     storage_path: str
+    active_coverage: SnapshotCoverage | None = None

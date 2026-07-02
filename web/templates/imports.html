@@ -53,7 +53,7 @@
         <div class="panel-header compact">
             <div>
                 <h2>Snapshot Management</h2>
-                <p>Create an explicit import context before uploading screenshots, for example <strong>S6 pre Transfer</strong>.</p>
+                <p>Create or activate an explicit import context before uploading screenshots, for example <strong>S6 pre Transfer</strong>. Screenshot imports without an active snapshot are blocked.</p>
             </div>
             <span class="panel-badge">{{ snapshot_model.open_count }} OPEN / {{ snapshot_model.total_count }} TOTAL</span>
         </div>
@@ -81,6 +81,9 @@
                 <label>Description
                     <input name="description" placeholder="Purpose, phase, server group or upload instruction">
                 </label>
+                <label>Expected Servers
+                    <input name="assigned_servers" placeholder="Optional: 549, 550, 551, 552">
+                </label>
                 <div class="snapshot-checkboxes">
                     <label><input type="checkbox" name="expected_alliance_power" value="1" checked> Alliance Power</label>
                     <label><input type="checkbox" name="expected_total_hero_power" value="1" checked> Total Hero Power</label>
@@ -92,6 +95,7 @@
                 {% if snapshot_model.active %}
                 <strong>{{ snapshot_model.active.name }}</strong>
                 <small>{{ snapshot_model.active.snapshot_type|replace('_', ' ') }} · {{ snapshot_model.active.status }} · feeds: {{ snapshot_model.active.expected_rankings|join(', ') }}</small>
+                <small>Expected servers: {{ snapshot_model.active.assigned_servers|join(', ') if snapshot_model.active.assigned_servers else 'not fixed yet' }}</small>
                 <em>{{ snapshot_model.storage_path }}</em>
                 {% else %}
                 <strong>No active snapshot</strong>
@@ -103,7 +107,7 @@
         {% if snapshot_model.snapshots %}
         <div class="quality-table snapshot-table">
             <div class="quality-row quality-head">
-                <span>Snapshot</span><span>Type</span><span>Status</span><span>Expected Feeds</span><span>Created</span><span>Actions</span>
+                <span>Snapshot</span><span>Type</span><span>Status</span><span>Expected Feeds</span><span>Expected Servers</span><span>Actions</span>
             </div>
             {% for item in snapshot_model.snapshots %}
             <div class="quality-row">
@@ -111,7 +115,7 @@
                 <span>{{ item.snapshot_type|replace('_', ' ') }}</span>
                 <span>{{ item.status }}</span>
                 <span>{{ item.expected_rankings|join(', ') }}</span>
-                <span>{{ item.created_at }}</span>
+                <span>{{ item.assigned_servers|join(', ') if item.assigned_servers else '—' }}</span>
                 <span class="snapshot-actions">
                     <form method="post" action="/imports/snapshots/{{ item.id }}/activate"><button type="submit">Set Active</button></form>
                     <form method="post" action="/imports/snapshots/{{ item.id }}/status">
@@ -130,6 +134,44 @@
         </div>
         {% endif %}
     </section>
+
+
+    {% if snapshot_model.active_coverage %}
+    <section class="panel snapshot-coverage-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Active Snapshot Coverage</h2>
+                <p>Snapshot-bound view of expected feeds, imported feeds, missing server/ranking combinations and open reviews.</p>
+            </div>
+            <span class="panel-badge">{{ 'BOUND' if snapshot_model.active_coverage.is_bound else 'UNBOUND' }}</span>
+        </div>
+        {% if snapshot_model.active_coverage.warning %}
+        <div class="drilldown-notice danger-note">{{ snapshot_model.active_coverage.warning }}</div>
+        {% endif %}
+        <div class="metrics-grid compact-metrics">
+            <article class="metric-card tone-info"><div class="metric-title">Expected Feeds</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.expected_rankings|length }}</div><div class="metric-subline">{{ snapshot_model.active_coverage.expected_rankings|join(', ') }}</div></article>
+            <article class="metric-card tone-info"><div class="metric-title">Imported Servers</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.imported_servers|length }}</div><div class="metric-subline">{{ snapshot_model.active_coverage.imported_servers|join(', ') if snapshot_model.active_coverage.imported_servers else 'none bound yet' }}</div></article>
+            <article class="metric-card tone-warning"><div class="metric-title">Missing Feeds</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.missing_feeds|length }}</div><div class="metric-subline">expected combinations not seen</div></article>
+            <article class="metric-card tone-warning"><div class="metric-title">Open Reviews</div><div class="metric-value small-value">{{ snapshot_model.active_coverage.open_review_count }}</div><div class="metric-subline">bound to active snapshot</div></article>
+        </div>
+        <div class="quality-table">
+            <div class="quality-row quality-head"><span>Server</span><span>Ranking</span><span>Rows</span><span>Screenshots</span><span>Status</span></div>
+            {% for feed in snapshot_model.active_coverage.imported_feeds %}
+            <div class="quality-row"><strong>{{ feed.server or '—' }}</strong><span>{{ feed.ranking_type }}</span><span>{{ feed.rows }}</span><span>{{ feed.screenshots }}</span><span>{{ feed.status }}</span></div>
+            {% else %}
+            <div class="quality-row"><span>No import report is bound to the active snapshot yet.</span></div>
+            {% endfor %}
+        </div>
+        {% if snapshot_model.active_coverage.missing_feeds %}
+        <div class="quality-table">
+            <div class="quality-row quality-head"><span>Missing Server</span><span>Missing Ranking</span><span>Reason</span></div>
+            {% for missing in snapshot_model.active_coverage.missing_feeds %}
+            <div class="quality-row"><strong>{{ missing.server or 'any' }}</strong><span>{{ missing.ranking_type }}</span><span>{{ missing.reason }}</span></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
 
     <section class="metrics-grid">
         <article class="metric-card tone-info">

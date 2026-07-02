@@ -48,6 +48,7 @@ async def create_snapshot(request: Request):
     name = form.get("name", "")
     snapshot_type = form.get("snapshot_type", "screenshot_upload")
     description = form.get("description", "")
+    assigned_servers_raw = form.get("assigned_servers", "")
     expected_rankings: list[str] = []
     if form.get("expected_alliance_power"):
         expected_rankings.append("alliance_power")
@@ -60,6 +61,7 @@ async def create_snapshot(request: Request):
             description=description,
             expected_rankings=expected_rankings or ["alliance_power", "total_hero_power"],
             source="Import Center",
+            assigned_servers=assigned_servers_raw,
             set_active=True,
         )
         target = "/imports?snapshot=created"
