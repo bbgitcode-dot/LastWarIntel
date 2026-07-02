@@ -39,6 +39,7 @@ class PlayerRankingEntry:
     parse_warnings: list[str] = field(default_factory=list)
     parse_corrections: list[str] = field(default_factory=list)
     normalized_identity: Optional[str] = None
+    visual_y: Optional[float] = None
 
     def to_legacy_row(self) -> dict:
         """Return a dict compatible with the current merge/export pipeline."""
@@ -69,6 +70,7 @@ class PlayerRankingEntry:
             "parse_warnings": ";".join(self.parse_warnings),
             "parse_corrections": ";".join(self.parse_corrections),
             "normalized_identity": self.normalized_identity,
+            "visual_y": self.visual_y,
         }
 
 

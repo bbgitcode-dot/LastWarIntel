@@ -1,3 +1,12 @@
+**Current Version:** v0.9.5.53  
+
+## v0.9.5.53 – Adaptive Review OCR Pipeline
+
+Review/Quarantine is now an active quality stage. Sentinel can attempt row-local enhanced OCR before leaving a row in quarantine. This is an important Road-to-v1 capability because v1 requires explainable remediation, not just detection.
+
+Next work should measure how many review rows are truly improved by enhanced crops and whether ensemble OCR should be added after the OpenCV-based stage.
+
+
 # Road to Sentinel v1.0.0
 
 > From screenshot import to trusted strategic decision support.

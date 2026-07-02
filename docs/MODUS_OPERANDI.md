@@ -1,3 +1,8 @@
+## v0.9.5.53 Operating Note
+
+When reviewing a run after .53, check the new `review_ocr` section in `data/latest_import_report.json` and the per-row `review_ocr_*` columns in Excel. A promoted review row is acceptable only when `review_ocr_status=promoted` and the decision explains the enhanced OCR evidence. Rows with `no_promotion` or `skipped` remain manual review candidates.
+
+
 # Sentinel Modus Operandi
 
 > How the Proud Owner and Mimir build Sentinel.

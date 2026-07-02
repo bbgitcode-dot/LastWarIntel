@@ -1,3 +1,12 @@
+## v0.9.5.53 Lesson – Review is an OCR opportunity, not just a stop sign
+
+The 549–553 regression run after .52 showed that the remaining review rows are often not pure power-scoring failures. They are row/crop/image-quality failures: Sentinel can infer bounded gaps, but runtime must not turn that inference into Operational Truth without better direct evidence.
+
+The correct next layer is an adaptive review OCR pass: crop the questionable visual row, enlarge it, enhance it, OCR it again, and only promote when the second pass produces stronger intrinsic row evidence. This keeps Data Quality ahead of Intelligence while turning quarantine into an active quality-improvement stage.
+
+Key principle: review OCR may improve evidence, but it must not become another guessing engine. If the enhanced crop is weak, ambiguous, or missing, quarantine remains the correct answer.
+
+
 # Sentinel Lessons Learned
 
 **Version:** v0.9.5.52

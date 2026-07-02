@@ -1,3 +1,22 @@
+**Version:** v0.9.5.53  
+
+## v0.9.5.53 Review OCR Architecture
+
+Sentinel now includes an adaptive Review OCR stage after Ranking Guard and Power Sanity Guard. The stage operates only on rows already isolated for review. It uses source-local visual evidence: original screenshot, row y-position, deterministic crop variants, 2x zoom, CLAHE, and sharpen. The stage may promote a row only when the re-OCR candidate passes a conservative evidence gate.
+
+Flow:
+
+```text
+Ranking Guard / Power Guard
+→ Quarantine candidate
+→ Adaptive Review OCR
+→ Promote on strong direct OCR evidence
+→ otherwise keep quarantine
+```
+
+This keeps Operational Truth protected while using review as a quality-improvement opportunity.
+
+
 # Sentinel Architecture
 
 **Version:** v0.9.5.52  

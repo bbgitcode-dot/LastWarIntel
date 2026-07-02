@@ -96,6 +96,7 @@ def build_player_ranking_entries(
                     + [value for value in str(row.get("column_corrections") or "").split(";") if value]
                 )),
                 normalized_identity=identity_quality.normalized_input,
+                visual_y=row.get("y"),
             )
         )
 

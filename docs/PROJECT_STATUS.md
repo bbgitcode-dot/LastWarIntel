@@ -1,3 +1,14 @@
+**Current Version:** v0.9.5.53  
+**Runtime Baseline:** v0.9.5.53 – Adaptive Review OCR Pipeline  
+**Sprint Focus:** Review rows now receive a source-local second-pass OCR attempt before remaining in quarantine.
+
+## v0.9.5.53 sprint result
+
+The sprint adds the first adaptive Review OCR pipeline. v0.9.5.52 made Power Recovery safer through segment-order guardrails; .53 addresses the next bottleneck: review rows that are likely caused by crop/image/OCR quality rather than by power scoring alone.
+
+The pipeline runs after Ranking Guard and Power Sanity Guard. It loads the original source screenshot, crops around the quarantined row's visual y-position, creates zoom/enhancement variants, reruns OCR, and promotes only clear second-pass rows. If evidence does not improve, the row remains quarantined with review OCR metadata.
+
+
 # Sentinel Project Status
 
 **Current Version:** v0.9.5.52  

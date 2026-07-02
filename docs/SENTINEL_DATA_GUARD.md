@@ -1,3 +1,15 @@
+## v0.9.5.53 Review OCR Guardrail
+
+Data Guard now allows a controlled post-quarantine review OCR attempt. This does not weaken quarantine: it gives Sentinel one more source-local chance to obtain better OCR evidence from the same row.
+
+Guardrails:
+- only rows already isolated for review are processed,
+- only the original source screenshot and row-local crop are used,
+- no filename/order/upload-order truth is introduced,
+- promotion requires strong direct OCR evidence,
+- otherwise the row remains quarantine.
+
+
 # Sentinel Data Guard – Die Integritätsschicht von Sentinel
 
 **Version:** v0.9.5.52

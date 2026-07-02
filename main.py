@@ -10,6 +10,7 @@ from parser.server import detect_ranking_type, detect_server_consensus_from_ocr
 from parser.data_guard import resolve_server_assignment, reconcile_server_assignments_by_content
 from parser.ranking_guard import apply_ranking_guard
 from parser.ranking_power_sanity_guard import apply_ranking_power_sanity_guard
+from parser.review_ocr import run_adaptive_review_ocr
 from parser.quality_loop import run_server_quality_loop
 from services.import_repository import JsonImportRunRepository, build_import_run_report
 from parser.debug import draw_debug_boxes
@@ -188,6 +189,14 @@ def main():
 
     grouped = apply_ranking_guard(grouped)
     grouped = apply_ranking_power_sanity_guard(grouped)
+    grouped = run_adaptive_review_ocr(
+        grouped,
+        reader=reader,
+        screenshot_dir=SCREENSHOT_DIR,
+        target_width=config["target_width"],
+        target_height=config["target_height"],
+        enabled=os.getenv("SENTINEL_REVIEW_OCR", "1") != "0",
+    )
     grouped = reconcile_server_assignments_by_content(grouped)
 
     print("\n===== ZUSAMMENFASSUNG =====")

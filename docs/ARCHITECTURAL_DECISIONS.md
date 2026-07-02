@@ -1,3 +1,14 @@
+## ADR – Adaptive Review OCR before final quarantine
+
+**Status:** Accepted in v0.9.5.53
+
+**Context:** After .52, many remaining review rows were not solved by additional power scoring. They required better direct OCR evidence from the questionable visual row.
+
+**Decision:** Add a source-local adaptive OCR pass for review/quarantine rows. Generate row crops and enhanced variants; promote only when the second-pass OCR evidence is strong.
+
+**Consequence:** Review becomes an evidence-improvement stage. Quarantine remains the fallback when enhanced OCR is weak or ambiguous. Filename/order/upload order remain explicitly non-authoritative.
+
+
 # Sentinel Architectural Decisions
 
 **Version:** v0.9.5.52

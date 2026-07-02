@@ -1,3 +1,23 @@
+## [0.9.5.53] - Adaptive Review OCR Pipeline
+
+### Added
+- Added adaptive second-pass OCR for ranking rows isolated by review/quarantine.
+- Added deterministic row-crop, shifted-crop, 2x zoom, CLAHE, and sharpen variants.
+- Added conservative review OCR promotion gate and quarantine fallback.
+- Added review OCR metadata to Excel exports and import reports.
+- Added smoke tests for variant generation, clear promotion, and report aggregation.
+
+### Changed
+- `main.py` now runs review OCR after Ranking/Power Guard and before content reconciliation.
+- Player ranking legacy rows now preserve `visual_y` for row-local crop recovery.
+
+### Guardrail
+- Review OCR is source-local and row-local; no filename/order/upload truth is introduced.
+- Weak review OCR stays quarantined.
+
+### Version
+- Version updated to `0.9.5.53`.
+
 # Changelog
 
 All notable changes to Sentinel are documented here. Detailed release notes are consolidated in `docs/RELEASE_NOTES.md`.

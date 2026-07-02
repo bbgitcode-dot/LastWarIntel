@@ -1,6 +1,38 @@
+**Current Version:** v0.9.5.53
+
+## v0.9.5.53 – Adaptive Review OCR Pipeline
+
+Adds a second-pass OCR stage for rows Sentinel already isolated for review/quarantine. Instead of immediately stopping at quarantine, Sentinel now attempts deterministic source-local row crops with zoom, CLAHE, sharpen, and multi-variant OCR. A row is promoted back into Operational Truth only when the enhanced OCR pass produces clearly better intrinsic evidence; otherwise it remains quarantined with explicit review OCR metadata.
+
+### Added
+- `parser/review_ocr.py` adaptive review OCR pipeline.
+- Row-crop, tall-crop, shifted-crop, 2x zoom, CLAHE, and sharpen review variants.
+- Conservative promotion gate for review OCR results.
+- Export/report metadata: `review_ocr_attempted`, `review_ocr_status`, `review_ocr_variants`, `review_ocr_best_variant`, `review_ocr_score`, `review_ocr_decision`.
+- Top-level `review_ocr` section in `data/latest_import_report.json`.
+- Regression tests for review OCR variant generation, quarantine promotion, and report summaries.
+
+### Guardrails
+- Review OCR is source-local and row-local. It never uses filename order, upload order, or neighbouring screenshots as truth.
+- Operational Truth is modified only when enhanced OCR improves the row evidence above a strict threshold.
+- Failed or weak review OCR attempts remain quarantine, not inferred truth.
+
+### Validation
+```bash
+pytest tests/smoke/test_adaptive_review_ocr.py tests/smoke/test_operational_import_repository.py tests/smoke/test_ranking_power_sanity_guard.py -q
+# 23 passed
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(review): add adaptive review OCR pipeline"
+git tag -a v0.9.5.53 -m "v0.9.5.53 Adaptive Review OCR Pipeline"
+```
+
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.52
+**Current Version:** v0.9.5.53
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
 
