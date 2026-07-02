@@ -107,3 +107,105 @@ def test_import_report_summarizes_review_ocr():
     assert report["review_ocr"]["promoted"] == 1
     assert report["review_ocr"]["no_promotion"] == 1
     assert report["reviews"][0]["review_ocr_decision"] == "kept_in_quarantine_after_review_ocr"
+
+
+def test_contextual_row_reconstruction_promotes_low_truncation_between_source_anchors(tmp_path):
+    screenshot = tmp_path / "row.png"
+    import cv2
+    cv2.imwrite(str(screenshot), np.zeros((400, 800, 3), dtype=np.uint8))
+    grouped = {
+        (551, "total_hero_power"): [
+            {"rank": 1, "name": "Joncollins", "power": 416_693_161, "source_file": "row.png"},
+            {"rank": 3, "name": "Monkopeace", "power": 317_058_104, "source_file": "row.png"},
+            {"rank": 4, "name": "LOVE BIEN", "power": 296_706_059, "source_file": "row.png"},
+        ],
+        ("REVIEW", "ranking_guard_quarantine"): [
+            {
+                "original_server": 551,
+                "original_ranking_type": "total_hero_power",
+                "ranking_type": "total_hero_power",
+                "name": "[IVE] MEITTi X 叫@1",
+                "power": 32_030_601,
+                "source_file": "row.png",
+                "visual_y": 200,
+                "ranking_guard_warning": "power_recovery_candidates_ambiguous",
+            }
+        ],
+    }
+    reader = StubReader([])
+
+    result = run_adaptive_review_ocr(
+        grouped,
+        reader=reader,
+        screenshot_dir=tmp_path,
+        target_width=800,
+        target_height=400,
+        enabled=True,
+        max_variants_per_row=2,
+    )
+
+    promoted_rows = [row for row in result[(551, "total_hero_power")] if row.get("row_reconstruction_status") == "promoted"]
+    assert len(promoted_rows) == 1
+    promoted = promoted_rows[0]
+    assert promoted["power"] == 320_306_010
+    assert promoted["rank"] == 2
+    assert promoted["review_ocr_status"] == "contextual_reconstructed"
+    assert promoted["power_recovery_decision_strategy"] == "contextual_row_reconstruction"
+
+
+def test_contextual_row_reconstruction_stays_quarantined_without_source_anchors(tmp_path):
+    screenshot = tmp_path / "row.png"
+    import cv2
+    cv2.imwrite(str(screenshot), np.zeros((400, 800, 3), dtype=np.uint8))
+    grouped = {
+        (551, "total_hero_power"): [
+            {"rank": 1, "name": "Other", "power": 416_693_161, "source_file": "different.png"},
+        ],
+        ("REVIEW", "ranking_guard_quarantine"): [
+            {
+                "original_server": 551,
+                "original_ranking_type": "total_hero_power",
+                "ranking_type": "total_hero_power",
+                "name": "[IVE] MEITTi",
+                "power": 32_030_601,
+                "source_file": "row.png",
+                "visual_y": 200,
+            }
+        ],
+    }
+
+    result = run_adaptive_review_ocr(
+        grouped,
+        reader=StubReader([]),
+        screenshot_dir=tmp_path,
+        target_width=800,
+        target_height=400,
+        enabled=True,
+        max_variants_per_row=2,
+    )
+
+    assert result[("REVIEW", "ranking_guard_quarantine")][0]["row_reconstruction_status"] == "no_promotion"
+
+
+def test_import_report_summarizes_contextual_row_reconstruction():
+    grouped = {
+        (551, "total_hero_power"): [
+            {
+                "rank": 2,
+                "power": 320_306_010,
+                "source_file": "row.png",
+                "review_ocr_attempted": True,
+                "review_ocr_status": "contextual_reconstructed",
+                "review_ocr_score": 0.91,
+                "row_reconstruction_attempted": True,
+                "row_reconstruction_status": "promoted",
+                "row_reconstruction_score": 0.91,
+            }
+        ]
+    }
+
+    report = build_import_run_report(grouped, screenshots=1, runtime_seconds=1, output_file="output/x.xlsx")
+
+    assert report["review_ocr"]["promoted"] == 1
+    assert report["row_reconstruction"]["attempted"] == 1
+    assert report["row_reconstruction"]["promoted"] == 1

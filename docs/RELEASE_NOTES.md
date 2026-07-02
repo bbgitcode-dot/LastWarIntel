@@ -1,3 +1,51 @@
+
+---
+
+# Sentinel v0.9.5.54 – Contextual Row Reconstruction
+
+## Focus
+
+Turn Review from passive quarantine into conservative source-local row reconstruction for bounded low-truncation THP gaps.
+
+## Added
+
+- Contextual Row Reconstruction after Adaptive Review OCR.
+- Source-local anchor evaluation for quarantined low/truncated THP rows.
+- Digit-preserving candidate promotion only when the candidate fits between trusted rows from the same screenshot.
+- Export/report metadata:
+  - `row_reconstruction_attempted`
+  - `row_reconstruction_status`
+  - `row_reconstruction_score`
+  - `row_reconstruction_reason`
+  - `row_reconstruction_anchor_before_power`
+  - `row_reconstruction_anchor_after_power`
+  - `row_reconstruction_rank`
+  - `row_reconstruction_method`
+  - `digit_preservation_score`
+
+## Guardrails
+
+- No filename order.
+- No upload order.
+- No cross-screenshot sequence truth.
+- No promotion without bounded source-local anchors.
+- Quarantine remains default when evidence is incomplete.
+
+## Validation
+
+```text
+pytest tests/smoke/test_adaptive_review_ocr.py tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_inference_context_engine.py tests/smoke/test_gap_recovery.py tests/smoke/test_ground_truth_validator.py -q
+31 passed
+python -m compileall -q parser services main.py version.py ground_truth_validator.py
+```
+
+## Commit
+
+```bash
+git add .
+git commit -m "feat(review): add contextual row reconstruction"
+git tag -a v0.9.5.54 -m "v0.9.5.54 Contextual Row Reconstruction"
+```
 **Current Version:** v0.9.5.53
 
 ## v0.9.5.53 – Adaptive Review OCR Pipeline

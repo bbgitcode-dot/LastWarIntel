@@ -125,6 +125,10 @@ def build_import_run_report(
     review_ocr_no_promotion = 0
     review_ocr_skipped = 0
     review_ocr_scores: list[float] = []
+    row_reconstruction_attempted = 0
+    row_reconstruction_promoted = 0
+    row_reconstruction_no_promotion = 0
+    row_reconstruction_scores: list[float] = []
 
     for (server, ranking_type), rows in sorted(grouped.items(), key=lambda item: str(item[0])):
         rows = list(rows or [])
@@ -148,12 +152,24 @@ def build_import_run_report(
                             review_ocr_scores.append(score)
                     except (TypeError, ValueError):
                         pass
-                if row.get("review_ocr_status") == "promoted":
+                if row.get("review_ocr_status") in {"promoted", "contextual_reconstructed"}:
                     review_ocr_promoted += 1
                 elif row.get("review_ocr_status") == "no_promotion":
                     review_ocr_no_promotion += 1
                 elif row.get("review_ocr_status") == "skipped":
                     review_ocr_skipped += 1
+            if row.get("row_reconstruction_attempted"):
+                row_reconstruction_attempted += 1
+                try:
+                    score = float(row.get("row_reconstruction_score") or 0)
+                    if score:
+                        row_reconstruction_scores.append(score)
+                except (TypeError, ValueError):
+                    pass
+                if row.get("row_reconstruction_status") == "promoted":
+                    row_reconstruction_promoted += 1
+                elif row.get("row_reconstruction_status") == "no_promotion":
+                    row_reconstruction_no_promotion += 1
             if row.get("ranking_recovery_status"):
                 recovery_attempts += 1
                 if row.get("ranking_recovery_status") == "recovered":
@@ -218,6 +234,9 @@ def build_import_run_report(
                     "review_ocr_decision": row.get("review_ocr_decision") or "",
                     "review_ocr_best_variant": row.get("review_ocr_best_variant") or "",
                     "review_ocr_score": _safe_float(row.get("review_ocr_score")),
+                    "row_reconstruction_status": row.get("row_reconstruction_status") or "",
+                    "row_reconstruction_reason": row.get("row_reconstruction_reason") or "",
+                    "row_reconstruction_score": _safe_float(row.get("row_reconstruction_score")),
                 })
             elif row.get("data_guard_conflict") or "server_assignment_conflict" in warning:
                 review_items.append({
@@ -279,6 +298,14 @@ def build_import_run_report(
             "skipped": review_ocr_skipped,
             "confidence_avg": round(sum(review_ocr_scores) / len(review_ocr_scores), 4) if review_ocr_scores else 0,
             "strategy": "adaptive_row_crop_zoom_clahe_sharpen_voting",
+        },
+        "row_reconstruction": {
+            "enabled": True,
+            "attempted": row_reconstruction_attempted,
+            "promoted": row_reconstruction_promoted,
+            "no_promotion": row_reconstruction_no_promotion,
+            "confidence_avg": round(sum(row_reconstruction_scores) / len(row_reconstruction_scores), 4) if row_reconstruction_scores else 0,
+            "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "imports": server_imports,
         "reviews": review_items,

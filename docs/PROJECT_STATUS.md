@@ -1,3 +1,23 @@
+**Current Version:** v0.9.5.54  
+**Runtime Baseline:** v0.9.5.54 – Contextual Row Reconstruction  
+**Sprint Focus:** Review rows can now be promoted only when source-local anchor rows bound a safe reconstructed row.
+
+## v0.9.5.54 sprint result
+
+v0.9.5.53 proved that enhanced Review OCR is technically useful infrastructure but did not promote any of the 12 review rows from the 549–553 regression run. The remaining failures are no longer pure image-filter problems; they are bounded row/rank reconstruction problems.
+
+v0.9.5.54 adds a conservative Contextual Row Reconstruction stage after adaptive Review OCR. For low/truncated THP rows, Sentinel now checks whether a digit-preserving recovered candidate fits between trusted source-local anchor powers from the same screenshot. Promotion requires:
+
+- same source screenshot,
+- same server and ranking type,
+- at least two trusted source-local anchor rows,
+- a normal THP candidate,
+- strong digit preservation,
+- bounded anchor order consistency,
+- no near-duplicate existing power.
+
+If those conditions are not met, the row stays in quarantine. This preserves the rule: quarantine beats false Operational Truth.
+
 **Current Version:** v0.9.5.53  
 **Runtime Baseline:** v0.9.5.53 – Adaptive Review OCR Pipeline  
 **Sprint Focus:** Review rows now receive a source-local second-pass OCR attempt before remaining in quarantine.

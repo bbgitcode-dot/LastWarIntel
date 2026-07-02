@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.import_run.v1",
-  "created_at": "2026-07-02T08:23:48.865363+00:00",
-  "runtime_seconds": 2238.72,
+  "created_at": "2026-07-02T09:23:41.863525+00:00",
+  "runtime_seconds": 2316.77,
   "screenshots": 83,
   "output_file": "output/lastwar_export.xlsx",
   "servers": [
@@ -2735,6 +2735,15 @@
       }
     ]
   },
+  "review_ocr": {
+    "enabled": true,
+    "attempted": 12,
+    "promoted": 0,
+    "no_promotion": 12,
+    "skipped": 0,
+    "confidence_avg": 0,
+    "strategy": "adaptive_row_crop_zoom_clahe_sharpen_voting"
+  },
   "imports": [
     {
       "server": null,
@@ -3006,7 +3015,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003252.png"
+      "screenshot": "Screenshot_20260701-003252.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 553,
@@ -3018,7 +3031,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194308.png"
+      "screenshot": "Screenshot_20260701-194308.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 552,
@@ -3030,7 +3047,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003252.png"
+      "screenshot": "Screenshot_20260701-003252.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 552,
@@ -3042,7 +3063,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003328.png"
+      "screenshot": "Screenshot_20260701-003328.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 549,
@@ -3054,7 +3079,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png"
+      "screenshot": "2026-06-28 13_15_08-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 553,
@@ -3066,7 +3095,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194413.png"
+      "screenshot": "Screenshot_20260701-194413.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 551,
@@ -3078,7 +3111,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_45_10-Window.png"
+      "screenshot": "2026-06-29 14_45_10-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 551,
@@ -3090,7 +3127,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_45_40-Window.png"
+      "screenshot": "2026-06-29 14_45_40-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 551,
@@ -3102,7 +3143,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_46_26-Window.png"
+      "screenshot": "2026-06-29 14_46_26-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 551,
@@ -3114,7 +3159,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-29 14_47_24-Window.png"
+      "screenshot": "2026-06-29 14_47_24-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 553,
@@ -3126,7 +3175,11 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194413.png"
+      "screenshot": "Screenshot_20260701-194413.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     },
     {
       "server": 550,
@@ -3138,14 +3191,18 @@
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_34_46-Window.png"
+      "screenshot": "2026-06-28 13_34_46-Window.png",
+      "review_ocr_status": "no_promotion",
+      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
+      "review_ocr_best_variant": "",
+      "review_ocr_score": 0.0
     }
   ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "83 screenshots · 5 servers · 591 rows · 2238.72s",
+      "detail": "83 screenshots · 5 servers · 591 rows · 2316.77s",
       "severity": "warning"
     },
     {

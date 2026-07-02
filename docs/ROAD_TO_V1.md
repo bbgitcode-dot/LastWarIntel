@@ -1,3 +1,13 @@
+**Current Version:** v0.9.5.54  
+
+## v0.9.5.54 – Contextual Row Reconstruction
+
+The Road to v1 now includes active review remediation. Adaptive Review OCR alone was insufficient for the 549–553 regression set because the hard cases are bounded row gaps: OCR sees nearby rows, but the missing or truncated row must be reconstructed using trusted source-local anchors.
+
+v0.9.5.54 adds conservative source-local bounded-gap reconstruction for low/truncated THP review rows. This is still not a general inference engine. Runtime promotion is allowed only when visual-row evidence, digit preservation, and neighboring source powers agree.
+
+Next Road-to-v1 work should improve explicit ranking-session metadata and row-y geometry so bounded gaps can be explained without relying on accidental parsed rank fields.
+
 **Current Version:** v0.9.5.53  
 
 ## v0.9.5.53 – Adaptive Review OCR Pipeline

@@ -1,3 +1,16 @@
+
+## [0.9.5.54] - Contextual Row Reconstruction
+
+### Added
+
+- Conservative source-local row reconstruction for review/quarantine THP rows.
+- Anchor-based bounded-gap promotion after Adaptive Review OCR.
+- Row reconstruction metadata in Excel export and import report.
+
+### Finding
+
+- The remaining 549–553 hard cases are often bounded row/rank reconstruction problems, not simple OCR enhancement problems.
+
 ## [0.9.5.53] - Adaptive Review OCR Pipeline
 
 ### Added

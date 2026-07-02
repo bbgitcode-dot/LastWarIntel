@@ -1,3 +1,21 @@
+**Version:** v0.9.5.54  
+
+## v0.9.5.54 Contextual Row Reconstruction Architecture
+
+Sentinel now treats Review as a two-stage remediation layer:
+
+```text
+Ranking Guard / Power Guard
+→ Adaptive Review OCR
+→ Contextual Row Reconstruction
+→ Promote only on bounded source-local evidence
+→ otherwise keep quarantine
+```
+
+Adaptive Review OCR improves direct row evidence through crop variants. Contextual Row Reconstruction handles the class of failures where OCR remains weak but a low/truncated THP row is bounded by trusted source-local anchor powers in the same screenshot. The reconstruction layer is intentionally narrow and does not use filename order, upload order, or cross-screenshot sequence as truth.
+
+Report metadata now exposes reconstruction status, anchor powers, reconstructed rank, method, score, and reason so promoted rows stay explainable.
+
 **Version:** v0.9.5.53  
 
 ## v0.9.5.53 Review OCR Architecture

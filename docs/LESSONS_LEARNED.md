@@ -1,3 +1,21 @@
+# Sentinel Lessons Learned
+
+**Version:** v0.9.5.54
+
+## 10. Review OCR is necessary but not sufficient
+
+The v0.9.5.53 regression showed `review_ocr.attempted=12` and `promoted=0`. Image enhancement alone did not solve the remaining hard rows. The hard cases were bounded row/rank gaps, not simple sharpen/zoom failures.
+
+## 11. Bounded source-local anchors are stronger than isolated OCR text
+
+For rows such as low/truncated THP values, the strongest evidence is often the candidate's position between trusted rows from the same screenshot. A candidate that preserves visible digits and fits the local power envelope is safer than one chosen only by OCR confidence.
+
+## 12. Contextual reconstruction must remain conservative
+
+Context can promote only when source-local anchors, digit preservation, and normal ranking order agree. If any part is weak, quarantine remains the correct outcome.
+
+---
+
 ## v0.9.5.53 Lesson – Review is an OCR opportunity, not just a stop sign
 
 The 549–553 regression run after .52 showed that the remaining review rows are often not pure power-scoring failures. They are row/crop/image-quality failures: Sentinel can infer bounded gaps, but runtime must not turn that inference into Operational Truth without better direct evidence.
