@@ -1,7 +1,7 @@
 {
   "schema": "sentinel.review_history.v1",
-  "updated_at": "2026-07-02T14:18:16+00:00",
-  "open_count": 3,
+  "updated_at": "2026-07-02T14:45:33+00:00",
+  "open_count": 6,
   "resolved_count": 0,
   "items": [
     {
@@ -60,6 +60,302 @@
       "second_candidate": 159730565,
       "margin": 0.0185,
       "resolution": null
+    },
+    {
+      "history_key": "9dbe838ff08689bc",
+      "status": "OPEN",
+      "created_at": "2026-07-02T14:45:33+00:00",
+      "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
+      "review_id": "REV-001",
+      "server": 554,
+      "ranking_type": "alliance_power",
+      "rank": 1,
+      "reason": "ranking_guard_quarantine",
+      "problem_type": "alliance_power_ambiguous",
+      "problem_statement": "REV-001: Ich konnte die Allianzstärke der Allianz auf Server 554, Rang 1, nicht eindeutig bestimmen. Vorschlag 1: 4.756.681.920, Vorschlag 2: 5.756.681.920 oder manuelle Eingabe.",
+      "screenshot": "Screenshot_20260702-082010.png",
+      "power_original": 77756681920,
+      "best_candidate": 4756681920,
+      "second_candidate": 5756681920,
+      "margin": 0.0369,
+      "why_bullets": [
+        "OCR/Parser lieferte den Ausgangswert 77.756.681.920.",
+        "Die besten Kandidaten liegen nah beieinander: 4.756.681.920 vs. 5.756.681.920.",
+        "Der Score-Abstand beträgt nur 0.0369 und liegt unter der sicheren Auto-Promotion-Schwelle.",
+        "Der führende Kandidat wurde durch folgende Evidenz gestützt: local_median_distance:0.036, source_local_bucket_match, non_top_alliance_context."
+      ],
+      "explainability_steps": [
+        {
+          "stage": "OCR",
+          "status": "captured",
+          "detail": "Screenshot Screenshot_20260702-082010.png wurde gelesen."
+        },
+        {
+          "stage": "Normalization",
+          "status": "applied",
+          "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."
+        },
+        {
+          "stage": "Power Recovery",
+          "status": "ambiguous",
+          "detail": "9 Kandidat(en), bester Score 0.5501, Margin 0.0369."
+        },
+        {
+          "stage": "Ranking Guard",
+          "status": "quarantine",
+          "detail": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.550;margin=0.037"
+        },
+        {
+          "stage": "Data Guard",
+          "status": "protected",
+          "detail": "Operational Truth wurde nicht verändert."
+        },
+        {
+          "stage": "Human Review",
+          "status": "open",
+          "detail": "Menschliche Entscheidung erforderlich."
+        }
+      ],
+      "choices": [
+        {
+          "label": "Vorschlag 1",
+          "value": 4756681920,
+          "score": 0.5501,
+          "digit_preservation_score": 0.28,
+          "reasons": [
+            "local_median_distance:0.036",
+            "source_local_bucket_match",
+            "non_top_alliance_context"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 2",
+          "value": 5756681920,
+          "score": 0.5132,
+          "digit_preservation_score": 0.28,
+          "reasons": [
+            "local_median_distance:0.167",
+            "source_local_bucket_match",
+            "non_top_alliance_context"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 3",
+          "value": 3756681920,
+          "score": 0.4933,
+          "digit_preservation_score": 0.28,
+          "reasons": [
+            "local_median_distance:0.238",
+            "source_local_bucket_match",
+            "non_top_alliance_context"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Manuelle Eingabe",
+          "value": null,
+          "score": null,
+          "kind": "manual_input"
+        }
+      ],
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      }
+    },
+    {
+      "history_key": "223d44a0af2331ba",
+      "status": "OPEN",
+      "created_at": "2026-07-02T14:45:33+00:00",
+      "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
+      "review_id": "REV-002",
+      "server": 554,
+      "ranking_type": "alliance_power",
+      "rank": 2,
+      "reason": "ranking_guard_quarantine",
+      "problem_type": "alliance_power_outlier",
+      "problem_statement": "REV-002: Die Allianzstärke auf Server 554, Rang 2, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen.",
+      "screenshot": "Screenshot_20260702-082020.png",
+      "power_original": null,
+      "best_candidate": null,
+      "second_candidate": null,
+      "margin": null,
+      "why_bullets": [
+        "Der Wert weicht stark vom lokalen Allianz-Power-Kontext ab.",
+        "Es gibt keine ausreichend starke Candidate-Evidenz; visuelle Prüfung ist nötig."
+      ],
+      "explainability_steps": [
+        {
+          "stage": "OCR",
+          "status": "captured",
+          "detail": "Screenshot Screenshot_20260702-082020.png wurde gelesen."
+        },
+        {
+          "stage": "Normalization",
+          "status": "applied",
+          "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."
+        },
+        {
+          "stage": "Power Recovery",
+          "status": "not_available",
+          "detail": "Keine Candidate-Spur für diesen Review vorhanden."
+        },
+        {
+          "stage": "Ranking Guard",
+          "status": "quarantine",
+          "detail": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.00"
+        },
+        {
+          "stage": "Data Guard",
+          "status": "protected",
+          "detail": "Operational Truth wurde nicht verändert."
+        },
+        {
+          "stage": "Human Review",
+          "status": "open",
+          "detail": "Menschliche Entscheidung erforderlich."
+        }
+      ],
+      "choices": [
+        {
+          "label": "Manuelle Eingabe",
+          "value": null,
+          "score": null,
+          "kind": "manual_input"
+        }
+      ],
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      }
+    },
+    {
+      "history_key": "6df21bdcbc3d0504",
+      "status": "OPEN",
+      "created_at": "2026-07-02T14:45:33+00:00",
+      "source_report_created_at": "2026-07-02T14:45:33.222081+00:00",
+      "review_id": "REV-003",
+      "server": 554,
+      "ranking_type": "total_hero_power",
+      "rank": 3,
+      "reason": "ranking_guard_quarantine",
+      "problem_type": "power_ambiguous",
+      "problem_statement": "REV-003: Ich konnte die Spieler-Power des Eintrags auf Server 554, Rang 3, nicht eindeutig bestimmen. Vorschlag 1: 167.730.565, Vorschlag 2: 159.730.565 oder manuelle Eingabe.",
+      "screenshot": "Screenshot_20260702-082210.png",
+      "power_original": 767730565,
+      "best_candidate": 167730565,
+      "second_candidate": 159730565,
+      "margin": 0.0185,
+      "why_bullets": [
+        "OCR/Parser lieferte den Ausgangswert 767.730.565.",
+        "Die besten Kandidaten liegen nah beieinander: 167.730.565 vs. 159.730.565.",
+        "Der Score-Abstand beträgt nur 0.0185 und liegt unter der sicheren Auto-Promotion-Schwelle.",
+        "Der führende Kandidat wurde durch folgende Evidenz gestützt: local_median_distance:0.027, near_prior_neighbour, source_local_bucket_match, ocr_error_model:leading_digit_to_1."
+      ],
+      "explainability_steps": [
+        {
+          "stage": "OCR",
+          "status": "captured",
+          "detail": "Screenshot Screenshot_20260702-082210.png wurde gelesen."
+        },
+        {
+          "stage": "Normalization",
+          "status": "applied",
+          "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."
+        },
+        {
+          "stage": "Power Recovery",
+          "status": "ambiguous",
+          "detail": "4 Kandidat(en), bester Score 0.7124, Margin 0.0185."
+        },
+        {
+          "stage": "Ranking Guard",
+          "status": "quarantine",
+          "detail": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.712;margin=0.019"
+        },
+        {
+          "stage": "Data Guard",
+          "status": "protected",
+          "detail": "Operational Truth wurde nicht verändert."
+        },
+        {
+          "stage": "Human Review",
+          "status": "open",
+          "detail": "Menschliche Entscheidung erforderlich."
+        }
+      ],
+      "choices": [
+        {
+          "label": "Vorschlag 1",
+          "value": 167730565,
+          "score": 0.7124,
+          "digit_preservation_score": 0.3289,
+          "reasons": [
+            "local_median_distance:0.027",
+            "near_prior_neighbour",
+            "source_local_bucket_match",
+            "ocr_error_model:leading_digit_to_1"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 2",
+          "value": 159730565,
+          "score": 0.6939,
+          "digit_preservation_score": 0.2578,
+          "reasons": [
+            "local_median_distance:0.022",
+            "fits_prior_neighbour_order",
+            "source_local_bucket_match"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 3",
+          "value": 158730565,
+          "score": 0.6922,
+          "digit_preservation_score": 0.2578,
+          "reasons": [
+            "local_median_distance:0.028",
+            "fits_prior_neighbour_order",
+            "source_local_bucket_match"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Manuelle Eingabe",
+          "value": null,
+          "score": null,
+          "kind": "manual_input"
+        }
+      ],
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      }
     }
   ]
 }
