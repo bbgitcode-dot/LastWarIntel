@@ -1473,3 +1473,18 @@ git add .
 git commit -m "feat(import): expose historical coverage drilldown"
 git tag -a v0.9.5.70 -m "v0.9.5.70 Historical Import Integrity and Coverage Drilldown"
 ```
+
+# Sentinel v0.9.5.71 – Snapshot Management Foundation
+
+This release introduces explicit managed snapshots for screenshot upload work. A reviewer can now create an active import context such as `S6 pre Transfer` before uploading or processing screenshots. Sentinel displays that active snapshot in the Command Center and Import Center so data can be tied to a human-readable operational phase.
+
+## Highlights
+
+- Managed snapshot storage in `data/managed_snapshots.json`.
+- Import Center `Create Snapshot` workflow.
+- Snapshot type, status, expected feeds, description, and active snapshot state.
+- Command Center active snapshot panel.
+
+## Guardrails
+
+Snapshot management is metadata-only. It does not promote OCR output, change Operational Truth, modify historical Excel baselines, or alter exports.

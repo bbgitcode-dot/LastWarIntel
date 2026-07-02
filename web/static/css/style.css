@@ -2347,3 +2347,137 @@ body {
     .operational-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .readiness-summary-row { grid-template-columns: 1fr; }
 }
+
+/* v0.9.5.71 Snapshot Management */
+.active-snapshot-panel,
+.snapshot-management-panel {
+    border-color: rgba(56, 189, 248, 0.42);
+}
+
+.snapshot-context-grid,
+.snapshot-management-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.snapshot-context-card,
+.snapshot-active-card,
+.snapshot-form {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+    border-radius: 16px;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.snapshot-context-card span,
+.snapshot-active-card span,
+.snapshot-form label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.snapshot-context-card strong,
+.snapshot-active-card strong {
+    font-size: 20px;
+    line-height: 1.15;
+}
+
+.snapshot-context-card small,
+.snapshot-active-card small,
+.snapshot-active-card em {
+    color: var(--muted);
+    font-size: 12px;
+    font-style: normal;
+}
+
+.snapshot-context-card.action-card:hover {
+    border-color: rgba(56, 189, 248, 0.76);
+    transform: translateY(-1px);
+}
+
+.snapshot-form {
+    grid-column: span 2;
+}
+
+.snapshot-form input,
+.snapshot-form select,
+.snapshot-actions select {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(51, 65, 85, 0.95);
+    border-radius: 10px;
+}
+
+.snapshot-checkboxes {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.snapshot-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.button-primary,
+.snapshot-actions button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 14px;
+    color: #00111f;
+    font-weight: 900;
+    background: linear-gradient(135deg, #38bdf8, #22c55e);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.snapshot-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.snapshot-actions form {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+}
+
+.snapshot-actions button {
+    padding: 7px 10px;
+    font-size: 11px;
+}
+
+.success-note {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.08);
+}
+
+@media (max-width: 1100px) {
+    .snapshot-context-grid,
+    .snapshot-management-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .snapshot-form {
+        grid-column: auto;
+    }
+}

@@ -160,3 +160,7 @@ Consequences:
 Status: Accepted in v0.9.5.69.
 
 Historical reference imports may process thousands of rows across many servers. They must use cached identity resolution and sheet-level SQLite transactions instead of per-row helper calls. This keeps reference-data loading fast while preserving the separation between historical baseline, current run, benchmark/ground truth, and Operational Truth.
+
+## ADR – Managed snapshots are import context, not Operational Truth
+
+Sentinel v0.9.5.71 introduces managed snapshots as JSON-backed metadata (`data/managed_snapshots.json`). This is intentionally separate from SQLite server-specific ranking snapshots and from Operational Truth exports. The managed snapshot answers: `What operational phase does this upload belong to?` The ranking tables answer: `What data was observed?` Future upload assignment can bind the two, but creating or activating a managed snapshot must not modify ranking rows or promote quarantined data.

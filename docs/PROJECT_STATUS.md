@@ -342,3 +342,9 @@ The historical Excel importer is now fast enough for iterative use. The S5/S6 hi
 ## v0.9.5.70 Status Update
 
 Historical imports are now fast and visible. The Import Center shows historical source files, collections, row counts and SQLite snapshot coverage. Missing-data drilldowns now use operational coverage and historical baseline context without presenting benchmark Server 551 validation as current operational quality.
+
+## v0.9.5.71 Status Update – Snapshot Management Foundation
+
+Sentinel now supports explicit managed snapshot context in the Import Center. A user can create and activate a snapshot such as `S6 pre Transfer`, define expected core ranking feeds, and see the active snapshot on the Command Center. This closes the first gap between historical baseline imports and future screenshot upload batches: data can now be associated with an operational phase before deeper assignment and integrity checks are built.
+
+Next data-integrity work should connect screenshot processing to the active snapshot, enforce missing-feed checks per snapshot, and continue improving upload/OCR reliability before intelligence-layer development resumes.

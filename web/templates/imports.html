@@ -48,6 +48,89 @@
         </div>
     </section>
 
+
+    <section class="panel snapshot-management-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Snapshot Management</h2>
+                <p>Create an explicit import context before uploading screenshots, for example <strong>S6 pre Transfer</strong>.</p>
+            </div>
+            <span class="panel-badge">{{ snapshot_model.open_count }} OPEN / {{ snapshot_model.total_count }} TOTAL</span>
+        </div>
+        {% if snapshot_notice == 'created' %}
+        <div class="drilldown-notice success-note">Snapshot created and set as active import context.</div>
+        {% elif snapshot_notice == 'activated' %}
+        <div class="drilldown-notice success-note">Snapshot activated.</div>
+        {% elif snapshot_notice == 'status-updated' %}
+        <div class="drilldown-notice success-note">Snapshot status updated.</div>
+        {% elif snapshot_notice == 'missing-name' %}
+        <div class="drilldown-notice danger-note">Snapshot name is required.</div>
+        {% endif %}
+        <div class="snapshot-management-grid">
+            <form class="snapshot-form" method="post" action="/imports/snapshots">
+                <label>Snapshot Name
+                    <input name="name" value="S6 pre Transfer" maxlength="80" required>
+                </label>
+                <label>Snapshot Type
+                    <select name="snapshot_type">
+                        <option value="screenshot_upload">Screenshot Upload</option>
+                        <option value="manual_import">Manual Import</option>
+                        <option value="historical_excel">Historical Excel</option>
+                    </select>
+                </label>
+                <label>Description
+                    <input name="description" placeholder="Purpose, phase, server group or upload instruction">
+                </label>
+                <div class="snapshot-checkboxes">
+                    <label><input type="checkbox" name="expected_alliance_power" value="1" checked> Alliance Power</label>
+                    <label><input type="checkbox" name="expected_total_hero_power" value="1" checked> Total Hero Power</label>
+                </div>
+                <button type="submit" class="button-primary">Create Snapshot</button>
+            </form>
+            <div class="snapshot-active-card">
+                <span>Active Snapshot</span>
+                {% if snapshot_model.active %}
+                <strong>{{ snapshot_model.active.name }}</strong>
+                <small>{{ snapshot_model.active.snapshot_type|replace('_', ' ') }} · {{ snapshot_model.active.status }} · feeds: {{ snapshot_model.active.expected_rankings|join(', ') }}</small>
+                <em>{{ snapshot_model.storage_path }}</em>
+                {% else %}
+                <strong>No active snapshot</strong>
+                <small>Create one before the next screenshot upload batch.</small>
+                <em>{{ snapshot_model.storage_path }}</em>
+                {% endif %}
+            </div>
+        </div>
+        {% if snapshot_model.snapshots %}
+        <div class="quality-table snapshot-table">
+            <div class="quality-row quality-head">
+                <span>Snapshot</span><span>Type</span><span>Status</span><span>Expected Feeds</span><span>Created</span><span>Actions</span>
+            </div>
+            {% for item in snapshot_model.snapshots %}
+            <div class="quality-row">
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.snapshot_type|replace('_', ' ') }}</span>
+                <span>{{ item.status }}</span>
+                <span>{{ item.expected_rankings|join(', ') }}</span>
+                <span>{{ item.created_at }}</span>
+                <span class="snapshot-actions">
+                    <form method="post" action="/imports/snapshots/{{ item.id }}/activate"><button type="submit">Set Active</button></form>
+                    <form method="post" action="/imports/snapshots/{{ item.id }}/status">
+                        <select name="status">
+                            <option value="open" {% if item.status == 'open' %}selected{% endif %}>open</option>
+                            <option value="importing" {% if item.status == 'importing' %}selected{% endif %}>importing</option>
+                            <option value="review" {% if item.status == 'review' %}selected{% endif %}>review</option>
+                            <option value="complete" {% if item.status == 'complete' %}selected{% endif %}>complete</option>
+                            <option value="closed" {% if item.status == 'closed' %}selected{% endif %}>closed</option>
+                        </select>
+                        <button type="submit">Save</button>
+                    </form>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
     <section class="metrics-grid">
         <article class="metric-card tone-info">
             <div class="metric-title">Screenshots</div>

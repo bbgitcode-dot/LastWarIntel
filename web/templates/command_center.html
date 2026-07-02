@@ -36,6 +36,36 @@
     </section>
 
 
+
+    {% if command.active_snapshot %}
+    <section class="panel active-snapshot-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Active Snapshot</h2>
+                <p>New screenshot uploads and review work should be interpreted in this import context.</p>
+            </div>
+            <span class="panel-badge">{{ command.active_snapshot.status|upper }}</span>
+        </div>
+        <div class="snapshot-context-grid">
+            <div class="snapshot-context-card">
+                <span>Snapshot</span>
+                <strong>{{ command.active_snapshot.name }}</strong>
+                <small>{{ command.active_snapshot.snapshot_type|replace('_', ' ') }}</small>
+            </div>
+            <div class="snapshot-context-card">
+                <span>Expected Feeds</span>
+                <strong>{{ command.active_snapshot.expected_rankings|length }}</strong>
+                <small>{{ command.active_snapshot.expected_rankings|join(', ') }}</small>
+            </div>
+            <a class="snapshot-context-card action-card" href="/imports">
+                <span>Manage</span>
+                <strong>Open Imports</strong>
+                <small>Create or switch snapshot context</small>
+            </a>
+        </div>
+    </section>
+    {% endif %}
+
     <section class="panel operational-readiness-panel">
         <div class="panel-header compact">
             <div>

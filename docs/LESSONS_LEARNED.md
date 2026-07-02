@@ -240,3 +240,7 @@ Historical importers must not use per-row database helper methods that open and 
 ## v0.9.5.70 - Historical Import UX Separation
 
 Historical Excel imports are valuable for server coverage, but they must stay visibly separate from current OCR imports and benchmark validation. The UI should always tell the user whether a KPI comes from current run state, historical reference data, or ground-truth validation. Mixing these layers creates misleading operational conclusions.
+
+## v0.9.5.71 – Snapshot context must be explicit
+
+The historical import work made it clear that `latest run` is not a sufficient operational context. Screenshot uploads need a human-named snapshot such as `S6 pre Transfer` so later coverage, reviews, and historical comparison can be interpreted correctly. Snapshot creation must remain metadata-only until guarded import assignment and Operational Truth promotion are explicitly implemented.

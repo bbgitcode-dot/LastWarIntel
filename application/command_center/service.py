@@ -12,6 +12,7 @@ from pathlib import Path
 
 from application.data_quality.service import DataQualityService
 from application.operational_import.service import OperationalImportService
+from application.snapshots.service import SnapshotService
 from version import __version__
 
 from .models import (
@@ -25,6 +26,7 @@ from .models import (
     ServerHealthItem,
     StatusBadge,
     SystemComponent,
+    ActiveSnapshotView,
 )
 
 
@@ -35,12 +37,15 @@ class CommandCenterService:
         self._database_path = database_path or Path("data/lastwarintel.sqlite")
         self._quality_service = DataQualityService()
         self._import_service = OperationalImportService()
+        self._snapshot_service = SnapshotService()
 
     def get_command_center(self) -> CommandCenterViewModel:
         database_exists = self._database_path.exists()
         database_tone = "success" if database_exists else "warning"
         database_detail = "SQLite ready" if database_exists else "SQLite file not found yet"
         latest_import = self._import_service.get_dashboard()
+        snapshot_dashboard = self._snapshot_service.get_dashboard()
+        active_snapshot = self._to_active_snapshot(snapshot_dashboard)
         quality = self._quality_service.get_dashboard()
         summary = quality.summary
         operational_readiness = self._build_operational_readiness(latest_import)
@@ -166,6 +171,7 @@ class CommandCenterService:
             mission=mission,
             attention_items=attention_items,
             operational_readiness=operational_readiness,
+            active_snapshot=active_snapshot,
             metrics=metrics,
             components=[
                 SystemComponent("API", "Online", "FastAPI service responding", "success"),
@@ -176,6 +182,19 @@ class CommandCenterService:
             activity=activity,
         )
 
+
+    @staticmethod
+    def _to_active_snapshot(snapshot_dashboard) -> ActiveSnapshotView | None:
+        active = getattr(snapshot_dashboard, "active", None)
+        if not active:
+            return None
+        return ActiveSnapshotView(
+            name=active.name,
+            snapshot_type=active.snapshot_type,
+            status=active.status,
+            expected_rankings=list(active.expected_rankings),
+            storage_path=snapshot_dashboard.storage_path,
+        )
 
     def _load_review_history(self) -> dict:
         path = Path("data/review_history.json")

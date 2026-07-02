@@ -462,3 +462,15 @@ git add .
 git commit -m "feat(import): expose historical coverage drilldown"
 git tag -a v0.9.5.70 -m "v0.9.5.70 Historical Import Integrity and Coverage Drilldown"
 ```
+
+## [0.9.5.71] - Snapshot Management Foundation
+
+### Added
+- Added managed snapshot context for screenshot upload batches.
+- Added Import Center form to create an active snapshot such as `S6 pre Transfer`.
+- Added snapshot activation and status-update routes.
+- Added active snapshot summary on the Command Center.
+- Added smoke tests for snapshot creation and Command Center exposure.
+
+### Safety
+- Managed snapshots are context metadata only. They do not change Operational Truth, historical SQLite ranking records, OCR decisions, Data Guard quarantine, or Excel exports.

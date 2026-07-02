@@ -76,6 +76,17 @@ class OperationalReadiness:
     server_health: list[ServerHealthItem]
 
 
+
+
+@dataclass(slots=True, frozen=True)
+class ActiveSnapshotView:
+    name: str
+    snapshot_type: str
+    status: str
+    expected_rankings: list[str]
+    storage_path: str
+
+
 @dataclass(slots=True, frozen=True)
 class ActivityItem:
     time: str
@@ -94,6 +105,7 @@ class CommandCenterViewModel:
     mission: MissionViewModel
     attention_items: list[AttentionItem]
     operational_readiness: OperationalReadiness
+    active_snapshot: ActiveSnapshotView | None
     metrics: list[OperationalMetric]
     components: list[SystemComponent]
     activity: list[ActivityItem]
