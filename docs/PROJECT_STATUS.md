@@ -1,3 +1,18 @@
+## v0.9.5.61 Status – Interactive Review Resolution Foundation
+
+Sentinel now has the first write-capable review workflow. Open review-history items can be marked `RESOLVED` in the web Review Center with candidate/manual decision data, reviewer, and comment. Resolved records remain in `data/review_history.json` and can be reopened.
+
+This is intentionally not an export override. Data Guard still protects Operational Truth; manual decisions are stored as audit evidence only until a future Manual Override Engine applies them under explicit guardrails.
+
+Current UI architecture:
+
+- Command Center remains the entry point.
+- Imports and Quality remain observability surfaces.
+- Review Center is the human-in-the-loop workspace.
+- Static output HTML remains run-detail evidence, not the primary interactive workflow.
+
+Next recommended sprint: guarded Manual Override Engine foundation, or a smaller Review Detail UX pass if the workflow needs polish before overrides.
+
 ## v0.9.5.59 Status – Review UX & Explainability Foundation
 
 Current focus has shifted from improving OCR heuristics to improving review trust and explainability.

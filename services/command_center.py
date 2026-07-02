@@ -785,6 +785,8 @@ def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
           <td>{_e(item.get('seen_count') or 1)}</td>
           <td>{_e(item.get('created_at') or '')}</td>
           <td>{_e(item.get('last_seen_at') or '')}</td>
+          <td>{_e((item.get('resolution') or {}).get('selected_choice') or (item.get('resolution') or {}).get('manual_value') or '')}</td>
+          <td>{_e((item.get('resolution') or {}).get('comment') or '')}</td>
         </tr>
         """)
     return ''.join(rendered)
@@ -803,7 +805,7 @@ def _review_center_cards(import_report: dict[str, Any]) -> str:
           <details open><summary>Warum?</summary>{_bullet_list(item.get('why_bullets') or [])}</details>
           <details><summary>Entscheidungspfad</summary>{_trace_steps(item.get('explainability_steps') or [])}</details>
           <details open><summary>Optionen</summary><div class="table-wrap small"><table><thead><tr><th>Option</th><th>Value</th><th>Score</th><th>Reason</th></tr></thead><tbody>{_choice_rows(item)}</tbody></table></div></details>
-          <div class="decision"><b>Nächster Schritt:</b> Diese Karte ist read-only vorbereitet. In einem späteren Sprint wird hier Kandidat übernehmen / manuelle Eingabe / Kommentar gespeichert.</div>
+          <div class="decision"><b>Nächster Schritt:</b> Im Web Review Center kann diese Entscheidung als RESOLVED gespeichert werden. Die statische Karte bleibt reine Evidence-Ansicht.</div>
         </section>
         """)
     return ''.join(rendered)
@@ -827,9 +829,9 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
 </section>
 <div class="tabs"><a href="#open">Open Reviews</a><a href="#history">History</a><a href="command_center.html">Back to Command Center</a></div>
-<div class="notice">The Review Center is the future human-in-the-loop workspace. v0.9.5.59 is read-only and focuses on explainability and persistent review state.</div>
+<div class="notice">The static Review Center remains a run-detail view. Interactive resolution is available through the web Review Center (/reviews), where decisions are stored in persistent review history without changing Operational Truth.</div>
 <h2 id="open">Open Reviews</h2>{_review_center_cards(report)}
-<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
+<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th><th>Resolution</th><th>Comment</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
 </main></body></html>"""
 
 

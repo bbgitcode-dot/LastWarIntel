@@ -302,3 +302,45 @@ def test_review_history_deduplicates_reruns_and_updates_last_seen(tmp_path: Path
     assert history["items"][0]["history_key"] == first_key
     assert history["items"][0]["seen_count"] == 2
     assert history["items"][0]["source_report_created_at"] == "2026-07-02T15:00:00Z"
+
+
+def test_review_resolution_helper_marks_history_resolved_without_export_override():
+    from web.routes.reviews import _resolve_review_item, _reopen_review_item
+
+    history = {
+        "schema": "sentinel.review_history.v1",
+        "items": [{
+            "history_key": "abc123",
+            "status": "OPEN",
+            "review_id": "REV-001",
+            "choices": [
+                {"label": "Vorschlag 1", "value": 167730565, "score": 0.71, "kind": "candidate"},
+                {"label": "Manuelle Eingabe", "value": None, "kind": "manual_input"},
+            ],
+            "resolution": {"status": "OPEN", "resolution_source": "human_review"},
+        }],
+    }
+
+    updated, found = _resolve_review_item(
+        history,
+        "abc123",
+        selected_choice="Vorschlag 1",
+        comment="visual check ok",
+        reviewer="tester",
+    )
+
+    assert found is True
+    assert updated["open_count"] == 0
+    assert updated["resolved_count"] == 1
+    item = updated["items"][0]
+    assert item["status"] == "RESOLVED"
+    assert item["resolution"]["selected_value"] == 167730565
+    assert item["resolution"]["comment"] == "visual check ok"
+    assert item["resolution"]["reviewer"] == "tester"
+    assert item["resolution"]["resolution_source"] == "human_review"
+
+    reopened, reopened_found = _reopen_review_item(updated, "abc123")
+    assert reopened_found is True
+    assert reopened["open_count"] == 1
+    assert reopened["resolved_count"] == 0
+    assert reopened["items"][0]["status"] == "OPEN"

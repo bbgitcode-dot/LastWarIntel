@@ -1,3 +1,16 @@
+## v0.9.5.61 Lesson – Resolving a review is not the same as changing truth
+
+Human review decisions must first become auditable state. They should not immediately rewrite OCR evidence, quarantine rows, or Excel exports. This separation keeps Data Guard in control and prevents a reviewer click from silently becoming Operational Truth.
+
+The safe path is staged:
+
+1. Explain the problem.
+2. Store the human decision with evidence and comment.
+3. Keep the review history durable.
+4. Let a future guarded override engine decide whether and how to apply the decision to exports.
+
+This makes human-in-the-loop review useful without weakening Sentinel's core principle: quarantine is safer than false truth.
+
 ## v0.9.5.59 – Review UX & Explainability
 
 - A correct quarantine is only useful if a human can understand it quickly.

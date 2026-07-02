@@ -84,6 +84,29 @@
                         {% for bullet in item.why_bullets[:3] %}<li>{{ bullet }}</li>{% endfor %}
                     </ul>
                     {% endif %}
+                    <form class="review-resolution-form" method="post" action="/reviews/{{ item.history_key }}/resolve">
+                        <div class="form-row">
+                            <label>Entscheidung</label>
+                            <select name="selected_choice">
+                                <option value="">Manuelle Eingabe / keine Kandidatenwahl</option>
+                                {% for choice in item.choices or [] %}
+                                    {% if choice.kind != 'manual_input' %}
+                                    <option value="{{ choice.label }}">{{ choice.label }}{% if choice.value %} · {{ choice.value }}{% endif %}{% if choice.score is not none %} · Score {{ choice.score }}{% endif %}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-row compact-inputs">
+                            <input name="manual_value" placeholder="Manueller Power-Wert">
+                            <input name="manual_name" placeholder="Name korrigieren">
+                            <input name="manual_alliance" placeholder="Allianz korrigieren">
+                        </div>
+                        <div class="form-row compact-inputs">
+                            <input name="reviewer" placeholder="Reviewer">
+                            <input name="comment" placeholder="Kommentar / Begründung">
+                            <button type="submit">Als RESOLVED speichern</button>
+                        </div>
+                    </form>
                 </div>
                 <strong>{{ item.status }}</strong>
             </article>
@@ -95,6 +118,43 @@
                     <p>Latest history has no unresolved review items.</p>
                 </div>
                 <strong>Proceed</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Resolved Reviews</h2>
+                <p>Resolved records are stored in review history only. Operational Truth is not changed until a guarded override engine consumes the resolution.</p>
+            </div>
+            <span class="panel-badge">{{ review_model.resolved_count }} RESOLVED</span>
+        </div>
+        <div class="attention-list">
+            {% for item in review_model.resolved_items %}
+            <article class="attention-item attention-success">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>{{ item.review_id }} · {{ item.problem_type }}</h3>
+                    <p>{{ item.problem_statement }}</p>
+                    <small>Resolved: {{ item.resolved_at or item.resolution.resolved_at }} · Reviewer: {{ item.resolution.reviewer or '—' }}</small>
+                    <p>Choice: {{ item.resolution.selected_choice or 'manual' }}{% if item.resolution.selected_value %} · {{ item.resolution.selected_value }}{% endif %}{% if item.resolution.manual_value %} · Manual: {{ item.resolution.manual_value }}{% endif %}</p>
+                    {% if item.resolution.comment %}<p>{{ item.resolution.comment }}</p>{% endif %}
+                    <form method="post" action="/reviews/{{ item.history_key }}/reopen">
+                        <button type="submit">Reopen</button>
+                    </form>
+                </div>
+                <strong>{{ item.status }}</strong>
+            </article>
+            {% else %}
+            <article class="attention-item attention-success">
+                <div class="attention-severity"></div>
+                <div>
+                    <h3>No resolved reviews yet</h3>
+                    <p>Resolved review decisions will appear here after the first human resolution.</p>
+                </div>
+                <strong>EMPTY</strong>
             </article>
             {% endfor %}
         </div>

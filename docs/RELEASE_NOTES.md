@@ -1,3 +1,19 @@
+# Sentinel v0.9.5.61 – Interactive Review Resolution Foundation
+
+Sentinel v0.9.5.61 introduces the first write-capable human-review workflow. The web Review Center can now mark persistent review-history items as `RESOLVED`, store the selected candidate or manual value, keep reviewer/comment metadata, and reopen resolved items when needed.
+
+## Highlights
+
+- Added web Review Center resolve actions for persistent reviews.
+- Added candidate selection, manual value/name/alliance fields, reviewer, and comment capture.
+- Added reopen support for resolved reviews.
+- Kept resolution state in `data/review_history.json`; Operational Truth and Excel exports remain unchanged.
+- Static output pages remain read-only run-detail views.
+
+## Guardrails
+
+Manual resolution is audit state only. It does not override OCR output, promote quarantined rows, or change Operational Truth. A future guarded Manual Override Engine must explicitly consume resolved reviews before export changes are allowed.
+
 # Sentinel v0.9.5.59 – Review UX & Explainability Foundation
 
 Sentinel v0.9.5.59 improves the human review workflow. Reviews now explain what is uncertain, why Sentinel refused automatic promotion, what candidates are available, and which decision a human needs to make.

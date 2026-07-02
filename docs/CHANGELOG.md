@@ -1,3 +1,20 @@
+## [0.9.5.61] - Interactive Review Resolution Foundation
+
+### Added
+- Added first web Review Center resolution actions for persistent review-history items.
+- Added candidate selection, manual value, manual name, manual alliance, reviewer, and comment capture.
+- Added reopen action for resolved review records.
+- Added smoke coverage for resolving and reopening review-history records.
+
+### Changed
+- Review Center now separates open and resolved review work.
+- Static Review Center copy clarifies that static pages remain read-only while `/reviews` handles resolution state.
+- Version updated to `0.9.5.61`.
+
+### Safety
+- Review resolution does not change Operational Truth, OCR evidence, quarantine, or Excel export rows.
+- Resolution data remains an auditable human decision record until a future guarded override engine consumes it.
+
 ## [0.9.5.59] - Review UX & Explainability Foundation
 
 ### Added

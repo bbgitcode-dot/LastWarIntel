@@ -1,3 +1,14 @@
+## ADR – Review Resolution Is Audit State Before Truth
+
+### Decision
+Manual review resolution is stored in persistent review history, but it does not directly mutate OCR evidence, quarantine state, Operational Truth, or Excel exports.
+
+### Rationale
+A human decision is strong evidence, but it still needs a guarded application layer. Separating resolution capture from override application preserves auditability and prevents accidental truth changes.
+
+### Consequence
+The Review Center may write `RESOLVED` state, selected candidate/manual values, reviewer, and comments. A future Manual Override Engine must explicitly consume those records before exports can change.
+
 ## ADR – Review Center as Human-in-the-Loop Workspace
 
 ### Decision

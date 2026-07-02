@@ -1,3 +1,15 @@
+## v0.9.5.61 Roadmap Update
+
+### Completed
+- First interactive review resolution workflow.
+- Persistent `RESOLVED` review records with candidate/manual decision metadata.
+- Reopen support for review-history records.
+
+### Next
+- v0.9.5.62: Guarded Manual Override Engine foundation.
+- v0.9.5.63: Re-export with resolved manual overrides.
+- v0.9.5.64: Review Detail UX polish and source evidence crops.
+
 ## v0.9.5.59 Roadmap Update
 
 ### Completed
