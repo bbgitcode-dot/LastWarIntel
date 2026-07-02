@@ -1,5 +1,24 @@
 # Sentinel Architecture
 
+**Current version:** v0.9.5.75
+
+## Snapshot Lifecycle Architecture
+
+A managed snapshot is the central container for screenshot import context. It is separate from Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth. In v0.9.5.75 the snapshot layer owns four responsibilities:
+
+- lifecycle state: `open`, `collecting`, `reviewing`, `verified`, `locked`, `archived`;
+- server-scope based expected evidence;
+- operational readiness calculation;
+- completion report and audit trail.
+
+Screenshot imports require an active `screenshot_upload` snapshot in an import-allowed state. Verified and locked snapshots become read-only references. A completion report under `reports/snapshots/<snapshot_id>/completion_report.json` captures the snapshot, coverage and readiness evidence at verification/lock time.
+
+Snapshot readiness is an evidence gate, not a truth engine. Operational Truth remains downstream and must continue to respect Data Guard, Ranking Guard, review decisions and quarantine.
+
+---
+
+# Sentinel Architecture
+
 **Current version:** v0.9.5.74
 
 Sentinel is an explainable strategic intelligence platform for Last War. Its current architecture is built around guarded data ingestion before strategic intelligence.

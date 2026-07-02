@@ -86,8 +86,12 @@ def activate_snapshot(snapshot_id: str):
 async def update_snapshot_status(snapshot_id: str, request: Request):
     form = _read_urlencoded(await request.body())
     status = form.get("status", "open")
-    snapshot_service.update_status(snapshot_id, status)
-    return RedirectResponse(url="/imports?snapshot=status-updated", status_code=303)
+    try:
+        snapshot_service.update_status(snapshot_id, status)
+        target = "/imports?snapshot=status-updated"
+    except SnapshotContextError:
+        target = "/imports?snapshot=status-blocked"
+    return RedirectResponse(url=target, status_code=303)
 
 
 @router.post("/imports/snapshots/{snapshot_id}/edit")
@@ -113,6 +117,14 @@ async def edit_snapshot(snapshot_id: str, request: Request):
     except (ValueError, SnapshotContextError):
         target = "/imports?snapshot=edit-blocked"
     return RedirectResponse(url=target, status_code=303)
+
+
+@router.post("/imports/snapshots/{snapshot_id}/completion-report")
+def write_snapshot_completion_report(snapshot_id: str):
+    snapshot = snapshot_service.update_status(snapshot_id, "verified")
+    if snapshot:
+        snapshot_service.write_completion_report(snapshot)
+    return RedirectResponse(url="/imports?snapshot=report-written", status_code=303)
 
 
 @router.get("/api/imports")

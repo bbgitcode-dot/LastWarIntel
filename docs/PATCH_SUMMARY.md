@@ -1,3 +1,35 @@
+# Release Notes
+
+**Current release:** v0.9.5.75 – Snapshot Lifecycle & Operational Readiness  
+
+## v0.9.5.75 – Snapshot Lifecycle & Operational Readiness
+
+### Added
+
+- Formal snapshot lifecycle: `open`, `collecting`, `reviewing`, `verified`, `locked`, `archived`.
+- Status alias migration for older states: `importing → collecting`, `review → reviewing`, `complete → verified`, `closed → locked`.
+- Import/edit gates so only safe lifecycle states accept mutation.
+- Operational Readiness model for active snapshots.
+- Snapshot completion report generation under `reports/snapshots/<snapshot_id>/completion_report.json`.
+- Snapshot audit trail for creation, activation, edits, lifecycle transitions and report creation.
+- Import Center UI for lifecycle states, readiness, audit and report generation.
+
+### Changed
+
+- Screenshot imports now move snapshots to `collecting` and finish as `reviewing` or `verified`.
+- Snapshot-bound import reports use schema `sentinel.import_run.v3`.
+- Verified, locked and archived snapshots are read-only.
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(snapshot): add lifecycle and operational readiness"
+git tag -a v0.9.5.75 -m "v0.9.5.75 Snapshot Lifecycle and Operational Readiness"
+```
+
+---
+
 # Sentinel Patch Summary
 
 **Current release:** v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness  

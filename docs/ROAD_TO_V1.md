@@ -1,3 +1,25 @@
+# Road to v1.0
+
+**Current version:** v0.9.5.75  
+**Current phase:** Data Integrity Fortress → Snapshot Lifecycle Closure
+
+## v0.9.5.75 milestone
+
+Snapshot management is now treated as a lifecycle-controlled work object rather than a loose import container. The v1.0 data foundation requires every screenshot import to belong to an active snapshot, every snapshot to declare its expected evidence, and every Operational Truth candidate to pass readiness gates before it is trusted.
+
+Completed for Snapshot Management:
+
+1. Create Snapshot in Import Center. ✅
+2. Active Snapshot required for screenshot upload/import. ✅
+3. Dynamic Server Scope and feed completeness. ✅
+4. Snapshot-level review and import binding. ✅
+5. Lifecycle states and lock semantics. ✅
+6. Operational Readiness and completion reports. ✅
+
+Deferred beyond v1.0 unless needed: snapshot merge, snapshot branching, snapshot diff UI and team collaboration.
+
+---
+
 # Road to Sentinel v1.0.0
 
 **Current version:** v0.9.5.74  

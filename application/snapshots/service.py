@@ -1,8 +1,9 @@
 """JSON-backed managed snapshot service.
 
 Managed snapshots are the mandatory import context for screenshot batches.
-They bind Current Run artifacts, review evidence and exports to a human-chosen
-phase without promoting anything into Operational Truth.
+v0.9.5.75 adds a lifecycle, operational readiness, completion reports and an
+append-only audit trail so a snapshot can become a reproducible Operational
+Truth candidate without mixing phases.
 """
 
 from __future__ import annotations
@@ -19,18 +20,29 @@ from uuid import uuid4
 from .models import (
     ManagedSnapshot,
     ServerScope,
+    SnapshotAuditEntry,
     SnapshotCoverage,
     SnapshotDashboard,
     SnapshotFeedCoverage,
     SnapshotMissingFeed,
+    SnapshotReadiness,
 )
 
 DEFAULT_EXPECTED_RANKINGS = ["alliance_power", "total_hero_power"]
 ALLOWED_TYPES = {"screenshot_upload", "historical_excel", "manual_import"}
-ALLOWED_STATUSES = {"open", "importing", "review", "complete", "closed", "locked", "archived"}
-ACTIVE_IMPORT_STATUSES = {"open", "importing", "review"}
-EDITABLE_STATUSES = {"open", "importing", "review"}
+LIFECYCLE_STATUSES = {"open", "collecting", "reviewing", "verified", "locked", "archived"}
+STATUS_ALIASES = {
+    "importing": "collecting",
+    "review": "reviewing",
+    "complete": "verified",
+    "closed": "locked",
+}
+ACTIVE_IMPORT_STATUSES = {"open", "collecting"}
+EDITABLE_STATUSES = {"open", "collecting"}
+REVIEWABLE_STATUSES = {"collecting", "reviewing"}
+LOCKED_STATUSES = {"verified", "locked", "archived"}
 SERVER_SCOPE_MODES = {"all", "range", "selected"}
+REPORT_ROOT = Path("reports/snapshots")
 
 
 class SnapshotContextError(RuntimeError):
@@ -48,8 +60,9 @@ class SnapshotService:
         snapshots = [self._from_raw(item) for item in payload.get("snapshots", []) if isinstance(item, dict)]
         active_id = str(payload.get("active_snapshot_id") or "")
         active = next((item for item in snapshots if item.id == active_id), None)
-        open_count = len([item for item in snapshots if item.status in ACTIVE_IMPORT_STATUSES])
+        open_count = len([item for item in snapshots if item.status in ACTIVE_IMPORT_STATUSES | REVIEWABLE_STATUSES])
         coverage = self.get_coverage(active) if active else None
+        readiness = self.get_readiness(active, coverage) if active else None
         return SnapshotDashboard(
             has_active=active is not None,
             active=active,
@@ -58,6 +71,7 @@ class SnapshotService:
             total_count=len(snapshots),
             storage_path=str(self.storage_path),
             active_coverage=coverage,
+            active_readiness=readiness,
         )
 
     def get_active_snapshot(self) -> ManagedSnapshot | None:
@@ -75,7 +89,7 @@ class SnapshotService:
             )
         if snapshot.status not in ACTIVE_IMPORT_STATUSES:
             raise SnapshotContextError(
-                f"Active snapshot '{snapshot.name}' is '{snapshot.status}'. Reopen/select an open snapshot before importing screenshots."
+                f"Active snapshot '{snapshot.name}' is '{snapshot.status}'. Only OPEN or COLLECTING snapshots accept screenshot imports."
             )
         return snapshot
 
@@ -121,16 +135,19 @@ class SnapshotService:
             assigned_servers=servers,
             server_scope=server_scope,
             locked=False,
+            audit=[SnapshotAuditEntry(event="created", at=now, detail="Snapshot created from Import Center")],
         )
         payload = self._load()
         existing = [item for item in payload.get("snapshots", []) if isinstance(item, dict)]
         existing = [item for item in existing if str(item.get("id")) != snapshot.id]
-        existing.append(asdict(snapshot))
+        raw = asdict(snapshot)
+        existing.append(raw)
         payload["snapshots"] = existing
         if set_active:
             payload["active_snapshot_id"] = snapshot.id
+            self._append_audit(raw, "activated", detail="Set active at creation")
         self._save(payload)
-        return snapshot
+        return self._from_raw(raw)
 
     def set_active(self, snapshot_id: str) -> ManagedSnapshot | None:
         payload = self._load()
@@ -139,24 +156,42 @@ class SnapshotService:
         if not match:
             return None
         payload["active_snapshot_id"] = snapshot_id
+        self._append_audit(match, "activated", detail="Set active snapshot context")
         self._save(payload)
         return self._from_raw(match)
 
     def update_status(self, snapshot_id: str, status: str) -> ManagedSnapshot | None:
-        clean_status = status if status in ALLOWED_STATUSES else "open"
+        clean_status = self._normalize_status(status)
         payload = self._load()
         changed: dict | None = None
         for item in payload.get("snapshots", []) or []:
             if isinstance(item, dict) and str(item.get("id")) == snapshot_id:
+                current = self._normalize_status(str(item.get("status") or "open"))
+                if current == "archived" and clean_status != "archived":
+                    raise SnapshotContextError("Archived snapshots are read-only and cannot be reopened.")
+                if current == "locked" and clean_status not in {"locked", "archived"}:
+                    raise SnapshotContextError("Locked snapshots cannot be moved back to an editable state.")
+                before = current
                 item["status"] = clean_status
                 item["updated_at"] = self._now()
+                self._append_audit(item, f"status_{before}_to_{clean_status}", detail=f"Status changed from {before} to {clean_status}")
                 changed = item
                 break
         if not changed:
             return None
         self._save(payload)
-        return self._from_raw(changed)
+        snapshot = self._from_raw(changed)
+        if snapshot.status in {"verified", "locked"}:
+            self.write_completion_report(snapshot)
+        return snapshot
 
+    def verify_snapshot(self, snapshot_id: str) -> ManagedSnapshot | None:
+        snapshot = self.update_status(snapshot_id, "verified")
+        return snapshot
+
+    def lock_snapshot(self, snapshot_id: str) -> ManagedSnapshot | None:
+        snapshot = self.update_status(snapshot_id, "locked")
+        return snapshot
 
     def update_snapshot(
         self,
@@ -175,8 +210,8 @@ class SnapshotService:
         for item in payload.get("snapshots", []) or []:
             if not isinstance(item, dict) or str(item.get("id")) != snapshot_id:
                 continue
-            if str(item.get("status") or "open") not in EDITABLE_STATUSES:
-                raise SnapshotContextError("Snapshot is locked for editing. Only open, importing or review snapshots can be edited.")
+            if self._normalize_status(str(item.get("status") or "open")) not in EDITABLE_STATUSES:
+                raise SnapshotContextError("Snapshot is locked for editing. Only OPEN or COLLECTING snapshots can be edited.")
             before = dict(item)
             if name is not None:
                 item["name"] = self._clean_name(name)
@@ -194,7 +229,7 @@ class SnapshotService:
                 item["server_scope"] = asdict(scope)
                 item["assigned_servers"] = self._expand_server_scope(scope)
             item["updated_at"] = self._now()
-            self._append_audit(item, "snapshot_updated", before)
+            self._append_audit(item, "snapshot_updated", before=before, detail="Editable snapshot fields changed")
             changed = item
             break
         if not changed:
@@ -203,12 +238,6 @@ class SnapshotService:
         return self._from_raw(changed)
 
     def bind_import_report(self, report: dict[str, Any], snapshot: ManagedSnapshot) -> dict[str, Any]:
-        """Attach active snapshot context to a latest import report.
-
-        This does not validate rows or promote Operational Truth.  It makes the
-        report auditable and prevents a later UI from treating an unbound run as
-        current operational evidence for the wrong phase.
-        """
         bound = dict(report or {})
         previous = bound.get("snapshot") if isinstance(bound.get("snapshot"), dict) else {}
         if previous and previous.get("id") and previous.get("id") != snapshot.id:
@@ -221,7 +250,7 @@ class SnapshotService:
         bound["snapshot_expected_rankings"] = list(snapshot.expected_rankings)
         bound["snapshot_expected_servers"] = list(snapshot.assigned_servers)
         bound["snapshot_server_scope"] = asdict(snapshot.server_scope)
-        bound["schema"] = "sentinel.import_run.v2"
+        bound["schema"] = "sentinel.import_run.v3"
         bound["schema_previous"] = report.get("schema") if isinstance(report, dict) else None
         return bound
 
@@ -289,7 +318,7 @@ class SnapshotService:
         open_reviews = 0
         if active:
             for item in history.get("items") or []:
-                if not isinstance(item, dict) or item.get("status") != "OPEN":
+                if not isinstance(item, dict) or str(item.get("status") or "").upper() != "OPEN":
                     continue
                 item_snapshot = item.get("snapshot") if isinstance(item.get("snapshot"), dict) else {}
                 if str(item_snapshot.get("id") or item.get("snapshot_id") or "") == active.id:
@@ -325,6 +354,75 @@ class SnapshotService:
             warning=warning,
         )
 
+    def get_readiness(self, snapshot: ManagedSnapshot | None = None, coverage: SnapshotCoverage | None = None) -> SnapshotReadiness:
+        active = snapshot or self.get_active_snapshot()
+        cov = coverage or self.get_coverage(active)
+        report = self._load_json(Path("data/latest_import_report.json"))
+        data_guard = report.get("data_guard") if isinstance(report.get("data_guard"), dict) else {}
+        data_guard_status = str(data_guard.get("status") or report.get("status") or "").lower()
+        ranking_recovery = report.get("ranking_recovery") if isinstance(report.get("ranking_recovery"), dict) else {}
+        rejected = self._int(ranking_recovery.get("rejected"))
+
+        expected_feeds_ok = cov.expected_feed_count > 0
+        completeness_ok = cov.expected_feed_count > 0 and cov.imported_valid_feed_count >= cov.expected_feed_count and not cov.missing_feeds
+        reviews_ok = cov.open_review_count == 0
+        data_guard_ok = not data_guard_status or data_guard_status in {"pass", "ok", "success", "ready", "verified"}
+        ranking_guard_ok = rejected == 0
+        bound_ok = cov.is_bound and not cov.warning
+        operational_truth_ready = bool(active) and expected_feeds_ok and completeness_ok and reviews_ok and data_guard_ok and ranking_guard_ok and bound_ok
+        message = "READY FOR OPERATIONAL TRUTH" if operational_truth_ready else "NOT READY - resolve missing feeds, reviews or guard warnings first"
+        return SnapshotReadiness(
+            status=active.status if active else "none",
+            operational_truth_ready=operational_truth_ready,
+            expected_feeds_ok=expected_feeds_ok,
+            completeness_ok=completeness_ok,
+            reviews_ok=reviews_ok,
+            data_guard_ok=data_guard_ok,
+            ranking_guard_ok=ranking_guard_ok,
+            locked=bool(active and active.locked),
+            missing_feed_count=len(cov.missing_feeds),
+            open_review_count=cov.open_review_count,
+            validated_feed_count=cov.imported_valid_feed_count,
+            expected_feed_count=cov.expected_feed_count,
+            completeness_percent=cov.completeness_percent,
+            message=message,
+        )
+
+    def write_completion_report(self, snapshot: ManagedSnapshot, coverage: SnapshotCoverage | None = None) -> str:
+        cov = coverage or self.get_coverage(snapshot)
+        readiness = self.get_readiness(snapshot, cov)
+        report_dir = REPORT_ROOT / snapshot.id
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_path = report_dir / "completion_report.json"
+        payload = {
+            "schema": "sentinel.snapshot_completion.v1",
+            "created_at": self._now(),
+            "snapshot": {
+                "id": snapshot.id,
+                "name": snapshot.name,
+                "type": snapshot.snapshot_type,
+                "status": snapshot.status,
+                "server_scope": asdict(snapshot.server_scope),
+                "expected_rankings": list(snapshot.expected_rankings),
+            },
+            "coverage": asdict(cov),
+            "readiness": asdict(readiness),
+            "operational_truth": "READY" if readiness.operational_truth_ready else "NOT_READY",
+        }
+        report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._store_report_path(snapshot.id, str(report_path))
+        return str(report_path)
+
+    def _store_report_path(self, snapshot_id: str, report_path: str) -> None:
+        payload = self._load()
+        for item in payload.get("snapshots", []) or []:
+            if isinstance(item, dict) and str(item.get("id")) == snapshot_id:
+                item["completion_report_file"] = report_path
+                self._append_audit(item, "completion_report_written", detail=report_path)
+                item["updated_at"] = self._now()
+                break
+        self._save(payload)
+
     def _load(self) -> dict:
         if not self.storage_path.exists():
             return {"active_snapshot_id": "", "snapshots": []}
@@ -357,11 +455,21 @@ class SnapshotService:
         server_scope = SnapshotService._server_scope_from_raw(raw)
         servers = SnapshotService._expand_server_scope(server_scope)
         rankings = SnapshotService._clean_rankings(raw.get("expected_rankings", []) or DEFAULT_EXPECTED_RANKINGS)
+        status = SnapshotService._normalize_status(str(raw.get("status") or "open"))
+        audit_entries = []
+        for entry in raw.get("audit", []) or []:
+            if isinstance(entry, dict):
+                audit_entries.append(SnapshotAuditEntry(
+                    event=str(entry.get("event") or "unknown"),
+                    at=str(entry.get("at") or ""),
+                    actor=str(entry.get("actor") or "sentinel"),
+                    detail=str(entry.get("detail") or ""),
+                ))
         return ManagedSnapshot(
             id=str(raw.get("id") or ""),
             name=str(raw.get("name") or "Unnamed Snapshot"),
             snapshot_type=str(raw.get("snapshot_type") or "screenshot_upload"),
-            status=str(raw.get("status") or "open"),
+            status=status,
             description=str(raw.get("description") or ""),
             expected_rankings=rankings,
             created_at=str(raw.get("created_at") or ""),
@@ -369,7 +477,9 @@ class SnapshotService:
             source=str(raw.get("source") or ""),
             assigned_servers=servers,
             server_scope=server_scope,
-            locked=str(raw.get("status") or "open") in {"complete", "closed", "locked", "archived"},
+            locked=status in LOCKED_STATUSES,
+            audit=audit_entries,
+            completion_report_file=str(raw.get("completion_report_file") or ""),
         )
 
     @staticmethod
@@ -386,7 +496,6 @@ class SnapshotService:
             "bound_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
 
-
     @staticmethod
     def _server_scope_from_raw(raw: dict[str, Any]) -> ServerScope:
         scope_raw = raw.get("server_scope") if isinstance(raw.get("server_scope"), dict) else {}
@@ -400,26 +509,14 @@ class SnapshotService:
         return SnapshotService._normalize_server_scope(ServerScope(mode="selected", servers=legacy_servers))
 
     @staticmethod
-    def _build_server_scope(
-        *,
-        mode: str,
-        assigned_servers: list[Any] | str,
-        server_range_start: int | str | None,
-        server_range_end: int | str | None,
-    ) -> ServerScope:
+    def _build_server_scope(*, mode: str, assigned_servers: list[Any] | str, server_range_start: int | str | None, server_range_end: int | str | None) -> ServerScope:
         clean_mode = str(mode or "selected").strip().lower()
         if clean_mode not in SERVER_SCOPE_MODES:
             clean_mode = "selected"
         if clean_mode == "all":
             return ServerScope(mode="all", servers=[])
         if clean_mode == "range":
-            return SnapshotService._normalize_server_scope(
-                ServerScope(
-                    mode="range",
-                    start=SnapshotService._optional_int(server_range_start),
-                    end=SnapshotService._optional_int(server_range_end),
-                )
-            )
+            return SnapshotService._normalize_server_scope(ServerScope(mode="range", start=SnapshotService._optional_int(server_range_start), end=SnapshotService._optional_int(server_range_end)))
         return SnapshotService._normalize_server_scope(ServerScope(mode="selected", servers=SnapshotService._clean_servers(assigned_servers)))
 
     @staticmethod
@@ -459,18 +556,18 @@ class SnapshotService:
         return list(snapshot.assigned_servers)
 
     @staticmethod
-    def _append_audit(item: dict[str, Any], event: str, before: dict[str, Any]) -> None:
+    def _append_audit(item: dict[str, Any], event: str, before: dict[str, Any] | None = None, detail: str = "") -> None:
         audit = item.setdefault("audit", [])
         if not isinstance(audit, list):
             audit = []
             item["audit"] = audit
-        audit.append({
-            "event": event,
-            "at": SnapshotService._now(),
-            "before_server_scope": before.get("server_scope"),
-            "before_assigned_servers": before.get("assigned_servers"),
-            "before_expected_rankings": before.get("expected_rankings"),
-        })
+        entry: dict[str, Any] = {"event": event, "at": SnapshotService._now(), "actor": "sentinel", "detail": detail}
+        if before:
+            entry["before_status"] = before.get("status")
+            entry["before_server_scope"] = before.get("server_scope")
+            entry["before_assigned_servers"] = before.get("assigned_servers")
+            entry["before_expected_rankings"] = before.get("expected_rankings")
+        audit.append(entry)
 
     @staticmethod
     def _clean_name(name: str) -> str:
@@ -524,6 +621,12 @@ class SnapshotService:
             return int(float(value))
         except (TypeError, ValueError):
             return 0
+
+    @staticmethod
+    def _normalize_status(status: str) -> str:
+        clean = str(status or "open").strip().lower()
+        clean = STATUS_ALIASES.get(clean, clean)
+        return clean if clean in LIFECYCLE_STATUSES else "open"
 
     @staticmethod
     def _slug_id(name: str) -> str:

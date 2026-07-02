@@ -1,5 +1,21 @@
 # Sentinel Project Status
 
+**Current version:** v0.9.5.75  
+**Current sprint:** Snapshot Lifecycle & Operational Readiness  
+**Status:** Data Foundation v1.0 hardening nearing completion.
+
+## v0.9.5.75 – Snapshot Lifecycle & Operational Readiness
+
+Implemented snapshot lifecycle states: `OPEN`, `COLLECTING`, `REVIEWING`, `VERIFIED`, `LOCKED`, `ARCHIVED`. Screenshot imports are accepted only while a screenshot snapshot is `OPEN` or `COLLECTING`; editable snapshot fields are blocked once the snapshot reaches review/verification/lock states.
+
+Operational Readiness now evaluates expected feeds, validated feed coverage, missing feeds, open reviews, Data Guard status and Ranking Guard rejection state before a snapshot can be treated as Operational Truth evidence. Completion reports are written to `reports/snapshots/<snapshot_id>/completion_report.json` when a snapshot is verified or locked. Snapshot audit events record creation, activation, edits, status transitions and report generation.
+
+Data Quality remains ahead of Intelligence: lifecycle and readiness gates do not promote imported rows by themselves. They only state whether the snapshot is ready to serve as explainable evidence.
+
+---
+
+# Sentinel Project Status
+
 **Current version:** v0.9.5.74  
 **Current sprint:** Snapshot Server Scope & Dynamic Completeness  
 **Baseline code:** v0.9.5.72  

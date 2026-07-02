@@ -1,5 +1,22 @@
 # Sentinel Modus Operandi
 
+## Snapshot operating procedure – v0.9.5.75
+
+1. Create or activate the correct snapshot before importing screenshots.
+2. Define Server Scope and expected rankings before the import batch.
+3. Keep the snapshot in `OPEN` or `COLLECTING` while screenshots are still arriving.
+4. Move to `REVIEWING` when import collection is finished.
+5. Resolve reviews and missing feeds before treating the snapshot as evidence.
+6. Move to `VERIFIED` only when readiness is acceptable.
+7. Move to `LOCKED` when the snapshot must become an immutable reference.
+8. Never use filename order, upload order or screenshot naming as truth.
+
+Quarantine remains preferred over false Operational Truth.
+
+---
+
+# Sentinel Modus Operandi
+
 **Current version:** v0.9.5.72  
 **Default documentation path:** `/docs`
 

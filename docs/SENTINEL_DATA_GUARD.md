@@ -1,5 +1,24 @@
 # Sentinel Data Guard
 
+## Snapshot lifecycle and Data Guard – v0.9.5.75
+
+Data Guard remains the authority for protecting Operational Truth from bad evidence. Snapshot lifecycle does not override quarantine, ranking integrity checks or human review. Instead, it adds a context gate around the evidence collection phase.
+
+Operational Readiness requires:
+
+- expected feeds defined from Server Scope × Expected Rankings;
+- imported/validated feeds matching the expected feed set;
+- no missing feed combinations;
+- no open reviews;
+- Data Guard status without unresolved warnings;
+- Ranking Guard without rejected feed evidence.
+
+A snapshot can be `VERIFIED` or `LOCKED`, but downstream Intelligence must still explain which evidence and guard status support its assessment.
+
+---
+
+# Sentinel Data Guard
+
 **Current version:** v0.9.5.72
 
 Sentinel Data Guard is the integrity layer that protects Operational Truth.

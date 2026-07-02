@@ -60,7 +60,7 @@ def main():
     except SnapshotContextError as exc:
         print(f"SNAPSHOT BLOCKER | {exc}")
         return
-    snapshot_service.update_status(active_snapshot.id, "importing")
+    snapshot_service.update_status(active_snapshot.id, "collecting")
     active_snapshot = snapshot_service.require_active_import_snapshot()
     start_time = time.perf_counter()
     print(f"Active Snapshot: {active_snapshot.name} ({active_snapshot.id})")
@@ -238,7 +238,7 @@ def main():
     if snapshot_export_file:
         import_report["snapshot_export_file"] = snapshot_export_file
     JsonImportRunRepository().save_latest_import(import_report)
-    snapshot_service.update_status(active_snapshot.id, "review" if import_report.get("review_count") else "complete")
+    snapshot_service.update_status(active_snapshot.id, "reviewing" if import_report.get("review_count") else "verified")
     print("Import report geschrieben nach data/latest_import_report.json")
     command_center_files = generate_command_center()
     print(f"Command Center geschrieben nach {command_center_files['command_center']}")

@@ -63,6 +63,10 @@
         <div class="drilldown-notice success-note">Snapshot activated.</div>
         {% elif snapshot_notice == 'status-updated' %}
         <div class="drilldown-notice success-note">Snapshot status updated.</div>
+        {% elif snapshot_notice == 'status-blocked' %}
+        <div class="drilldown-notice danger-note">Snapshot lifecycle transition blocked. Locked or archived snapshots cannot be reopened.</div>
+        {% elif snapshot_notice == 'report-written' %}
+        <div class="drilldown-notice success-note">Snapshot completion report generated.</div>
         {% elif snapshot_notice == 'updated' %}
         <div class="drilldown-notice success-note">Snapshot updated. Coverage was recalculated from its server scope.</div>
         {% elif snapshot_notice == 'edit-blocked' %}
@@ -140,14 +144,16 @@
                     <form method="post" action="/imports/snapshots/{{ item.id }}/activate"><button type="submit">Set Active</button></form>
                     <form method="post" action="/imports/snapshots/{{ item.id }}/status">
                         <select name="status">
-                            <option value="open" {% if item.status == 'open' %}selected{% endif %}>open</option>
-                            <option value="importing" {% if item.status == 'importing' %}selected{% endif %}>importing</option>
-                            <option value="review" {% if item.status == 'review' %}selected{% endif %}>review</option>
-                            <option value="complete" {% if item.status == 'complete' %}selected{% endif %}>complete</option>
-                            <option value="closed" {% if item.status == 'closed' %}selected{% endif %}>closed</option>
+                            <option value="open" {% if item.status == 'open' %}selected{% endif %}>OPEN</option>
+                            <option value="collecting" {% if item.status == 'collecting' %}selected{% endif %}>COLLECTING</option>
+                            <option value="reviewing" {% if item.status == 'reviewing' %}selected{% endif %}>REVIEWING</option>
+                            <option value="verified" {% if item.status == 'verified' %}selected{% endif %}>VERIFIED</option>
+                            <option value="locked" {% if item.status == 'locked' %}selected{% endif %}>LOCKED</option>
+                            <option value="archived" {% if item.status == 'archived' %}selected{% endif %}>ARCHIVED</option>
                         </select>
                         <button type="submit">Save</button>
                     </form>
+                    <form method="post" action="/imports/snapshots/{{ item.id }}/completion-report"><button type="submit">Verify + Report</button></form>
                     {% if not item.locked %}
                     <details class="snapshot-edit-details">
                         <summary>Edit</summary>
@@ -168,7 +174,7 @@
                         </form>
                     </details>
                     {% else %}
-                    <small>locked</small>
+                    <small>read-only</small>
                     {% endif %}
                 </span>
             </div>
@@ -176,6 +182,42 @@
         </div>
         {% endif %}
     </section>
+
+
+    {% if snapshot_model.active_readiness %}
+    <section class="panel snapshot-readiness-panel">
+        <div class="panel-header compact">
+            <div>
+                <h2>Operational Readiness</h2>
+                <p>Lifecycle gate for using the active snapshot as Operational Truth evidence.</p>
+            </div>
+            <span class="panel-badge">{{ 'READY' if snapshot_model.active_readiness.operational_truth_ready else 'NOT READY' }}</span>
+        </div>
+        <div class="metrics-grid compact-metrics">
+            <article class="metric-card tone-info"><div class="metric-title">Lifecycle</div><div class="metric-value small-value">{{ snapshot_model.active_readiness.status|upper }}</div><div class="metric-subline">locked: {{ 'yes' if snapshot_model.active_readiness.locked else 'no' }}</div></article>
+            <article class="metric-card tone-info"><div class="metric-title">Expected Feeds</div><div class="metric-value small-value">{{ snapshot_model.active_readiness.expected_feed_count }}</div><div class="metric-subline">validated {{ snapshot_model.active_readiness.validated_feed_count }}</div></article>
+            <article class="metric-card {{ 'tone-success' if snapshot_model.active_readiness.reviews_ok else 'tone-warning' }}"><div class="metric-title">Open Reviews</div><div class="metric-value small-value">{{ snapshot_model.active_readiness.open_review_count }}</div><div class="metric-subline">must be 0 before READY</div></article>
+            <article class="metric-card {{ 'tone-success' if snapshot_model.active_readiness.data_guard_ok else 'tone-warning' }}"><div class="metric-title">Data Guard</div><div class="metric-value small-value">{{ 'PASS' if snapshot_model.active_readiness.data_guard_ok else 'WARN' }}</div><div class="metric-subline">quarantine beats false truth</div></article>
+            <article class="metric-card {{ 'tone-success' if snapshot_model.active_readiness.ranking_guard_ok else 'tone-warning' }}"><div class="metric-title">Ranking Guard</div><div class="metric-value small-value">{{ 'PASS' if snapshot_model.active_readiness.ranking_guard_ok else 'WARN' }}</div><div class="metric-subline">ranking integrity gate</div></article>
+        </div>
+        <div class="drilldown-notice {{ 'success-note' if snapshot_model.active_readiness.operational_truth_ready else 'danger-note' }}">{{ snapshot_model.active_readiness.message }}</div>
+        {% if snapshot_model.active and snapshot_model.active.completion_report_file %}
+        <p class="metric-subline">Completion report: {{ snapshot_model.active.completion_report_file }}</p>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    {% if snapshot_model.active and snapshot_model.active.audit %}
+    <section class="panel snapshot-audit-panel">
+        <div class="panel-header compact"><div><h2>Snapshot Audit Trail</h2><p>Key lifecycle events for the active snapshot.</p></div><span class="panel-badge">AUDIT</span></div>
+        <div class="quality-table">
+            <div class="quality-row quality-head"><span>Time</span><span>Event</span><span>Detail</span></div>
+            {% for event in snapshot_model.active.audit[-8:] %}
+            <div class="quality-row"><span>{{ event.at }}</span><strong>{{ event.event }}</strong><span>{{ event.detail }}</span></div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
 
     {% if snapshot_model.active_coverage %}

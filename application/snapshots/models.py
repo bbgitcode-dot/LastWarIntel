@@ -43,6 +43,8 @@ class ManagedSnapshot:
     assigned_servers: list[int] = field(default_factory=list)
     server_scope: ServerScope = field(default_factory=ServerScope)
     locked: bool = False
+    audit: list[SnapshotAuditEntry] = field(default_factory=list)
+    completion_report_file: str = ""
 
 
 @dataclass(slots=True, frozen=True)
@@ -84,6 +86,32 @@ class SnapshotCoverage:
 
 
 @dataclass(slots=True, frozen=True)
+class SnapshotReadiness:
+    status: str
+    operational_truth_ready: bool
+    expected_feeds_ok: bool
+    completeness_ok: bool
+    reviews_ok: bool
+    data_guard_ok: bool
+    ranking_guard_ok: bool
+    locked: bool
+    missing_feed_count: int
+    open_review_count: int
+    validated_feed_count: int
+    expected_feed_count: int
+    completeness_percent: float
+    message: str
+
+
+@dataclass(slots=True, frozen=True)
+class SnapshotAuditEntry:
+    event: str
+    at: str
+    actor: str = "sentinel"
+    detail: str = ""
+
+
+@dataclass(slots=True, frozen=True)
 class SnapshotDashboard:
     has_active: bool
     active: ManagedSnapshot | None
@@ -92,3 +120,4 @@ class SnapshotDashboard:
     total_count: int
     storage_path: str
     active_coverage: SnapshotCoverage | None = None
+    active_readiness: SnapshotReadiness | None = None

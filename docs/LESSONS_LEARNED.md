@@ -1,3 +1,13 @@
+# Lessons Learned
+
+## v0.9.5.75 – A snapshot needs a lifecycle, not just a name
+
+A named snapshot prevents phase confusion, but a named and editable snapshot can still drift after leadership has started using it. Sentinel therefore needs explicit lifecycle states and lock semantics.
+
+Lesson: Operational Truth readiness must be earned through coverage, review closure and guard status. A verified or locked snapshot should be reproducible, auditable and protected from accidental mutation.
+
+---
+
 # Sentinel Lessons Learned
 
 **Current version:** v0.9.5.72

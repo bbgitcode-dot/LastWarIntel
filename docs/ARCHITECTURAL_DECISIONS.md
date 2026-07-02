@@ -1,3 +1,15 @@
+# Architectural Decisions
+
+## ADR – v0.9.5.75 Snapshot lifecycle controls Operational Truth readiness
+
+Decision: Managed snapshots now use a formal lifecycle: `open`, `collecting`, `reviewing`, `verified`, `locked`, `archived`. Import and edit operations are only allowed in safe early states. Verified, locked and archived snapshots are protected from accidental mutation.
+
+Rationale: Sentinel must not allow a completed phase such as `S6 pre Transfer` to receive new screenshots or scope edits after leadership has begun treating it as evidence. Lifecycle control reduces accidental mixing and makes Operational Truth reproducible.
+
+Consequences: Screenshot import is blocked outside import-capable states. Snapshot edits are blocked once review/verification begins. Completion reports and audit events provide traceability.
+
+---
+
 # Sentinel Architectural Decisions
 
 **Current version:** v0.9.5.72
