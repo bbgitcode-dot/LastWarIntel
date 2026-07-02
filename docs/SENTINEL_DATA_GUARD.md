@@ -1,6 +1,6 @@
 # Sentinel Data Guard – Die Integritätsschicht von Sentinel
 
-**Version:** v0.9.5.49
+**Version:** v0.9.5.50
 
 ---
 
@@ -71,5 +71,5 @@ Recovery darf Felder nur verändern, wenn die Veränderung nachvollziehbar und m
 
 ## Aktuelle Erweiterung
 
-v0.9.5.49 entfernt die letzte Legacy-Entscheidung der leading-digit recovery. Recovery darf Kandidaten erzeugen, aber nur bei klarem Kontext-Score und ausreichender Margin automatisch recovern. Ambiguität bleibt Quarantäne.
+v0.9.5.50 entfernt die letzte Legacy-Entscheidung der leading-digit recovery. Recovery darf Kandidaten erzeugen, aber nur bei klarem Kontext-Score und ausreichender Margin automatisch recovern. Ambiguität bleibt Quarantäne.
 

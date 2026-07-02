@@ -1,6 +1,6 @@
 # Sentinel Roadmap
 
-**Version:** v0.9.5.49
+**Version:** v0.9.5.50
 
 ---
 
@@ -60,7 +60,7 @@ Completed in v0.9.5.48.
 - Adds candidate traces to the import report.
 - Fixes review-count aggregation.
 
-### v0.9.5.49 – Import Session and Segment Integrity
+### v0.9.5.50 – Import Session and Segment Integrity
 
 - Introduce explicit import sessions.
 - Detect missing, duplicate, mixed, and out-of-order segments.

@@ -1,8 +1,52 @@
 # Sentinel Release Notes
 
-**Current Version:** v0.9.5.49
+**Current Version:** v0.9.5.50
 
 This file consolidates Sentinel release notes. Individual historical release-note files may remain in the repository for traceability, but this is the primary release history.
+
+---
+
+## v0.9.5.50 – Bidirectional Power Error Model
+
+### Focus
+
+Adds an OCR power error model to the existing candidate decision engine. v0.9.5.49 safely quarantined ambiguous high explosions; v0.9.5.50 also detects low/truncated THP values that lost a magnitude digit.
+
+### Added
+
+- Low THP candidate generation for values such as `32,030,601 -> 320,306,010`, `25,009,089 -> 250,009,089/250,090,890`, and `13,861,884 -> 138,618,840`.
+- Candidate reasons for:
+  - `ocr_error_model:scale_x10_truncated_digit`,
+  - `ocr_error_model:scale_x100_truncated_digit`,
+  - `ocr_error_model:insert_zero`,
+  - `ocr_error_model:leading_digit_to_1/2/3`.
+- Regression tests using the Server 549–553 findings.
+
+### Changed
+
+- Candidate scoring now combines source-local context with OCR error probability.
+- Clear high-explosion THP candidates can recover when the OCR model creates a decisive margin.
+- Low/truncated THP rows recover only when the same source contains a normal THP envelope.
+
+### Guardrail
+
+Recovery remains source-local, auditable, and margin-gated. Runtime does not read Ground Truth; Ground Truth only informed the error classes and tests. Alliance Power low tails remain protected from THP truncation recovery.
+
+### Validation
+
+```text
+python -m compileall -q parser main.py ground_truth_validator.py sentinel.py version.py
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_thp_power_sanity_guard.py tests/smoke/test_sentinel_ranking_guard.py tests/smoke/test_ranking_recovery.py tests/smoke/test_operational_import_repository.py -q
+30 passed
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(recovery): add bidirectional OCR power error model"
+git tag -a v0.9.5.50 -m "v0.9.5.50 Bidirectional Power Error Model"
+```
 
 ---
 

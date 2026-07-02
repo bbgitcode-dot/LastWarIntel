@@ -1,20 +1,35 @@
 # Sentinel Project Status
 
-**Current Version:** v0.9.5.49  
-**Sprint Type:** Candidate Decision Engine Cutover  
-**Runtime Baseline:** v0.9.5.49 – Candidate Decision Engine Cutover  
+**Current Version:** v0.9.5.50  
+**Sprint Type:** Bidirectional Power Error Model  
+**Runtime Baseline:** v0.9.5.50 – Bidirectional Power Error Model  
 **Current Phase:** Data Integrity Fortress / Operational Data Stability  
-**Next Planned Sprint:** v0.9.5.50 – Import Session and Segment Integrity
+**Next Planned Sprint:** v0.9.5.51 – Import Session and Segment Integrity
 
 ---
 
 ## Executive summary
 
-Sentinel v0.9.5.49 completes the cutover from legacy leading-digit recovery to explicit candidate decisioning. The candidate generator and scorer remain in place, but the old fallback can no longer select a value when the context score is weak or tied.
+Sentinel v0.9.5.50 extends the candidate decision engine with a bidirectional OCR power error model. v0.9.5.49 made high power explosion recovery safe by removing legacy fallback decisions; v0.9.5.50 adds the missing opposite direction: low/truncated THP powers such as 32M, 25M, 23M, 19M, and 13M can now generate x10, x100, and inserted-zero candidates.
 
-This sprint deliberately favors precision over recall: clear candidate winners are recovered, while ambiguous ties are quarantined with audit metadata. The Server 553 regression class is now safer because near-zero score margins no longer become Operational Truth.
+The sprint keeps the same doctrine: recovery is allowed only when source-local context and OCR-error probability produce a clear candidate margin. Ambiguous values remain quarantined.
 
 ---
+
+## What changed in v0.9.5.50
+
+### Added
+
+- Low/truncated THP candidate generation for OCR values that lost a magnitude digit.
+- Candidate transforms for `scale_x10_truncated_digit`, `scale_x100_truncated_digit`, and `insert_zero`.
+- OCR error probability scoring for high THP leading-digit explosions such as `764M -> 164M` and `798M -> 198M`.
+- Regression tests covering Server 549–553 findings: high explosion recovery, low truncation recovery, and Alliance Power tail protection.
+
+### Guardrail
+
+- The model is source-local and ranking-type aware.
+- Alliance Power low tails are not treated as THP truncation errors.
+- Ground Truth informs the error classes during development but does not power runtime decisions.
 
 
 ## What changed in v0.9.5.49

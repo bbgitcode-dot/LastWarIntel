@@ -235,13 +235,17 @@ def test_server553_thp_digit_explosion_cluster_blocks_all_high_rows_even_with_on
 
     trusted_powers = {row["power"] for row in result[(553, "total_hero_power")]}
     assert {764_292_586, 764_047_047, 763_106_065, 762_831_270}.isdisjoint(trusted_powers)
-    # v0.9.5.49 no longer recovers tied 7xxM candidates through the legacy path.
-    # The already clean low rows remain trusted; ambiguous explosion rows go to review.
-    assert {164_292_586, 164_047_047}.issubset(trusted_powers)
+    # v0.9.5.50 adds an OCR error probability model. Rows whose exact
+    # leading-digit correction clearly wins may now recover; rows without enough
+    # rank/context separation still remain quarantined.
+    assert {164_292_586, 164_047_047, 163_106_065}.issubset(trusted_powers)
+    recovered = [row for row in result[(553, "total_hero_power")] if row.get("power_recovered_from") == 763_106_065][0]
+    assert recovered["power"] == 163_106_065
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.50"
     quarantine = result[("REVIEW", "ranking_guard_quarantine")]
     quarantined_powers = {row["power"] for row in quarantine}
-    assert {763_106_065, 762_831_270}.issubset(quarantined_powers)
-    assert all("source_shape_digit_explosion" in row.get("ranking_guard_reason", "") for row in quarantine)
+    assert 762_831_270 in quarantined_powers
+    assert all("power_recovery_candidates_ambiguous" in row.get("ranking_guard_reason", "") for row in quarantine)
 
 
 def test_server553_alliance_power_middle_77b_spike_is_quarantined_without_screenshot_order():
@@ -312,4 +316,63 @@ def test_context_candidate_recovery_selects_alliance_candidate_when_clear():
     assert recovered["power_recovery_decision_strategy"] == "context_candidate_margin"
     assert recovered["power_recovery_legacy_used"] is False
     assert recovered["power_recovery_candidates"]
+    assert ("REVIEW", "ranking_guard_quarantine") not in result
+
+
+def test_low_truncation_recovery_selects_x10_candidate_when_clear():
+    grouped = {
+        (551, "total_hero_power"): [
+            _row(420_000_000, "000_first.png", 1),
+            _row(410_000_000, "000_first.png", 2),
+            _row(322_000_000, "551_low.png", 94),
+            _row(32_030_601, "551_low.png", 95, "[IVE] MEITTi"),
+            _row(317_000_000, "551_low.png", 96),
+            _row(310_000_000, "551_low.png", 97),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    recovered = [row for row in result[(551, "total_hero_power")] if row.get("power_recovered_from") == 32_030_601][0]
+    assert recovered["power"] == 320_306_010
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.50"
+    assert recovered["power_recovery_legacy_used"] is False
+    assert any("scale_x10_truncated_digit" in reason for candidate in recovered["power_recovery_candidates"] for reason in candidate["reasons"])
+
+
+def test_low_truncation_recovery_selects_insert_zero_candidate_when_context_clear():
+    grouped = {
+        (551, "total_hero_power"): [
+            _row(420_000_000, "000_first.png", 1),
+            _row(410_000_000, "000_first.png", 2),
+            _row(252_000_000, "551_insert_zero.png", 19),
+            _row(25_009_089, "551_insert_zero.png", 20, "[IVE] K9 Thunder"),
+            _row(248_000_000, "551_insert_zero.png", 21),
+            _row(246_000_000, "551_insert_zero.png", 22),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    recovered = [row for row in result[(551, "total_hero_power")] if row.get("power_recovered_from") == 25_009_089][0]
+    assert recovered["power"] == 250_090_890 or recovered["power"] == 250_009_089
+    assert recovered["power_recovery_decision_version"] == "v0.9.5.50"
+    assert recovered["power_recovery_legacy_used"] is False
+
+
+def test_low_alliance_power_tail_does_not_get_thp_truncation_recovery():
+    grouped = {
+        (552, "alliance_power"): [
+            _row(63_115_694, "552_ap_tail.png", 21),
+            _row(36_733_773, "552_ap_tail.png", 22),
+            _row(19_260_818, "552_ap_tail.png", 23),
+            _row(13_617_964, "552_ap_tail.png", 24),
+            _row(2_046_130, "552_ap_tail.png", 25),
+        ]
+    }
+
+    result = apply_ranking_power_sanity_guard(grouped)
+
+    assert (552, "alliance_power") in result
+    assert [row["power"] for row in result[(552, "alliance_power")]] == [63_115_694, 36_733_773, 19_260_818, 13_617_964, 2_046_130]
     assert ("REVIEW", "ranking_guard_quarantine") not in result

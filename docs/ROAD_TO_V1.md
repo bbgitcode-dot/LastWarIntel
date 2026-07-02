@@ -2,7 +2,7 @@
 
 > From screenshot import to trusted strategic decision support.
 
-**Current Version:** v0.9.5.49  
+**Current Version:** v0.9.5.50  
 **Current Phase:** Data Integrity Fortress
 
 ---
@@ -63,7 +63,7 @@ Delivered:
 - Import-report candidate traces with selected value, best/second score, margin, confidence, and reason.
 - Corrected global review-count aggregation.
 
-#### v0.9.5.49 – Import Session and Segment Integrity
+#### v0.9.5.50 – Import Session and Segment Integrity
 
 Create explicit import sessions and ranking-session metadata.
 

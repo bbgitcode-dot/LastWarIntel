@@ -4,6 +4,21 @@ All notable changes to Sentinel are documented here. Detailed release notes are 
 
 ---
 
+## [0.9.5.50] - Bidirectional Power Error Model
+
+### Added
+
+- Source-local low/truncated THP recovery candidates.
+- OCR error probability scoring for high and low THP power errors.
+- Regression coverage for Server 549–553 power error classes.
+
+### Changed
+
+- Candidate scoring now includes OCR error model reasons while retaining margin-gated recovery.
+- Version updated to `0.9.5.50`.
+
+---
+
 ## [0.9.5.49] - Candidate Decision Engine Cutover
 
 ### Changed

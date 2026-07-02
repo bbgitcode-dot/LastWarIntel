@@ -1,6 +1,6 @@
 # Sentinel Architectural Decisions
 
-**Version:** v0.9.5.49
+**Version:** v0.9.5.50
 
 ---
 
@@ -71,4 +71,4 @@
 
 **Reason:** Server 553 showed cases where legacy recovery selected a lower-scored or tied candidate.
 
-**Consequence:** v0.9.5.49 uses the candidate decision engine only. Ambiguous score margins quarantine the row.
+**Consequence:** v0.9.5.50 uses the candidate decision engine only. Ambiguous score margins quarantine the row.
