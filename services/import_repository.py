@@ -160,6 +160,43 @@ def _visible_rank_from_window(row: dict[str, Any], source_rank_windows: dict[str
         return raw_rank, window, "already_visible_rank"
     return raw_rank, window, "outside_window_kept_raw"
 
+
+
+def _first_present(row: dict[str, Any], keys: list[str]) -> Any:
+    """Return the first non-empty value for review target context."""
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _review_target_context(row: dict[str, Any], *, visible_rank: int | None, raw_rank: int | None) -> dict[str, Any]:
+    """Build human-facing context for a quarantined row.
+
+    Reviewers must not infer the target only from a screenshot crop.  The row
+    carries whatever identity OCR/parser already extracted so the UI can say
+    "look at player/alliance X at visible rank Y".
+    """
+    target_name = _first_present(row, [
+        "name", "player_name", "alliance_name", "display_name", "raw_name", "title",
+    ])
+    target_alliance = _first_present(row, [
+        "alliance", "alliance_tag", "tag", "alliance_code", "guild", "team",
+    ])
+    power_original = _first_present(row, ["power_original", "original_power", "power", "value"])
+    power_selected = _first_present(row, ["power_selected", "selected_power", "recovered_power"])
+    return {
+        "target_rank": raw_rank,
+        "visible_rank": visible_rank,
+        "target_name": target_name,
+        "target_alliance": target_alliance,
+        "target_power_original": power_original,
+        "target_power_selected": power_selected if power_selected is not None else power_original,
+        "target_source_file": row.get("source_file") or "",
+        "ocr_rank": _int(row.get("ocr_rank")),
+    }
+
 def _status_for_group(rows: list[dict[str, Any]]) -> tuple[str, int, int]:
     if not rows:
         return "Incomplete", 0, 0
@@ -292,15 +329,18 @@ def build_import_run_report(
             elif ranking_type == "ranking_guard_quarantine":
                 visible_rank, rank_window, rank_source = _visible_rank_from_window(row, source_rank_windows)
                 raw_rank = _rank_value(row)
+                target_context = _review_target_context(row, visible_rank=visible_rank, raw_rank=raw_rank)
                 review_items.append({
                     "server": _int(row.get("original_server")) or (rank_window or {}).get("server") or None,
                     "ranking_type": str(row.get("original_ranking_type") or row.get("ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
                     "expected_ranking_type": str(row.get("expected_ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
                     "rank": visible_rank,
                     "visible_rank": visible_rank,
+                    "target_rank": raw_rank,
                     "raw_review_rank": raw_rank,
                     "screenshot_rank_window": rank_window,
                     "rank_trace_source": rank_source,
+                    **target_context,
                     "title": "Ranking Guard quarantine",
                     "description": str(row.get("ranking_guard_warning") or "Ranking Guard isolated this row instead of guessing a ranking type."),
                     "severity": "warning",
@@ -385,8 +425,9 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.76",
+            "version": "v0.9.5.77",
             "source_rank_windows": len(source_rank_windows),
+            "source_rank_windows_detail": source_rank_windows,
             "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),
             "ambiguous_power_reviews": power_ambiguous,
             "explosive_power_traces": sum(1 for trace in power_recovery_traces if (trace.get("power_original") or 0) >= 50_000_000_000 or ((trace.get("ranking_type") == "total_hero_power") and (trace.get("power_original") or 0) >= 500_000_000)),

@@ -71,15 +71,37 @@ def _format_number(value: Any) -> str:
 def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
     """Return calibrated screenshot overlay metadata for the reviewed rank.
 
-    The overlay remains a visual aid only.  If the target rank would fall outside
-    the visible screenshot table, Sentinel marks the highlight as approximate
-    rather than pretending exact evidence exists.
+    The UI label uses the human-visible ranking rank.  The overlay position uses
+    the row index inside the screenshot window.  Example: visible rank 66 in a
+    screenshot window 64-72 is row 3, not row 66.
     """
+    visible_rank = item.get("visible_rank") or item.get("rank")
+    row_rank = visible_rank
+    is_approximate = False
+    window = item.get("screenshot_rank_window")
+    if isinstance(window, dict):
+        try:
+            start = int(window.get("start") or 0)
+            end = int(window.get("end") or 0)
+            vr = int(visible_rank or 0)
+            if start and end and start <= vr <= end:
+                row_rank = vr - start + 1
+            elif item.get("raw_review_rank") not in (None, ""):
+                row_rank = int(item.get("raw_review_rank"))
+                is_approximate = True
+        except (TypeError, ValueError):
+            pass
+    elif item.get("raw_review_rank") not in (None, "") and item.get("rank_trace_source") == "derived_from_screenshot_window":
+        try:
+            row_rank = int(item.get("raw_review_rank"))
+        except (TypeError, ValueError):
+            pass
+
     try:
-        rank = int(item.get("rank") or 0)
+        row_rank_i = int(row_rank or 0)
     except (TypeError, ValueError):
-        rank = 0
-    if rank <= 0:
+        row_rank_i = 0
+    if row_rank_i <= 0:
         return {"style": "", "label": "", "is_approximate": True}
 
     ranking_type = str(item.get("ranking_type") or "").lower()
@@ -87,9 +109,8 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
         ranking_type,
         {"top": 13.80, "step": 8.00, "height": 7.20, "left": 2.5, "right": 2.5},
     )
-    top_pct = profile["top"] + (rank - 1) * profile["step"]
+    top_pct = profile["top"] + (row_rank_i - 1) * profile["step"]
     height_pct = profile["height"]
-    is_approximate = False
 
     if top_pct < 4.0 or top_pct > 88.0:
         is_approximate = True
@@ -98,7 +119,8 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
     left_pct = max(0.0, min(profile.get("left", 2.5), 20.0))
     right_pct = max(0.0, min(profile.get("right", 2.5), 20.0))
     style = f"top:{top_pct:.2f}%;height:{height_pct:.2f}%;left:{left_pct:.2f}%;right:{right_pct:.2f}%;"
-    label = f"Rank {rank}" + (" approx." if is_approximate else "")
+    label_rank = visible_rank or row_rank_i
+    label = f"Rank {label_rank}" + (" approx." if is_approximate else "")
     return {"style": style, "label": label, "is_approximate": is_approximate}
 
 
@@ -114,6 +136,16 @@ def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched["rank_highlight_style"] = highlight.get("style") or ""
     enriched["rank_highlight_label"] = highlight.get("label") or ""
     enriched["rank_highlight_is_approximate"] = bool(highlight.get("is_approximate"))
+    enriched["display_rank"] = enriched.get("visible_rank") or enriched.get("rank")
+    enriched["target_rank_display"] = enriched.get("target_rank") or enriched.get("raw_review_rank") or ""
+    enriched["target_name_display"] = enriched.get("target_name") or (enriched.get("trace") or {}).get("name") or ""
+    enriched["target_alliance_display"] = enriched.get("target_alliance") or (enriched.get("trace") or {}).get("alliance") or ""
+    enriched["target_power_display"] = _format_number(enriched.get("target_power_selected") or enriched.get("power_selected") or enriched.get("power_original"))
+    window = enriched.get("screenshot_rank_window")
+    if isinstance(window, dict) and window.get("start") and window.get("end"):
+        enriched["screenshot_rank_window_label"] = f"{window.get('start')}-{window.get('end')}"
+    else:
+        enriched["screenshot_rank_window_label"] = ""
     enriched["power_original_display"] = _format_number(enriched.get("power_original"))
     enriched["best_candidate_display"] = _format_number(enriched.get("best_candidate"))
     enriched["second_candidate_display"] = _format_number(enriched.get("second_candidate"))

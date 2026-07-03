@@ -353,8 +353,73 @@ def _fmt_power(value: Any) -> str:
 
 
 
+def _derive_visible_rank(item: dict[str, Any], trace: dict[str, Any] | None = None) -> Any:
+    """Return the rank a human can see in the linked screenshot.
+
+    `rank` may be a quarantine ordinal or an internal target rank.  Review
+    surfaces must prefer `visible_rank`, then derive it from the screenshot rank
+    window and raw review row when possible.  The raw/internal rank remains
+    available as `target_rank`/`raw_review_rank` for matching only.
+    """
+    explicit = item.get("visible_rank")
+    if explicit not in (None, ""):
+        return explicit
+    window = item.get("screenshot_rank_window")
+    raw = item.get("raw_review_rank") or item.get("target_rank")
+    if isinstance(window, dict) and raw not in (None, ""):
+        try:
+            start = int(window.get("start") or 0)
+            end = int(window.get("end") or 0)
+            raw_i = int(raw)
+            count = int(window.get("count") or max(0, end - start + 1))
+            if start and count and 1 <= raw_i <= count:
+                return start + raw_i - 1
+            if start <= raw_i <= end:
+                return raw_i
+        except (TypeError, ValueError):
+            pass
+    return item.get("rank") or (trace or {}).get("rank") or "?"
+
+
 def _display_rank(item: dict[str, Any], trace: dict[str, Any] | None = None) -> Any:
-    return item.get("visible_rank") or item.get("rank") or (trace or {}).get("rank") or "?"
+    return _derive_visible_rank(item, trace)
+
+
+def _target_name(review: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
+    for value in (
+        review.get("target_name"),
+        review.get("manual_name"),
+        (trace or {}).get("name"),
+        review.get("name"),
+    ):
+        if value not in (None, ""):
+            return str(value)
+    return "unbekannter Eintrag"
+
+
+def _target_alliance(review: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
+    for value in (
+        review.get("target_alliance"),
+        review.get("manual_alliance"),
+        (trace or {}).get("alliance"),
+        review.get("alliance"),
+    ):
+        if value not in (None, ""):
+            return str(value)
+    return ""
+
+
+def _target_identity_label(review: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
+    ranking_type = str(review.get("ranking_type") or "")
+    name = _target_name(review, trace)
+    alliance = _target_alliance(review, trace)
+    if ranking_type == "alliance_power":
+        if alliance and alliance not in name:
+            return f"{alliance} {name}".strip()
+        return name
+    if alliance:
+        return f"{name} ({alliance})"
+    return name
 
 
 def _rank_window_label(item: dict[str, Any]) -> str:
@@ -443,6 +508,9 @@ def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict
     elif ranking_type == "total_hero_power":
         subject = "Spieler-Power des Eintrags"
 
+    target = _target_identity_label(review, trace)
+    target_part = f" ({target})" if target and target != "unbekannter Eintrag" else ""
+
     if problem_type in {"alliance_power_ambiguous", "power_ambiguous"} and trace:
         choices = _choice_list(trace)
         candidate_bits = []
@@ -450,7 +518,7 @@ def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict
             if choice.get("value") is not None:
                 candidate_bits.append(f"{choice['label']}: {_fmt_power(choice.get('value'))}")
         candidates = ", ".join(candidate_bits) if candidate_bits else "keine sichere Kandidatenliste"
-        return f"{review_id}: Ich konnte die {subject} auf Server {server}, sichtbarer Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe. ({rank_hint})"
+        return f"{review_id}: Ich konnte die {subject}{target_part} auf Server {server}, sichtbarer Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe. ({rank_hint})"
 
     if problem_type == "alliance_power_outlier":
         return f"{review_id}: Die Allianzstärke auf Server {server}, sichtbarer Rang {rank}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. ({rank_hint})"
@@ -494,7 +562,8 @@ def _history_identity(item: dict[str, Any]) -> str:
     return "|".join(str(v or "") for v in [
         item.get("server"),
         item.get("ranking_type"),
-        item.get("rank"),
+        item.get("visible_rank") or item.get("rank"),
+        item.get("target_name") or "",
         item.get("screenshot"),
         item.get("problem_type"),
         item.get("reason"),
@@ -521,9 +590,14 @@ def _history_record_from_evidence(item: dict[str, Any], *, created_at: Any, sour
         "review_id": item.get("id"),
         "server": item.get("server"),
         "ranking_type": item.get("ranking_type"),
-        "rank": item.get("rank"),
+        "rank": item.get("visible_rank") or item.get("rank"),
         "visible_rank": item.get("visible_rank") or item.get("rank"),
+        "target_rank": item.get("target_rank") or item.get("raw_review_rank"),
         "raw_review_rank": item.get("raw_review_rank"),
+        "target_name": item.get("target_name"),
+        "target_alliance": item.get("target_alliance"),
+        "target_power_original": item.get("target_power_original"),
+        "target_power_selected": item.get("target_power_selected"),
         "screenshot_rank_window": item.get("screenshot_rank_window"),
         "rank_trace_source": item.get("rank_trace_source"),
         "reason": item.get("reason"),
@@ -718,9 +792,14 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "server": review.get("server"),
             "candidate_server": review.get("candidate_server"),
             "ranking_type": review.get("ranking_type"),
-            "rank": review.get("rank"),
-            "visible_rank": review.get("visible_rank") or review.get("rank"),
+            "rank": _derive_visible_rank(review, trace),
+            "visible_rank": _derive_visible_rank(review, trace),
+            "target_rank": review.get("target_rank") or review.get("raw_review_rank"),
             "raw_review_rank": review.get("raw_review_rank"),
+            "target_name": review.get("target_name") or (trace.get("name") if trace else None),
+            "target_alliance": review.get("target_alliance") or (trace.get("alliance") if trace else None),
+            "target_power_original": review.get("target_power_original") or (trace.get("power_original") if trace else None),
+            "target_power_selected": review.get("target_power_selected") or (trace.get("power_selected") if trace else None),
             "screenshot_rank_window": review.get("screenshot_rank_window"),
             "rank_trace_source": review.get("rank_trace_source"),
             "title": review.get("title"),

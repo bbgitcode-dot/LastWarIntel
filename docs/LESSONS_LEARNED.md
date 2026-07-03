@@ -9,3 +9,7 @@ Design rule added:
 > Review surfaces must separate `review_id`, `raw_review_rank`, `visible_rank`, and `screenshot_rank_window`.
 
 This follows Sentinel's core principle: Data Quality before Intelligence, and quarantine before false Operational Truth.
+
+## v0.9.5.77 Note – Review Context
+
+Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.

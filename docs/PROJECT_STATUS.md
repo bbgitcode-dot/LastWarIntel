@@ -1,6 +1,6 @@
 # Project Status
 
-**Current version:** v0.9.5.76  
+**Current version:** v0.9.5.77  
 **Sprint:** Recognition Quality & Data Integrity Pass
 
 ## Status
@@ -31,3 +31,7 @@ Continue Recognition Quality hardening:
 - tighten false/aggressive power explosion handling,
 - use recognition telemetry to locate runtime bottlenecks,
 - keep quarantine preferred over false Operational Truth.
+
+## v0.9.5.77 Note – Review Context
+
+Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.

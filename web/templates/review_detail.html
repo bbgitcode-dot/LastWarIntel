@@ -28,12 +28,17 @@
             </div>
             <div class="review-detail-grid review-context-grid">
                 <div class="page-link-card">
-                    <strong>Server</strong>
-                    <span>{{ item.server or '—' }}</span>
+                    <strong>Review Target</strong>
+                    <span>{% if item.target_name_display %}{{ item.target_name_display }}{% else %}Unbekannter Eintrag{% endif %}</span>
+                    {% if item.target_alliance_display %}<span>{{ item.target_alliance_display }}</span>{% endif %}
+                    {% if item.target_power_display %}<span>OCR Power {{ item.target_power_display }}</span>{% endif %}
                 </div>
                 <div class="page-link-card">
-                    <strong>Ranking</strong>
-                    <span>{{ item.ranking_type }} · Rank {{ item.rank }}</span>
+                    <strong>Location</strong>
+                    <span>Server {{ item.server or '—' }}</span>
+                    <span>{{ item.ranking_type }} · Visible Rank {{ item.display_rank }}</span>
+                    {% if item.screenshot_rank_window_label %}<span>Screenshot Window {{ item.screenshot_rank_window_label }}</span>{% endif %}
+                    {% if item.target_rank_display %}<span>Internal Target Rank {{ item.target_rank_display }}</span>{% endif %}
                 </div>
                 <div class="page-link-card screenshot-link-card">
                     <strong>Screenshot</strong>
@@ -160,7 +165,7 @@
                 {% endif %}
             </a>
             <div class="screenshot-meta-grid">
-                <div><strong>Target</strong><span>{{ item.ranking_type }} · Rank {{ item.rank }}{% if item.rank_highlight_is_approximate %} · approximate highlight{% endif %}</span></div>
+                <div><strong>Target</strong><span>{{ item.ranking_type }} · Visible Rank {{ item.display_rank }}{% if item.screenshot_rank_window_label %} · Window {{ item.screenshot_rank_window_label }}{% endif %}{% if item.rank_highlight_is_approximate %} · approximate highlight{% endif %}</span>{% if item.target_name_display %}<span>{{ item.target_name_display }}{% if item.target_alliance_display %} · {{ item.target_alliance_display }}{% endif %}</span>{% endif %}</div>
                 <div><strong>File</strong><span>{{ item.screenshot }}</span></div>
                 <div><strong>Action</strong><span>Click preview to open full resolution.</span></div>
             </div>

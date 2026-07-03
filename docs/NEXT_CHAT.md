@@ -1,8 +1,8 @@
 # NEXT CHAT
 
-Baseline: **Sentinel v0.9.5.76 – Recognition Quality & Data Integrity Pass**
+Baseline: **Sentinel v0.9.5.77 – Review Context & Explainability**
 
-Use `Sentinel_v0.9.5.76.zip` as the next baseline.
+Use `Sentinel_v0.9.5.77.zip` as the next baseline.
 
 ## Important context
 
@@ -21,3 +21,7 @@ Goals:
 - reduce avoidable human reviews without weakening Data Guard,
 - improve 77B/79B explosion handling before Ranking Guard,
 - preserve explainability for every promoted value.
+
+## v0.9.5.77 Note – Review Context
+
+Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.

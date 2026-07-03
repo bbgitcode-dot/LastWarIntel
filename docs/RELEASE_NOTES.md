@@ -1,6 +1,23 @@
+## v0.9.5.77 – Review Context & Explainability
+
+- Fixed Review Detail surfaces that exposed internal/quarantine ranks as if they were visible in the linked screenshot.
+- Review cards now prefer `visible_rank` and keep `target_rank` / `raw_review_rank` as internal trace fields only.
+- Screenshot overlays now position highlights by row inside the screenshot rank window while labelling the human-visible rank. Example: visible rank 66 in window 64-72 highlights row 3 and labels Rank 66.
+- Added review target context fields for human validation: target name, alliance/tag, OCR/source power, visible rank, screenshot window and internal target rank.
+- Review problem statements now name the affected player/alliance when available, reducing reviewer ambiguity.
+- Added smoke coverage for Review Context and overlay row-index calculation.
+
+Validation:
+
+```text
+python -m compileall -q services web parser
+pytest -q tests/smoke/test_review_rank_trace.py tests/smoke/test_review_context.py tests/smoke/test_command_center.py tests/smoke/test_operational_import_repository.py
+# 11 passed
+```
+
 # Release Notes
 
-**Current release:** v0.9.5.76 – Recognition Quality & Data Integrity Pass  
+**Current release:** v0.9.5.77 – Review Context & Explainability  
 
 ## v0.9.5.76 – Recognition Quality & Data Integrity Pass
 
