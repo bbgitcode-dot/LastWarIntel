@@ -107,3 +107,7 @@ Review Rank Trace is now part of the data-quality boundary. Review surfaces must
 ## v0.9.5.77 Note – Review Context
 
 Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
+## v0.9.5.80 – Continuous Collection Decision
+
+Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
+

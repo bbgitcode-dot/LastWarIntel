@@ -53,3 +53,18 @@ def test_review_ids_continue_from_existing_history():
     existing = {"items": [{"review_id": "REV-013", "review_identity": "old"}]}
     payload = _evidence_json(import_report, existing)
     assert payload["items"][0]["id"] == "REV-014"
+
+from services.command_center import _derive_visible_rank, _rank_context_label
+
+
+def test_command_center_source_row_only_does_not_fallback_to_rank():
+    item = {
+        "rank": 2,
+        "visible_rank": None,
+        "source_row": 2,
+        "raw_review_rank": 2,
+        "rank_trace_source": "source_row_only",
+        "screenshot_rank_window": {"start": 1, "end": 8, "count": 8},
+    }
+    assert _derive_visible_rank(item) == ""
+    assert _rank_context_label(item) == "Screenshot-Zeile 2; sichtbarer Rang ungeklärt"

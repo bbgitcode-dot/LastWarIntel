@@ -1,11 +1,13 @@
 {
   "schema": "sentinel.review_history.v1",
-  "updated_at": "2026-07-03T07:41:37+00:00",
-  "open_count": 15,
+  "updated_at": "2026-07-03T14:18:37+00:00",
+  "open_count": 17,
+  "open_current_count": 2,
+  "stale_open_count": 15,
   "resolved_count": 1,
   "items": [
     {
-      "history_key": "196dc3939c44f2d0",
+      "history_key": "70b00e51f327dcbb",
       "status": "RESOLVED",
       "created_at": "2026-07-02T14:18:16+00:00",
       "source_report_created_at": "2026-07-02T19:23:46.012008+00:00",
@@ -118,10 +120,11 @@
           "kind": "manual_input"
         }
       ],
-      "resolved_at": "2026-07-03T10:46:56+00:00"
+      "resolved_at": "2026-07-03T10:46:56+00:00",
+      "current_run_seen": false
     },
     {
-      "history_key": "8afd8ed30a20c87b",
+      "history_key": "fc0d46bb39b3b683",
       "status": "OPEN",
       "created_at": "2026-07-02T14:18:16+00:00",
       "source_report_created_at": "2026-07-02T19:23:46.012008+00:00",
@@ -194,10 +197,11 @@
           "score": null,
           "kind": "manual_input"
         }
-      ]
+      ],
+      "current_run_seen": false
     },
     {
-      "history_key": "f59513724d0df129",
+      "history_key": "4060dc7a46ea66a2",
       "status": "OPEN",
       "created_at": "2026-07-02T14:18:16+00:00",
       "source_report_created_at": "2026-07-02T19:23:46.012008+00:00",
@@ -309,10 +313,11 @@
           "score": null,
           "kind": "manual_input"
         }
-      ]
+      ],
+      "current_run_seen": false
     },
     {
-      "history_key": "fb4acc4061bc461f",
+      "history_key": "9a8bd6e44b9f228a",
       "review_identity": "552|alliance_power|1|Screenshot_20260701-003252.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -579,10 +584,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "785297fda511ddd8",
+      "history_key": "71cc224a2813ffe7",
       "review_identity": "554|alliance_power|2|Screenshot_20260702-082010.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -843,10 +849,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "a233da128054d035",
+      "history_key": "6ba6c3caff821dac",
       "review_identity": "552|alliance_power|3|Screenshot_20260701-003252.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -1110,10 +1117,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "6d19d3a9b9ce56f4",
+      "history_key": "b6b8ee97f8dc0599",
       "review_identity": "552|alliance_power|4|Screenshot_20260701-003328.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -1374,10 +1382,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "8b3aead9c596d203",
+      "history_key": "440b85880cca63f9",
       "review_identity": "554|alliance_power|5|Screenshot_20260702-082020.png|alliance_power_outlier|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -1600,10 +1609,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "48cef74da35784ef",
+      "history_key": "5a1a6074529b3082",
       "review_identity": "549|alliance_power|6|2026-06-28 13_15_08-Window.png|rank_or_row_unclear|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -1825,10 +1835,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "83bbb5e46e5af731",
+      "history_key": "1b0f3f4b88655687",
       "review_identity": "553|total_hero_power|7|Screenshot_20260701-194413.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -2086,10 +2097,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "52ebbcbfba057a74",
+      "history_key": "63e87b3e96c34a20",
       "review_identity": "554|total_hero_power|8|Screenshot_20260702-082140.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -2351,10 +2363,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "e49be072caef9604",
+      "history_key": "3cf29850db64db46",
       "review_identity": "554|total_hero_power|9|Screenshot_20260702-082210.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -2616,10 +2629,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "ea3c5794875a8207",
+      "history_key": "71fde5524929eb41",
       "review_identity": "551|total_hero_power|10|2026-06-29 14_45_40-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -2883,10 +2897,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "4f7153cd074ad819",
+      "history_key": "85f514f8c10fabeb",
       "review_identity": "551|total_hero_power|11|2026-06-29 14_46_26-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -3151,10 +3166,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "3af1fd5625d1800a",
+      "history_key": "a568d18eaba002ae",
       "review_identity": "551|total_hero_power|12|2026-06-29 14_47_24-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -3421,10 +3437,11 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
     },
     {
-      "history_key": "d6ff8d0dd3da3eef",
+      "history_key": "bee607f0875d8cc5",
       "review_identity": "553|total_hero_power|13|Screenshot_20260701-194413.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T07:41:37+00:00",
@@ -3691,7 +3708,555 @@
         "reviewer": null,
         "resolved_at": null,
         "resolution_source": "human_review"
-      }
+      },
+      "current_run_seen": false
+    },
+    {
+      "history_key": "4046fe35af8e5eca",
+      "review_identity": "554|alliance_power|1|[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼|Screenshot_20260702-082020.png|alliance_power_outlier|ranking_guard_quarantine",
+      "status": "OPEN",
+      "created_at": "2026-07-03T14:18:37+00:00",
+      "last_seen_at": "2026-07-03T14:18:37+00:00",
+      "seen_count": 1,
+      "source_report_created_at": "2026-07-03T14:18:37.497623+00:00",
+      "snapshot": {
+        "id": "s6-pre-transfer-2b69ebc1",
+        "name": "S6 pre Transfer",
+        "type": "screenshot_upload",
+        "status_at_import": "collecting",
+        "description": "Collect Data of all 128 servers in our server/transfer group before transition day",
+        "expected_rankings": [
+          "alliance_power",
+          "total_hero_power"
+        ],
+        "expected_servers": [
+          549,
+          550,
+          551,
+          552,
+          553,
+          554,
+          555,
+          556,
+          557,
+          558,
+          559,
+          560,
+          561,
+          562,
+          563,
+          564,
+          565,
+          566,
+          567,
+          568,
+          569,
+          570,
+          571,
+          572,
+          573,
+          574,
+          575,
+          576,
+          577,
+          578,
+          579,
+          580,
+          581,
+          582,
+          583,
+          584,
+          585,
+          586,
+          587,
+          588,
+          589,
+          590,
+          591,
+          592,
+          593,
+          594,
+          595,
+          596,
+          597,
+          598,
+          599,
+          600,
+          601,
+          602,
+          603,
+          604,
+          605,
+          606,
+          607,
+          608,
+          609,
+          610,
+          611,
+          612,
+          613,
+          614,
+          615,
+          616,
+          617,
+          618,
+          619,
+          620,
+          621,
+          622,
+          623,
+          624,
+          625,
+          626,
+          627,
+          628,
+          629,
+          630,
+          631,
+          632,
+          633,
+          634,
+          635,
+          636,
+          637,
+          638,
+          639,
+          640,
+          641,
+          642,
+          643,
+          644,
+          645,
+          646,
+          647,
+          648,
+          649,
+          650,
+          651,
+          652,
+          653,
+          654,
+          655,
+          656,
+          657,
+          658,
+          659,
+          660,
+          661,
+          662,
+          663,
+          664,
+          665,
+          666,
+          667,
+          668,
+          669,
+          670,
+          671,
+          672,
+          673,
+          674,
+          675,
+          676
+        ],
+        "server_scope": {
+          "mode": "range",
+          "start": 549,
+          "end": 676,
+          "servers": []
+        },
+        "bound_at": "2026-07-03T14:18:37+00:00"
+      },
+      "snapshot_id": "s6-pre-transfer-2b69ebc1",
+      "snapshot_name": "S6 pre Transfer",
+      "review_id": "REV-014",
+      "server": 554,
+      "ranking_type": "alliance_power",
+      "rank": 1,
+      "visible_rank": 1,
+      "source_row": 1,
+      "target_rank": 1,
+      "raw_review_rank": 1,
+      "target_name": "[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼",
+      "target_alliance": null,
+      "target_power_original": 7677657342,
+      "target_power_selected": 7677657342,
+      "screenshot_rank_window": {
+        "start": 1,
+        "end": 8,
+        "count": 8,
+        "ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "server": 554,
+        "ranking_type": "alliance_power",
+        "source_row": 1
+      },
+      "rank_trace_source": "source_row_only",
+      "reason": "ranking_guard_quarantine",
+      "problem_type": "alliance_power_outlier",
+      "problem_statement": "REV-014: Die Allianzstärke auf Server 554, sichtbarer Rang 1, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. (Screenshot window 1-8; source_row_only)",
+      "screenshot": "Screenshot_20260702-082020.png",
+      "power_original": null,
+      "best_candidate": null,
+      "second_candidate": null,
+      "margin": null,
+      "why_bullets": [
+        "Der Wert weicht stark vom lokalen Allianz-Power-Kontext ab.",
+        "Es gibt keine ausreichend starke Candidate-Evidenz; visuelle Prüfung ist nötig."
+      ],
+      "explainability_steps": [
+        {
+          "stage": "OCR",
+          "status": "captured",
+          "detail": "Screenshot Screenshot_20260702-082020.png wurde gelesen."
+        },
+        {
+          "stage": "Normalization",
+          "status": "applied",
+          "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."
+        },
+        {
+          "stage": "Power Recovery",
+          "status": "not_available",
+          "detail": "Keine Candidate-Spur für diesen Review vorhanden."
+        },
+        {
+          "stage": "Ranking Guard",
+          "status": "quarantine",
+          "detail": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.00"
+        },
+        {
+          "stage": "Data Guard",
+          "status": "protected",
+          "detail": "Operational Truth wurde nicht verändert."
+        },
+        {
+          "stage": "Human Review",
+          "status": "open",
+          "detail": "Menschliche Entscheidung erforderlich."
+        }
+      ],
+      "choices": [
+        {
+          "label": "Manuelle Eingabe",
+          "value": null,
+          "score": null,
+          "kind": "manual_input"
+        }
+      ],
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      },
+      "current_run_seen": true
+    },
+    {
+      "history_key": "6abc7845b438c83c",
+      "review_identity": "554|total_hero_power|2|[MBM] yochic Rfeoezome#A|Screenshot_20260702-082210.png|rank_or_row_unclear|ranking_guard_quarantine",
+      "status": "OPEN",
+      "created_at": "2026-07-03T14:18:37+00:00",
+      "last_seen_at": "2026-07-03T14:18:37+00:00",
+      "seen_count": 1,
+      "source_report_created_at": "2026-07-03T14:18:37.497623+00:00",
+      "snapshot": {
+        "id": "s6-pre-transfer-2b69ebc1",
+        "name": "S6 pre Transfer",
+        "type": "screenshot_upload",
+        "status_at_import": "collecting",
+        "description": "Collect Data of all 128 servers in our server/transfer group before transition day",
+        "expected_rankings": [
+          "alliance_power",
+          "total_hero_power"
+        ],
+        "expected_servers": [
+          549,
+          550,
+          551,
+          552,
+          553,
+          554,
+          555,
+          556,
+          557,
+          558,
+          559,
+          560,
+          561,
+          562,
+          563,
+          564,
+          565,
+          566,
+          567,
+          568,
+          569,
+          570,
+          571,
+          572,
+          573,
+          574,
+          575,
+          576,
+          577,
+          578,
+          579,
+          580,
+          581,
+          582,
+          583,
+          584,
+          585,
+          586,
+          587,
+          588,
+          589,
+          590,
+          591,
+          592,
+          593,
+          594,
+          595,
+          596,
+          597,
+          598,
+          599,
+          600,
+          601,
+          602,
+          603,
+          604,
+          605,
+          606,
+          607,
+          608,
+          609,
+          610,
+          611,
+          612,
+          613,
+          614,
+          615,
+          616,
+          617,
+          618,
+          619,
+          620,
+          621,
+          622,
+          623,
+          624,
+          625,
+          626,
+          627,
+          628,
+          629,
+          630,
+          631,
+          632,
+          633,
+          634,
+          635,
+          636,
+          637,
+          638,
+          639,
+          640,
+          641,
+          642,
+          643,
+          644,
+          645,
+          646,
+          647,
+          648,
+          649,
+          650,
+          651,
+          652,
+          653,
+          654,
+          655,
+          656,
+          657,
+          658,
+          659,
+          660,
+          661,
+          662,
+          663,
+          664,
+          665,
+          666,
+          667,
+          668,
+          669,
+          670,
+          671,
+          672,
+          673,
+          674,
+          675,
+          676
+        ],
+        "server_scope": {
+          "mode": "range",
+          "start": 549,
+          "end": 676,
+          "servers": []
+        },
+        "bound_at": "2026-07-03T14:18:37+00:00"
+      },
+      "snapshot_id": "s6-pre-transfer-2b69ebc1",
+      "snapshot_name": "S6 pre Transfer",
+      "review_id": "REV-015",
+      "server": 554,
+      "ranking_type": "total_hero_power",
+      "rank": 2,
+      "visible_rank": 2,
+      "source_row": 2,
+      "target_rank": 2,
+      "raw_review_rank": 2,
+      "target_name": "[MBM] yochic Rfeoezome#A",
+      "target_alliance": "MBM",
+      "target_power_original": 767730565,
+      "target_power_selected": 767730565,
+      "screenshot_rank_window": {
+        "start": 1,
+        "end": 8,
+        "count": 8,
+        "ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "server": 554,
+        "ranking_type": "total_hero_power",
+        "source_row": 2
+      },
+      "rank_trace_source": "source_row_only",
+      "reason": "ranking_guard_quarantine",
+      "problem_type": "rank_or_row_unclear",
+      "problem_statement": "REV-015: Rang oder Zeilenposition auf Server 554, sichtbarer Rang 2, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. (Screenshot window 1-8; source_row_only)",
+      "screenshot": "Screenshot_20260702-082210.png",
+      "power_original": 767529557,
+      "best_candidate": 167529557,
+      "second_candidate": 159529557,
+      "margin": 0.1392,
+      "why_bullets": [
+        "OCR/Parser lieferte den Ausgangswert 767.529.557.",
+        "Die besten Kandidaten liegen nah beieinander: 167.529.557 vs. 159.529.557.",
+        "Der Score-Abstand beträgt nur 0.1392 und liegt unter der sicheren Auto-Promotion-Schwelle.",
+        "Der führende Kandidat wurde durch folgende Evidenz gestützt: local_median_distance:0.026, near_following_neighbour, source_local_bucket_match, ocr_error_model:leading_digit_to_1."
+      ],
+      "explainability_steps": [
+        {
+          "stage": "OCR",
+          "status": "captured",
+          "detail": "Screenshot Screenshot_20260702-082210.png wurde gelesen."
+        },
+        {
+          "stage": "Normalization",
+          "status": "applied",
+          "detail": "Text, Ranking-Typ und Power-Felder wurden normalisiert."
+        },
+        {
+          "stage": "Power Recovery",
+          "status": "recovered",
+          "detail": "4 Kandidat(en), bester Score 0.7128, Margin 0.1392."
+        },
+        {
+          "stage": "Ranking Guard",
+          "status": "quarantine",
+          "detail": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.712;margin=0.019"
+        },
+        {
+          "stage": "Data Guard",
+          "status": "protected",
+          "detail": "Operational Truth wurde nicht verändert."
+        },
+        {
+          "stage": "Human Review",
+          "status": "open",
+          "detail": "Menschliche Entscheidung erforderlich."
+        }
+      ],
+      "choices": [
+        {
+          "label": "Vorschlag 1",
+          "value": 167529557,
+          "score": 0.7128,
+          "digit_preservation_score": 0.3067,
+          "reasons": [
+            "local_median_distance:0.026",
+            "near_following_neighbour",
+            "source_local_bucket_match",
+            "ocr_error_model:leading_digit_to_1"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 2",
+          "value": 159529557,
+          "score": 0.5735,
+          "digit_preservation_score": 0.2356,
+          "reasons": [
+            "local_median_distance:0.023",
+            "near_following_neighbour",
+            "source_local_bucket_match"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Vorschlag 3",
+          "value": 158529557,
+          "score": 0.5718,
+          "digit_preservation_score": 0.2356,
+          "reasons": [
+            "local_median_distance:0.029",
+            "near_following_neighbour",
+            "source_local_bucket_match"
+          ],
+          "kind": "candidate"
+        },
+        {
+          "label": "Manuelle Eingabe",
+          "value": null,
+          "score": null,
+          "kind": "manual_input"
+        }
+      ],
+      "resolution": {
+        "status": "OPEN",
+        "selected_choice": null,
+        "manual_value": null,
+        "manual_name": null,
+        "manual_alliance": null,
+        "comment": null,
+        "reviewer": null,
+        "resolved_at": null,
+        "resolution_source": "human_review"
+      },
+      "current_run_seen": true
     }
   ]
 }

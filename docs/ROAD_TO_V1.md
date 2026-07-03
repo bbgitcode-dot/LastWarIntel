@@ -22,3 +22,7 @@
 3. Runtime profiling and OCR performance improvements
 4. Final Operational Truth validation pass
 5. Intelligence expansion only after recognition quality is stable
+## v0.9.5.80 – Continuous Collection Decision
+
+Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
+

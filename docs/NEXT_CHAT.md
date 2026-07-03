@@ -1,15 +1,24 @@
-# NEXT CHAT – Sentinel v0.9.5.79 Handover
+# NEXT CHAT – Sentinel v0.9.5.80 Handover
 
-Baseline: **Sentinel v0.9.5.79 – Review Identity Consistency Fix**
+Baseline: **Sentinel v0.9.5.80 – Continuous Collection & Source-Row Review Clarity**
 
-Use `Sentinel_v0.9.5.79.zip` as the next baseline.
+Use `Sentinel_v0.9.5.80.zip` as the next baseline.
 
-## What changed
+## Current Focus
 
-- Review IDs are persistent and monotonic across runs.
-- Source-row-only reviews no longer claim a visible/global rank.
-- Review Target, overlay, location and list cards use consistent rank context.
+Data recognition and review clarity remain the active priority before expanding Intelligence.
 
-## Recommended next step
+## What changed in .80
 
-Run a small targeted screenshot test first, preferably the two screenshots that reproduced REV-001/REV-002 confusion. Avoid the full 99-screenshot integration run until the Review UI is confirmed.
+- Normal `python main.py` imports no longer move an active snapshot to `REVIEWING` automatically.
+- Operators must explicitly finish collection with `python main.py --finish-collection` or through the UI lifecycle.
+- Review rendering was hardened for `source_row_only`: a screenshot row is no longer displayed as a proven visible/global rank.
+
+## Next likely sprint
+
+Continue Recognition Quality:
+
+- verify source-row-only Review Detail in fresh rebuilt reports;
+- align target identity, highlight row and source row for ambiguous reviews;
+- reduce power explosion / ambiguous candidate cases;
+- keep the 99-screenshot dataset as an integration benchmark, not a routine test.

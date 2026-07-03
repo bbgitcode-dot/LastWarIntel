@@ -85,6 +85,11 @@ def parse_args(argv=None):
         action="store_true",
         help="Skip Excel export mirroring during quick developer runs. The JSON import report is still written.",
     )
+    parser.add_argument(
+        "--finish-collection",
+        action="store_true",
+        help="After the import, explicitly move the active snapshot to REVIEWING/VERIFIED. By default Sentinel keeps COLLECTING so 24/7 screenshot intake is not blocked.",
+    )
     return parser.parse_args(argv)
 
 
@@ -322,7 +327,14 @@ def main(argv=None):
         if snapshot_export_file:
             import_report["snapshot_export_file"] = snapshot_export_file
     JsonImportRunRepository().save_latest_import(import_report)
-    snapshot_service.update_status(active_snapshot.id, "reviewing" if import_report.get("review_count") else "verified")
+    if args.finish_collection:
+        snapshot_service.update_status(active_snapshot.id, "reviewing" if import_report.get("review_count") else "verified")
+        print("Snapshot collection explicitly finished by --finish-collection.")
+    elif str(active_snapshot.status).lower() == "open":
+        snapshot_service.update_status(active_snapshot.id, "collecting")
+        print("Snapshot bleibt nach Import auf COLLECTING fuer kontinuierliche Screenshot-Annahme.")
+    else:
+        print(f"Snapshot bleibt auf {active_snapshot.status.upper()} fuer kontinuierliche Screenshot-Annahme.")
     print("Import report geschrieben nach data/latest_import_report.json")
     if args.skip_command_center:
         print("Command Center rebuild skipped by --skip-command-center")

@@ -69,16 +69,19 @@ def _format_number(value: Any) -> str:
 
 
 def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
-    """Return calibrated screenshot overlay metadata for the reviewed rank.
+    """Return calibrated screenshot overlay metadata for the reviewed row.
 
-    The UI label uses the human-visible ranking rank.  The overlay position uses
-    the row index inside the screenshot window.  Example: visible rank 66 in a
-    screenshot window 64-72 is row 3, not row 66.
+    The label may show a global visible rank only when Sentinel has actually
+    proven one.  For source-row-only reviews the overlay still highlights the
+    row, but the label says Row N instead of falsely claiming Rank N.
     """
-    visible_rank = item.get("visible_rank") or item.get("rank")
+    source_row_only = item.get("rank_trace_source") == "source_row_only"
+    visible_rank = item.get("visible_rank")
+    if not source_row_only and visible_rank in (None, ""):
+        visible_rank = item.get("rank")
     source_row = item.get("source_row") or item.get("raw_review_rank") or item.get("target_rank")
     row_rank = visible_rank or source_row
-    source_row_only = item.get("rank_trace_source") == "source_row_only" or visible_rank in (None, "")
+    source_row_only = source_row_only or visible_rank in (None, "")
     is_approximate = False
     window = item.get("screenshot_rank_window")
     if isinstance(window, dict):
@@ -141,7 +144,10 @@ def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched["rank_highlight_style"] = highlight.get("style") or ""
     enriched["rank_highlight_label"] = highlight.get("label") or ""
     enriched["rank_highlight_is_approximate"] = bool(highlight.get("is_approximate"))
-    enriched["display_rank"] = enriched.get("visible_rank") or ""
+    if enriched.get("rank_trace_source") == "source_row_only":
+        enriched["display_rank"] = ""
+    else:
+        enriched["display_rank"] = enriched.get("visible_rank") or ""
     enriched["source_row_display"] = enriched.get("source_row") or enriched.get("raw_review_rank") or ""
     enriched["rank_display_label"] = f"Visible Rank {enriched['display_rank']}" if enriched.get("display_rank") else f"Source Row {enriched.get('source_row_display') or 'unresolved'} · Visible Rank unresolved"
     enriched["target_rank_display"] = enriched.get("target_rank") or enriched.get("raw_review_rank") or ""

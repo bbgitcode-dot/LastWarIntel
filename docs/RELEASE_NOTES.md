@@ -1,3 +1,25 @@
+## v0.9.5.80 – Continuous Collection & Source-Row Review Clarity
+
+- Changed screenshot import lifecycle behavior: normal `python main.py` runs no longer move the active snapshot from `COLLECTING` to `REVIEWING` automatically.
+- Added explicit `--finish-collection` flag for operators who intentionally want to close intake after a run and advance the snapshot to `REVIEWING` or `VERIFIED`.
+- Hardened Review rendering for `source_row_only` cases: Sentinel now shows `Source Row N · Visible Rank unresolved` instead of falling back to `Rank N` when no global visible rank is proven.
+- Evidence Pack and Review Detail now use the same conservative rank context, preventing misleading prompts during manual review.
+- Added smoke coverage for source-row-only review rendering.
+
+Validation:
+```text
+3 passed (review identity smoke)
+compileall OK
+zip integrity OK
+```
+
+Commit:
+```bash
+git add .
+git commit -m "fix(snapshot): keep collecting after imports"
+git tag -a v0.9.5.80 -m "v0.9.5.80 Continuous Collection and Source-Row Review Clarity"
+```
+
 ## v0.9.5.79 – Review Identity Consistency Fix
 
 - Fixed review identity drift where Review cards could show a technical/source row as a visible ranking rank.

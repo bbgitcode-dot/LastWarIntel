@@ -1,8 +1,19 @@
+# Project Status – Sentinel v0.9.5.80
+
+**Current version:** v0.9.5.80  
+**Focus:** Continuous screenshot collection and conservative review rank display.
+
+## v0.9.5.80 Note
+
+Normal screenshot import runs now keep the active snapshot in `COLLECTING`. The system no longer assumes a batch run means collection is finished. This supports 24/7 screenshot intake while still allowing operators to explicitly move to `REVIEWING` with `--finish-collection` or UI lifecycle controls.
+
+Review rendering now treats `source_row_only` evidence conservatively. If Sentinel only knows the row within a screenshot, it displays `Source Row` and leaves visible rank unresolved instead of claiming a global rank.
+
 # Project Status
 
-**Current version:** v0.9.5.79  
+**Current version:** v0.9.5.80  
 
-## v0.9.5.79 Note – Review Identity Consistency
+## v0.9.5.80 Note – Review Identity Consistency
 
 Review IDs now continue from persistent Review History and Review surfaces no longer treat screenshot row ordinals as proven visible/global ranks. If Sentinel only knows the row in a screenshot, it shows `Source Row` and keeps the visible rank unresolved until stronger evidence is available.
 

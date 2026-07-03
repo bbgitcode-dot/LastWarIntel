@@ -357,13 +357,15 @@ def _derive_visible_rank(item: dict[str, Any], trace: dict[str, Any] | None = No
     """Return the rank a human can see in the linked screenshot.
 
     `rank` may be a quarantine ordinal or an internal target rank.  Review
-    surfaces must prefer `visible_rank`, then derive it from the screenshot rank
-    window and raw review row when possible.  The raw/internal rank remains
-    available as `target_rank`/`raw_review_rank` for matching only.
+    surfaces must prefer `visible_rank`, then derive it from a trusted screenshot
+    rank window.  If the rank trace is source-row-only, do not convert row 2
+    into visible rank 2; that was the confusing REVIEW bug seen in v0.9.5.79.
     """
     explicit = item.get("visible_rank")
     if explicit not in (None, ""):
         return explicit
+    if item.get("rank_trace_source") == "source_row_only":
+        return ""
     window = item.get("screenshot_rank_window")
     raw = item.get("raw_review_rank") or item.get("target_rank")
     if isinstance(window, dict) and raw not in (None, ""):
@@ -372,6 +374,8 @@ def _derive_visible_rank(item: dict[str, Any], trace: dict[str, Any] | None = No
             end = int(window.get("end") or 0)
             raw_i = int(raw)
             count = int(window.get("count") or max(0, end - start + 1))
+            if start == 1 and end == count and 1 <= raw_i <= count:
+                return ""
             if start and count and 1 <= raw_i <= count:
                 return start + raw_i - 1
             if start <= raw_i <= end:
@@ -934,7 +938,7 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
           <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label') or item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
           <div class="action"><b>Problem:</b> {_e(item.get('problem_statement') or '')}</div>
           <div class="evidence-grid">
-            <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · visible rank {_e(item.get('visible_rank') or item.get('rank'))}</div><div class="hint">{_e(_rank_trace_hint(item))}</div></div>
+            <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · {_e(_rank_context_label(item, trace))}</div><div class="hint">{_e(_rank_trace_hint(item))}</div></div>
             <div><div class="label">OCR / Original</div><b>{_e(_fmt_power(item.get('power_original')))}</b><div class="hint">selected {_e(_fmt_power(item.get('power_selected')))}</div></div>
             <div><div class="label">Best vs second</div><b>{_e(_fmt_power(item.get('best_candidate')))} / {_e(_fmt_power(item.get('second_candidate')))}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')} · {_e(item.get('confidence_label') or '')}</div></div>
             <div><div class="label">Review status</div><b>{_e(item.get('review_ocr_status') or 'n/a')}</b><div class="hint">row recon {_e(item.get('row_reconstruction_status') or 'n/a')}</div></div>
