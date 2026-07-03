@@ -1,6 +1,10 @@
 # Project Status
 
-**Current version:** v0.9.5.78  
+**Current version:** v0.9.5.79  
+
+## v0.9.5.79 Note – Review Identity Consistency
+
+Review IDs now continue from persistent Review History and Review surfaces no longer treat screenshot row ordinals as proven visible/global ranks. If Sentinel only knows the row in a screenshot, it shows `Source Row` and keeps the visible rank unresolved until stronger evidence is available.
 
 ## v0.9.5.78 Note – Developer Benchmark & Report Rebuild
 

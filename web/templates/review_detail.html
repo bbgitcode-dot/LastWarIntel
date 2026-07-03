@@ -36,8 +36,9 @@
                 <div class="page-link-card">
                     <strong>Location</strong>
                     <span>Server {{ item.server or '—' }}</span>
-                    <span>{{ item.ranking_type }} · Visible Rank {{ item.display_rank }}</span>
+                    <span>{{ item.ranking_type }} · {{ item.rank_display_label }}</span>
                     {% if item.screenshot_rank_window_label %}<span>Screenshot Window {{ item.screenshot_rank_window_label }}</span>{% endif %}
+                    {% if item.source_row_display %}<span>Source Row {{ item.source_row_display }}</span>{% endif %}
                     {% if item.target_rank_display %}<span>Internal Target Rank {{ item.target_rank_display }}</span>{% endif %}
                 </div>
                 <div class="page-link-card screenshot-link-card">

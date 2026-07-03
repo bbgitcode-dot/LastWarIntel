@@ -76,7 +76,9 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
     screenshot window 64-72 is row 3, not row 66.
     """
     visible_rank = item.get("visible_rank") or item.get("rank")
-    row_rank = visible_rank
+    source_row = item.get("source_row") or item.get("raw_review_rank") or item.get("target_rank")
+    row_rank = visible_rank or source_row
+    source_row_only = item.get("rank_trace_source") == "source_row_only" or visible_rank in (None, "")
     is_approximate = False
     window = item.get("screenshot_rank_window")
     if isinstance(window, dict):
@@ -88,7 +90,7 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
                 row_rank = vr - start + 1
             elif item.get("raw_review_rank") not in (None, ""):
                 row_rank = int(item.get("raw_review_rank"))
-                is_approximate = True
+                is_approximate = not source_row_only
         except (TypeError, ValueError):
             pass
     elif item.get("raw_review_rank") not in (None, "") and item.get("rank_trace_source") == "derived_from_screenshot_window":
@@ -119,8 +121,11 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
     left_pct = max(0.0, min(profile.get("left", 2.5), 20.0))
     right_pct = max(0.0, min(profile.get("right", 2.5), 20.0))
     style = f"top:{top_pct:.2f}%;height:{height_pct:.2f}%;left:{left_pct:.2f}%;right:{right_pct:.2f}%;"
-    label_rank = visible_rank or row_rank_i
-    label = f"Rank {label_rank}" + (" approx." if is_approximate else "")
+    label_rank = visible_rank
+    if label_rank not in (None, ""):
+        label = f"Rank {label_rank}" + (" approx." if is_approximate else "")
+    else:
+        label = f"Row {row_rank_i}" + (" approx." if is_approximate else "")
     return {"style": style, "label": label, "is_approximate": is_approximate}
 
 
@@ -136,7 +141,9 @@ def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched["rank_highlight_style"] = highlight.get("style") or ""
     enriched["rank_highlight_label"] = highlight.get("label") or ""
     enriched["rank_highlight_is_approximate"] = bool(highlight.get("is_approximate"))
-    enriched["display_rank"] = enriched.get("visible_rank") or enriched.get("rank")
+    enriched["display_rank"] = enriched.get("visible_rank") or ""
+    enriched["source_row_display"] = enriched.get("source_row") or enriched.get("raw_review_rank") or ""
+    enriched["rank_display_label"] = f"Visible Rank {enriched['display_rank']}" if enriched.get("display_rank") else f"Source Row {enriched.get('source_row_display') or 'unresolved'} · Visible Rank unresolved"
     enriched["target_rank_display"] = enriched.get("target_rank") or enriched.get("raw_review_rank") or ""
     enriched["target_name_display"] = enriched.get("target_name") or (enriched.get("trace") or {}).get("name") or ""
     enriched["target_alliance_display"] = enriched.get("target_alliance") or (enriched.get("trace") or {}).get("alliance") or ""

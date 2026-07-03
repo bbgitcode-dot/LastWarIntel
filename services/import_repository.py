@@ -151,14 +151,21 @@ def _visible_rank_from_window(row: dict[str, Any], source_rank_windows: dict[str
     start = int(window.get("start") or 0)
     end = int(window.get("end") or 0)
     count = int(window.get("count") or max(0, end - start + 1))
-    # If the quarantine rank looks like a row ordinal inside this screenshot,
-    # translate it into the visible ranking rank. Example: window 64-72 and
-    # quarantine rank 3 => visible rank 66.
+    # If the screenshot window itself is only 1..N, Sentinel cannot prove that
+    # these are global ranking ranks. In production this often means the OCR
+    # captured visible row ordinals from a scrolled screenshot. Do not surface
+    # them as Operational Truth ranks; keep the row as review-local context.
+    if start == 1 and end == count and 1 <= raw_rank <= count:
+        window = dict(window)
+        window["source_row"] = raw_rank
+        return None, window, "source_row_only"
+    # Otherwise translate a review-local row ordinal into the visible rank.
+    # Example: window 64-72 and quarantine row 3 => visible rank 66.
     if start and count and 1 <= raw_rank <= count and end >= start:
         return start + raw_rank - 1, window, "derived_from_screenshot_window"
     if start <= raw_rank <= end:
         return raw_rank, window, "already_visible_rank"
-    return raw_rank, window, "outside_window_kept_raw"
+    return None, window, "visible_rank_unresolved"
 
 
 
@@ -188,6 +195,7 @@ def _review_target_context(row: dict[str, Any], *, visible_rank: int | None, raw
     power_selected = _first_present(row, ["power_selected", "selected_power", "recovered_power"])
     return {
         "target_rank": raw_rank,
+        "source_row": raw_rank if visible_rank in (None, "") else None,
         "visible_rank": visible_rank,
         "target_name": target_name,
         "target_alliance": target_alliance,
@@ -336,6 +344,7 @@ def build_import_run_report(
                     "expected_ranking_type": str(row.get("expected_ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
                     "rank": visible_rank,
                     "visible_rank": visible_rank,
+                    "source_row": raw_rank if visible_rank in (None, "") else None,
                     "target_rank": raw_rank,
                     "raw_review_rank": raw_rank,
                     "screenshot_rank_window": rank_window,
@@ -425,7 +434,7 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.78",
+            "version": "v0.9.5.79",
             "source_rank_windows": len(source_rank_windows),
             "source_rank_windows_detail": source_rank_windows,
             "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),

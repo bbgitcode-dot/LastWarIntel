@@ -385,6 +385,21 @@ def _display_rank(item: dict[str, Any], trace: dict[str, Any] | None = None) -> 
     return _derive_visible_rank(item, trace)
 
 
+def _source_row(item: dict[str, Any], trace: dict[str, Any] | None = None) -> Any:
+    for value in (item.get("source_row"), item.get("raw_review_rank"), item.get("target_rank"), (trace or {}).get("rank")):
+        if value not in (None, ""):
+            return value
+    return "?"
+
+
+def _rank_context_label(item: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
+    visible = _derive_visible_rank(item, trace)
+    if visible not in (None, "", "?"):
+        return f"sichtbarer Rang {visible}"
+    row = _source_row(item, trace)
+    return f"Screenshot-Zeile {row}; sichtbarer Rang ungeklärt"
+
+
 def _target_name(review: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
     for value in (
         review.get("target_name"),
@@ -500,6 +515,7 @@ def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict
     problem_type = _problem_type(review, trace)
     ranking_type = str(review.get("ranking_type") or "Ranking")
     rank = _display_rank(review, trace)
+    rank_label = _rank_context_label(review, trace)
     rank_hint = _rank_trace_hint(review)
     server = review.get("server") or review.get("candidate_server") or "unbekannt"
     subject = "Datensatz"
@@ -518,21 +534,21 @@ def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict
             if choice.get("value") is not None:
                 candidate_bits.append(f"{choice['label']}: {_fmt_power(choice.get('value'))}")
         candidates = ", ".join(candidate_bits) if candidate_bits else "keine sichere Kandidatenliste"
-        return f"{review_id}: Ich konnte die {subject}{target_part} auf Server {server}, sichtbarer Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe. ({rank_hint})"
+        return f"{review_id}: Ich konnte die {subject}{target_part} auf Server {server}, {rank_label}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe. ({rank_hint})"
 
     if problem_type == "alliance_power_outlier":
-        return f"{review_id}: Die Allianzstärke auf Server {server}, sichtbarer Rang {rank}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. ({rank_hint})"
+        return f"{review_id}: Die Allianzstärke auf Server {server}, {rank_label}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. ({rank_hint})"
 
     if problem_type == "server_assignment_unclear":
         return f"{review_id}: Ich konnte den Screenshot-Block nicht eindeutig einem Server zuordnen. Bitte Serverkopf prüfen und den Datensatz nur übernehmen, wenn Server {server} visuell bestätigt ist."
 
     if problem_type == "name_unclear":
-        return f"{review_id}: Der Name des Eintrags auf Server {server}, sichtbarer Rang {rank}, ist nicht eindeutig lesbar. Bitte Name manuell prüfen oder ergänzen. ({rank_hint})"
+        return f"{review_id}: Der Name des Eintrags auf Server {server}, {rank_label}, ist nicht eindeutig lesbar. Bitte Name manuell prüfen oder ergänzen. ({rank_hint})"
 
     if problem_type == "rank_or_row_unclear":
-        return f"{review_id}: Rang oder Zeilenposition auf Server {server}, sichtbarer Rang {rank}, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. ({rank_hint})"
+        return f"{review_id}: Rang oder Zeilenposition auf Server {server}, {rank_label}, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. ({rank_hint})"
 
-    return f"{review_id}: Dieser Datensatz auf Server {server}, sichtbarer Rang {rank}, braucht eine manuelle Prüfung, bevor er Operational Truth werden darf. ({rank_hint})"
+    return f"{review_id}: Dieser Datensatz auf Server {server}, {rank_label}, braucht eine manuelle Prüfung, bevor er Operational Truth werden darf. ({rank_hint})"
 
 
 def _confidence_label(trace: dict[str, Any] | None) -> str:
@@ -562,7 +578,7 @@ def _history_identity(item: dict[str, Any]) -> str:
     return "|".join(str(v or "") for v in [
         item.get("server"),
         item.get("ranking_type"),
-        item.get("visible_rank") or item.get("rank"),
+        item.get("visible_rank") or item.get("source_row") or item.get("raw_review_rank") or item.get("rank"),
         item.get("target_name") or "",
         item.get("screenshot"),
         item.get("problem_type"),
@@ -590,8 +606,9 @@ def _history_record_from_evidence(item: dict[str, Any], *, created_at: Any, sour
         "review_id": item.get("id"),
         "server": item.get("server"),
         "ranking_type": item.get("ranking_type"),
-        "rank": item.get("visible_rank") or item.get("rank"),
-        "visible_rank": item.get("visible_rank") or item.get("rank"),
+        "rank": item.get("visible_rank"),
+        "visible_rank": item.get("visible_rank"),
+        "source_row": item.get("source_row"),
         "target_rank": item.get("target_rank") or item.get("raw_review_rank"),
         "raw_review_rank": item.get("raw_review_rank"),
         "target_name": item.get("target_name"),
@@ -767,10 +784,38 @@ def _resolution_template() -> dict[str, Any]:
     }
 
 
-def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
+def _review_number(value: Any) -> int:
+    text = str(value or "")
+    if text.startswith("REV-"):
+        text = text[4:]
+    try:
+        return int(text)
+    except ValueError:
+        return 0
+
+
+def _review_id_maps(existing_history: dict[str, Any] | None) -> tuple[dict[str, str], int]:
+    payload = existing_history if isinstance(existing_history, dict) else {}
+    identity_to_id: dict[str, str] = {}
+    max_seen = 0
+    for item in payload.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        rid = str(item.get("review_id") or item.get("id") or "")
+        identity = item.get("review_identity") or _history_identity(item)
+        number = _review_number(rid)
+        if number:
+            max_seen = max(max_seen, number)
+        if identity and rid.startswith("REV-"):
+            identity_to_id[str(identity)] = rid
+    return identity_to_id, max_seen
+
+
+def _evidence_items(import_report: dict[str, Any], existing_history: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     reviews = list(import_report.get("reviews") or [])
     snapshot_binding = import_report.get("snapshot") if isinstance(import_report.get("snapshot"), dict) else {}
     trace_index = _build_trace_index(import_report)
+    identity_to_id, next_number = _review_id_maps(existing_history)
     items = []
     for idx, review in enumerate(reviews, start=1):
         trace = _review_trace_for(review, trace_index)
@@ -779,7 +824,7 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
         choices = _choice_list(trace)
         why_bullets = _why_bullets(review, trace, problem_type)
         explainability_steps = _explainability_steps(review, trace)
-        items.append({
+        item = {
             "id": review_id,
             "problem_type": problem_type,
             "problem_label": _problem_label(problem_type),
@@ -794,6 +839,7 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "ranking_type": review.get("ranking_type"),
             "rank": _derive_visible_rank(review, trace),
             "visible_rank": _derive_visible_rank(review, trace),
+            "source_row": review.get("source_row") or review.get("raw_review_rank"),
             "target_rank": review.get("target_rank") or review.get("raw_review_rank"),
             "raw_review_rank": review.get("raw_review_rank"),
             "target_name": review.get("target_name") or (trace.get("name") if trace else None),
@@ -826,11 +872,19 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "snapshot": snapshot_binding,
             "snapshot_id": snapshot_binding.get("id") or import_report.get("snapshot_id"),
             "snapshot_name": snapshot_binding.get("name") or import_report.get("snapshot_name"),
-        })
+        }
+        identity = _history_identity(item)
+        stable_id = identity_to_id.get(identity)
+        if not stable_id:
+            next_number += 1
+            stable_id = f"REV-{next_number:03d}"
+        item["id"] = stable_id
+        item["problem_statement"] = _human_problem_statement(stable_id, review, trace)
+        items.append(item)
     return items
 
 
-def _evidence_json(import_report: dict[str, Any] | None) -> dict[str, Any]:
+def _evidence_json(import_report: dict[str, Any] | None, existing_history: dict[str, Any] | None = None) -> dict[str, Any]:
     report = import_report or {}
     return {
         "schema": "sentinel.review_evidence_pack.v1",
@@ -842,7 +896,7 @@ def _evidence_json(import_report: dict[str, Any] | None) -> dict[str, Any]:
         "snapshot": report.get("snapshot") if isinstance(report.get("snapshot"), dict) else {},
         "snapshot_id": report.get("snapshot_id"),
         "snapshot_name": report.get("snapshot_name"),
-        "items": _evidence_items(report),
+        "items": _evidence_items(report, existing_history),
     }
 
 
@@ -1070,10 +1124,10 @@ def generate_command_center(
     import_report = _load_json(Path(import_report_path))
     ground_truth = _load_json(Path(ground_truth_report_path))
     inference = _load_json(Path(inference_report_path))
-    evidence_payload = _evidence_json(import_report)
 
     history_path = Path(import_report_path).parent / "review_history.json"
     existing_history = _load_json(history_path)
+    evidence_payload = _evidence_json(import_report, existing_history)
     history_payload = _history_payload(existing_history, evidence_payload)
     history_path.parent.mkdir(parents=True, exist_ok=True)
     history_path.write_text(json.dumps(history_payload, ensure_ascii=False, indent=2), encoding="utf-8")

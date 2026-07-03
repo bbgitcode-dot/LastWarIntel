@@ -1,3 +1,27 @@
+## v0.9.5.79 – Review Identity Consistency Fix
+
+- Fixed review identity drift where Review cards could show a technical/source row as a visible ranking rank.
+- Added conservative `source_row_only` handling: if Sentinel only knows the row inside the screenshot, the UI now says `Source Row` and marks visible rank as unresolved instead of pretending it knows the global rank.
+- Review IDs now continue from persistent Review History instead of restarting at `REV-001` on every run. Existing review identities keep their stable REV id; new review identities receive the next number.
+- Review Target, Location, Evidence overlay and Review Center list now share the same rank context fields: `visible_rank`, `source_row`, `raw_review_rank`, and `rank_trace_source`.
+- Added smoke coverage for source-row-only reviews and monotonic Review IDs.
+
+Validation:
+
+```text
+19 passed
+compileall OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "fix(review): keep review identity and source row consistent"
+git tag -a v0.9.5.79 -m "v0.9.5.79 Review Identity Consistency Fix"
+```
+
 ## v0.9.5.78 – Developer Benchmark & Report Rebuild Mode
 
 Focus: reduce iteration cost for recognition/review quality work so the 99-screenshot production benchmark does not need to be run for every UI or reporting fix.
