@@ -1,3 +1,11 @@
+## Current Status – v0.9.5.86
+
+Sentinel is now focused on review identity correctness before further review reduction. v0.9.5.86 fixes misleading review source-row identity by anchoring quarantine reviews to trusted observed rows from the same screenshot when strong identity/power evidence exists.
+
+Current priority remains **Data Quality before Intelligence**. The next benchmark should verify that `[SWSq] Sven the vän` is shown at the correct observed rank and that raw display identity is preserved for human review.
+
+Next focus after validation: run a cache second-pass benchmark and confirm OCR cache hits reduce runtime without changing Operational Truth.
+
 ## Current Status – v0.9.5.85
 
 Sentinel has moved from Review UX stabilization back into recognition quality hardening. The latest benchmark showed v0.9.5.84 reduced runtime from 4446s to 3431s and reduced current review items from 13 to 12. v0.9.5.85 adds the first runtime-focused infrastructure: a content-hash OCR cache.

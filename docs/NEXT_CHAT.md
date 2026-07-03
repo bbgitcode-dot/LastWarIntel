@@ -1,3 +1,16 @@
+## Next Chat – After v0.9.5.86
+
+Baseline: `Sentinel_v0.9.5.86.zip`
+
+Recommended validation:
+
+1. Rebuild reports: `python main.py --rebuild-reports`.
+2. Inspect Server 553 THP review for Sven: it should anchor to the observed Rank 10 row and prefer raw display identity when available.
+3. Run a second identical screenshot import to validate OCR cache hits.
+4. Compare runtime and review count against v0.9.5.85.
+
+Likely next sprint: OCR Cache Effectiveness & Data Quality Loop Profiling, unless source-row identity still shows mismatches.
+
 ## Next Chat – After v0.9.5.85
 
 Baseline: `Sentinel_v0.9.5.85.zip`

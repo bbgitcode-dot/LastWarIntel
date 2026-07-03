@@ -1,3 +1,27 @@
+## v0.9.5.86 – Source Row Identity & Display Fidelity
+
+- Added same-screenshot source-evidence anchoring for Ranking Guard reviews.
+- If a quarantined row matches a trusted observed row on the same screenshot by identity/power evidence, the review now uses the observed row rank instead of the quarantine ordinal.
+- Preserves raw/observed name and alliance tag fields ahead of normalized fields in review target context.
+- Adds recognition telemetry for `source_evidence_anchor_reviews`.
+- Keeps OCR Source, Operational Mapping and Operational Truth separated.
+
+Validation:
+
+```text
+source-row identity smoke tests passed
+targeted compile OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "fix(review): anchor source row identity and preserve display fidelity"
+git tag -a v0.9.5.86 -m "v0.9.5.86 Source Row Identity and Display Fidelity"
+```
+
 ## v0.9.5.85 – Recovery Promotion Rules & OCR Cache
 
 - Added a persistent, content-hash based OCR cache for metadata and row OCR observations.

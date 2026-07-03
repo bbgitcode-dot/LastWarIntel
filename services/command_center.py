@@ -460,6 +460,10 @@ def _rank_trace_hint(item: dict[str, Any]) -> str:
     raw = item.get("raw_review_rank")
     source = item.get("rank_trace_source") or ""
     window = _rank_window_label(item)
+    if source == "source_evidence_anchor":
+        match_score = item.get("source_evidence_match_score")
+        suffix = f"; evidence anchor score {match_score}" if match_score not in (None, "") else ""
+        return f"Screenshot window {window}; source evidence anchor{suffix}"
     if source == "derived_from_screenshot_window" and raw:
         return f"Screenshot window {window}; OCR row {raw}"
     if window != "n/a":

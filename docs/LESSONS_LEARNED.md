@@ -1,3 +1,9 @@
+## v0.9.5.86 Lesson – Review Identity Must Follow Observed Evidence
+
+A quarantined row ordinal is not enough to identify the human review target. If the same screenshot contains a trusted observed row matching the quarantined identity, the review must anchor to that observed row. Review UI may normalize internally for matching, but must display the observed spelling and alliance tag when available.
+
+This protects the reviewer from validating the wrong player/alliance even when the power candidates are useful.
+
 ## v0.9.5.85 Lesson – Cache Observations, Not Truth
 
 OCR is an expensive observation step, especially during repeated benchmark runs over the same screenshots. Caching OCR output is safe only when the cache key is based on screenshot content, OCR provider fingerprint, OCR mode and normalization parameters. The cache must never become evidence about server identity, upload order or ranking position.

@@ -454,7 +454,7 @@ def _recover_context_power(
                 f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
             )
 
-        # v0.9.5.85: near-miss low-truncation promotion.  Some rows have a
+        # v0.9.5.86: near-miss low-truncation promotion.  Some rows have a
         # weaker digit-preservation score because OCR dropped separators or mixed
         # glyphs, but the local rank segment strongly supports one candidate and
         # the next candidate is far behind.  Promote only when the candidate is
@@ -611,7 +611,7 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.85"
+        recovered["power_recovery_decision_version"] = "v0.9.5.86"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -624,7 +624,7 @@ def _apply_recovered_power(
     else:
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.85"
+        recovered["power_recovery_decision_version"] = "v0.9.5.86"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -849,7 +849,7 @@ def _mark_quarantined(
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
         quarantined["power_recovery_family"] = _power_recovery_family(ranking_type=ranking_type, observed=_power(quarantined))
-        quarantined["power_recovery_decision_version"] = "v0.9.5.85"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.86"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)

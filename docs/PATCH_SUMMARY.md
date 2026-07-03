@@ -1,3 +1,21 @@
+# Patch Summary – v0.9.5.86
+
+**Theme:** Source Row Identity & Display Fidelity
+
+This patch fixes the class of review errors where Sentinel described the right-looking candidate but highlighted or labelled the wrong screenshot row. The motivating case was Server 553 THP: `[SWSq] Sven the vän` was visually Rank 10, while the review rendered `[SWSQ] Sven the Van` at Rank 12.
+
+## Changed
+
+- `services/import_repository.py` now builds a same-screenshot source-evidence index from trusted non-quarantine rows.
+- Ranking Guard quarantine reviews can be anchored to the observed screenshot row when name/alliance/power evidence matches strongly enough.
+- Review target context prefers raw/observed identity fields before normalized fields.
+- Recognition quality telemetry now reports `source_evidence_anchor_reviews`.
+- Added smoke coverage for source-evidence anchoring and raw display preservation.
+
+## Safety
+
+The anchor uses only rows already observed on the same screenshot. It does not use filename order, upload order or screenshot order as truth. If no strong same-screenshot match exists, Sentinel keeps the conservative source-row / unresolved-rank behavior.
+
 # Patch Summary – v0.9.5.85
 
 **Theme:** Recovery Promotion Rules & OCR Cache

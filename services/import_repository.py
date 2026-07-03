@@ -8,6 +8,8 @@ small JSON document; the boundary can later be backed by SQLite/PostgreSQL.
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -96,6 +98,144 @@ def _row_power_recovery_trace(row: dict[str, Any], *, server: Any, ranking_type:
 def _rank_value(row: dict[str, Any]) -> int | None:
     rank = _int(row.get("rank")) or _int(row.get("computed_rank")) or _int(row.get("ocr_rank"))
     return rank or None
+
+
+def _identity_text(value: Any) -> str:
+    """Normalize identity text only for matching, never for display.
+
+    Human review must preserve the observed spelling/casing, but source-row
+    reconciliation needs a forgiving comparison so small OCR differences such
+    as ``vän`` vs ``Van`` or ``SWSq`` vs ``SWSQ`` can still anchor the row.
+    """
+    text = str(value or "")
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    text = re.sub(r"[^0-9a-zA-Z]+", "", text).casefold()
+    return text
+
+
+def _power_value(row: dict[str, Any]) -> int | None:
+    value = _int(
+        row.get("power")
+        or row.get("hero_power")
+        or row.get("alliance_power")
+        or row.get("power_selected")
+        or row.get("selected_power")
+        or row.get("recovered_power")
+        or row.get("power_original")
+        or row.get("original_power")
+    )
+    return value or None
+
+
+def _display_name_value(row: dict[str, Any]) -> str:
+    return str(_first_present(row, [
+        "raw_name", "ocr_name", "observed_name", "source_name", "display_name",
+        "name", "player_name", "alliance_name", "title",
+    ]) or "")
+
+
+def _display_alliance_value(row: dict[str, Any]) -> str:
+    return str(_first_present(row, [
+        "raw_alliance_tag", "observed_alliance_tag", "source_alliance_tag",
+        "alliance_tag", "alliance", "tag", "alliance_code", "guild", "team",
+    ]) or "")
+
+
+def _build_source_evidence_index(grouped: dict[tuple[Any, str], list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    """Index trusted screenshot rows for review source-row reconciliation.
+
+    Ranking Guard quarantine rows can carry synthetic quarantine ordinals.  If
+    a quarantined identity also exists as a normal row on the same screenshot,
+    the review should follow that observed row rather than the quarantine
+    ordinal.  This prevents a review for ``[SWSq] Sven the vän`` from being
+    rendered as Rank 12 when the screenshot row itself is Rank 10.
+    """
+    index: dict[str, list[dict[str, Any]]] = {}
+    for (server, ranking_type), rows in grouped.items():
+        if ranking_type in {"data_guard_quarantine", "ranking_guard_quarantine"}:
+            continue
+        for row in rows or []:
+            source = str(row.get("source_file") or "")
+            rank = _rank_value(row)
+            if not source or rank is None:
+                continue
+            index.setdefault(source, []).append({
+                "rank": rank,
+                "server": server if isinstance(server, int) else None,
+                "ranking_type": ranking_type,
+                "name": _display_name_value(row),
+                "alliance": _display_alliance_value(row),
+                "power": _power_value(row),
+                "row": row,
+            })
+    return index
+
+
+def _digits_tail_match(left: int | None, right: int | None, *, min_digits: int = 5) -> bool:
+    if not left or not right:
+        return False
+    l_text = str(abs(int(left)))
+    r_text = str(abs(int(right)))
+    tail_len = min(len(l_text), len(r_text), 9)
+    if tail_len < min_digits:
+        return False
+    return l_text[-tail_len:] == r_text[-tail_len:]
+
+
+def _source_evidence_match(row: dict[str, Any], source_evidence_index: dict[str, list[dict[str, Any]]]) -> dict[str, Any] | None:
+    source = str(row.get("source_file") or "")
+    candidates = source_evidence_index.get(source) or []
+    if not candidates:
+        return None
+    row_name = _identity_text(_display_name_value(row))
+    row_alliance = _identity_text(_display_alliance_value(row))
+    row_power = _power_value(row)
+    best: tuple[float, dict[str, Any]] | None = None
+    for candidate in candidates:
+        score = 0.0
+        cand_name = _identity_text(candidate.get("name"))
+        cand_alliance = _identity_text(candidate.get("alliance"))
+        cand_power = candidate.get("power")
+        if row_name and cand_name:
+            if row_name == cand_name or row_name in cand_name or cand_name in row_name:
+                score += 4.0
+            elif len(row_name) >= 5 and len(cand_name) >= 5 and (row_name[:5] == cand_name[:5] or row_name[-5:] == cand_name[-5:]):
+                score += 1.5
+        if row_alliance and cand_alliance:
+            if row_alliance == cand_alliance:
+                score += 2.0
+        if row_power and cand_power:
+            if row_power == cand_power:
+                score += 4.0
+            elif _digits_tail_match(row_power, cand_power):
+                score += 2.0
+        if score > 0 and (best is None or score > best[0]):
+            best = (score, candidate)
+    if best and best[0] >= 4.0:
+        matched = dict(best[1])
+        matched["match_score"] = round(best[0], 4)
+        return matched
+    return None
+
+
+def _apply_source_evidence_anchor(review_item: dict[str, Any], match: dict[str, Any] | None) -> dict[str, Any]:
+    """Prefer exact same-screenshot observed row anchors over quarantine ordinals."""
+    if not match:
+        return review_item
+    anchored = dict(review_item)
+    anchored["visible_rank"] = match.get("rank")
+    anchored["rank"] = match.get("rank")
+    anchored["source_row"] = None
+    anchored["rank_trace_source"] = "source_evidence_anchor"
+    anchored["source_evidence_match_score"] = match.get("match_score")
+    if match.get("name"):
+        anchored["target_name"] = match.get("name")
+    if match.get("alliance"):
+        anchored["target_alliance"] = match.get("alliance")
+    if match.get("power"):
+        anchored["target_power_selected"] = match.get("power")
+    return anchored
 
 
 def _build_source_rank_windows(grouped: dict[tuple[Any, str], list[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
@@ -188,10 +328,12 @@ def _review_target_context(row: dict[str, Any], *, visible_rank: int | None, raw
     "look at player/alliance X at visible rank Y".
     """
     target_name = _first_present(row, [
-        "name", "player_name", "alliance_name", "display_name", "raw_name", "title",
+        "raw_name", "ocr_name", "observed_name", "source_name", "display_name",
+        "name", "player_name", "alliance_name", "title",
     ])
     target_alliance = _first_present(row, [
-        "alliance", "alliance_tag", "tag", "alliance_code", "guild", "team",
+        "raw_alliance_tag", "observed_alliance_tag", "source_alliance_tag",
+        "alliance_tag", "alliance", "tag", "alliance_code", "guild", "team",
     ])
     power_original = _first_present(row, ["power_original", "original_power", "power", "value"])
     power_selected = _first_present(row, ["power_selected", "selected_power", "recovered_power"])
@@ -251,6 +393,7 @@ def build_import_run_report(
     row_reconstruction_no_promotion = 0
     row_reconstruction_scores: list[float] = []
     source_rank_windows = _build_source_rank_windows(grouped)
+    source_evidence_index = _build_source_evidence_index(grouped)
 
     for (server, ranking_type), rows in sorted(grouped.items(), key=lambda item: str(item[0])):
         rows = list(rows or [])
@@ -351,7 +494,7 @@ def build_import_run_report(
                 visible_rank, rank_window, rank_source = _visible_rank_from_window(row, source_rank_windows)
                 raw_rank = _rank_value(row)
                 target_context = _review_target_context(row, visible_rank=visible_rank, raw_rank=raw_rank)
-                review_items.append({
+                review_item = {
                     "server": _int(row.get("original_server")) or (rank_window or {}).get("server") or None,
                     "ranking_type": str(row.get("original_ranking_type") or row.get("ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
                     "expected_ranking_type": str(row.get("expected_ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
@@ -376,7 +519,9 @@ def build_import_run_report(
                     "row_reconstruction_status": row.get("row_reconstruction_status") or "",
                     "row_reconstruction_reason": row.get("row_reconstruction_reason") or "",
                     "row_reconstruction_score": _safe_float(row.get("row_reconstruction_score")),
-                })
+                }
+                review_item = _apply_source_evidence_anchor(review_item, _source_evidence_match(row, source_evidence_index))
+                review_items.append(review_item)
             elif row.get("data_guard_conflict") or "server_assignment_conflict" in warning:
                 review_items.append({
                     "server": server if isinstance(server, int) else None,
@@ -468,7 +613,7 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.85",
+            "version": "v0.9.5.86",
             "auto_accepted_rows": auto_accepted,
             "power_validated_rows": power_validated,
             "power_outlier_quarantined_rows": power_outlier_quarantined,
@@ -477,7 +622,8 @@ def build_import_run_report(
             "runtime_breakdown": runtime_breakdown,
             "source_rank_windows": len(source_rank_windows),
             "source_rank_windows_detail": source_rank_windows,
-            "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),
+            "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") in {"derived_from_screenshot_window", "source_evidence_anchor"}),
+            "source_evidence_anchor_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "source_evidence_anchor"),
             "ambiguous_power_reviews": power_ambiguous,
             "ambiguous_power_near_misses": near_miss_ambiguous,
             "power_recovery_by_family": dict(sorted(power_recovery_by_family.items())),

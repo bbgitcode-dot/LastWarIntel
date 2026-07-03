@@ -68,3 +68,42 @@ def test_command_center_source_row_only_does_not_fallback_to_rank():
     }
     assert _derive_visible_rank(item) == ""
     assert _rank_context_label(item) == "OCR Row 2; Operational Rank unresolved"
+
+
+def test_source_evidence_anchor_overrides_quarantine_rank_and_preserves_observed_identity():
+    grouped = {
+        (553, "total_hero_power"): [
+            {
+                "rank": 10,
+                "source_file": "server553.png",
+                "raw_name": "[SWSq] Sven the vän",
+                "alliance_tag": "SWSq",
+                "power": 203_127_008,
+            },
+            {"rank": 11, "source_file": "server553.png", "raw_name": "[SWSq] Gaharan", "power": 201_388_946},
+            {"rank": 12, "source_file": "server553.png", "raw_name": "[LAFA] Gartner", "power": 201_294_803},
+            {"rank": 13, "source_file": "server553.png", "raw_name": "[SWSq] Rambokillyou", "power": 196_983_222},
+        ],
+        ("REVIEW", "ranking_guard_quarantine"): [
+            {
+                "original_server": 553,
+                "original_ranking_type": "total_hero_power",
+                "expected_ranking_type": "total_hero_power",
+                "rank": 12,
+                "source_file": "server553.png",
+                "name": "[SWSQ] Sven the Van",
+                "alliance": "SWSQ",
+                "power": 20_312_700,
+                "ranking_guard_warning": "power_sanity:power_recovery_candidates_ambiguous",
+            }
+        ],
+    }
+    report = build_import_run_report(grouped, screenshots=1, runtime_seconds=1, output_file="out.xlsx")
+    review = report["reviews"][0]
+    assert review["rank_trace_source"] == "source_evidence_anchor"
+    assert review["visible_rank"] == 10
+    assert review["rank"] == 10
+    assert review["target_name"] == "[SWSq] Sven the vän"
+    assert review["target_alliance"] == "SWSq"
+    enriched = _enrich_review_item(review)
+    assert enriched["rank_highlight_label"] == "Rank 10"
