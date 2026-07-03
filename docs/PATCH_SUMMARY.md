@@ -1,27 +1,58 @@
-# Patch Summary – v0.9.5.77
+# Patch Summary – v0.9.5.78
 
-## Review Context & Explainability
+## Title
+Developer Benchmark & Report Rebuild Mode
 
-This patch completes the first Review Context pass after the v0.9.5.76 quality sprint. It fixes the misleading review-rank presentation where an internal quarantine ordinal could appear as the actual ranking rank.
+## Baseline
+Sentinel v0.9.5.77 – Review Context & Explainability
 
-## Changed
+## Purpose
+The 99-screenshot benchmark is too expensive to rerun for every review UI or report iteration. v0.9.5.78 adds safe developer run modes so Review Context, Evidence Pack and Command Center changes can be validated with targeted screenshots or by rebuilding reports from the latest import JSON.
 
-- Review evidence now carries target identity context where available:
-  - `target_name`
-  - `target_alliance`
-  - `target_power_original`
-  - `target_power_selected`
-  - `target_rank` / `raw_review_rank`
-  - `visible_rank`
-- Review Detail now shows a Review Target card with name/alliance/power.
-- Review Queue now surfaces target identity and visible rank.
-- Screenshot overlay positioning now uses the row inside the screenshot window, not the global rank number.
-- Problem statements now explicitly say `sichtbarer Rang` and include the affected player/alliance when known.
+## Included
+
+- Added CLI argument parsing to `main.py`.
+- Added `--rebuild-reports` for no-OCR static report regeneration.
+- Added `--screenshots` filename/glob filter for small targeted OCR runs.
+- Added `--limit` for quick smoke runs.
+- Added `--skip-excel` and `--skip-command-center` for faster local profiling.
+- Added `SENTINEL_SCREENSHOTS` and `SENTINEL_SCREENSHOT_LIMIT` environment fallbacks.
+- Added smoke tests covering screenshot selection and rebuild parsing.
+- Updated recognition telemetry version to `v0.9.5.78`.
+
+## Commands
+
+Fast report/UI validation after template/report changes:
+
+```bash
+python main.py --rebuild-reports
+```
+
+Targeted Review Context validation:
+
+```bash
+python main.py --screenshots "Screenshot_20260702-082210.png" --skip-excel
+```
+
+Small OCR benchmark:
+
+```bash
+python main.py --screenshots "*082210*.png,*194413*.png" --skip-command-center
+```
 
 ## Validation
 
 ```text
-11 passed
-compileall OK
+python -m compileall -q main.py services web parser application
+pytest -q tests/smoke/test_developer_run_modes.py tests/smoke/test_review_rank_trace.py tests/smoke/test_review_context.py tests/smoke/test_command_center.py tests/smoke/test_operational_import_repository.py
+15 passed
 zip integrity OK
+```
+
+## Git
+
+```bash
+git add .
+git commit -m "chore(dev): add benchmark and report rebuild modes"
+git tag -a v0.9.5.78 -m "v0.9.5.78 Developer Benchmark and Report Rebuild Mode"
 ```

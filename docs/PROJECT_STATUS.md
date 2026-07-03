@@ -1,6 +1,17 @@
 # Project Status
 
-**Current version:** v0.9.5.77  
+**Current version:** v0.9.5.78  
+
+## v0.9.5.78 Note – Developer Benchmark & Report Rebuild
+
+The 99-screenshot run is now treated as an integration benchmark, not as the default validation path for every UI/reporting change. Sentinel now supports targeted developer runs and report-only rebuilds:
+
+- `python main.py --rebuild-reports` regenerates Command Center, Review Dashboard and Evidence Pack from `data/latest_import_report.json` without OCR.
+- `python main.py --screenshots "<filename-or-glob>"` limits OCR to explicit test screenshots for Review Context and recognition debugging.
+- `--skip-excel`, `--skip-command-center` and `--limit` reduce iteration time for small quality checks.
+
+These modes are developer conveniences only. They do not alter the rule that screenshot filename/order/upload order must never be treated as truth.
+
 **Sprint:** Recognition Quality & Data Integrity Pass
 
 ## Status

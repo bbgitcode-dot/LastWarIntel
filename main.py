@@ -1,4 +1,6 @@
 from pathlib import Path
+import argparse
+import fnmatch
 import json
 import os
 import sys
@@ -51,8 +53,77 @@ def _safe_print(*values) -> None:
         print(text.encode("unicode_escape").decode("ascii"))
 
 
-def main():
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Sentinel screenshot import runner",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--rebuild-reports",
+        action="store_true",
+        help="Regenerate Command Center, Review Dashboard and Evidence Pack from data/latest_import_report.json without running OCR.",
+    )
+    parser.add_argument(
+        "--screenshots",
+        default="",
+        help="Developer filter: comma-separated screenshot filenames or glob patterns inside screenshots/. This limits processing only; it is never used as data truth.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Developer filter: process only the first N selected screenshots. 0 means no limit.",
+    )
+    parser.add_argument(
+        "--skip-command-center",
+        action="store_true",
+        help="Skip static HTML report rendering after import. Useful for OCR-only profiling.",
+    )
+    parser.add_argument(
+        "--skip-excel",
+        action="store_true",
+        help="Skip Excel export mirroring during quick developer runs. The JSON import report is still written.",
+    )
+    return parser.parse_args(argv)
+
+
+def _parse_screenshot_patterns(pattern_text: str) -> list[str]:
+    return [part.strip() for part in str(pattern_text or "").split(",") if part.strip()]
+
+
+def _select_screenshots(screen_dir: Path, *, patterns: list[str] | None = None, limit: int = 0) -> list[Path]:
+    """Return screenshot paths for the current run.
+
+    This is a developer/benchmark convenience only.  It filters the input set by
+    explicit filename/glob and must not be interpreted as evidence about server,
+    rank or upload order.  Operational truth is still derived exclusively from
+    OCR, parser evidence and Data Guard validation.
+    """
+    screenshots = sorted(list(screen_dir.glob("*.png")) + list(screen_dir.glob("*.jpg")))
+    patterns = list(patterns or [])
+    if patterns:
+        selected: list[Path] = []
+        for screenshot in screenshots:
+            name = screenshot.name
+            full = str(screenshot)
+            if any(fnmatch.fnmatch(name, pattern) or fnmatch.fnmatch(full, pattern) for pattern in patterns):
+                selected.append(screenshot)
+        screenshots = selected
+    if limit and limit > 0:
+        screenshots = screenshots[:limit]
+    return screenshots
+
+def main(argv=None):
     _configure_stdout()
+    args = parse_args(argv)
+    if args.rebuild_reports:
+        command_center_files = generate_command_center()
+        print("Report rebuild completed from data/latest_import_report.json")
+        print(f"Command Center geschrieben nach {command_center_files['command_center']}")
+        print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
+        print(f"Review Evidence Pack geschrieben nach {command_center_files['review_evidence_pack']}")
+        return
     config = load_config()
     snapshot_service = SnapshotService()
     try:
@@ -69,10 +140,18 @@ def main():
     print(f"OCR Metadata Languages: {list(reader.info.metadata_languages)}")
     print(f"OCR Row Languages: {list(reader.info.row_languages)}")
 
-    screenshots = sorted(
-        list(SCREENSHOT_DIR.glob("*.png")) +
-        list(SCREENSHOT_DIR.glob("*.jpg"))
+    screenshot_patterns = _parse_screenshot_patterns(args.screenshots or os.getenv("SENTINEL_SCREENSHOTS", ""))
+    screenshots = _select_screenshots(
+        SCREENSHOT_DIR,
+        patterns=screenshot_patterns,
+        limit=args.limit or int(os.getenv("SENTINEL_SCREENSHOT_LIMIT", "0") or 0),
     )
+    if screenshot_patterns or args.limit:
+        print(f"Developer screenshot filter active: {len(screenshots)} screenshot(s) selected")
+        if screenshot_patterns:
+            print("Patterns:", ", ".join(screenshot_patterns))
+        if args.limit:
+            print("Limit:", args.limit)
 
     if not screenshots:
         print("Keine Screenshots gefunden.")
@@ -230,20 +309,28 @@ def main():
             _safe_print(row["rank"], row["name"], row["power"])
 
     output_file = os.getenv("SENTINEL_OUTPUT_FILE") or str(snapshot_service.snapshot_output_dir(active_snapshot) / "lastwar_export.xlsx")
-    export(final_grouped, filename=output_file)
+    if args.skip_excel:
+        print("Excel export skipped by --skip-excel")
+    else:
+        export(final_grouped, filename=output_file)
     duration = time.perf_counter() - start_time
     import_report = build_import_run_report(final_grouped, screenshots=len(screenshots), runtime_seconds=duration, output_file=output_file)
     import_report = snapshot_service.bind_import_report(import_report, active_snapshot)
-    snapshot_export_file = snapshot_service.mirror_export_to_snapshot(output_file, active_snapshot)
-    if snapshot_export_file:
-        import_report["snapshot_export_file"] = snapshot_export_file
+    snapshot_export_file = None
+    if not args.skip_excel:
+        snapshot_export_file = snapshot_service.mirror_export_to_snapshot(output_file, active_snapshot)
+        if snapshot_export_file:
+            import_report["snapshot_export_file"] = snapshot_export_file
     JsonImportRunRepository().save_latest_import(import_report)
     snapshot_service.update_status(active_snapshot.id, "reviewing" if import_report.get("review_count") else "verified")
     print("Import report geschrieben nach data/latest_import_report.json")
-    command_center_files = generate_command_center()
-    print(f"Command Center geschrieben nach {command_center_files['command_center']}")
-    print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
-    print(f"Review Evidence Pack geschrieben nach {command_center_files['review_evidence_pack']}")
+    if args.skip_command_center:
+        print("Command Center rebuild skipped by --skip-command-center")
+    else:
+        command_center_files = generate_command_center()
+        print(f"Command Center geschrieben nach {command_center_files['command_center']}")
+        print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
+        print(f"Review Evidence Pack geschrieben nach {command_center_files['review_evidence_pack']}")
     print(f"\nRuntime: {duration:.2f}s")
 
 

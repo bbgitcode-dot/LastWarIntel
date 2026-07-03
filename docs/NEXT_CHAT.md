@@ -1,27 +1,30 @@
-# NEXT CHAT
+# NEXT CHAT – Sentinel v0.9.5.78 Handover
 
-Baseline: **Sentinel v0.9.5.77 – Review Context & Explainability**
+Baseline: **Sentinel v0.9.5.78 – Developer Benchmark & Report Rebuild Mode**
 
-Use `Sentinel_v0.9.5.77.zip` as the next baseline.
+Use `Sentinel_v0.9.5.78.zip` as the next baseline.
 
-## Important context
+## Current Priority
 
-- Snapshot workflow is stable enough for now.
-- Current priority is screenshot recognition quality, not new Intelligence.
-- .76 fixed misleading review ranks by separating visible rank from raw review/quarantine row.
-- Review history now distinguishes current-run open reviews from stale historical open reviews.
+Continue Recognition Quality work without burning full 99-screenshot benchmark runs unnecessarily. Use the new fast validation modes:
 
-## Recommended next sprint
+```bash
+python main.py --rebuild-reports
+python main.py --screenshots "Screenshot_20260702-082210.png" --skip-excel
+python main.py --screenshots "*082210*.png,*194413*.png" --skip-command-center
+```
 
-**v0.9.5.77 – Candidate Promotion Calibration & Power Explosion Guard**
+## Important Rule
 
-Goals:
+The screenshot filters are developer input selectors only. They must never become evidence for server, ranking, rank or upload order. Operational Truth remains OCR/Data Guard driven.
 
-- analyze the remaining ambiguous power candidates from the 99-screenshot run,
-- reduce avoidable human reviews without weakening Data Guard,
-- improve 77B/79B explosion handling before Ranking Guard,
-- preserve explainability for every promoted value.
+## Recommended Next Sprint
 
-## v0.9.5.77 Note – Review Context
+**v0.9.5.79 – Candidate Promotion Calibration & Power Explosion Guard**
 
-Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
+Focus areas:
+
+- Reduce ambiguous candidate margins using the real 99-screenshot benchmark.
+- Catch 77B/79B power explosions earlier in the parser/recovery pipeline.
+- Keep Review Context visible rank and target identity stable across dashboard, detail and evidence pack.
+- Use the 99-screenshot run only as integration benchmark, preferably 2–3 times per day max.

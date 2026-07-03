@@ -1,3 +1,46 @@
+## v0.9.5.78 – Developer Benchmark & Report Rebuild Mode
+
+Focus: reduce iteration cost for recognition/review quality work so the 99-screenshot production benchmark does not need to be run for every UI or reporting fix.
+
+### Added
+
+- `python main.py --rebuild-reports` to regenerate Command Center, Review Dashboard and Review Evidence Pack from `data/latest_import_report.json` without running OCR.
+- Developer screenshot filters for small targeted runs:
+  - `--screenshots "Screenshot_20260702-082210.png"`
+  - `--screenshots "*082210*.png,*194413*.png"`
+  - `--limit N`
+- Optional quick-run switches:
+  - `--skip-excel`
+  - `--skip-command-center`
+- Environment fallbacks for local benchmark automation:
+  - `SENTINEL_SCREENSHOTS`
+  - `SENTINEL_SCREENSHOT_LIMIT`
+- Smoke tests for developer run selection and report-rebuild argument parsing.
+
+### Changed
+
+- Default `python main.py` behavior remains unchanged for operational imports.
+- Screenshot filters are explicitly treated as developer input selection only; they do not become truth about server, ranking, rank or upload order. Operational truth remains OCR/Data Guard driven.
+- Recognition telemetry version advanced to `v0.9.5.78`.
+
+### Validation
+
+```text
+python -m compileall -q main.py services web parser application
+pytest -q tests/smoke/test_developer_run_modes.py tests/smoke/test_review_rank_trace.py tests/smoke/test_review_context.py tests/smoke/test_command_center.py tests/smoke/test_operational_import_repository.py
+# 15 passed
+```
+
+### Git
+
+```bash
+git add .
+git commit -m "chore(dev): add benchmark and report rebuild modes"
+git tag -a v0.9.5.78 -m "v0.9.5.78 Developer Benchmark and Report Rebuild Mode"
+```
+
+---
+
 ## v0.9.5.77 – Review Context & Explainability
 
 - Fixed Review Detail surfaces that exposed internal/quarantine ranks as if they were visible in the linked screenshot.
