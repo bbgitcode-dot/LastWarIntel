@@ -124,7 +124,7 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
           <td>{evidence_link}</td>
           <td>{_e(item.get('server') or '')}</td>
           <td>{_e(item.get('ranking_type') or '')}</td>
-          <td>{_e(item.get('visible_rank') or item.get('rank') or '')}</td>
+          <td>{_e(_rank_context_label(item))}</td>
           <td>{_e(_rank_window_label(item))}</td>
           <td>{_e(item.get('raw_review_rank') or '')}</td>
           <td>{_e(item.get('title') or '')}</td>
@@ -399,9 +399,9 @@ def _source_row(item: dict[str, Any], trace: dict[str, Any] | None = None) -> An
 def _rank_context_label(item: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
     visible = _derive_visible_rank(item, trace)
     if visible not in (None, "", "?"):
-        return f"sichtbarer Rang {visible}"
+        return f"Operational Rank {visible}"
     row = _source_row(item, trace)
-    return f"Screenshot-Zeile {row}; sichtbarer Rang ungeklärt"
+    return f"OCR Row {row}; Operational Rank unresolved"
 
 
 def _target_name(review: dict[str, Any], trace: dict[str, Any] | None = None) -> str:
@@ -460,7 +460,7 @@ def _rank_trace_hint(item: dict[str, Any]) -> str:
     source = item.get("rank_trace_source") or ""
     window = _rank_window_label(item)
     if source == "derived_from_screenshot_window" and raw:
-        return f"Screenshot window {window}; raw review row {raw}"
+        return f"Screenshot window {window}; OCR row {raw}"
     if window != "n/a":
         return f"Screenshot window {window}; {source or 'rank trace'}"
     return source or "n/a"
@@ -938,7 +938,7 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
           <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label') or item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
           <div class="action"><b>Problem:</b> {_e(item.get('problem_statement') or '')}</div>
           <div class="evidence-grid">
-            <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · {_e(_rank_context_label(item, trace))}</div><div class="hint">{_e(_rank_trace_hint(item))}</div></div>
+            <div><div class="label">OCR Evidence</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · {_e(_rank_context_label(item, trace))}</div><div class="hint">{_e(_rank_trace_hint(item))}</div><div class="hint">OCR source: {_e(_target_identity_label(item, trace))}</div></div>
             <div><div class="label">OCR / Original</div><b>{_e(_fmt_power(item.get('power_original')))}</b><div class="hint">selected {_e(_fmt_power(item.get('power_selected')))}</div></div>
             <div><div class="label">Best vs second</div><b>{_e(_fmt_power(item.get('best_candidate')))} / {_e(_fmt_power(item.get('second_candidate')))}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')} · {_e(item.get('confidence_label') or '')}</div></div>
             <div><div class="label">Review status</div><b>{_e(item.get('review_ocr_status') or 'n/a')}</b><div class="hint">row recon {_e(item.get('row_reconstruction_status') or 'n/a')}</div></div>
@@ -986,7 +986,7 @@ def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
           <td>{_e(item.get('history_key') or '')}</td>
           <td>{_e(item.get('server') or '')}</td>
           <td>{_e(item.get('ranking_type') or '')}</td>
-          <td>{_e(item.get('visible_rank') or item.get('rank') or '')}</td>
+          <td>{_e(_rank_context_label(item))}</td>
           <td>{_e('current' if item.get('current_run_seen') else 'stale')}</td>
           <td>{_e(item.get('problem_type') or '')}</td>
           <td>{_e(item.get('problem_statement') or '')}</td>
@@ -1040,7 +1040,7 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 <div class="tabs"><a href="#open">Open Reviews</a><a href="#history">History</a><a href="command_center.html">Back to Command Center</a></div>
 <div class="notice">The static Review Center remains a run-detail view. Interactive resolution is available through the web Review Center (/reviews), where decisions are stored in persistent review history without changing Operational Truth.</div>
 <h2 id="open">Open Reviews</h2>{_review_center_cards(report)}
-<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Run</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th><th>Resolution</th><th>Comment</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
+<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Operational Rank / OCR Evidence</th><th>Run</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th><th>Resolution</th><th>Comment</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
 </main></body></html>"""
 
 
@@ -1091,7 +1091,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <h2>Server Overview</h2><section class="server-grid">{_server_cards(report)}</section>
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
 <h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Open Review Detail / Evidence</a><a href="review_dashboard.html">Open Review Queue</a></div></section>
-<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Screenshot Window</th><th>Raw Review Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
+<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Operational Rank</th><th>Screenshot Window</th><th>OCR Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
 </main></body></html>"""
@@ -1111,7 +1111,7 @@ def render_review_dashboard(import_report: dict[str, Any] | None) -> str:
 {_metric_card('Import Review Count', report.get('import_review_count', 0), 'guard warnings')}
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
 </section>
-<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Screenshot Window</th><th>Raw Review Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
+<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Operational Rank</th><th>Screenshot Window</th><th>OCR Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
 </main></body></html>"""
 
 

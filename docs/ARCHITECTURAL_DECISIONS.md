@@ -106,3 +106,8 @@ Review Rank Trace is now part of the data-quality boundary. Review surfaces must
 
 Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
 
+
+
+## ADR-008 – Separate OCR Evidence from Operational Mapping
+
+OCR output is an observation. Candidate matching is a hypothesis. Operational Truth is the validated result. Review UIs must never collapse these layers. When only a screenshot-local source row is known, Sentinel labels it as `OCR Row`; `Operational Rank` remains unresolved until a reliable mapping exists or a human reviewer resolves it.

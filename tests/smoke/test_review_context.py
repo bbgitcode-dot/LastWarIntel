@@ -47,5 +47,5 @@ def test_problem_statement_names_target_and_visible_rank():
     statement = _human_problem_statement("REV-003", review, trace)
     assert "SUPER YASU" in statement
     assert "[TOS]" in statement
-    assert "sichtbarer Rang 66" in statement
+    assert "Operational Rank 66" in statement
     assert "Screenshot window 64-72" in statement

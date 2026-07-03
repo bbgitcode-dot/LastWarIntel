@@ -1,3 +1,27 @@
+## v0.9.5.81 – Review Evidence Model
+
+- Separates Review UI into **OCR Source**, **Operational Mapping**, and pending **Operational Truth**.
+- Source-row-only reviews now label the overlay as `OCR Row N` instead of implying a proven rank.
+- Review Detail, Review Center, static review reports, and history tables now use `Operational Rank` only when Sentinel has proven one.
+- Adds human-facing OCR Source identity fields so reviewers know which player/alliance row the highlight refers to.
+
+Validation:
+
+```text
+pytest tests/smoke/test_review_identity_consistency.py tests/smoke/test_review_context.py
+compileall OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "fix(review): separate OCR source from operational mapping"
+git tag -a v0.9.5.81 -m "v0.9.5.81 Review Evidence Model"
+```
+
+
 ## v0.9.5.80 – Continuous Collection & Source-Row Review Clarity
 
 - Changed screenshot import lifecycle behavior: normal `python main.py` runs no longer move the active snapshot from `COLLECTING` to `REVIEWING` automatically.

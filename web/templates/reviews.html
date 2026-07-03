@@ -89,7 +89,7 @@
                 <div>
                     <h3>{{ item.review_id }} · {{ item.problem_type }}</h3>
                     <p>{{ item.problem_statement }}</p>
-                    <small>Server {{ item.server }} · {{ item.ranking_type }} · {{ item.rank_display_label }}{% if item.target_name_display %} · Target {{ item.target_name_display }}{% endif %}{% if item.screenshot_rank_window_label %} · Window {{ item.screenshot_rank_window_label }}{% endif %} · Seen {{ item.seen_count or 1 }}x{% if item.screenshot_url %} · <a class="screenshot-inline-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">{{ item.screenshot }} ↗</a>{% elif item.screenshot %} · {{ item.screenshot }}{% endif %}</small>
+                    <small>Server {{ item.server }} · {{ item.ranking_type }} · {{ item.rank_display_label }}{% if item.ocr_source_name_display %} · OCR Source {{ item.ocr_source_name_display }}{% endif %}{% if item.screenshot_rank_window_label %} · Window {{ item.screenshot_rank_window_label }}{% endif %} · Seen {{ item.seen_count or 1 }}x{% if item.screenshot_url %} · <a class="screenshot-inline-link" href="{{ item.screenshot_url }}" target="_blank" rel="noopener noreferrer">{{ item.screenshot }} ↗</a>{% elif item.screenshot %} · {{ item.screenshot }}{% endif %}</small>
                     {% if item.why_bullets %}
                     <ul>
                         {% for bullet in item.why_bullets[:3] %}<li>{{ bullet }}</li>{% endfor %}
@@ -182,7 +182,7 @@
         </div>
         <div class="quality-table">
             <div class="quality-row quality-head">
-                <span>Status</span><span>Review</span><span>Server</span><span>Ranking</span><span>Rank</span><span>Seen</span><span>Last Seen</span>
+                <span>Status</span><span>Review</span><span>Server</span><span>Ranking</span><span>Evidence</span><span>Seen</span><span>Last Seen</span>
             </div>
             {% for item in review_model.history_items|reverse %}
             <div class="quality-row">
@@ -190,7 +190,7 @@
                 <span>{{ item.review_id }}</span>
                 <span>{{ item.server or '—' }}</span>
                 <span>{{ item.ranking_type }}</span>
-                <span>{{ item.rank }}</span>
+                <span>{{ item.rank_display_label }}</span>
                 <span>{{ item.seen_count or 1 }}</span>
                 <span>{{ item.last_seen_at or item.created_at }}</span>
             </div>

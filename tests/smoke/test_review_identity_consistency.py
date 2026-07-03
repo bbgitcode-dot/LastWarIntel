@@ -28,8 +28,8 @@ def test_source_row_only_does_not_claim_visible_rank():
     assert review["source_row"] == 2
     assert review["rank_trace_source"] == "source_row_only"
     enriched = _enrich_review_item(review)
-    assert enriched["rank_display_label"] == "Source Row 2 · Visible Rank unresolved"
-    assert enriched["rank_highlight_label"] == "Row 2"
+    assert enriched["rank_display_label"] == "OCR Row 2 · Operational Rank unresolved"
+    assert enriched["rank_highlight_label"] == "OCR Row 2"
 
 
 def test_review_ids_continue_from_existing_history():
@@ -67,4 +67,4 @@ def test_command_center_source_row_only_does_not_fallback_to_rank():
         "screenshot_rank_window": {"start": 1, "end": 8, "count": 8},
     }
     assert _derive_visible_rank(item) == ""
-    assert _rank_context_label(item) == "Screenshot-Zeile 2; sichtbarer Rang ungeklärt"
+    assert _rank_context_label(item) == "OCR Row 2; Operational Rank unresolved"

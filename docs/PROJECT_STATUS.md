@@ -1,3 +1,10 @@
+# Project Status – Sentinel v0.9.5.81
+
+**Current version:** v0.9.5.81  
+**Focus:** Review Evidence Model / Explainability clarity.
+
+Sentinel now separates OCR Source from Operational Mapping in review surfaces. A highlighted screenshot row is evidence, not a proven rank unless the rank mapping is explicitly resolved.
+
 # Project Status – Sentinel v0.9.5.80
 
 **Current version:** v0.9.5.80  

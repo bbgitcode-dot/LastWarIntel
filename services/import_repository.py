@@ -434,7 +434,7 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.80",
+            "version": "v0.9.5.81",
             "source_rank_windows": len(source_rank_windows),
             "source_rank_windows_detail": source_rank_windows,
             "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),

@@ -1,30 +1,29 @@
-# Patch Summary – v0.9.5.80
+# Patch Summary – v0.9.5.81
 
-## Sentinel v0.9.5.80 – Continuous Collection & Source-Row Review Clarity
+## Sentinel v0.9.5.81 – Review Evidence Model
 
-This patch corrects two workflow issues found during the 99-screenshot recognition pass.
+This patch fixes the review explanation model: the highlighted screenshot row is now explicitly treated as OCR evidence, while Operational Rank remains unresolved unless Sentinel can prove it.
 
-## Changes
+### Changed
 
-- Normal screenshot import runs keep the active snapshot in `COLLECTING` so 24/7 screenshot intake is not blocked after every batch.
-- `--finish-collection` is now the explicit operator action that advances a snapshot to `REVIEWING` or `VERIFIED`.
-- Review UI and Evidence Pack no longer treat source-row-only evidence as a proven global visible rank.
-- Source-row-only reviews display `Source Row N · Visible Rank unresolved` and highlight the row without claiming `Rank N`.
+- Review Detail separates OCR Source, Evidence Location, and Operational Mapping.
+- Source-row-only overlays are labelled `OCR Row N`.
+- Review list and history no longer present screenshot-local rows as global ranks.
+- Static review reports use Operational Rank / OCR Evidence wording.
+- Documentation records the separation of OCR observation, mapping hypothesis, and Operational Truth.
 
-## Validation
+### Validation
 
 ```text
-python -m pytest -q tests/smoke/test_review_identity_consistency.py
-3 passed
-
-python -m compileall -q main.py services/command_center.py web/routes/reviews.py services/import_repository.py application/snapshots/service.py
+pytest tests/smoke/test_review_identity_consistency.py tests/smoke/test_review_context.py
 compileall OK
+zip integrity OK
 ```
 
-## Commit
+### Git
 
 ```bash
 git add .
-git commit -m "fix(snapshot): keep collecting after imports"
-git tag -a v0.9.5.80 -m "v0.9.5.80 Continuous Collection and Source-Row Review Clarity"
+git commit -m "fix(review): separate OCR source from operational mapping"
+git tag -a v0.9.5.81 -m "v0.9.5.81 Review Evidence Model"
 ```

@@ -1,24 +1,19 @@
-# NEXT CHAT – Sentinel v0.9.5.80 Handover
+# NEXT CHAT – Sentinel v0.9.5.81 Handover
 
-Baseline: **Sentinel v0.9.5.80 – Continuous Collection & Source-Row Review Clarity**
+Baseline: **Sentinel v0.9.5.81 – Review Evidence Model**
 
-Use `Sentinel_v0.9.5.80.zip` as the next baseline.
+Use `Sentinel_v0.9.5.81.zip` as the next baseline.
 
-## Current Focus
+## Key point
 
-Data recognition and review clarity remain the active priority before expanding Intelligence.
+Review evidence is now separated into three concepts:
 
-## What changed in .80
+1. OCR Source – what the screenshot/OCR row says.
+2. Operational Mapping – Sentinel's hypothesis and candidate scoring.
+3. Operational Truth – only after human resolution / guarded promotion.
 
-- Normal `python main.py` imports no longer move an active snapshot to `REVIEWING` automatically.
-- Operators must explicitly finish collection with `python main.py --finish-collection` or through the UI lifecycle.
-- Review rendering was hardened for `source_row_only`: a screenshot row is no longer displayed as a proven visible/global rank.
+Do not display source-row ordinals as proven ranks. Keep the yellow overlay, but label it as OCR Row when global rank is not proven.
 
-## Next likely sprint
+## Next likely work
 
-Continue Recognition Quality:
-
-- verify source-row-only Review Detail in fresh rebuilt reports;
-- align target identity, highlight row and source row for ambiguous reviews;
-- reduce power explosion / ambiguous candidate cases;
-- keep the 99-screenshot dataset as an integration benchmark, not a routine test.
+Return to recognition quality: false power explosions, ambiguous candidate margins, review-history cleanup, and runtime profiling.

@@ -1,6 +1,6 @@
 {
   "schema": "sentinel.review_history.v1",
-  "updated_at": "2026-07-03T14:18:37+00:00",
+  "updated_at": "2026-07-03T16:56:50+00:00",
   "open_count": 17,
   "open_current_count": 2,
   "stale_open_count": 15,
@@ -3716,9 +3716,9 @@
       "review_identity": "554|alliance_power|1|[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼|Screenshot_20260702-082020.png|alliance_power_outlier|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T14:18:37+00:00",
-      "last_seen_at": "2026-07-03T14:18:37+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T14:18:37.497623+00:00",
+      "last_seen_at": "2026-07-03T16:56:50+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T16:56:50.393769+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -3865,7 +3865,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T14:18:37+00:00"
+        "bound_at": "2026-07-03T16:56:50+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -3902,7 +3902,7 @@
       "rank_trace_source": "source_row_only",
       "reason": "ranking_guard_quarantine",
       "problem_type": "alliance_power_outlier",
-      "problem_statement": "REV-014: Die Allianzstärke auf Server 554, sichtbarer Rang 1, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. (Screenshot window 1-8; source_row_only)",
+      "problem_statement": "REV-014: Die Allianzstärke auf Server 554, Screenshot-Zeile 1; sichtbarer Rang ungeklärt, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. (Screenshot window 1-8; source_row_only)",
       "screenshot": "Screenshot_20260702-082020.png",
       "power_original": null,
       "best_candidate": null,
@@ -3970,9 +3970,9 @@
       "review_identity": "554|total_hero_power|2|[MBM] yochic Rfeoezome#A|Screenshot_20260702-082210.png|rank_or_row_unclear|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T14:18:37+00:00",
-      "last_seen_at": "2026-07-03T14:18:37+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T14:18:37.497623+00:00",
+      "last_seen_at": "2026-07-03T16:56:50+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T16:56:50.393769+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -4119,7 +4119,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T14:18:37+00:00"
+        "bound_at": "2026-07-03T16:56:50+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -4156,7 +4156,7 @@
       "rank_trace_source": "source_row_only",
       "reason": "ranking_guard_quarantine",
       "problem_type": "rank_or_row_unclear",
-      "problem_statement": "REV-015: Rang oder Zeilenposition auf Server 554, sichtbarer Rang 2, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. (Screenshot window 1-8; source_row_only)",
+      "problem_statement": "REV-015: Rang oder Zeilenposition auf Server 554, Screenshot-Zeile 2; sichtbarer Rang ungeklärt, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. (Screenshot window 1-8; source_row_only)",
       "screenshot": "Screenshot_20260702-082210.png",
       "power_original": 767529557,
       "best_candidate": 167529557,

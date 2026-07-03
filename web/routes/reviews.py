@@ -128,7 +128,7 @@ def _rank_highlight_meta(item: dict[str, Any]) -> dict[str, Any]:
     if label_rank not in (None, ""):
         label = f"Rank {label_rank}" + (" approx." if is_approximate else "")
     else:
-        label = f"Row {row_rank_i}" + (" approx." if is_approximate else "")
+        label = f"OCR Row {row_rank_i}" + (" approx." if is_approximate else "")
     return {"style": style, "label": label, "is_approximate": is_approximate}
 
 
@@ -144,16 +144,36 @@ def _enrich_review_item(item: dict[str, Any]) -> dict[str, Any]:
     enriched["rank_highlight_style"] = highlight.get("style") or ""
     enriched["rank_highlight_label"] = highlight.get("label") or ""
     enriched["rank_highlight_is_approximate"] = bool(highlight.get("is_approximate"))
-    if enriched.get("rank_trace_source") == "source_row_only":
-        enriched["display_rank"] = ""
+
+    source_row_only = enriched.get("rank_trace_source") == "source_row_only"
+    visible_rank = enriched.get("visible_rank")
+    enriched["display_rank"] = "" if source_row_only else (visible_rank or "")
+    enriched["source_row_display"] = enriched.get("source_row") or enriched.get("raw_review_rank") or enriched.get("target_rank") or ""
+
+    # v0.9.5.81: Review surfaces separate raw OCR evidence from Sentinel's
+    # operational mapping hypothesis.  A screenshot-local source row is not a
+    # proven rank and must never be rendered as one.
+    if enriched.get("display_rank"):
+        enriched["rank_display_label"] = f"Operational Rank {enriched['display_rank']}"
+        enriched["operational_rank_display"] = str(enriched["display_rank"])
+        enriched["operational_mapping_status"] = "Mapped to visible ranking position"
     else:
-        enriched["display_rank"] = enriched.get("visible_rank") or ""
-    enriched["source_row_display"] = enriched.get("source_row") or enriched.get("raw_review_rank") or ""
-    enriched["rank_display_label"] = f"Visible Rank {enriched['display_rank']}" if enriched.get("display_rank") else f"Source Row {enriched.get('source_row_display') or 'unresolved'} · Visible Rank unresolved"
+        row = enriched.get("source_row_display") or "unresolved"
+        enriched["rank_display_label"] = f"OCR Row {row} · Operational Rank unresolved"
+        enriched["operational_rank_display"] = "not determined"
+        enriched["operational_mapping_status"] = "Ambiguous / pending human review"
+
     enriched["target_rank_display"] = enriched.get("target_rank") or enriched.get("raw_review_rank") or ""
     enriched["target_name_display"] = enriched.get("target_name") or (enriched.get("trace") or {}).get("name") or ""
     enriched["target_alliance_display"] = enriched.get("target_alliance") or (enriched.get("trace") or {}).get("alliance") or ""
     enriched["target_power_display"] = _format_number(enriched.get("target_power_selected") or enriched.get("power_selected") or enriched.get("power_original"))
+
+    # Aliases with explicit OCR wording. Templates should prefer these names.
+    enriched["ocr_source_name_display"] = enriched["target_name_display"]
+    enriched["ocr_source_alliance_display"] = enriched["target_alliance_display"]
+    enriched["ocr_source_power_display"] = enriched["target_power_display"]
+    enriched["ocr_source_row_label"] = f"OCR Row {enriched.get('source_row_display') or 'unresolved'}"
+
     window = enriched.get("screenshot_rank_window")
     if isinstance(window, dict) and window.get("start") and window.get("end"):
         enriched["screenshot_rank_window_label"] = f"{window.get('start')}-{window.get('end')}"
