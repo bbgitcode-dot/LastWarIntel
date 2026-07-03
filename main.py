@@ -141,13 +141,24 @@ def _select_screenshots(screen_dir: Path, *, patterns: list[str] | None = None, 
 def main(argv=None):
     _configure_stdout()
     args = parse_args(argv)
+    start_time = time.perf_counter()
+    runtime_timings: dict[str, float] = {}
+
     if args.rebuild_reports:
+        # Rebuild mode intentionally skips OCR/import, but it must still provide
+        # the same diagnostic runtime object as a full import.  v0.9.5.82
+        # initialized runtime telemetry only in the import path, which caused an
+        # UnboundLocalError before any report could be rebuilt.
         with _timed_stage(runtime_timings, "html_report_render"):
             command_center_files = generate_command_center()
+        duration = time.perf_counter() - start_time
+        runtime_timings["total_runtime"] = duration
         print("Report rebuild completed from data/latest_import_report.json")
         print(f"Command Center geschrieben nach {command_center_files['command_center']}")
         print(f"Review Dashboard geschrieben nach {command_center_files['review_dashboard']}")
         print(f"Review Evidence Pack geschrieben nach {command_center_files['review_evidence_pack']}")
+        print("Runtime telemetry:", json.dumps(_rounded_timings(runtime_timings), ensure_ascii=False))
+        print(f"\nRuntime: {duration:.2f}s")
         return
     config = load_config()
     snapshot_service = SnapshotService()
@@ -158,8 +169,6 @@ def main(argv=None):
         return
     snapshot_service.update_status(active_snapshot.id, "collecting")
     active_snapshot = snapshot_service.require_active_import_snapshot()
-    start_time = time.perf_counter()
-    runtime_timings: dict[str, float] = {}
     print(f"Active Snapshot: {active_snapshot.name} ({active_snapshot.id})")
     with _timed_stage(runtime_timings, "ocr_reader_init"):
         reader = create_reader()

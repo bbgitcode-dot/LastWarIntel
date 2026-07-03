@@ -27,3 +27,8 @@ Reviews now distinguish OCR Source, Operational Mapping, and Operational Truth. 
 ## v0.9.5.82 – Recognition Quality Telemetry
 
 Recognition optimization must be measured before it is tuned. Runtime, recovery rate, ambiguous power reviews and quarantine counts are now first-class import report metrics. The 99-screenshot run should be used as an integration benchmark, not as the only developer feedback loop.
+
+
+## v0.9.5.83 Note
+
+The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.

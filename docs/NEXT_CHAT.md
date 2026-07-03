@@ -22,3 +22,8 @@ Run a small targeted test first, then one full 99-screenshot benchmark when conv
 - OCR vs report/export time split
 
 If the 77B/79B family still produces unnecessary reviews, tune candidate scoring using the new telemetry rather than changing UI.
+
+
+## v0.9.5.83 Note
+
+The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.

@@ -82,3 +82,8 @@ Continue Recognition Quality hardening:
 ## v0.9.5.77 Note – Review Context
 
 Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
+
+
+## v0.9.5.83 Note
+
+The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.

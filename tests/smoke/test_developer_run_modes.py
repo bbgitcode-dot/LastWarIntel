@@ -30,3 +30,23 @@ def test_rebuild_reports_flag_parses_without_requiring_ocr():
 
     assert args.rebuild_reports is True
     assert args.screenshots == ""
+
+
+def test_rebuild_reports_initializes_runtime_telemetry(monkeypatch, capsys):
+    import main as main_module
+
+    def fake_generate_command_center():
+        return {
+            "command_center": "output/command_center.html",
+            "review_dashboard": "output/review_dashboard.html",
+            "review_evidence_pack": "output/review_evidence_pack.html",
+        }
+
+    monkeypatch.setattr(main_module, "generate_command_center", fake_generate_command_center)
+
+    main_module.main(["--rebuild-reports"])
+
+    output = capsys.readouterr().out
+    assert "Report rebuild completed" in output
+    assert "Runtime telemetry:" in output
+    assert "html_report_render" in output

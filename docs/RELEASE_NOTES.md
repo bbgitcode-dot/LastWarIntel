@@ -1096,3 +1096,42 @@ Active resolution of recoverable validation gaps caused by screenshot/server buc
 - Usable identities: 26 → 32
 - Score: 53.69 → 63.45
 
+
+
+---
+
+# Sentinel v0.9.5.83 – Recognition Engine Pass I / Rebuild Telemetry Hotfix
+
+## Focus
+
+Stabilize the developer/report rebuild path introduced during the recognition-quality work so quick tests do not require a full 99-screenshot OCR run.
+
+## Fixed
+
+- `python main.py --rebuild-reports` no longer crashes with `UnboundLocalError: runtime_timings`.
+- Runtime telemetry is initialized at the start of `main()` and is now available in both the normal import path and report-rebuild path.
+- Rebuild mode now prints timing telemetry and runtime duration without touching OCR, screenshots, snapshot state, Excel export or Operational Truth.
+
+## Added
+
+- Smoke coverage for `--rebuild-reports` to ensure the fast report-only feedback loop remains available.
+
+## Why
+
+The 99-screenshot benchmark is too expensive to run after every UI/report change. Sentinel needs reliable short-loop developer commands before more recognition-engine changes are attempted. This patch repairs that loop and keeps the large benchmark reserved for changes that should move recognition metrics.
+
+## Validation
+
+```text
+pytest tests/smoke/test_developer_run_modes.py -q
+python -m compileall -q main.py services parser application version.py
+zip integrity OK
+```
+
+## Commit
+
+```bash
+git add .
+git commit -m "fix(dev): initialize rebuild report telemetry"
+git tag -a v0.9.5.83 -m "v0.9.5.83 Rebuild Report Telemetry Hotfix"
+```

@@ -1,36 +1,53 @@
 {
   "schema": "sentinel.import_run.v3",
-  "created_at": "2026-07-03T16:56:50.393769+00:00",
-  "runtime_seconds": 163.4,
-  "screenshots": 2,
+  "created_at": "2026-07-03T18:11:39.499514+00:00",
+  "runtime_seconds": 155.7,
+  "runtime_breakdown": {
+    "adaptive_review_ocr": 7.9864,
+    "data_quality_loop": 94.0049,
+    "image_load_normalize": 0.0691,
+    "merge_rows": 0.0002,
+    "metadata_ocr": 10.1746,
+    "ocr_reader_init": 30.7645,
+    "player_snapshot_build": 0.0034,
+    "power_sanity_recovery": 0.001,
+    "ranking_guard": 0.0003,
+    "row_ocr": 12.4071,
+    "row_parse": 0.07,
+    "server_reconciliation": 0.0001,
+    "total_runtime": 155.7,
+    "seconds_per_screenshot": 155.7
+  },
+  "screenshots": 1,
   "output_file": "output\\snapshots\\s6-pre-transfer-2b69ebc1\\lastwar_export.xlsx",
   "servers": [
     554
   ],
   "server_count": 1,
-  "rows": 18,
+  "rows": 9,
   "status": "Review",
-  "readiness": 50,
-  "review_count": 18,
-  "review_item_count": 2,
-  "import_review_count": 18,
+  "readiness": 55,
+  "review_count": 9,
+  "review_item_count": 1,
+  "import_review_count": 9,
   "data_guard": {
     "status": "Warning",
-    "warnings": 18,
+    "warnings": 9,
     "critical": 0,
     "checks": [
       "server_assignment",
       "data_quality_loop",
       "ranking_guard",
       "ranking_recovery",
-      "quarantine"
+      "quarantine",
+      "recognition_quality"
     ]
   },
   "ranking_recovery": {
     "attempts": 0,
     "success": 0,
     "calibrated_pass": 0,
-    "rejected": 2,
+    "rejected": 1,
     "confidence_avg": 0
   },
   "power_recovery": {
@@ -43,7 +60,7 @@
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
         "source_file": "Screenshot_20260702-082210.png",
-        "rank": 2,
+        "rank": 1,
         "ocr_rank": 6,
         "name": "[MBM] yochic Rfeoezome#A",
         "power_original": 767730565,
@@ -251,9 +268,9 @@
   },
   "review_ocr": {
     "enabled": true,
-    "attempted": 2,
+    "attempted": 1,
     "promoted": 0,
-    "no_promotion": 2,
+    "no_promotion": 1,
     "skipped": 0,
     "confidence_avg": 0,
     "strategy": "adaptive_row_crop_zoom_clahe_sharpen_voting"
@@ -267,26 +284,30 @@
     "strategy": "source_local_anchor_bounded_gap_reconstruction"
   },
   "recognition_quality": {
-    "version": "v0.9.5.80",
-    "source_rank_windows": 2,
+    "version": "v0.9.5.82",
+    "auto_accepted_rows": 8,
+    "power_validated_rows": 6,
+    "power_outlier_quarantined_rows": 1,
+    "human_review_items": 1,
+    "power_recovery_success_rate": 0.6667,
+    "runtime_breakdown": {
+      "adaptive_review_ocr": 7.9864,
+      "data_quality_loop": 94.0049,
+      "image_load_normalize": 0.0691,
+      "merge_rows": 0.0002,
+      "metadata_ocr": 10.1746,
+      "ocr_reader_init": 30.7645,
+      "player_snapshot_build": 0.0034,
+      "power_sanity_recovery": 0.001,
+      "ranking_guard": 0.0003,
+      "row_ocr": 12.4071,
+      "row_parse": 0.07,
+      "server_reconciliation": 0.0001,
+      "total_runtime": 155.7,
+      "seconds_per_screenshot": 155.7
+    },
+    "source_rank_windows": 1,
     "source_rank_windows_detail": {
-      "Screenshot_20260702-082020.png": {
-        "start": 1,
-        "end": 8,
-        "count": 8,
-        "ranks": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
       "Screenshot_20260702-082210.png": {
         "start": 1,
         "end": 8,
@@ -308,41 +329,24 @@
     "rank_trace_fixed_reviews": 0,
     "ambiguous_power_reviews": 1,
     "explosive_power_traces": 2,
-    "seconds_per_screenshot": 81.6998
+    "seconds_per_screenshot": 155.7
   },
   "imports": [
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 2,
+      "rows": 1,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 2,
-      "screenshots": 2,
+      "review_count": 1,
+      "screenshots": 1,
       "source_files": [
-        "Screenshot_20260702-082020.png",
         "Screenshot_20260702-082210.png"
       ],
       "source": "REVIEW_ranking_guard_quarantine",
       "power_recovery_count": 0,
       "power_candidate_trace_count": 1,
       "power_ambiguous_count": 1
-    },
-    {
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "rows": 8,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 8,
-      "screenshots": 1,
-      "source_files": [
-        "Screenshot_20260702-082020.png"
-      ],
-      "source": "554_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
     },
     {
       "server": 554,
@@ -364,8 +368,8 @@
   "reviews": [
     {
       "server": 554,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
       "rank": null,
       "visible_rank": null,
       "source_row": 1,
@@ -386,56 +390,8 @@
           8
         ],
         "server": 554,
-        "ranking_type": "alliance_power",
-        "source_row": 1
-      },
-      "rank_trace_source": "source_row_only",
-      "target_name": "[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼",
-      "target_alliance": null,
-      "target_power_original": 7677657342,
-      "target_power_selected": 7677657342,
-      "target_source_file": "Screenshot_20260702-082020.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.00",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260702-082020.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 554,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": null,
-      "visible_rank": null,
-      "source_row": 2,
-      "target_rank": 2,
-      "raw_review_rank": 2,
-      "screenshot_rank_window": {
-        "start": 1,
-        "end": 8,
-        "count": 8,
-        "ranks": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ],
-        "server": 554,
         "ranking_type": "total_hero_power",
-        "source_row": 2
+        "source_row": 1
       },
       "rank_trace_source": "source_row_only",
       "target_name": "[MBM] yochic Rfeoezome#A",
@@ -463,13 +419,13 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "2 screenshots · 1 servers · 18 rows · 163.40s",
+      "detail": "1 screenshots · 1 servers · 9 rows · 155.70s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "18 review item(s) detected",
+      "detail": "9 review item(s) detected",
       "severity": "warning"
     }
   ],
@@ -619,7 +575,7 @@
       "end": 676,
       "servers": []
     },
-    "bound_at": "2026-07-03T16:56:50+00:00"
+    "bound_at": "2026-07-03T18:11:39+00:00"
   },
   "snapshot_id": "s6-pre-transfer-2b69ebc1",
   "snapshot_name": "S6 pre Transfer",
@@ -765,6 +721,5 @@
     "end": 676,
     "servers": []
   },
-  "schema_previous": "sentinel.import_run.v4",
-  "snapshot_export_file": "output\\snapshots\\s6-pre-transfer-2b69ebc1\\lastwar_export.xlsx"
+  "schema_previous": "sentinel.import_run.v5"
 }
