@@ -1,3 +1,17 @@
+# Project Status – Sentinel v0.9.5.84
+
+**Current version:** v0.9.5.84  
+**Focus:** Power Recovery diagnostics and measurable recognition tuning.
+
+Sentinel now separates power-recovery telemetry by failure family. This gives the next tuning sprint a clean measurement surface: 77B/79B alliance explosions, 7xxM THP explosions, low truncations and generic context candidates can be counted independently.
+
+## Current priorities
+
+1. Use family telemetry to identify which ambiguous reviews are safe tuning targets.
+2. Reduce `near_miss_ambiguous` without increasing false auto-promotions.
+3. Keep OCR Source / Operational Mapping / Operational Truth separate in all Review surfaces.
+4. Run the 99-screenshot benchmark only after candidate scoring has changed enough to expect a measurable improvement.
+
 # Project Status – Sentinel v0.9.5.82
 
 **Current version:** v0.9.5.82  

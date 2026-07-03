@@ -1,29 +1,23 @@
-# NEXT CHAT – Sentinel v0.9.5.82 Handover
+# NEXT CHAT – Sentinel v0.9.5.84 Handover
 
-Baseline: **Sentinel v0.9.5.82 – Recognition Quality Pass**
+Baseline: **Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry**
 
-Use `Sentinel_v0.9.5.82.zip` as the next baseline.
+Use `Sentinel_v0.9.5.84.zip` as the next baseline.
 
 ## What changed
 
-- Import reports now include `runtime_breakdown`.
-- Import reports now include recognition-quality counters under `recognition_quality`.
-- Command Center displays Recognition Quality and Runtime / Screenshot.
-- High alliance-power OCR explosions can be auto-promoted only when candidate evidence is very strong and source-local order is consistent.
+- Power recovery traces now include `family`.
+- Import reports summarize `by_family`, `ambiguous_by_family` and `near_miss_ambiguous`.
+- Recognition Quality exposes the same family counters for Command Center review.
+- Command Center power trace tables show the family per trace.
 
-## Next likely work
+## Recommended next work
 
-Run a small targeted test first, then one full 99-screenshot benchmark when convenient. Compare:
+Do not run the full 99-screenshot benchmark yet unless a measurable scoring change is expected. First use small targeted runs to inspect:
 
-- review item count
-- power recovered
-- power ambiguous
-- runtime per screenshot
-- OCR vs report/export time split
+- alliance high explosions
+- THP high explosions
+- low truncations
+- near-miss ambiguous cases
 
-If the 77B/79B family still produces unnecessary reviews, tune candidate scoring using the new telemetry rather than changing UI.
-
-
-## v0.9.5.83 Note
-
-The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.
+Next likely sprint: Candidate Scoring Pass focused on one family at a time.

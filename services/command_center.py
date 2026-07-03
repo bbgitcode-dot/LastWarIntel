@@ -141,7 +141,7 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
 def _power_trace_rows(import_report: dict[str, Any], limit: int = 25) -> str:
     traces = list(((import_report.get("power_recovery") or {}).get("traces") or []))[:limit]
     if not traces:
-        return '<tr><td colspan="9" class="muted">No power recovery traces.</td></tr>'
+        return '<tr><td colspan="10" class="muted">No power recovery traces.</td></tr>'
     rendered = []
     for trace in traces:
         status = trace.get("status") or ""
@@ -154,6 +154,7 @@ def _power_trace_rows(import_report: dict[str, Any], limit: int = 25) -> str:
           <td>{_e(trace.get('power_original') or '')}</td>
           <td>{_e(trace.get('power_selected') or '')}</td>
           <td><span class="badge {_badge_class(status)}">{_e(status)}</span></td>
+          <td>{_e(trace.get('family') or 'unclassified')}</td>
           <td>{_num(trace.get('confidence'), '')}</td>
           <td>{_e(trace.get('decision_reason') or '')}</td>
         </tr>
@@ -1056,7 +1057,7 @@ def render_review_evidence_pack(import_report: dict[str, Any] | None) -> str:
 <section class="grid">
 {_metric_card('Review Items', report.get('review_item_count', 0), 'evidence cards')}
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
-{_metric_card('Power Recovered', (report.get('power_recovery') or {}).get('recovered', 0), f"{(report.get('power_recovery') or {}).get('ambiguous', 0)} ambiguous")}
+{_metric_card('Power Recovered', (report.get('power_recovery') or {}).get('recovered', 0), f"{(report.get('power_recovery') or {}).get('ambiguous', 0)} ambiguous · {(report.get('power_recovery') or {}).get('near_miss_ambiguous', 0)} near-miss")}
 {_metric_card('Data Guard', (report.get('data_guard') or {}).get('status', 'n/a'), f"{(report.get('data_guard') or {}).get('warnings', 0)} warning(s)")}
 </section>
 <div class="notice">This page is intentionally narrower than the Command Center: it shows only the evidence needed to decide review items. It does not promote rows or alter exports.</div>
@@ -1087,7 +1088,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 {_metric_card('Runtime / Screenshot', runtime.get('seconds_per_screenshot', 'n/a'), 'seconds per screenshot')}
 {_metric_card('Rows', report.get('rows', 0), 'export/report rows')}
 {_metric_card('Review Items', report.get('review_item_count', 0), f"DataGuard {data_guard.get('status', 'n/a')}")}
-{_metric_card('Power Recovered', power.get('recovered', 0), f"{power.get('ambiguous', 0)} ambiguous")}
+{_metric_card('Power Recovered', power.get('recovered', 0), f"{power.get('ambiguous', 0)} ambiguous · {power.get('near_miss_ambiguous', 0)} near-miss")}
 {_metric_card('Review OCR', review_ocr.get('promoted', 0), f"{review_ocr.get('attempted', 0)} attempted")}
 {_metric_card('Row Reconstruction', row_recon.get('promoted', 0), f"{row_recon.get('attempted', 0)} attempted")}
 </section>
@@ -1097,7 +1098,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Open Review Detail / Evidence</a><a href="review_dashboard.html">Open Review Queue</a></div></section>
 <h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Operational Rank</th><th>Screenshot Window</th><th>OCR Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Runtime Telemetry</h2><section class="card"><pre>{_e(json.dumps(runtime, ensure_ascii=False, indent=2))}</pre></section>
-<h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
+<h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Family</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
 </main></body></html>"""
 

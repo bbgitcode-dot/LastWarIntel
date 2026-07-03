@@ -11,6 +11,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from collections import Counter
 
 
 DEFAULT_IMPORT_REPORT = Path("data/latest_import_report.json")
@@ -75,6 +76,7 @@ def _row_power_recovery_trace(row: dict[str, Any], *, server: Any, ranking_type:
         "power_original": _int(row.get("power_recovered_from")) or _int(row.get("power_original")) or _int(row.get("power")) or None,
         "power_selected": _int(row.get("power")) or None,
         "status": row.get("power_recovery_status") or row.get("power_sanity_status") or "unknown",
+        "family": row.get("power_recovery_family") or "unclassified",
         "method": row.get("power_recovery_method") or "",
         "confidence": _safe_float(row.get("power_sanity_confidence")),
         "candidate_count": _int(row.get("power_candidate_count")) or len(candidate_list),
@@ -393,6 +395,18 @@ def build_import_run_report(
     readiness = 100 if not effective_review_count else max(50, int(round(100 - min(effective_review_count * 5, 50))))
     power_recovered = sum(1 for trace in power_recovery_traces if trace.get("status") == "recovered")
     power_ambiguous = sum(1 for trace in power_recovery_traces if trace.get("status") in {"ambiguous", "candidate_ambiguous"})
+    power_recovery_by_family = Counter(str(trace.get("family") or "unclassified") for trace in power_recovery_traces)
+    ambiguous_by_family = Counter(
+        str(trace.get("family") or "unclassified")
+        for trace in power_recovery_traces
+        if trace.get("status") in {"ambiguous", "candidate_ambiguous"}
+    )
+    near_miss_ambiguous = sum(
+        1
+        for trace in power_recovery_traces
+        if trace.get("status") in {"ambiguous", "candidate_ambiguous"}
+        and 0 < float(trace.get("margin") or 0) < 0.05
+    )
     runtime_breakdown = dict(runtime_breakdown or {})
     if runtime_seconds and screenshots:
         runtime_breakdown.setdefault("seconds_per_screenshot", round(float(runtime_seconds) / max(int(screenshots), 1), 4))
@@ -430,6 +444,9 @@ def build_import_run_report(
             "candidate_traces": len(power_recovery_traces),
             "recovered": power_recovered,
             "ambiguous": power_ambiguous,
+            "near_miss_ambiguous": near_miss_ambiguous,
+            "by_family": dict(sorted(power_recovery_by_family.items())),
+            "ambiguous_by_family": dict(sorted(ambiguous_by_family.items())),
             "confidence_avg": round(sum(power_recovery_confidences) / len(power_recovery_confidences), 4) if power_recovery_confidences else 0,
             "traces": power_recovery_traces,
         },
@@ -451,7 +468,7 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.82",
+            "version": "v0.9.5.84",
             "auto_accepted_rows": auto_accepted,
             "power_validated_rows": power_validated,
             "power_outlier_quarantined_rows": power_outlier_quarantined,
@@ -462,6 +479,9 @@ def build_import_run_report(
             "source_rank_windows_detail": source_rank_windows,
             "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),
             "ambiguous_power_reviews": power_ambiguous,
+            "ambiguous_power_near_misses": near_miss_ambiguous,
+            "power_recovery_by_family": dict(sorted(power_recovery_by_family.items())),
+            "ambiguous_power_by_family": dict(sorted(ambiguous_by_family.items())),
             "explosive_power_traces": sum(1 for trace in power_recovery_traces if (trace.get("power_original") or 0) >= 50_000_000_000 or ((trace.get("ranking_type") == "total_hero_power") and (trace.get("power_original") or 0) >= 500_000_000)),
             "seconds_per_screenshot": round(float(runtime_seconds) / max(int(screenshots), 1), 4),
         },

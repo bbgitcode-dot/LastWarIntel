@@ -19,9 +19,11 @@ def test_import_report_exposes_runtime_and_recognition_quality_metrics():
 
     assert report["schema"] == "sentinel.import_run.v5"
     assert report["runtime_breakdown"]["row_ocr"] == 7.5
-    assert report["recognition_quality"]["version"] == "v0.9.5.82"
+    assert report["recognition_quality"]["version"] == "v0.9.5.84"
     assert report["recognition_quality"]["power_validated_rows"] == 1
     assert report["recognition_quality"]["runtime_breakdown"]["seconds_per_screenshot"] == 10.0
+    assert "power_recovery_by_family" in report["recognition_quality"]
+    assert "near_miss_ambiguous" in report["power_recovery"]
 
 
 def test_guarded_alliance_explosion_candidate_can_promote_strong_order_consistent_case():

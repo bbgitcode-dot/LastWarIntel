@@ -1,3 +1,28 @@
+## v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry
+
+- Adds explicit `power_recovery_family` classification for recovered and ambiguous power rows.
+- Splits power-recovery telemetry by family so alliance high explosions, THP high explosions, low truncations and generic context candidates are measurable separately.
+- Adds `near_miss_ambiguous` counters for close candidate margins that are prime targets for the next recognition-tuning pass.
+- Extends Command Center and Evidence Pack power-recovery summaries with near-miss counts and recovery-family labels in trace tables.
+- Keeps the .81 Review Evidence Model unchanged: OCR Source, Operational Mapping and Operational Truth remain separate.
+
+Validation:
+
+```text
+19 passed (ranking power sanity + recognition quality smoke)
+targeted compile OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "feat(recognition): classify power recovery families"
+git tag -a v0.9.5.84 -m "v0.9.5.84 Power Recovery Diagnostics"
+```
+
+
 ## v0.9.5.82 – Recognition Quality Pass
 
 - Adds runtime telemetry to import runs so OCR, parsing, recovery, report rendering and export costs are visible in `data/latest_import_report.json`.

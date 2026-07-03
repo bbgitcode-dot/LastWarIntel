@@ -540,6 +540,26 @@ def _set_power(row: dict[str, Any], value: int) -> None:
 # winner. Ambiguous candidates are quarantined for review.
 
 
+
+
+def _power_recovery_family(*, ranking_type: str, observed: int | None, recovered: int | None = None) -> str:
+    """Classify the OCR power recovery problem for diagnostics.
+
+    The family is telemetry-only. It must not decide Operational Truth.  It lets
+    the import report separate 77B/79B-style high explosions from 23M-style low
+    truncations so Recognition Quality can be optimized with evidence instead
+    of one undifferentiated ambiguous bucket.
+    """
+    if observed is None:
+        return "unknown"
+    if ranking_type == "alliance_power" and observed >= 50_000_000_000:
+        return "alliance_high_explosion"
+    if ranking_type == "total_hero_power" and observed >= 500_000_000:
+        return "thp_high_explosion"
+    if ranking_type == "total_hero_power" and 1_000_000 <= observed < 50_000_000:
+        return "thp_low_truncation"
+    return "context_candidate"
+
 def _apply_recovered_power(
     row: dict[str, Any],
     recovered_power: int,
@@ -565,7 +585,8 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_score"] = round(selected.score, 4)
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.52"
+        recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
+        recovered["power_recovery_decision_version"] = "v0.9.5.84"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -577,7 +598,8 @@ def _apply_recovered_power(
         recovered["power_sanity_confidence"] = min(0.99, max(0.50, round(selected.score, 4)))
     else:
         recovered["power_recovery_status"] = "recovered"
-        recovered["power_recovery_decision_version"] = "v0.9.5.52"
+        recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
+        recovered["power_recovery_decision_version"] = "v0.9.5.84"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -801,7 +823,8 @@ def _mark_quarantined(
         quarantined["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
-        quarantined["power_recovery_decision_version"] = "v0.9.5.52"
+        quarantined["power_recovery_family"] = _power_recovery_family(ranking_type=ranking_type, observed=_power(quarantined))
+        quarantined["power_recovery_decision_version"] = "v0.9.5.84"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)

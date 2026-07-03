@@ -1,3 +1,41 @@
+# Patch Summary – v0.9.5.84
+
+## Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry
+
+This patch prepares the next recognition-tuning step by making power-recovery failures measurable by class. It does not relax Data Guard or Ranking Guard. Quarantine remains preferred over false Operational Truth.
+
+### Changed
+
+- Added `power_recovery_family` on recovered and ambiguous power-recovery rows.
+- Added import-report counters:
+  - `power_recovery.by_family`
+  - `power_recovery.ambiguous_by_family`
+  - `power_recovery.near_miss_ambiguous`
+  - `recognition_quality.power_recovery_by_family`
+  - `recognition_quality.ambiguous_power_by_family`
+  - `recognition_quality.ambiguous_power_near_misses`
+- Added recovery family labels to static Command Center trace tables.
+- Added near-miss counts to Power Recovered metric cards.
+- Bumped recognition quality telemetry version to `v0.9.5.84`.
+
+### Validation
+
+```text
+19 passed (ranking power sanity + recognition quality smoke)
+python -m compileall -q main.py parser services application web version.py
+zip integrity OK
+```
+
+### Git
+
+```bash
+git add .
+git commit -m "feat(recognition): classify power recovery families"
+git tag -a v0.9.5.84 -m "v0.9.5.84 Power Recovery Diagnostics"
+```
+
+---
+
 # Patch Summary – v0.9.5.82
 
 ## Sentinel v0.9.5.82 – Recognition Quality Pass
