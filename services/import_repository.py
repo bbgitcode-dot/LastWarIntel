@@ -468,7 +468,7 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.84",
+            "version": "v0.9.5.85",
             "auto_accepted_rows": auto_accepted,
             "power_validated_rows": power_validated,
             "power_outlier_quarantined_rows": power_outlier_quarantined,

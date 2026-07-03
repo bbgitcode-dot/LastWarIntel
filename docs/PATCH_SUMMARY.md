@@ -1,3 +1,22 @@
+# Patch Summary – v0.9.5.85
+
+**Theme:** Recovery Promotion Rules & OCR Cache
+
+This patch turns the v0.9.5.84 diagnostics into two practical improvements: cached OCR observations for repeat/benchmark runs and a guarded promotion rule for one class of near-miss low-truncation power recoveries.
+
+## Changed
+
+- `parser/ocr_cache.py` introduces a persistent OCR cache under `data/ocr_cache/`.
+- `main.py` now uses cached metadata/row OCR by default and exposes `--no-ocr-cache`.
+- Runtime telemetry now includes `ocr_cache_hits`, `ocr_cache_misses`, `ocr_cache_writes`, and `ocr_cache_errors`.
+- `parser/ranking_power_sanity_guard.py` adds a conservative near-miss low-truncation recovery path.
+- `services/import_repository.py` reports recognition quality as `v0.9.5.85`.
+- New smoke tests cover cache behavior and the promoted near-miss recovery class.
+
+## Safety
+
+The OCR cache is an observation cache only. It does not create Operational Truth, change Data Guard decisions, or infer server/rank from filename, upload order or screenshot order. Cache misses and cache errors fall back to live OCR.
+
 # Patch Summary – v0.9.5.84
 
 ## Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry

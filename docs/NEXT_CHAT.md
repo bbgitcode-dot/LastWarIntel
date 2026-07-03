@@ -1,3 +1,20 @@
+## Next Chat – After v0.9.5.85
+
+Baseline: `Sentinel_v0.9.5.85.zip`
+
+Recommended next step:
+
+1. Run a small smoke test with `python main.py --rebuild-reports`.
+2. Run a 1–2 screenshot test twice to verify OCR cache hits on the second run.
+3. If stable, run the 99-screenshot benchmark again and compare:
+   - Runtime
+   - OCR cache hit/miss counts
+   - Review items
+   - Ambiguous power recoveries
+   - Critical count
+
+Likely next sprint: v0.9.5.86 – OCR Cache Extension & Data Quality Loop Profiling.
+
 # NEXT CHAT – Sentinel v0.9.5.84 Handover
 
 Baseline: **Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry**

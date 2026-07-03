@@ -1,3 +1,9 @@
+## Current Status – v0.9.5.85
+
+Sentinel has moved from Review UX stabilization back into recognition quality hardening. The latest benchmark showed v0.9.5.84 reduced runtime from 4446s to 3431s and reduced current review items from 13 to 12. v0.9.5.85 adds the first runtime-focused infrastructure: a content-hash OCR cache.
+
+Current focus remains **Data Quality before Intelligence**. The next measurable goals are fewer ambiguous power recoveries and lower repeat-run runtime without weakening Data Guard or Ranking Guard.
+
 # Project Status – Sentinel v0.9.5.84
 
 **Current version:** v0.9.5.84  

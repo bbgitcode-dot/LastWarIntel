@@ -9,6 +9,7 @@ from contextlib import contextmanager
 
 from parser.image import load_and_normalize_image
 from parser.ocr import create_reader, read_ocr, read_metadata_ocr, ocr_to_text
+from parser.ocr_cache import OcrCache
 from parser.server import detect_ranking_type, detect_server_consensus_from_ocr
 from parser.data_guard import resolve_server_assignment, reconcile_server_assignments_by_content
 from parser.ranking_guard import apply_ranking_guard
@@ -109,6 +110,11 @@ def parse_args(argv=None):
         action="store_true",
         help="After the import, explicitly move the active snapshot to REVIEWING/VERIFIED. By default Sentinel keeps COLLECTING so 24/7 screenshot intake is not blocked.",
     )
+    parser.add_argument(
+        "--no-ocr-cache",
+        action="store_true",
+        help="Disable the persistent OCR cache for this run. Cache is enabled by default and keyed by screenshot content hash.",
+    )
     return parser.parse_args(argv)
 
 
@@ -175,6 +181,11 @@ def main(argv=None):
     print(f"OCR Provider: {reader.info.engine} ({reader.info.name})")
     print(f"OCR Metadata Languages: {list(reader.info.metadata_languages)}")
     print(f"OCR Row Languages: {list(reader.info.row_languages)}")
+    ocr_cache = OcrCache(enabled=not args.no_ocr_cache and os.getenv("SENTINEL_OCR_CACHE", "1") != "0")
+    if ocr_cache.enabled:
+        print("OCR Cache: enabled (content-hash based)")
+    else:
+        print("OCR Cache: disabled")
 
     screenshot_patterns = _parse_screenshot_patterns(args.screenshots or os.getenv("SENTINEL_SCREENSHOTS", ""))
     screenshots = _select_screenshots(
@@ -208,14 +219,30 @@ def main(argv=None):
         # Metadata OCR intentionally runs separately with the stable metadata
         # reader. This avoids multilingual noise breaking Warzone detection.
         with _timed_stage(runtime_timings, "metadata_ocr"):
-            metadata_ocr = read_metadata_ocr(reader, image)
+            metadata_ocr = ocr_cache.get_or_compute(
+                screenshot=screenshot,
+                reader=reader,
+                image=image,
+                mode="metadata",
+                target_width=config["target_width"],
+                target_height=config["target_height"],
+                compute=lambda active_reader, active_image: read_metadata_ocr(active_reader, active_image),
+            )
             metadata_text = ocr_to_text(metadata_ocr)
             metadata_detection = detect_server_consensus_from_ocr(metadata_ocr, min_occurrences=3)
             ranking_type = detect_ranking_type(metadata_text)
 
         # Row OCR may use multilingual readers depending on the selected profile.
         with _timed_stage(runtime_timings, "row_ocr"):
-            ocr = read_ocr(reader, image)
+            ocr = ocr_cache.get_or_compute(
+                screenshot=screenshot,
+                reader=reader,
+                image=image,
+                mode="rows",
+                target_width=config["target_width"],
+                target_height=config["target_height"],
+                compute=lambda active_reader, active_image: read_ocr(active_reader, active_image),
+            )
             row_text = ocr_to_text(ocr)
         server_detection = resolve_server_assignment(metadata_detection, ocr)
 
@@ -361,6 +388,10 @@ def main(argv=None):
     else:
         with _timed_stage(runtime_timings, "excel_export"):
             export(final_grouped, filename=output_file)
+    runtime_timings["ocr_cache_hits"] = float(ocr_cache.stats.hits)
+    runtime_timings["ocr_cache_misses"] = float(ocr_cache.stats.misses)
+    runtime_timings["ocr_cache_writes"] = float(ocr_cache.stats.writes)
+    runtime_timings["ocr_cache_errors"] = float(ocr_cache.stats.errors)
     duration = time.perf_counter() - start_time
     runtime_timings["total_runtime"] = duration
     import_report = build_import_run_report(final_grouped, screenshots=len(screenshots), runtime_seconds=duration, output_file=output_file, runtime_breakdown=_rounded_timings(runtime_timings))

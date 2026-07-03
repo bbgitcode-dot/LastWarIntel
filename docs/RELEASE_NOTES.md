@@ -1,3 +1,20 @@
+## v0.9.5.85 – Recovery Promotion Rules & OCR Cache
+
+- Added a persistent, content-hash based OCR cache for metadata and row OCR observations.
+- Added CLI switch `--no-ocr-cache` and environment override `SENTINEL_OCR_CACHE=0`.
+- Added telemetry counters for OCR cache hits, misses, writes and errors.
+- Added conservative near-miss low-truncation promotion rules for order-consistent THP recoveries.
+- Updated recognition quality versioning to v0.9.5.85.
+- Added smoke coverage for OCR cache reuse and near-miss recovery promotion.
+
+Validation:
+
+```text
+21 passed
+targeted compile OK
+zip integrity OK
+```
+
 ## v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry
 
 - Adds explicit `power_recovery_family` classification for recovered and ambiguous power rows.

@@ -1,3 +1,7 @@
+## v0.9.5.85 Lesson – Cache Observations, Not Truth
+
+OCR is an expensive observation step, especially during repeated benchmark runs over the same screenshots. Caching OCR output is safe only when the cache key is based on screenshot content, OCR provider fingerprint, OCR mode and normalization parameters. The cache must never become evidence about server identity, upload order or ranking position.
+
 ## v0.9.5.84 – Power Recovery Diagnostics
 
 The 99-screenshot batch showed that `ambiguous` is not a useful single bucket. A 79B alliance explosion, a 7xxM THP explosion and a 23M low truncation require different tuning strategies. Sentinel now classifies each power-recovery trace by family and tracks near-miss ambiguous cases separately. Future recognition tuning should target one family at a time and measure whether false Operational Truth remains at zero.

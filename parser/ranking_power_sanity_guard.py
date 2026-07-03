@@ -453,6 +453,31 @@ def _recover_context_power(
                 f"selected_digit_preserving_candidate:score={best.score:.3f};"
                 f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
             )
+
+        # v0.9.5.85: near-miss low-truncation promotion.  Some rows have a
+        # weaker digit-preservation score because OCR dropped separators or mixed
+        # glyphs, but the local rank segment strongly supports one candidate and
+        # the next candidate is far behind.  Promote only when the candidate is
+        # order-consistent, supported by source-local bucket evidence, and the
+        # margin is large enough to keep close 219M/203M style cases in review.
+        if (
+            best.score >= 1.00
+            and margin >= 0.18
+            and not _has_order_break(best)
+            and any(reason == "source_local_bucket_match" for reason in best.reasons)
+            and any(
+                reason.startswith("fits_prior_neighbour_order")
+                or reason.startswith("fits_following_neighbour_order")
+                or reason.startswith("near_prior_neighbour")
+                or reason.startswith("near_following_neighbour")
+                for reason in best.reasons
+            )
+        ):
+            return best.value, candidates, (
+                f"selected_near_miss_low_truncation_candidate:score={best.score:.3f};"
+                f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
+            )
+
         return None, candidates, f"ambiguous_low_truncation_candidates:best={best.score:.3f};margin={margin:.3f}"
 
     # Segment-order tie-breaker for high OCR explosions.  This recovers rows
@@ -586,7 +611,7 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.84"
+        recovered["power_recovery_decision_version"] = "v0.9.5.85"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -599,7 +624,7 @@ def _apply_recovered_power(
     else:
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.84"
+        recovered["power_recovery_decision_version"] = "v0.9.5.85"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -824,7 +849,7 @@ def _mark_quarantined(
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
         quarantined["power_recovery_family"] = _power_recovery_family(ranking_type=ranking_type, observed=_power(quarantined))
-        quarantined["power_recovery_decision_version"] = "v0.9.5.84"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.85"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)
