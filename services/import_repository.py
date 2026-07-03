@@ -90,6 +90,76 @@ def _row_power_recovery_trace(row: dict[str, Any], *, server: Any, ranking_type:
         "candidates": candidate_list,
     }
 
+
+def _rank_value(row: dict[str, Any]) -> int | None:
+    rank = _int(row.get("rank")) or _int(row.get("computed_rank")) or _int(row.get("ocr_rank"))
+    return rank or None
+
+
+def _build_source_rank_windows(grouped: dict[tuple[Any, str], list[dict[str, Any]]]) -> dict[str, dict[str, Any]]:
+    """Infer visible rank windows per screenshot from trusted non-review rows.
+
+    Quarantine rows are stored under the synthetic REVIEW/ranking_guard bucket
+    and historically kept their quarantine ordinal as ``rank``.  For human
+    review that is misleading: a screenshot showing ranks 64-72 must surface
+    rank 66, not review item #3.  This helper records the actual visible rank
+    range from the normal import rows of the same screenshot.  The mapping uses
+    only same-screenshot evidence and never filename/upload order as truth.
+    """
+    windows: dict[str, dict[str, Any]] = {}
+    for (server, ranking_type), rows in grouped.items():
+        if ranking_type in {"data_guard_quarantine", "ranking_guard_quarantine"}:
+            continue
+        for row in rows or []:
+            source = str(row.get("source_file") or "")
+            rank = _rank_value(row)
+            if not source or rank is None:
+                continue
+            bucket = windows.setdefault(source, {"min": rank, "max": rank, "ranks": set(), "server": server if isinstance(server, int) else None, "ranking_type": ranking_type})
+            bucket["min"] = min(int(bucket["min"]), rank)
+            bucket["max"] = max(int(bucket["max"]), rank)
+            bucket["ranks"].add(rank)
+            if isinstance(server, int):
+                bucket["server"] = server
+            if ranking_type in {"alliance_power", "total_hero_power"}:
+                bucket["ranking_type"] = ranking_type
+    normalized: dict[str, dict[str, Any]] = {}
+    for source, bucket in windows.items():
+        ranks = sorted(int(v) for v in bucket.get("ranks", set()))
+        normalized[source] = {
+            "start": int(bucket["min"]),
+            "end": int(bucket["max"]),
+            "count": len(ranks),
+            "ranks": ranks,
+            "server": bucket.get("server"),
+            "ranking_type": bucket.get("ranking_type"),
+        }
+    return normalized
+
+
+def _visible_rank_from_window(row: dict[str, Any], source_rank_windows: dict[str, dict[str, Any]]) -> tuple[int | None, dict[str, Any] | None, str]:
+    raw_rank = _rank_value(row)
+    source = str(row.get("source_file") or "")
+    window = source_rank_windows.get(source)
+    explicit = _int(row.get("visible_rank")) or _int(row.get("source_rank")) or _int(row.get("display_rank"))
+    if explicit:
+        return explicit, window, "explicit_visible_rank"
+    if raw_rank is None:
+        return None, window, "rank_missing"
+    if not window:
+        return raw_rank, None, "no_screenshot_window"
+    start = int(window.get("start") or 0)
+    end = int(window.get("end") or 0)
+    count = int(window.get("count") or max(0, end - start + 1))
+    # If the quarantine rank looks like a row ordinal inside this screenshot,
+    # translate it into the visible ranking rank. Example: window 64-72 and
+    # quarantine rank 3 => visible rank 66.
+    if start and count and 1 <= raw_rank <= count and end >= start:
+        return start + raw_rank - 1, window, "derived_from_screenshot_window"
+    if start <= raw_rank <= end:
+        return raw_rank, window, "already_visible_rank"
+    return raw_rank, window, "outside_window_kept_raw"
+
 def _status_for_group(rows: list[dict[str, Any]]) -> tuple[str, int, int]:
     if not rows:
         return "Incomplete", 0, 0
@@ -129,6 +199,7 @@ def build_import_run_report(
     row_reconstruction_promoted = 0
     row_reconstruction_no_promotion = 0
     row_reconstruction_scores: list[float] = []
+    source_rank_windows = _build_source_rank_windows(grouped)
 
     for (server, ranking_type), rows in sorted(grouped.items(), key=lambda item: str(item[0])):
         rows = list(rows or [])
@@ -219,11 +290,17 @@ def build_import_run_report(
                     "screenshot": row.get("source_file") or "",
                 })
             elif ranking_type == "ranking_guard_quarantine":
+                visible_rank, rank_window, rank_source = _visible_rank_from_window(row, source_rank_windows)
+                raw_rank = _rank_value(row)
                 review_items.append({
-                    "server": _int(row.get("original_server")) or None,
-                    "ranking_type": str(row.get("original_ranking_type") or row.get("ranking_type") or "unknown"),
-                    "expected_ranking_type": str(row.get("expected_ranking_type") or "unknown"),
-                    "rank": _int(row.get("rank")) or _int(row.get("computed_rank")) or None,
+                    "server": _int(row.get("original_server")) or (rank_window or {}).get("server") or None,
+                    "ranking_type": str(row.get("original_ranking_type") or row.get("ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
+                    "expected_ranking_type": str(row.get("expected_ranking_type") or (rank_window or {}).get("ranking_type") or "unknown"),
+                    "rank": visible_rank,
+                    "visible_rank": visible_rank,
+                    "raw_review_rank": raw_rank,
+                    "screenshot_rank_window": rank_window,
+                    "rank_trace_source": rank_source,
                     "title": "Ranking Guard quarantine",
                     "description": str(row.get("ranking_guard_warning") or "Ranking Guard isolated this row instead of guessing a ranking type."),
                     "severity": "warning",
@@ -257,7 +334,7 @@ def build_import_run_report(
     power_recovered = sum(1 for trace in power_recovery_traces if trace.get("status") == "recovered")
     power_ambiguous = sum(1 for trace in power_recovery_traces if trace.get("status") in {"ambiguous", "candidate_ambiguous"})
     return {
-        "schema": "sentinel.import_run.v1",
+        "schema": "sentinel.import_run.v4",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "runtime_seconds": round(float(runtime_seconds), 2),
         "screenshots": int(screenshots),
@@ -306,6 +383,14 @@ def build_import_run_report(
             "no_promotion": row_reconstruction_no_promotion,
             "confidence_avg": round(sum(row_reconstruction_scores) / len(row_reconstruction_scores), 4) if row_reconstruction_scores else 0,
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
+        },
+        "recognition_quality": {
+            "version": "v0.9.5.76",
+            "source_rank_windows": len(source_rank_windows),
+            "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),
+            "ambiguous_power_reviews": power_ambiguous,
+            "explosive_power_traces": sum(1 for trace in power_recovery_traces if (trace.get("power_original") or 0) >= 50_000_000_000 or ((trace.get("ranking_type") == "total_hero_power") and (trace.get("power_original") or 0) >= 500_000_000)),
+            "seconds_per_screenshot": round(float(runtime_seconds) / max(int(screenshots), 1), 4),
         },
         "imports": server_imports,
         "reviews": review_items,

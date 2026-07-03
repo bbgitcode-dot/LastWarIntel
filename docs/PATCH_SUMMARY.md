@@ -1,3 +1,33 @@
+# Patch Summary
+
+**Current release:** v0.9.5.76 – Recognition Quality & Data Integrity Pass  
+
+## What changed
+
+- Added screenshot-window based visible-rank derivation for ranking-guard review items.
+- Preserved raw quarantine row index separately as `raw_review_rank`.
+- Added `visible_rank`, `screenshot_rank_window`, and `rank_trace_source` to reports, evidence packs, dashboards, and review history.
+- Added recognition-quality telemetry to `data/latest_import_report.json`.
+- Added review-history stale/current counters to make 13 current review items vs. 16 persistent open reviews explainable instead of misleading.
+- Added smoke test: `tests/smoke/test_review_rank_trace.py`.
+
+## Validation
+
+```text
+14 passed
+zip integrity OK
+```
+
+## Git
+
+```bash
+git add .
+git commit -m "feat(recognition): add review rank trace and quality telemetry"
+git tag -a v0.9.5.76 -m "v0.9.5.76 Recognition Quality and Data Integrity Pass"
+```
+
+---
+
 # Release Notes
 
 **Current release:** v0.9.5.75 – Snapshot Lifecycle & Operational Readiness  

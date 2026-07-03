@@ -114,7 +114,7 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
     if limit is not None:
         reviews = reviews[:limit]
     if not reviews:
-        return '<tr><td colspan="11" class="muted">No review items.</td></tr>'
+        return '<tr><td colspan="13" class="muted">No review items.</td></tr>'
     rendered = []
     for idx, item in enumerate(reviews, start=1):
         review_id = f"REV-{idx:03d}"
@@ -124,7 +124,9 @@ def _review_rows(import_report: dict[str, Any], limit: int | None = None) -> str
           <td>{evidence_link}</td>
           <td>{_e(item.get('server') or '')}</td>
           <td>{_e(item.get('ranking_type') or '')}</td>
-          <td>{_e(item.get('rank') or '')}</td>
+          <td>{_e(item.get('visible_rank') or item.get('rank') or '')}</td>
+          <td>{_e(_rank_window_label(item))}</td>
+          <td>{_e(item.get('raw_review_rank') or '')}</td>
           <td>{_e(item.get('title') or '')}</td>
           <td>{_e(item.get('reason') or '')}</td>
           <td>{_e(item.get('review_ocr_status') or '')}</td>
@@ -271,6 +273,8 @@ def _trace_match_score(review: dict[str, Any], trace: dict[str, Any]) -> float:
         score += 4.0
     if str(review.get("rank") or "") == str(trace.get("rank") or ""):
         score += 2.0
+    elif review.get("raw_review_rank") not in (None, "") and str(review.get("raw_review_rank")) == str(trace.get("rank") or ""):
+        score += 1.8
     review_type = str(review.get("ranking_type") or "")
     expected_type = str(review.get("expected_ranking_type") or "")
     trace_type = str(trace.get("ranking_type") or "")
@@ -317,6 +321,16 @@ def _review_trace_for(review: dict[str, Any], trace_index: dict[str, Any]) -> di
     if quarantine_key in exact:
         return exact[quarantine_key]
 
+    raw_rank = review.get("raw_review_rank")
+    if raw_rank not in (None, ""):
+        for raw_key in (
+            (str(review.get("screenshot") or ""), str(review.get("ranking_type") or ""), str(raw_rank)),
+            (str(review.get("screenshot") or ""), str(review.get("expected_ranking_type") or ""), str(raw_rank)),
+            (str(review.get("screenshot") or ""), "ranking_guard_quarantine", str(raw_rank)),
+        ):
+            if raw_key in exact:
+                return exact[raw_key]
+
     candidates = list((trace_index.get("by_screenshot") or {}).get(str(review.get("screenshot") or ""), []))
     if not candidates:
         return None
@@ -337,6 +351,35 @@ def _fmt_power(value: Any) -> str:
     except (TypeError, ValueError):
         return str(value)
 
+
+
+def _display_rank(item: dict[str, Any], trace: dict[str, Any] | None = None) -> Any:
+    return item.get("visible_rank") or item.get("rank") or (trace or {}).get("rank") or "?"
+
+
+def _rank_window_label(item: dict[str, Any]) -> str:
+    window = item.get("screenshot_rank_window")
+    if not isinstance(window, dict):
+        return "n/a"
+    start = window.get("start")
+    end = window.get("end")
+    if start and end:
+        return f"{start}-{end}"
+    ranks = window.get("ranks") or []
+    if ranks:
+        return f"{min(ranks)}-{max(ranks)}"
+    return "n/a"
+
+
+def _rank_trace_hint(item: dict[str, Any]) -> str:
+    raw = item.get("raw_review_rank")
+    source = item.get("rank_trace_source") or ""
+    window = _rank_window_label(item)
+    if source == "derived_from_screenshot_window" and raw:
+        return f"Screenshot window {window}; raw review row {raw}"
+    if window != "n/a":
+        return f"Screenshot window {window}; {source or 'rank trace'}"
+    return source or "n/a"
 
 def _problem_type(review: dict[str, Any], trace: dict[str, Any] | None) -> str:
     reason = str(review.get("reason") or "")
@@ -391,7 +434,8 @@ def _choice_list(trace: dict[str, Any] | None) -> list[dict[str, Any]]:
 def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict[str, Any] | None) -> str:
     problem_type = _problem_type(review, trace)
     ranking_type = str(review.get("ranking_type") or "Ranking")
-    rank = review.get("rank") or "?"
+    rank = _display_rank(review, trace)
+    rank_hint = _rank_trace_hint(review)
     server = review.get("server") or review.get("candidate_server") or "unbekannt"
     subject = "Datensatz"
     if ranking_type == "alliance_power":
@@ -406,21 +450,21 @@ def _human_problem_statement(review_id: str, review: dict[str, Any], trace: dict
             if choice.get("value") is not None:
                 candidate_bits.append(f"{choice['label']}: {_fmt_power(choice.get('value'))}")
         candidates = ", ".join(candidate_bits) if candidate_bits else "keine sichere Kandidatenliste"
-        return f"{review_id}: Ich konnte die {subject} auf Server {server}, Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe."
+        return f"{review_id}: Ich konnte die {subject} auf Server {server}, sichtbarer Rang {rank}, nicht eindeutig bestimmen. {candidates} oder manuelle Eingabe. ({rank_hint})"
 
     if problem_type == "alliance_power_outlier":
-        return f"{review_id}: Die Allianzstärke auf Server {server}, Rang {rank}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen."
+        return f"{review_id}: Die Allianzstärke auf Server {server}, sichtbarer Rang {rank}, wirkt im lokalen Kontext wie ein Ausreißer. Bitte visuell prüfen, ob Wert und Ranking-Typ wirklich stimmen. ({rank_hint})"
 
     if problem_type == "server_assignment_unclear":
         return f"{review_id}: Ich konnte den Screenshot-Block nicht eindeutig einem Server zuordnen. Bitte Serverkopf prüfen und den Datensatz nur übernehmen, wenn Server {server} visuell bestätigt ist."
 
     if problem_type == "name_unclear":
-        return f"{review_id}: Der Name des Eintrags auf Server {server}, Rang {rank}, ist nicht eindeutig lesbar. Bitte Name manuell prüfen oder ergänzen."
+        return f"{review_id}: Der Name des Eintrags auf Server {server}, sichtbarer Rang {rank}, ist nicht eindeutig lesbar. Bitte Name manuell prüfen oder ergänzen. ({rank_hint})"
 
     if problem_type == "rank_or_row_unclear":
-        return f"{review_id}: Rang oder Zeilenposition auf Server {server}, Rang {rank}, ist nicht eindeutig. Bitte Nachbarzeilen prüfen."
+        return f"{review_id}: Rang oder Zeilenposition auf Server {server}, sichtbarer Rang {rank}, ist nicht eindeutig. Bitte Nachbarzeilen prüfen. ({rank_hint})"
 
-    return f"{review_id}: Dieser Datensatz auf Server {server}, Rang {rank}, braucht eine manuelle Prüfung, bevor er Operational Truth werden darf."
+    return f"{review_id}: Dieser Datensatz auf Server {server}, sichtbarer Rang {rank}, braucht eine manuelle Prüfung, bevor er Operational Truth werden darf. ({rank_hint})"
 
 
 def _confidence_label(trace: dict[str, Any] | None) -> str:
@@ -478,6 +522,10 @@ def _history_record_from_evidence(item: dict[str, Any], *, created_at: Any, sour
         "server": item.get("server"),
         "ranking_type": item.get("ranking_type"),
         "rank": item.get("rank"),
+        "visible_rank": item.get("visible_rank") or item.get("rank"),
+        "raw_review_rank": item.get("raw_review_rank"),
+        "screenshot_rank_window": item.get("screenshot_rank_window"),
+        "rank_trace_source": item.get("rank_trace_source"),
         "reason": item.get("reason"),
         "problem_type": item.get("problem_type"),
         "problem_statement": item.get("problem_statement"),
@@ -539,6 +587,7 @@ def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) 
             ordered.append(normalized)
 
     source_created_at = evidence.get("source_report_created_at")
+    current_identities: set[str] = set()
     for item in evidence.get("items") or []:
         incoming = _history_record_from_evidence(
             item,
@@ -546,6 +595,7 @@ def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) 
             source_created_at=source_created_at,
         )
         identity = incoming["review_identity"]
+        current_identities.add(identity)
         if identity in by_identity:
             by_identity[identity] = _merge_history_record(by_identity[identity], incoming)
         else:
@@ -554,11 +604,18 @@ def _history_payload(existing: dict[str, Any] | None, evidence: dict[str, Any]) 
 
     # Preserve stable display order while using the merged record for each identity.
     items = [by_identity[item["review_identity"]] for item in ordered if item.get("review_identity") in by_identity]
+    for item in items:
+        item["current_run_seen"] = item.get("review_identity") in current_identities
     items = items[-500:]
+    open_count = sum(1 for item in items if item.get("status") == "OPEN")
+    open_current_count = sum(1 for item in items if item.get("status") == "OPEN" and item.get("current_run_seen"))
+    stale_open_count = sum(1 for item in items if item.get("status") == "OPEN" and not item.get("current_run_seen"))
     return {
         "schema": "sentinel.review_history.v1",
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "open_count": sum(1 for item in items if item.get("status") == "OPEN"),
+        "open_count": open_count,
+        "open_current_count": open_current_count,
+        "stale_open_count": stale_open_count,
         "resolved_count": sum(1 for item in items if item.get("status") == "RESOLVED"),
         "items": items,
     }
@@ -662,6 +719,10 @@ def _evidence_items(import_report: dict[str, Any]) -> list[dict[str, Any]]:
             "candidate_server": review.get("candidate_server"),
             "ranking_type": review.get("ranking_type"),
             "rank": review.get("rank"),
+            "visible_rank": review.get("visible_rank") or review.get("rank"),
+            "raw_review_rank": review.get("raw_review_rank"),
+            "screenshot_rank_window": review.get("screenshot_rank_window"),
+            "rank_trace_source": review.get("rank_trace_source"),
             "title": review.get("title"),
             "reason": review.get("reason"),
             "description": review.get("description"),
@@ -740,7 +801,7 @@ def _evidence_cards(import_report: dict[str, Any]) -> str:
           <div class="row between"><h3>{_e(item.get('id'))} · {_e(item.get('problem_label') or item.get('title'))}</h3><span class="badge {_badge_class('warning')}">{_e(item.get('reason'))}</span></div>
           <div class="action"><b>Problem:</b> {_e(item.get('problem_statement') or '')}</div>
           <div class="evidence-grid">
-            <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · rank {_e(item.get('rank'))}</div></div>
+            <div><div class="label">Location</div><b>Server {_e(item.get('server') or 'REVIEW')}</b><div class="hint">{_e(item.get('ranking_type'))} · visible rank {_e(item.get('visible_rank') or item.get('rank'))}</div><div class="hint">{_e(_rank_trace_hint(item))}</div></div>
             <div><div class="label">OCR / Original</div><b>{_e(_fmt_power(item.get('power_original')))}</b><div class="hint">selected {_e(_fmt_power(item.get('power_selected')))}</div></div>
             <div><div class="label">Best vs second</div><b>{_e(_fmt_power(item.get('best_candidate')))} / {_e(_fmt_power(item.get('second_candidate')))}</b><div class="hint">margin {_num(item.get('margin'), 'n/a')} · {_e(item.get('confidence_label') or '')}</div></div>
             <div><div class="label">Review status</div><b>{_e(item.get('review_ocr_status') or 'n/a')}</b><div class="hint">row recon {_e(item.get('row_reconstruction_status') or 'n/a')}</div></div>
@@ -788,7 +849,8 @@ def _history_rows(history: dict[str, Any] | None, limit: int = 200) -> str:
           <td>{_e(item.get('history_key') or '')}</td>
           <td>{_e(item.get('server') or '')}</td>
           <td>{_e(item.get('ranking_type') or '')}</td>
-          <td>{_e(item.get('rank') or '')}</td>
+          <td>{_e(item.get('visible_rank') or item.get('rank') or '')}</td>
+          <td>{_e('current' if item.get('current_run_seen') else 'stale')}</td>
           <td>{_e(item.get('problem_type') or '')}</td>
           <td>{_e(item.get('problem_statement') or '')}</td>
           <td>{_e(item.get('screenshot') or '')}</td>
@@ -833,7 +895,7 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 <body><header><h1>Sentinel Review Center</h1><div class="muted">Generated {generated_at} · <span class="badge {_badge_class(status)}">{_e(status)}</span></div>
 <div class="links"><a href="command_center.html">Command Center</a><a href="review_dashboard.html">Review Queue</a><a href="review_evidence_pack.html">Review Detail / Evidence</a></div></header><main>
 <section class="grid">
-{_metric_card('Open Reviews', open_count, 'persistent review history')}
+{_metric_card('Open Reviews', open_count, f"{(history or {}).get('stale_open_count', 0)} stale / {(history or {}).get('open_current_count', open_count)} current")}
 {_metric_card('Resolved Reviews', resolved_count, 'manual resolution foundation')}
 {_metric_card('Current Run Items', report.get('review_item_count', 0), 'latest report')}
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
@@ -841,7 +903,7 @@ def render_review_center(import_report: dict[str, Any] | None, history: dict[str
 <div class="tabs"><a href="#open">Open Reviews</a><a href="#history">History</a><a href="command_center.html">Back to Command Center</a></div>
 <div class="notice">The static Review Center remains a run-detail view. Interactive resolution is available through the web Review Center (/reviews), where decisions are stored in persistent review history without changing Operational Truth.</div>
 <h2 id="open">Open Reviews</h2>{_review_center_cards(report)}
-<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th><th>Resolution</th><th>Comment</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
+<h2 id="history">Review History</h2><div class="table-wrap"><table><thead><tr><th>Status</th><th>Key</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Run</th><th>Type</th><th>Problem</th><th>Screenshot</th><th>Seen</th><th>Created</th><th>Last Seen</th><th>Resolution</th><th>Comment</th></tr></thead><tbody>{_history_rows(history)}</tbody></table></div>
 </main></body></html>"""
 
 
@@ -892,7 +954,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <h2>Server Overview</h2><section class="server-grid">{_server_cards(report)}</section>
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
 <h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Open Review Detail / Evidence</a><a href="review_dashboard.html">Open Review Queue</a></div></section>
-<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
+<h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Screenshot Window</th><th>Raw Review Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
 </main></body></html>"""
@@ -912,7 +974,7 @@ def render_review_dashboard(import_report: dict[str, Any] | None) -> str:
 {_metric_card('Import Review Count', report.get('import_review_count', 0), 'guard warnings')}
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'operational gate')}
 </section>
-<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Rank</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
+<h2>All Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Visible Rank</th><th>Screenshot Window</th><th>Raw Review Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report)}</tbody></table></div>
 </main></body></html>"""
 
 

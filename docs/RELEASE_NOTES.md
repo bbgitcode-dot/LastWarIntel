@@ -1,5 +1,36 @@
 # Release Notes
 
+**Current release:** v0.9.5.76 – Recognition Quality & Data Integrity Pass  
+
+## v0.9.5.76 – Recognition Quality & Data Integrity Pass
+
+Focus: harden screenshot recognition and review explainability based on the first 99-screenshot production-style run.
+
+### Added
+
+- Review Rank Trace: ranking-guard reviews now distinguish the Review ID/raw quarantine row from the actual visible ranking rank in the screenshot.
+- Screenshot rank-window awareness: review items can carry `screenshot_rank_window`, `visible_rank`, `raw_review_rank`, and `rank_trace_source`.
+- Recognition telemetry in the import report, including source rank-window count, rank-trace fixes, explosive power traces, ambiguous power reviews, and seconds per screenshot.
+- Review history current/stale markers plus current/stale open counts to explain differences between current review items and persistent historical open reviews.
+- Smoke coverage for screenshot-window rank mapping.
+
+### Fixed
+
+- Misleading review wording such as “Rang 2” or “Rang 3” when the linked screenshot actually shows a later rank window such as 10–18 or 64–72.
+- Trace matching now falls back to `raw_review_rank`, so evidence can still bind after the visible rank is corrected for the human review surface.
+
+### Git
+
+```bash
+git add .
+git commit -m "feat(recognition): add review rank trace and quality telemetry"
+git tag -a v0.9.5.76 -m "v0.9.5.76 Recognition Quality and Data Integrity Pass"
+```
+
+---
+
+# Release Notes
+
 **Current release:** v0.9.5.75 – Snapshot Lifecycle & Operational Readiness  
 
 ## v0.9.5.75 – Snapshot Lifecycle & Operational Readiness

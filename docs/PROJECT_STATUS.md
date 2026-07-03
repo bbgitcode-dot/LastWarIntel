@@ -1,169 +1,33 @@
-# Sentinel Project Status
+# Project Status
 
-**Current version:** v0.9.5.75  
-**Current sprint:** Snapshot Lifecycle & Operational Readiness  
-**Status:** Data Foundation v1.0 hardening nearing completion.
+**Current version:** v0.9.5.76  
+**Sprint:** Recognition Quality & Data Integrity Pass
 
-## v0.9.5.75 – Snapshot Lifecycle & Operational Readiness
+## Status
 
-Implemented snapshot lifecycle states: `OPEN`, `COLLECTING`, `REVIEWING`, `VERIFIED`, `LOCKED`, `ARCHIVED`. Screenshot imports are accepted only while a screenshot snapshot is `OPEN` or `COLLECTING`; editable snapshot fields are blocked once the snapshot reaches review/verification/lock states.
+Snapshot foundation is functionally closed for now. The active focus has moved back to screenshot-derived data integrity and recognition quality.
 
-Operational Readiness now evaluates expected feeds, validated feed coverage, missing feeds, open reviews, Data Guard status and Ranking Guard rejection state before a snapshot can be treated as Operational Truth evidence. Completion reports are written to `reports/snapshots/<snapshot_id>/completion_report.json` when a snapshot is verified or locked. Snapshot audit events record creation, activation, edits, status transitions and report generation.
+## v0.9.5.76 outcome
 
-Data Quality remains ahead of Intelligence: lifecycle and readiness gates do not promote imported rows by themselves. They only state whether the snapshot is ready to serve as explainable evidence.
+The first production-style run over 99 screenshots exposed a critical review-reporting issue: review IDs/raw quarantine indices were being presented like visible ranking ranks. This release fixes that by deriving the visible rank from the same screenshot's trusted rank window and preserving the raw review row separately.
 
----
-
-# Sentinel Project Status
-
-**Current version:** v0.9.5.74  
-**Current sprint:** Snapshot Server Scope & Dynamic Completeness  
-**Baseline code:** v0.9.5.72  
-**Primary focus:** Data integrity before intelligence
-
-## Current Philosophy
-
-**Data Quality comes before Intelligence.**
-
-Sentinel is not just an OCR project. OCR is one sensor in a broader explainable strategic intelligence platform for Last War. The current objective is to make screenshot-derived data reliable, auditable and safe before building deeper assessment and recommendation logic.
-
-The guiding rule remains:
-
-> Quarantine is preferred over false Operational Truth.
-
-Operational Truth may only emerge through guarded validation, Data Guard, Ranking Guard, explicit recovery evidence and Human Review. A dashboard, import script or reviewer click must not silently rewrite truth.
-
-## Current system state
-
-### Stable / usable foundations
-
-- Local screenshot OCR pipeline and parser.
-- Ranking extraction for `alliance_power` and `total_hero_power`.
-- Data Guard protection for server assignment and runtime truth.
-- Ranking Guard for ranking-type contamination and power sanity issues.
-- Context-aware power candidate recovery with candidate metadata.
-- Review OCR and row reconstruction as conservative remediation stages.
-- Persistent Review History (`data/review_history.json`).
-- Web Review Center with detail view, screenshot preview, screenshot link and calibrated rank highlight overlay.
-- Command Center with Operational Readiness, drilldowns, Imports, Quality and Review navigation.
-- Historical Excel importer with fast bulk import and report output.
-- Historical coverage baseline from `input/LastWarS5_post_Transfer.xlsx` and `input/LastWarS6_pre-season.xlsx`.
-- Managed Snapshot foundation with enforced screenshot upload binding and JSON-backed active snapshot context.
-- Snapshot-level coverage for expected feeds, imported feeds, missing combinations and open reviews.
-
-### Current data-source separation
-
-Sentinel must keep these contexts separate:
-
-| Context | Purpose | Truth status |
-| --- | --- | --- |
-| Current Run | Latest screenshot OCR/import report | Candidate operational evidence |
-| Review History | Human-in-the-loop open/resolved review state | Audit/workflow state |
-| Historical Dataset | Imported Excel baseline and historical coverage | Reference data |
-| Benchmark/Ground Truth | Test and validation data | Development-only validation |
-| Operational Truth | Data safe enough for strategic use | Guarded output only |
-
-Server 551 benchmark data must not appear as current-run quality unless it is actually part of the active run or historical dataset view. Historical records may appear under historical coverage, not as live operational completeness.
-
-## Recent sprint achievements
-
-### v0.9.5.47–v0.9.5.54 – Data Integrity Fortress
-- Added context-aware power candidate recovery.
-- Reduced false OCR digit explosions by scoring candidates against local ranking context.
-- Added recovery metadata to reports and exports.
-- Added bounded row reconstruction for missing/truncated rows.
-- Reinforced the rule that ambiguous cases must remain in quarantine.
-
-### v0.9.5.55–v0.9.5.61 – Review System Foundation
-- Added Command Center and Review Dashboard.
-- Added Review Evidence Pack.
-- Added human-readable review problem statements, choices and explainability traces.
-- Added persistent review history and resolution-state foundation.
-- Clarified that review resolution is audit evidence, not an immediate export override.
-
-### v0.9.5.62–v0.9.5.65 – Review UX and Evidence Detail
-- Consolidated visible navigation.
-- Added screenshot links in review detail.
-- Added screenshot preview and rank highlight overlay.
-- Calibrated overlay so the marked rank aligns with the visible row.
-
-### v0.9.5.66–v0.9.5.70 – Operational Readiness and Historical Coverage
-- Added Operational Readiness tiles and drilldowns.
-- Corrected current-run vs historical vs benchmark separation.
-- Added fast historical Excel import.
-- Added historical import report and coverage drilldown.
-
-### v0.9.5.71 – Snapshot Management Foundation
-- Added JSON-backed managed snapshots.
-- Added active snapshot display in Command Center and Import Center.
-- Introduced Snapshot as the planned container for future screenshot uploads.
-
-### v0.9.5.73 – Snapshot Upload Binding & Import Context Enforcement
-- Screenshot import now requires an active `screenshot_upload` snapshot.
-- Latest import report is bound to the active snapshot and upgraded to `sentinel.import_run.v2`.
-- Default screenshot export path is snapshot-scoped under `output/snapshots/<snapshot_id>/`.
-- Review evidence and persistent review history keep snapshot id/name context.
-- Import Center shows active snapshot coverage, missing expected feeds and open reviews bound to the snapshot.
-- Unbound latest reports are explicitly warned against so phases such as `S6 pre Transfer` cannot be silently mixed with another event.
-
-
-### v0.9.5.74 – Snapshot Server Scope & Dynamic Completeness
-- Replaced ambiguous expected-server text with explicit Server Scope.
-- Added `all`, `range` and `selected` server-scope modes.
-- Range scope expands inclusively, so `549-676` becomes 128 expected servers.
-- Snapshot completeness now reports imported valid feeds / expected feeds.
-- Active snapshots can be edited while open/importing/review; completed/closed snapshots are protected.
-
-## Immediate next steps
-
-### Next development focus: Snapshot close/freeze semantics and screenshot preflight
-
-The active snapshot context is now enforced for screenshot imports. The next hardening step is to make snapshot lifecycle decisions explicit.
-
-Required next work:
-
-1. Add snapshot close/freeze semantics with a protected read-only state.
-2. Add screenshot quality preflight before OCR import.
-3. Add duplicate screenshot detection inside the active snapshot.
-4. Add clearer source-local missing-data causes.
-5. Prepare snapshot-to-snapshot compare without mixing Current Run, Historical Dataset, Benchmark/Ground Truth or Operational Truth.
-
-Example target snapshot:
+Sentinel now reports review location as:
 
 ```text
-Snapshot: S6 pre Transfer
-Type: screenshot_upload
-Expected feeds: alliance_power, total_hero_power
-Status: open/importing/review/complete
+Server
+Ranking Type
+Visible Rank
+Screenshot Window
+Raw Review Row
 ```
 
-### Following focus: Upload/OCR integrity last-mile improvements
+instead of collapsing those concepts into a single misleading `rank`.
 
-After snapshot workflow is explicit, return to data-integrity improvements:
+## Next priority
 
-- image upload preflight checks,
-- screenshot quality scoring,
-- duplicate screenshot detection,
-- row geometry confidence,
-- source-local completeness checks,
-- review crop/line evidence where needed,
-- clearer missing-data causes.
+Continue Recognition Quality hardening:
 
-## Known risks and limitations
-
-- Snapshot binding is foundational but not yet fully enforced across all import artifacts.
-- Review resolution is stored as workflow evidence; guarded override into exports still needs a separate Manual Override Engine.
-- Historical data is imported and visible but must remain reference coverage until explicitly promoted by future guarded workflows.
-- ADR files currently contain duplicate numbers from earlier sprint history. The canonical architectural decisions are summarized in `docs/ARCHITECTURAL_DECISIONS.md`; ADR numbering should be cleaned in a later documentation/refactoring sprint.
-- Static output artifacts still exist alongside web pages. The long-term goal is a single navigable web flow.
-
-## Definition of done for the current phase
-
-The current Data Integrity phase is complete when:
-
-- every screenshot import belongs to an explicit snapshot,
-- current run, historical data and benchmark data cannot be confused,
-- all suspicious power/name/rank/server cases are either recovered with strong evidence or quarantined,
-- review items are explainable and actionable,
-- unresolved reviews block Operational Truth instead of silently exporting questionable data,
-- the Command Center answers: what exists, what is complete, what is missing and what needs human action.
+- reduce ambiguous candidate margins,
+- tighten false/aggressive power explosion handling,
+- use recognition telemetry to locate runtime bottlenecks,
+- keep quarantine preferred over false Operational Truth.

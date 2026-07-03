@@ -125,3 +125,10 @@ Snapshot: S6 pre Transfer
 ## Guardrail
 
 The UI may explain, link and collect review decisions, but it must not silently change Operational Truth.
+
+
+---
+
+## v0.9.5.76 Recognition Quality Note
+
+Review Rank Trace is now part of the data-quality boundary. Review surfaces must not treat technical review IDs or quarantine-row ordinals as Operational Truth ranks. Sentinel carries `visible_rank`, `raw_review_rank`, `screenshot_rank_window`, and `rank_trace_source` so human reviewers see the same rank range that appears in the linked screenshot.

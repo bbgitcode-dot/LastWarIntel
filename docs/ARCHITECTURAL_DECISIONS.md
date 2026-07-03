@@ -95,3 +95,10 @@ Decision:
 - Completed, closed, locked or archived snapshots are protected against scope edits.
 
 Rationale: the snapshot defines what complete means. Sentinel must never treat filename order, upload order or a hard-coded season size as truth.
+
+
+---
+
+## v0.9.5.76 Recognition Quality Note
+
+Review Rank Trace is now part of the data-quality boundary. Review surfaces must not treat technical review IDs or quarantine-row ordinals as Operational Truth ranks. Sentinel carries `visible_rank`, `raw_review_rank`, `screenshot_rank_window`, and `rank_trace_source` so human reviewers see the same rank range that appears in the linked screenshot.
