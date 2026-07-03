@@ -1,21 +1,22 @@
-# Patch Summary – v0.9.5.81
+# Patch Summary – v0.9.5.82
 
-## Sentinel v0.9.5.81 – Review Evidence Model
+## Sentinel v0.9.5.82 – Recognition Quality Pass
 
-This patch fixes the review explanation model: the highlighted screenshot row is now explicitly treated as OCR evidence, while Operational Rank remains unresolved unless Sentinel can prove it.
+This patch turns the 99-screenshot production batch into measurable recognition quality telemetry. It does not expand Intelligence. It improves the ability to see where OCR/recovery time and review load are produced.
 
 ### Changed
 
-- Review Detail separates OCR Source, Evidence Location, and Operational Mapping.
-- Source-row-only overlays are labelled `OCR Row N`.
-- Review list and history no longer present screenshot-local rows as global ranks.
-- Static review reports use Operational Rank / OCR Evidence wording.
-- Documentation records the separation of OCR observation, mapping hypothesis, and Operational Truth.
+- Added per-stage runtime telemetry to `main.py`.
+- Extended import reports to schema `sentinel.import_run.v5`.
+- Added recognition quality counters and recovery success rate.
+- Added conservative high-explosion candidate auto-promotion for strong, order-consistent alliance-power candidates.
+- Added Command Center cards for Recognition Quality and Runtime / Screenshot.
+- Documentation updated for the recognition-quality sprint.
 
 ### Validation
 
 ```text
-pytest tests/smoke/test_review_identity_consistency.py tests/smoke/test_review_context.py
+16 passed
 compileall OK
 zip integrity OK
 ```
@@ -24,6 +25,6 @@ zip integrity OK
 
 ```bash
 git add .
-git commit -m "fix(review): separate OCR source from operational mapping"
-git tag -a v0.9.5.81 -m "v0.9.5.81 Review Evidence Model"
+git commit -m "feat(data-guard): add recognition quality telemetry"
+git tag -a v0.9.5.82 -m "v0.9.5.82 Recognition Quality Pass"
 ```

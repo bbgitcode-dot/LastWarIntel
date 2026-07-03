@@ -1,19 +1,24 @@
-# NEXT CHAT – Sentinel v0.9.5.81 Handover
+# NEXT CHAT – Sentinel v0.9.5.82 Handover
 
-Baseline: **Sentinel v0.9.5.81 – Review Evidence Model**
+Baseline: **Sentinel v0.9.5.82 – Recognition Quality Pass**
 
-Use `Sentinel_v0.9.5.81.zip` as the next baseline.
+Use `Sentinel_v0.9.5.82.zip` as the next baseline.
 
-## Key point
+## What changed
 
-Review evidence is now separated into three concepts:
-
-1. OCR Source – what the screenshot/OCR row says.
-2. Operational Mapping – Sentinel's hypothesis and candidate scoring.
-3. Operational Truth – only after human resolution / guarded promotion.
-
-Do not display source-row ordinals as proven ranks. Keep the yellow overlay, but label it as OCR Row when global rank is not proven.
+- Import reports now include `runtime_breakdown`.
+- Import reports now include recognition-quality counters under `recognition_quality`.
+- Command Center displays Recognition Quality and Runtime / Screenshot.
+- High alliance-power OCR explosions can be auto-promoted only when candidate evidence is very strong and source-local order is consistent.
 
 ## Next likely work
 
-Return to recognition quality: false power explosions, ambiguous candidate margins, review-history cleanup, and runtime profiling.
+Run a small targeted test first, then one full 99-screenshot benchmark when convenient. Compare:
+
+- review item count
+- power recovered
+- power ambiguous
+- runtime per screenshot
+- OCR vs report/export time split
+
+If the 77B/79B family still produces unnecessary reviews, tune candidate scoring using the new telemetry rather than changing UI.

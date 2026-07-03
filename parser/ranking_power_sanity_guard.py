@@ -479,6 +479,24 @@ def _recover_context_power(
 
     if best.score >= 0.58 and margin >= 0.10:
         return best.value, candidates, f"selected_clear_candidate:score={best.score:.3f};margin={margin:.3f}"
+
+    # v0.9.5.82: conservative high-explosion promotion.  The 99-screenshot
+    # baseline showed 77B/79B alliance values that were clearly OCR magnitude
+    # explosions but still became manual reviews because the top two candidates
+    # were close.  Promote only when the winning candidate is very strong, the
+    # score margin is non-trivial, and the candidate does not break any
+    # neighbour-order evidence.  Borderline low-score cases still go to review.
+    if (
+        ranking_type == "alliance_power"
+        and (_power(row) or 0) >= 50_000_000_000
+        and best.score >= 1.00
+        and margin >= 0.02
+        and not _has_order_break(best)
+        and any(reason.startswith("fits_prior_neighbour_order") for reason in best.reasons)
+        and any(reason.startswith("fits_following_neighbour_order") for reason in best.reasons)
+        and any(reason == "source_local_bucket_match" for reason in best.reasons)
+    ):
+        return best.value, candidates, f"selected_guarded_explosion_candidate:score={best.score:.3f};margin={margin:.3f}"
     return None, candidates, f"ambiguous_candidates:best={best.score:.3f};margin={margin:.3f}"
 
 

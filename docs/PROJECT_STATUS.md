@@ -1,3 +1,17 @@
+# Project Status – Sentinel v0.9.5.82
+
+**Current version:** v0.9.5.82  
+**Focus:** Recognition Quality Pass / measurable data-recognition improvement.
+
+Sentinel now records runtime and recognition-quality telemetry for screenshot imports. The goal is to reduce avoidable human reviews and make the expensive 99-screenshot benchmark measurable before deeper OCR tuning.
+
+## Current priorities
+
+1. Reduce false high-power OCR explosions.
+2. Reduce ambiguous candidate reviews where the evidence is already strong.
+3. Use runtime telemetry to identify the real performance bottleneck before optimizing.
+4. Keep review explainability from .81 intact: OCR Source, Operational Mapping and Operational Truth remain separate.
+
 # Project Status – Sentinel v0.9.5.81
 
 **Current version:** v0.9.5.81  

@@ -223,6 +223,7 @@ def build_import_run_report(
     screenshots: int,
     runtime_seconds: float,
     output_file: str,
+    runtime_breakdown: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     server_imports: list[dict[str, Any]] = []
     review_items: list[dict[str, Any]] = []
@@ -235,6 +236,9 @@ def build_import_run_report(
     power_recovery_traces: list[dict[str, Any]] = []
     power_recovery_confidences: list[float] = []
     import_review_count_total = 0
+    power_validated = 0
+    power_outlier_quarantined = 0
+    rows_with_power = 0
     review_ocr_attempted = 0
     review_ocr_promoted = 0
     review_ocr_no_promotion = 0
@@ -259,6 +263,13 @@ def build_import_run_report(
         import_review_count_total += review_count
         group_power_traces: list[dict[str, Any]] = []
         for row in rows:
+            if row.get("power") is not None or row.get("hero_power") is not None or row.get("alliance_power") is not None:
+                rows_with_power += 1
+            if row.get("power_sanity_status") == "validated":
+                power_validated += 1
+            if row.get("power_sanity_status") in {"candidate_ambiguous", "quarantine"} or "power_sanity" in str(row.get("ranking_guard_warning") or ""):
+                if ranking_type == "ranking_guard_quarantine":
+                    power_outlier_quarantined += 1
             if row.get("review_ocr_status"):
                 if row.get("review_ocr_attempted"):
                     review_ocr_attempted += 1
@@ -382,10 +393,16 @@ def build_import_run_report(
     readiness = 100 if not effective_review_count else max(50, int(round(100 - min(effective_review_count * 5, 50))))
     power_recovered = sum(1 for trace in power_recovery_traces if trace.get("status") == "recovered")
     power_ambiguous = sum(1 for trace in power_recovery_traces if trace.get("status") in {"ambiguous", "candidate_ambiguous"})
+    runtime_breakdown = dict(runtime_breakdown or {})
+    if runtime_seconds and screenshots:
+        runtime_breakdown.setdefault("seconds_per_screenshot", round(float(runtime_seconds) / max(int(screenshots), 1), 4))
+
+    auto_accepted = max(0, rows_with_power - power_outlier_quarantined)
     return {
-        "schema": "sentinel.import_run.v4",
+        "schema": "sentinel.import_run.v5",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "runtime_seconds": round(float(runtime_seconds), 2),
+        "runtime_breakdown": runtime_breakdown,
         "screenshots": int(screenshots),
         "output_file": output_file,
         "servers": sorted(servers),
@@ -400,7 +417,7 @@ def build_import_run_report(
             "status": "Warning" if effective_review_count else "Healthy",
             "warnings": effective_review_count,
             "critical": 0,
-            "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "ranking_recovery", "quarantine"],
+            "checks": ["server_assignment", "data_quality_loop", "ranking_guard", "ranking_recovery", "quarantine", "recognition_quality"],
         },
         "ranking_recovery": {
             "attempts": recovery_attempts,
@@ -434,7 +451,13 @@ def build_import_run_report(
             "strategy": "source_local_anchor_bounded_gap_reconstruction",
         },
         "recognition_quality": {
-            "version": "v0.9.5.81",
+            "version": "v0.9.5.82",
+            "auto_accepted_rows": auto_accepted,
+            "power_validated_rows": power_validated,
+            "power_outlier_quarantined_rows": power_outlier_quarantined,
+            "human_review_items": len(review_items),
+            "power_recovery_success_rate": round(power_recovered / max(len(power_recovery_traces), 1), 4),
+            "runtime_breakdown": runtime_breakdown,
             "source_rank_windows": len(source_rank_windows),
             "source_rank_windows_detail": source_rank_windows,
             "rank_trace_fixed_reviews": sum(1 for item in review_items if item.get("rank_trace_source") == "derived_from_screenshot_window"),

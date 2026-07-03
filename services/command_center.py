@@ -1069,6 +1069,8 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
     power = report.get("power_recovery") or {}
     review_ocr = report.get("review_ocr") or {}
     row_recon = report.get("row_reconstruction") or {}
+    recognition = report.get("recognition_quality") or {}
+    runtime = report.get("runtime_breakdown") or recognition.get("runtime_breakdown") or {}
     status = report.get("status") or "No report"
     generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     inference_rows = len((inference or {}).get("inferences") or (inference or {}).get("rows") or []) if inference else 0
@@ -1081,6 +1083,8 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 {_metric_card('Readiness', report.get('readiness', 'n/a'), 'Operational confidence gate')}
 {_metric_card('Servers', report.get('server_count', 0), ', '.join(str(v) for v in report.get('servers', [])))}
 {_metric_card('Screenshots', report.get('screenshots', 0), f"Runtime {_num(report.get('runtime_seconds'))}s")}
+{_metric_card('Recognition Quality', recognition.get('power_recovery_success_rate', 'n/a'), f"{recognition.get('human_review_items', 0)} reviews · {recognition.get('power_outlier_quarantined_rows', 0)} quarantined")}
+{_metric_card('Runtime / Screenshot', runtime.get('seconds_per_screenshot', 'n/a'), 'seconds per screenshot')}
 {_metric_card('Rows', report.get('rows', 0), 'export/report rows')}
 {_metric_card('Review Items', report.get('review_item_count', 0), f"DataGuard {data_guard.get('status', 'n/a')}")}
 {_metric_card('Power Recovered', power.get('recovered', 0), f"{power.get('ambiguous', 0)} ambiguous")}
@@ -1092,6 +1096,7 @@ def render_command_center(import_report: dict[str, Any] | None, ground_truth: di
 <h2>Ground Truth</h2><section class="grid">{_ground_truth_panel(ground_truth)}</section>
 <h2>Review Center</h2><section class="card"><b>Human-in-the-loop review workspace</b><p class="muted">Open review items, review history, and explainability traces are available in the integrated Review Center.</p><div class="links"><a href="review_center.html">Open Review Center</a><a href="review_evidence_pack.html">Open Review Detail / Evidence</a><a href="review_dashboard.html">Open Review Queue</a></div></section>
 <h2>Recent Review Items</h2><div class="table-wrap"><table><thead><tr><th>Evidence</th><th>Server</th><th>Ranking</th><th>Operational Rank</th><th>Screenshot Window</th><th>OCR Row</th><th>Title</th><th>Reason</th><th>Review OCR</th><th>Row Recon</th><th>Score</th><th>Screenshot</th><th>Description</th></tr></thead><tbody>{_review_rows(report, limit=30)}</tbody></table></div>
+<h2>Runtime Telemetry</h2><section class="card"><pre>{_e(json.dumps(runtime, ensure_ascii=False, indent=2))}</pre></section>
 <h2>Power Recovery Traces</h2><div class="table-wrap"><table><thead><tr><th>Server</th><th>Ranking</th><th>Rank</th><th>Name</th><th>Original</th><th>Selected</th><th>Status</th><th>Confidence</th><th>Decision</th></tr></thead><tbody>{_power_trace_rows(report)}</tbody></table></div>
 <h2>Inference</h2><section class="card"><b>{_e(inference_rows)}</b> inference rows detected in the latest inference report. Inference remains read-only unless promoted by explicit guarded runtime logic.</section>
 </main></body></html>"""

@@ -1,3 +1,28 @@
+## v0.9.5.82 – Recognition Quality Pass
+
+- Adds runtime telemetry to import runs so OCR, parsing, recovery, report rendering and export costs are visible in `data/latest_import_report.json`.
+- Adds recognition-quality metrics: auto-accepted rows, power-validated rows, power-outlier quarantines, human review items and power-recovery success rate.
+- Adds a conservative guarded promotion path for high alliance-power OCR explosions when candidate evidence is strong, order-consistent and source-local.
+- Command Center surfaces Recognition Quality and Runtime / Screenshot metrics for faster quality benchmarking.
+- Keeps Continuous Collection behavior from .80: normal imports do not close the snapshot.
+
+Validation:
+
+```text
+16 passed
+compileall OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "feat(data-guard): add recognition quality telemetry"
+git tag -a v0.9.5.82 -m "v0.9.5.82 Recognition Quality Pass"
+```
+
+
 ## v0.9.5.81 – Review Evidence Model
 
 - Separates Review UI into **OCR Source**, **Operational Mapping**, and pending **Operational Truth**.
@@ -559,7 +584,7 @@ pytest tests/smoke/test_semantic_ranking_guard.py \
        tests/smoke/test_sentinel_ranking_guard.py \
        tests/smoke/test_ranking_recovery.py -q
 
-14 passed
+16 passed
 ```
 
 Full smoke collection still contains pre-existing invalid legacy smoke files unrelated to this patch.

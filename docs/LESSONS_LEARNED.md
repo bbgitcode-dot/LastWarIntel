@@ -22,3 +22,8 @@ Screenshot import runs are not collection boundaries. A snapshot may remain `COL
 ## v0.9.5.81 – Review Evidence Model
 
 Reviews now distinguish OCR Source, Operational Mapping, and Operational Truth. Source-row overlays remain useful, but must be labelled as OCR evidence rather than proven ranking facts when global rank mapping is unresolved.
+
+
+## v0.9.5.82 – Recognition Quality Telemetry
+
+Recognition optimization must be measured before it is tuned. Runtime, recovery rate, ambiguous power reviews and quarantine counts are now first-class import report metrics. The 99-screenshot run should be used as an integration benchmark, not as the only developer feedback loop.
