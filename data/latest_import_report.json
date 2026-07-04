@@ -1,49 +1,43 @@
 {
   "schema": "sentinel.import_run.v3",
-  "created_at": "2026-07-04T13:42:20.040680+00:00",
-  "runtime_seconds": 3976.62,
+  "created_at": "2026-07-04T15:18:39.284518+00:00",
+  "runtime_seconds": 1007.32,
   "runtime_breakdown": {
-    "adaptive_review_ocr": 112.3061,
-    "data_quality_loop": 2098.2523,
-    "excel_export": 0.9647,
-    "image_load_normalize": 5.2493,
-    "merge_rows": 0.0097,
-    "metadata_ocr": 786.3062,
+    "adaptive_review_ocr": 45.9495,
+    "data_quality_loop": 574.554,
+    "excel_export": 1.865,
+    "image_load_normalize": 1.74,
+    "merge_rows": 0.0023,
+    "metadata_ocr": 154.8984,
     "ocr_cache_errors": 0.0,
     "ocr_cache_hits": 0.0,
-    "ocr_cache_misses": 228.0,
+    "ocr_cache_misses": 36.0,
     "ocr_cache_writes": 0.0,
-    "ocr_reader_init": 9.3642,
-    "player_snapshot_build": 0.0674,
-    "power_sanity_recovery": 0.0383,
-    "ranking_guard": 0.011,
-    "row_ocr": 958.4344,
-    "row_parse": 0.1841,
+    "ocr_reader_init": 46.2478,
+    "player_snapshot_build": 0.0367,
+    "power_sanity_recovery": 0.0042,
+    "ranking_guard": 0.0022,
+    "row_ocr": 179.23,
+    "row_parse": 0.0587,
     "server_reconciliation": 0.0001,
-    "total_runtime": 3976.6168,
-    "seconds_per_screenshot": 34.8826
+    "total_runtime": 1007.3163,
+    "seconds_per_screenshot": 55.962
   },
-  "screenshots": 114,
+  "screenshots": 18,
   "output_file": "output\\snapshots\\s6-pre-transfer-2b69ebc1\\lastwar_export.xlsx",
   "servers": [
-    549,
-    550,
-    551,
-    552,
-    553,
-    554,
-    555
+    551
   ],
-  "server_count": 7,
-  "rows": 319,
+  "server_count": 1,
+  "rows": 129,
   "status": "Review",
   "readiness": 50,
-  "review_count": 319,
-  "review_item_count": 12,
-  "import_review_count": 319,
+  "review_count": 128,
+  "review_item_count": 3,
+  "import_review_count": 128,
   "data_guard": {
     "status": "Warning",
-    "warnings": 319,
+    "warnings": 128,
     "critical": 0,
     "checks": [
       "server_assignment",
@@ -58,264 +52,28 @@
     "attempts": 0,
     "success": 0,
     "calibrated_pass": 0,
-    "rejected": 12,
+    "rejected": 3,
     "confidence_avg": 0
   },
   "power_recovery": {
-    "candidate_traces": 17,
-    "recovered": 8,
-    "ambiguous": 9,
-    "near_miss_ambiguous": 8,
+    "candidate_traces": 8,
+    "recovered": 1,
+    "ambiguous": 3,
+    "near_miss_ambiguous": 2,
     "by_family": {
-      "alliance_high_explosion": 5,
-      "thp_high_explosion": 10,
-      "thp_low_truncation": 2
+      "thp_low_truncation": 4,
+      "unclassified": 4
     },
     "ambiguous_by_family": {
-      "alliance_high_explosion": 4,
-      "thp_high_explosion": 4,
-      "thp_low_truncation": 1
+      "thp_low_truncation": 3
     },
-    "confidence_avg": 0.8757,
+    "confidence_avg": 1.05,
     "traces": [
       {
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260702-082140.png",
-        "rank": 1,
-        "ocr_rank": null,
-        "name": "[KOLT] 5oh9o3588",
-        "power_original": 776246374,
-        "power_selected": 776246374,
-        "status": "ambiguous",
-        "family": "thp_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 5,
-        "best_candidate": 176246374,
-        "best_score": 0.7136,
-        "second_candidate": 172246374,
-        "second_score": 0.6999,
-        "margin": 0.0137,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 176246374,
-            "score": 0.7136,
-            "reasons": [
-              "local_median_distance:0.023",
-              "near_following_neighbour",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3289
-          },
-          {
-            "value": 172246374,
-            "score": 0.6999,
-            "reasons": [
-              "local_median_distance:0.000",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 171246374,
-            "score": 0.6983,
-            "reasons": [
-              "local_median_distance:0.006",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 170246374,
-            "score": 0.5767,
-            "reasons": [
-              "local_median_distance:0.012",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 276246374,
-            "score": 0.4111,
-            "reasons": [
-              "local_median_distance:0.603",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3289
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-194413.png",
-        "rank": 3,
-        "ocr_rank": 3,
-        "name": "[EWY] umar712233",
-        "power_original": 798830284,
-        "power_selected": 798830284,
-        "status": "ambiguous",
-        "family": "thp_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 7,
-        "best_candidate": 201830284,
-        "best_score": 0.4593,
-        "second_candidate": 202830284,
-        "second_score": 0.4579,
-        "margin": 0.0014,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 201830284,
-            "score": 0.4593,
-            "reasons": [
-              "local_median_distance:0.003",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 202830284,
-            "score": 0.4579,
-            "reasons": [
-              "local_median_distance:0.008",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 196830284,
-            "score": 0.4538,
-            "reasons": [
-              "local_median_distance:0.022",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 195830284,
-            "score": 0.4524,
-            "reasons": [
-              "local_median_distance:0.027",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 194830284,
-            "score": 0.451,
-            "reasons": [
-              "local_median_distance:0.032",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 198830284,
-            "score": 0.4166,
-            "reasons": [
-              "local_median_distance:0.012",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.2844
-          },
-          {
-            "value": 298830284,
-            "score": 0.2043,
-            "reasons": [
-              "local_median_distance:0.485",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.2844
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260702-082210.png",
-        "rank": 6,
-        "ocr_rank": 6,
-        "name": "[MBM] yochic Rfeoezome#A",
-        "power_original": 767730565,
-        "power_selected": 767730565,
-        "status": "ambiguous",
-        "family": "thp_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 4,
-        "best_candidate": 167730565,
-        "best_score": 0.7124,
-        "second_candidate": 159730565,
-        "second_score": 0.6939,
-        "margin": 0.0185,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 167730565,
-            "score": 0.7124,
-            "reasons": [
-              "local_median_distance:0.027",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3289
-          },
-          {
-            "value": 159730565,
-            "score": 0.6939,
-            "reasons": [
-              "local_median_distance:0.022",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 158730565,
-            "score": 0.6922,
-            "reasons": [
-              "local_median_distance:0.028",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 267730565,
-            "score": -0.019,
-            "reasons": [
-              "local_median_distance:0.639",
-              "breaks_prior_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3289
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
         "source_file": "2026-06-29 14_45_40-Window.png",
-        "rank": 7,
+        "rank": 1,
         "ocr_rank": null,
         "name": "[IVE] Kg Thunder 升孕)",
         "power_original": 25009089,
@@ -395,547 +153,189 @@
       {
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260702-082010.png",
-        "rank": 8,
-        "ocr_rank": 8,
-        "name": "[TOs] tigris rte@R09#B Of shadow",
-        "power_original": 77756681920,
-        "power_selected": 77756681920,
+        "source_file": "2026-06-29 14_46_26-Window.png",
+        "rank": 2,
+        "ocr_rank": null,
+        "name": "[IVE] M0/X HUNI",
+        "power_original": 23956100,
+        "power_selected": 23956100,
         "status": "ambiguous",
-        "family": "alliance_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 9,
-        "best_candidate": 4756681920,
-        "best_score": 0.5501,
-        "second_candidate": 5756681920,
-        "second_score": 0.5132,
-        "margin": 0.0369,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 4756681920,
-            "score": 0.5501,
-            "reasons": [
-              "local_median_distance:0.036",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 5756681920,
-            "score": 0.5132,
-            "reasons": [
-              "local_median_distance:0.167",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 3756681920,
-            "score": 0.4933,
-            "reasons": [
-              "local_median_distance:0.238",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 6756681920,
-            "score": 0.4564,
-            "reasons": [
-              "local_median_distance:0.370",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 10756681920,
-            "score": 0.28,
-            "reasons": [
-              "local_median_distance:1.181",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 20756681920,
-            "score": 0.28,
-            "reasons": [
-              "local_median_distance:3.209",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 17756681920,
-            "score": 0.1,
-            "reasons": [
-              "local_median_distance:2.600",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 27756681920,
-            "score": 0.1,
-            "reasons": [
-              "local_median_distance:4.628",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 37756681920,
-            "score": 0.1,
-            "reasons": [
-              "local_median_distance:6.656",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260704-000352.png",
-        "rank": 9,
-        "ocr_rank": 9,
-        "name": "[KOS] HellBilly 世 [tFHe#B3",
-        "power_original": 770653976,
-        "power_selected": 770653976,
-        "status": "ambiguous",
-        "family": "thp_high_explosion",
+        "family": "thp_low_truncation",
         "method": "",
         "confidence": 0.0,
         "candidate_count": 6,
-        "best_candidate": 173653976,
-        "best_score": 0.6968,
-        "second_candidate": 177653976,
-        "second_score": 0.6903,
-        "margin": 0.0065,
+        "best_candidate": 230956100,
+        "best_score": 1.0318,
+        "second_candidate": 203956100,
+        "second_score": 0.8145,
+        "margin": 0.2173,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
         "decision_version": "v0.9.5.87",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 173653976,
-            "score": 0.6968,
-            "reasons": [
-              "local_median_distance:0.011",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 177653976,
-            "score": 0.6903,
-            "reasons": [
-              "local_median_distance:0.035",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 171653976,
-            "score": 0.58,
-            "reasons": [
-              "local_median_distance:0.000",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 172653976,
-            "score": 0.5784,
+            "value": 230956100,
+            "score": 1.0318,
             "reasons": [
               "local_median_distance:0.006",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2578
-          },
-          {
-            "value": 270653976,
-            "score": 0.4186,
-            "reasons": [
-              "local_median_distance:0.577",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3289
-          },
-          {
-            "value": 170653976,
-            "score": 0.4183,
-            "reasons": [
-              "local_median_distance:0.006",
-              "breaks_following_neighbour_order",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3289
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-194308.png",
-        "rank": 7,
-        "ocr_rank": null,
-        "name": "[kk7] 3arb Rlemow 驺",
-        "power_original": 77739565950,
-        "power_selected": 77739565950,
-        "status": "ambiguous",
-        "family": "alliance_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 8,
-        "best_candidate": 10739565950,
-        "best_score": 0.9343,
-        "second_candidate": 9739565950,
-        "second_score": 0.918,
-        "margin": 0.0162,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 10739565950,
-            "score": 0.9343,
-            "reasons": [
-              "local_median_distance:0.378",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 9739565950,
-            "score": 0.918,
-            "reasons": [
-              "local_median_distance:0.436",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 17739565950,
-            "score": 0.9121,
-            "reasons": [
-              "local_median_distance:0.028",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 25739565950,
-            "score": 0.9023,
-            "reasons": [
-              "local_median_distance:0.492",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 18739565950,
-            "score": 0.8959,
-            "reasons": [
-              "local_median_distance:0.086",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 27739565950,
-            "score": 0.8699,
-            "reasons": [
-              "local_median_distance:0.608",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 3739565950,
-            "score": 0.8207,
-            "reasons": [
-              "local_median_distance:0.783",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 37739565950,
-            "score": 0.16,
-            "reasons": [
-              "local_median_distance:1.187",
-              "breaks_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          }
-        ]
-      },
-      {
-        "server": null,
-        "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-003252.png",
-        "rank": 8,
-        "ocr_rank": null,
-        "name": "[PAN] 己九CIIHNEKOPANC",
-        "power_original": 77709655122,
-        "power_selected": 77709655122,
-        "status": "ambiguous",
-        "family": "alliance_high_explosion",
-        "method": "",
-        "confidence": 0.0,
-        "candidate_count": 8,
-        "best_candidate": 22709655122,
-        "best_score": 0.7966,
-        "second_candidate": 27709655122,
-        "second_score": 0.7425,
-        "margin": 0.054,
-        "decision_reason": "quarantined_ambiguous_candidates",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 22709655122,
-            "score": 0.7966,
-            "reasons": [
-              "local_median_distance:0.012",
               "fits_prior_neighbour_order",
               "source_local_bucket_match",
-              "non_top_alliance_context"
+              "digit_preservation:0.640",
+              "ocr_error_model:insert_zero"
             ],
-            "digit_preservation_score": 0.28
+            "digit_preservation_score": 0.64
           },
           {
-            "value": 27709655122,
-            "score": 0.7425,
+            "value": 203956100,
+            "score": 0.8145,
             "reasons": [
-              "local_median_distance:0.205",
+              "local_median_distance:0.122",
               "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
             ],
-            "digit_preservation_score": 0.3273
+            "digit_preservation_score": 0.62
           },
           {
-            "value": 12709655122,
-            "score": 0.6748,
-            "reasons": [
-              "local_median_distance:0.447",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 23709655122,
-            "score": 0.6713,
+            "value": 239561000,
+            "score": 0.5514,
             "reasons": [
               "local_median_distance:0.031",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 20709655122,
-            "score": 0.6522,
-            "reasons": [
-              "local_median_distance:0.099",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 19709655122,
-            "score": 0.64,
-            "reasons": [
-              "local_median_distance:0.143",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 17709655122,
-            "score": 0.5557,
-            "reasons": [
-              "local_median_distance:0.230",
-              "fits_prior_neighbour_order",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 37709655122,
-            "score": 0.0208,
-            "reasons": [
-              "local_median_distance:0.640",
               "breaks_prior_neighbour_order",
-              "non_top_alliance_context"
+              "digit_preservation:1.000",
+              "ocr_error_model:scale_x10_truncated_digit"
             ],
-            "digit_preservation_score": 0.3273
+            "digit_preservation_score": 1.0
+          },
+          {
+            "value": 239506100,
+            "score": 0.4683,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.820",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.82
+          },
+          {
+            "value": 239056100,
+            "score": 0.464,
+            "reasons": [
+              "local_median_distance:0.029",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.800",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.8
+          },
+          {
+            "value": 239560100,
+            "score": 0.4394,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.700",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.7
           }
         ]
       },
       {
         "server": null,
         "ranking_type": "ranking_guard_quarantine",
-        "source_file": "Screenshot_20260701-003328.png",
-        "rank": 9,
+        "source_file": "2026-06-29 14_47_24-Window.png",
+        "rank": 3,
         "ocr_rank": null,
-        "name": "[uiz] Eureka [terHmo#33",
-        "power_original": 70057779917,
-        "power_selected": 70057779917,
+        "name": "瓯 Kriegspiel",
+        "power_original": 21900298,
+        "power_selected": 21900298,
         "status": "ambiguous",
-        "family": "alliance_high_explosion",
+        "family": "thp_low_truncation",
         "method": "",
         "confidence": 0.0,
-        "candidate_count": 9,
-        "best_candidate": 6057779917,
-        "best_score": 0.6719,
-        "second_candidate": 5057779917,
-        "second_score": 0.6303,
-        "margin": 0.0416,
+        "candidate_count": 6,
+        "best_candidate": 219002980,
+        "best_score": 1.1201,
+        "second_candidate": 219000298,
+        "second_score": 1.0993,
+        "margin": 0.0208,
         "decision_reason": "quarantined_ambiguous_candidates",
         "decision_strategy": "context_candidate_margin",
         "decision_version": "v0.9.5.87",
         "legacy_used": false,
         "candidates": [
           {
-            "value": 6057779917,
-            "score": 0.6719,
+            "value": 219002980,
+            "score": 1.1201,
             "reasons": [
-              "local_median_distance:0.100",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.840",
+              "ocr_error_model:scale_x10_truncated_digit"
             ],
-            "digit_preservation_score": 0.28
+            "digit_preservation_score": 0.84
           },
           {
-            "value": 5057779917,
-            "score": 0.6303,
+            "value": 219000298,
+            "score": 1.0993,
             "reasons": [
-              "local_median_distance:0.249",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.920",
+              "ocr_error_model:insert_zero"
             ],
-            "digit_preservation_score": 0.28
+            "digit_preservation_score": 0.92
           },
           {
-            "value": 9057779917,
-            "score": 0.6033,
+            "value": 219002908,
+            "score": 0.9169,
             "reasons": [
-              "local_median_distance:0.345",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.660",
+              "ocr_error_model:low_truncation_candidate"
             ],
-            "digit_preservation_score": 0.28
+            "digit_preservation_score": 0.66
           },
           {
-            "value": 10057779917,
-            "score": 0.5618,
+            "value": 219002098,
+            "score": 0.9121,
             "reasons": [
-              "local_median_distance:0.494",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.640",
+              "ocr_error_model:low_truncation_candidate"
             ],
-            "digit_preservation_score": 0.3091
+            "digit_preservation_score": 0.64
           },
           {
-            "value": 8057779917,
-            "score": 0.5249,
+            "value": 210900298,
+            "score": 0.8418,
             "reasons": [
-              "local_median_distance:0.197",
-              "near_following_neighbour",
-              "source_local_bucket_match"
+              "local_median_distance:0.042",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.640",
+              "ocr_error_model:insert_zero"
             ],
-            "digit_preservation_score": 0.28
+            "digit_preservation_score": 0.64
           },
           {
-            "value": 4057779917,
-            "score": 0.4687,
+            "value": 201900298,
+            "score": 0.8256,
             "reasons": [
-              "local_median_distance:0.397",
-              "near_following_neighbour",
-              "source_local_bucket_match"
+              "local_median_distance:0.083",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
             ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 20057779917,
-            "score": 0.24,
-            "reasons": [
-              "local_median_distance:1.979",
-              "fits_following_neighbour_order"
-            ],
-            "digit_preservation_score": 0.3091
-          },
-          {
-            "value": 30057779917,
-            "score": 0.24,
-            "reasons": [
-              "local_median_distance:3.464",
-              "fits_following_neighbour_order"
-            ],
-            "digit_preservation_score": 0.3091
-          },
-          {
-            "value": 40057779917,
-            "score": 0.12,
-            "reasons": [
-              "local_median_distance:4.949",
-              "fits_following_neighbour_order",
-              "too_close_to_observed_explosion"
-            ],
-            "digit_preservation_score": 0.3091
+            "digit_preservation_score": 0.62
           }
         ]
       },
@@ -944,6 +344,357 @@
         "ranking_type": "total_hero_power",
         "source_file": "2026-06-29 14_45_10-Window.png",
         "rank": 8,
+        "ocr_rank": 8,
+        "name": "PENDING REVIEW | MEITTi X 叫@1",
+        "power_original": 32030601,
+        "power_selected": 32030601,
+        "status": "pending_review",
+        "family": "unclassified",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 5,
+        "best_candidate": 302030601,
+        "best_score": 0.8419,
+        "second_candidate": 320306010,
+        "second_score": 0.4974,
+        "margin": 0.3446,
+        "decision_reason": "",
+        "decision_strategy": "",
+        "decision_version": "",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 302030601,
+            "score": 0.8419,
+            "reasons": [
+              "local_median_distance:0.025",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.62
+          },
+          {
+            "value": 320306010,
+            "score": 0.4974,
+            "reasons": [
+              "local_median_distance:0.087",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.840",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ],
+            "digit_preservation_score": 0.84
+          },
+          {
+            "value": 320030601,
+            "score": 0.4576,
+            "reasons": [
+              "local_median_distance:0.086",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.840",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.84
+          },
+          {
+            "value": 320300601,
+            "score": 0.3278,
+            "reasons": [
+              "local_median_distance:0.086",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.800",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.8
+          },
+          {
+            "value": 320306001,
+            "score": 0.3038,
+            "reasons": [
+              "local_median_distance:0.087",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.700",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.7
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_45_40-Window.png",
+        "rank": null,
+        "ocr_rank": null,
+        "name": "PENDING REVIEW | Kg Thunder 升孕)",
+        "power_original": 25009089,
+        "power_selected": 25009089,
+        "status": "pending_review",
+        "family": "unclassified",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 5,
+        "best_candidate": 250090890,
+        "best_score": 0.9335,
+        "second_candidate": 250009089,
+        "second_score": 0.9079,
+        "margin": 0.0257,
+        "decision_reason": "",
+        "decision_strategy": "",
+        "decision_version": "",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 250090890,
+            "score": 0.9335,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.840",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ],
+            "digit_preservation_score": 0.84
+          },
+          {
+            "value": 250009089,
+            "score": 0.9079,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.900",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.9
+          },
+          {
+            "value": 205009089,
+            "score": 0.7917,
+            "reasons": [
+              "local_median_distance:0.204",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.62
+          },
+          {
+            "value": 250090089,
+            "score": 0.7351,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.680",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.68
+          },
+          {
+            "value": 250090809,
+            "score": 0.7303,
+            "reasons": [
+              "local_median_distance:0.029",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.660",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.66
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_46_26-Window.png",
+        "rank": null,
+        "ocr_rank": null,
+        "name": "PENDING REVIEW | M0/X HUNI",
+        "power_original": 23956100,
+        "power_selected": 23956100,
+        "status": "pending_review",
+        "family": "unclassified",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 6,
+        "best_candidate": 230956100,
+        "best_score": 1.0318,
+        "second_candidate": 203956100,
+        "second_score": 0.8145,
+        "margin": 0.2173,
+        "decision_reason": "",
+        "decision_strategy": "",
+        "decision_version": "",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 230956100,
+            "score": 1.0318,
+            "reasons": [
+              "local_median_distance:0.006",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.640",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.64
+          },
+          {
+            "value": 203956100,
+            "score": 0.8145,
+            "reasons": [
+              "local_median_distance:0.122",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.62
+          },
+          {
+            "value": 239561000,
+            "score": 0.5514,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:1.000",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ],
+            "digit_preservation_score": 1.0
+          },
+          {
+            "value": 239506100,
+            "score": 0.4683,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.820",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.82
+          },
+          {
+            "value": 239056100,
+            "score": 0.464,
+            "reasons": [
+              "local_median_distance:0.029",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.800",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.8
+          },
+          {
+            "value": 239560100,
+            "score": 0.4394,
+            "reasons": [
+              "local_median_distance:0.031",
+              "breaks_prior_neighbour_order",
+              "digit_preservation:0.700",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.7
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_47_24-Window.png",
+        "rank": null,
+        "ocr_rank": null,
+        "name": "PENDING REVIEW | 瓯 Kriegspiel",
+        "power_original": 21900298,
+        "power_selected": 21900298,
+        "status": "pending_review",
+        "family": "unclassified",
+        "method": "",
+        "confidence": 0.0,
+        "candidate_count": 6,
+        "best_candidate": 219002980,
+        "best_score": 1.1201,
+        "second_candidate": 219000298,
+        "second_score": 1.0993,
+        "margin": 0.0208,
+        "decision_reason": "",
+        "decision_strategy": "",
+        "decision_version": "",
+        "legacy_used": false,
+        "candidates": [
+          {
+            "value": 219002980,
+            "score": 1.1201,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.840",
+              "ocr_error_model:scale_x10_truncated_digit"
+            ],
+            "digit_preservation_score": 0.84
+          },
+          {
+            "value": 219000298,
+            "score": 1.0993,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.920",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.92
+          },
+          {
+            "value": 219002908,
+            "score": 0.9169,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.660",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.66
+          },
+          {
+            "value": 219002098,
+            "score": 0.9121,
+            "reasons": [
+              "local_median_distance:0.005",
+              "fits_prior_neighbour_order",
+              "source_local_bucket_match",
+              "digit_preservation:0.640",
+              "ocr_error_model:low_truncation_candidate"
+            ],
+            "digit_preservation_score": 0.64
+          },
+          {
+            "value": 210900298,
+            "score": 0.8418,
+            "reasons": [
+              "local_median_distance:0.042",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.640",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.64
+          },
+          {
+            "value": 201900298,
+            "score": 0.8256,
+            "reasons": [
+              "local_median_distance:0.083",
+              "fits_prior_neighbour_order",
+              "digit_preservation:0.620",
+              "ocr_error_model:insert_zero"
+            ],
+            "digit_preservation_score": 0.62
+          }
+        ]
+      },
+      {
+        "server": 551,
+        "ranking_type": "total_hero_power",
+        "source_file": "2026-06-29 14_45_10-Window.png",
+        "rank": 2,
         "ocr_rank": 8,
         "name": "[IVE] MEITTi X 叫@1",
         "power_original": 32030601,
@@ -979,1034 +730,89 @@
             "digit_preservation_score": 0.84
           }
         ]
-      },
-      {
-        "server": 552,
-        "ranking_type": "alliance_power",
-        "source_file": "Screenshot_20260701-003252.png",
-        "rank": 8,
-        "ocr_rank": null,
-        "name": "[BwD] 八于9团4",
-        "power_original": 79085297891,
-        "power_selected": 22085297891,
-        "status": "recovered",
-        "family": "alliance_high_explosion",
-        "method": "alliance_power_context_candidate_recovery",
-        "confidence": 0.99,
-        "candidate_count": 8,
-        "best_candidate": 22085297891,
-        "best_score": 1.029,
-        "second_candidate": 20085297891,
-        "second_score": 1.0046,
-        "margin": 0.0244,
-        "decision_reason": "selected_guarded_explosion_candidate:score=1.029;margin=0.024",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 22085297891,
-            "score": 1.029,
-            "reasons": [
-              "local_median_distance:0.039",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.2982
-          },
-          {
-            "value": 20085297891,
-            "score": 1.0046,
-            "reasons": [
-              "local_median_distance:0.126",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.2982
-          },
-          {
-            "value": 19085297891,
-            "score": 0.9924,
-            "reasons": [
-              "local_median_distance:0.170",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 27085297891,
-            "score": 0.9902,
-            "reasons": [
-              "local_median_distance:0.178",
-              "fits_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.2982
-          },
-          {
-            "value": 23085297891,
-            "score": 0.9189,
-            "reasons": [
-              "local_median_distance:0.004",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.2982
-          },
-          {
-            "value": 12085297891,
-            "score": 0.7872,
-            "reasons": [
-              "local_median_distance:0.474",
-              "fits_prior_neighbour_order",
-              "near_following_neighbour",
-              "source_local_bucket_match",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.2982
-          },
-          {
-            "value": 29085297891,
-            "score": 0.6658,
-            "reasons": [
-              "local_median_distance:0.265",
-              "near_prior_neighbour",
-              "fits_following_neighbour_order",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          },
-          {
-            "value": 39085297891,
-            "score": 0.244,
-            "reasons": [
-              "local_median_distance:0.700",
-              "breaks_prior_neighbour_order",
-              "fits_following_neighbour_order",
-              "non_top_alliance_context"
-            ],
-            "digit_preservation_score": 0.3273
-          }
-        ]
-      },
-      {
-        "server": 553,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-194430.png",
-        "rank": 1,
-        "ocr_rank": null,
-        "name": "[LAFA] ThorNord Bfeg2ofe*8",
-        "power_original": 793262033,
-        "power_selected": 193262033,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.8383,
-        "candidate_count": 6,
-        "best_candidate": 193262033,
-        "best_score": 0.8383,
-        "second_candidate": 190262033,
-        "second_score": 0.6973,
-        "margin": 0.1411,
-        "decision_reason": "selected_clear_candidate:score=0.838;margin=0.141",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 193262033,
-            "score": 0.8383,
-            "reasons": [
-              "local_median_distance:0.006",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.2844
-          },
-          {
-            "value": 190262033,
-            "score": 0.6973,
-            "reasons": [
-              "local_median_distance:0.010",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 187262033,
-            "score": 0.6929,
-            "reasons": [
-              "local_median_distance:0.025",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 192262033,
-            "score": 0.5798,
-            "reasons": [
-              "local_median_distance:0.001",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 191262033,
-            "score": 0.5787,
-            "reasons": [
-              "local_median_distance:0.004",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2133
-          },
-          {
-            "value": 293262033,
-            "score": 0.4326,
-            "reasons": [
-              "local_median_distance:0.526",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.2844
-          }
-        ]
-      },
-      {
-        "server": 553,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-194631.png",
-        "rank": 58,
-        "ocr_rank": 58,
-        "name": "[LAFA] EIGrapscho",
-        "power_original": 764047047,
-        "power_selected": 164047047,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.9392,
-        "candidate_count": 3,
-        "best_candidate": 164047047,
-        "best_score": 0.9392,
-        "second_candidate": 163047047,
-        "second_score": 0.7991,
-        "margin": 0.14,
-        "decision_reason": "selected_clear_candidate:score=0.939;margin=0.140",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 164047047,
-            "score": 0.9392,
-            "reasons": [
-              "local_median_distance:0.003",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:58",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3067
-          },
-          {
-            "value": 163047047,
-            "score": 0.7991,
-            "reasons": [
-              "local_median_distance:0.003",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:58"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 264047047,
-            "score": 0.088,
-            "reasons": [
-              "local_median_distance:0.614",
-              "breaks_prior_neighbour_order",
-              "late_thp_rank:58",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3067
-          }
-        ]
-      },
-      {
-        "server": 553,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260701-194444.png",
-        "rank": 88,
-        "ocr_rank": 88,
-        "name": "[SWSQ] Gokingoong",
-        "power_original": 783060407,
-        "power_selected": 182060407,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.7977,
-        "candidate_count": 5,
-        "best_candidate": 182060407,
-        "best_score": 0.7977,
-        "second_candidate": 183060407,
-        "second_score": 0.8192,
-        "margin": -0.0215,
-        "decision_reason": "selected_segment_order_candidate:score=0.798;margin=0.022;order=2>1",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 183060407,
-            "score": 0.8192,
-            "reasons": [
-              "local_median_distance:0.003",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "late_thp_rank:88",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3067
-          },
-          {
-            "value": 182060407,
-            "score": 0.7977,
-            "reasons": [
-              "local_median_distance:0.008",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 186060407,
-            "score": 0.7962,
-            "reasons": [
-              "local_median_distance:0.014",
-              "fits_prior_neighbour_order",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 184060407,
-            "score": 0.6792,
-            "reasons": [
-              "local_median_distance:0.003",
-              "near_prior_neighbour",
-              "source_local_bucket_match",
-              "late_thp_rank:88"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 283060407,
-            "score": 0.1082,
-            "reasons": [
-              "local_median_distance:0.542",
-              "breaks_prior_neighbour_order",
-              "late_thp_rank:88",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3067
-          }
-        ]
-      },
-      {
-        "server": 554,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260702-082210.png",
-        "rank": 3,
-        "ocr_rank": null,
-        "name": "[TOS] haru Bifeoezome#k UowoU",
-        "power_original": 760293871,
-        "power_selected": 160293871,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.8348,
-        "candidate_count": 5,
-        "best_candidate": 160293871,
-        "best_score": 0.8348,
-        "second_candidate": 159293871,
-        "second_score": 0.6931,
-        "margin": 0.1417,
-        "decision_reason": "selected_clear_candidate:score=0.835;margin=0.142",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 160293871,
-            "score": 0.8348,
-            "reasons": [
-              "local_median_distance:0.018",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3067
-          },
-          {
-            "value": 159293871,
-            "score": 0.6931,
-            "reasons": [
-              "local_median_distance:0.025",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 167293871,
-            "score": 0.5732,
-            "reasons": [
-              "local_median_distance:0.024",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 158293871,
-            "score": 0.5714,
-            "reasons": [
-              "local_median_distance:0.031",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 260293871,
-            "score": 0.4137,
-            "reasons": [
-              "local_median_distance:0.594",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3067
-          }
-        ]
-      },
-      {
-        "server": 555,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260704-000324.png",
-        "rank": 1,
-        "ocr_rank": null,
-        "name": "[EVIL] Poor Lil Tink Tink",
-        "power_original": 780756002,
-        "power_selected": 180756002,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.8384,
-        "candidate_count": 6,
-        "best_candidate": 180756002,
-        "best_score": 0.8384,
-        "second_candidate": 179756002,
-        "second_score": 0.6999,
-        "margin": 0.1384,
-        "decision_reason": "selected_clear_candidate:score=0.838;margin=0.138",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 180756002,
-            "score": 0.8384,
-            "reasons": [
-              "local_median_distance:0.006",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3067
-          },
-          {
-            "value": 179756002,
-            "score": 0.6999,
-            "reasons": [
-              "local_median_distance:0.000",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 178756002,
-            "score": 0.6985,
-            "reasons": [
-              "local_median_distance:0.005",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.28
-          },
-          {
-            "value": 177756002,
-            "score": 0.6969,
-            "reasons": [
-              "local_median_distance:0.011",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 173756002,
-            "score": 0.6907,
-            "reasons": [
-              "local_median_distance:0.033",
-              "fits_following_neighbour_order",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 280756002,
-            "score": 0.4226,
-            "reasons": [
-              "local_median_distance:0.562",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3067
-          }
-        ]
-      },
-      {
-        "server": 555,
-        "ranking_type": "total_hero_power",
-        "source_file": "Screenshot_20260704-000316.png",
-        "rank": 2,
-        "ocr_rank": null,
-        "name": "[EVIL] CROWOOZ Bfeg2one#B83",
-        "power_original": 783270476,
-        "power_selected": 183270476,
-        "status": "recovered",
-        "family": "thp_high_explosion",
-        "method": "total_hero_power_context_candidate_recovery",
-        "confidence": 0.7175,
-        "candidate_count": 5,
-        "best_candidate": 183270476,
-        "best_score": 0.7175,
-        "second_candidate": 182270476,
-        "second_score": 0.5791,
-        "margin": 0.1385,
-        "decision_reason": "selected_clear_candidate:score=0.718;margin=0.138",
-        "decision_strategy": "context_candidate_margin",
-        "decision_version": "v0.9.5.87",
-        "legacy_used": false,
-        "candidates": [
-          {
-            "value": 183270476,
-            "score": 0.7175,
-            "reasons": [
-              "local_median_distance:0.009",
-              "near_following_neighbour",
-              "source_local_bucket_match",
-              "ocr_error_model:leading_digit_to_1"
-            ],
-            "digit_preservation_score": 0.3067
-          },
-          {
-            "value": 182270476,
-            "score": 0.5791,
-            "reasons": [
-              "local_median_distance:0.003",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 180270476,
-            "score": 0.5779,
-            "reasons": [
-              "local_median_distance:0.008",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 187270476,
-            "score": 0.5713,
-            "reasons": [
-              "local_median_distance:0.031",
-              "near_following_neighbour",
-              "source_local_bucket_match"
-            ],
-            "digit_preservation_score": 0.2356
-          },
-          {
-            "value": 283270476,
-            "score": 0.4234,
-            "reasons": [
-              "local_median_distance:0.559",
-              "fits_following_neighbour_order",
-              "ocr_error_model:leading_digit_to_2"
-            ],
-            "digit_preservation_score": 0.3067
-          }
-        ]
       }
     ]
   },
   "review_ocr": {
     "enabled": true,
-    "attempted": 13,
+    "attempted": 4,
     "promoted": 1,
-    "no_promotion": 12,
+    "no_promotion": 3,
     "skipped": 0,
     "confidence_avg": 1.05,
     "strategy": "adaptive_row_crop_zoom_clahe_sharpen_voting"
   },
   "row_reconstruction": {
     "enabled": true,
-    "attempted": 6,
+    "attempted": 4,
     "promoted": 1,
-    "no_promotion": 5,
+    "no_promotion": 3,
     "confidence_avg": 1.05,
     "strategy": "source_local_anchor_bounded_gap_reconstruction"
   },
   "recognition_quality": {
     "version": "v0.9.5.89",
-    "auto_accepted_rows": 308,
-    "power_validated_rows": 297,
-    "power_outlier_quarantined_rows": 11,
-    "human_review_items": 12,
-    "power_recovery_success_rate": 0.4706,
+    "auto_accepted_rows": 126,
+    "power_validated_rows": 121,
+    "power_outlier_quarantined_rows": 3,
+    "human_review_items": 3,
+    "power_recovery_success_rate": 0.125,
     "runtime_breakdown": {
-      "adaptive_review_ocr": 112.3061,
-      "data_quality_loop": 2098.2523,
-      "excel_export": 0.9647,
-      "image_load_normalize": 5.2493,
-      "merge_rows": 0.0097,
-      "metadata_ocr": 786.3062,
+      "adaptive_review_ocr": 45.9495,
+      "data_quality_loop": 574.554,
+      "excel_export": 1.865,
+      "image_load_normalize": 1.74,
+      "merge_rows": 0.0023,
+      "metadata_ocr": 154.8984,
       "ocr_cache_errors": 0.0,
       "ocr_cache_hits": 0.0,
-      "ocr_cache_misses": 228.0,
+      "ocr_cache_misses": 36.0,
       "ocr_cache_writes": 0.0,
-      "ocr_reader_init": 9.3642,
-      "player_snapshot_build": 0.0674,
-      "power_sanity_recovery": 0.0383,
-      "ranking_guard": 0.011,
-      "row_ocr": 958.4344,
-      "row_parse": 0.1841,
+      "ocr_reader_init": 46.2478,
+      "player_snapshot_build": 0.0367,
+      "power_sanity_recovery": 0.0042,
+      "ranking_guard": 0.0022,
+      "row_ocr": 179.23,
+      "row_parse": 0.0587,
       "server_reconciliation": 0.0001,
-      "total_runtime": 3976.6168,
-      "seconds_per_screenshot": 34.8826
+      "total_runtime": 1007.3163,
+      "seconds_per_screenshot": 55.962
     },
-    "source_rank_windows": 84,
+    "source_rank_windows": 14,
     "source_rank_windows_detail": {
-      "2026-06-28 13_14_06-Window.png": {
-        "start": 3,
-        "end": 7,
-        "count": 5,
-        "ranks": [
-          3,
-          4,
-          5,
-          6,
-          7
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_14_49-Window.png": {
-        "start": 8,
-        "end": 12,
-        "count": 5,
-        "ranks": [
-          8,
-          9,
-          10,
-          11,
-          12
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_15_08-Window.png": {
-        "start": 13,
-        "end": 19,
-        "count": 6,
-        "ranks": [
-          13,
-          14,
-          15,
-          16,
-          18,
-          19
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_16_01-Window.png": {
-        "start": 17,
-        "end": 36,
-        "count": 7,
-        "ranks": [
-          17,
-          31,
-          32,
-          33,
-          34,
-          35,
-          36
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_15_25-Window.png": {
-        "start": 20,
-        "end": 24,
-        "count": 5,
-        "ranks": [
-          20,
-          21,
-          22,
-          23,
-          24
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_15_43-Window.png": {
-        "start": 25,
-        "end": 30,
-        "count": 6,
-        "ranks": [
-          25,
-          26,
-          27,
-          28,
-          29,
-          30
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_16_27-Window.png": {
-        "start": 37,
-        "end": 44,
-        "count": 8,
-        "ranks": [
-          37,
-          38,
-          39,
-          40,
-          41,
-          42,
-          43,
-          44
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_20_25-Window.png": {
-        "start": 1,
-        "end": 900,
-        "count": 4,
-        "ranks": [
-          1,
-          9,
-          93,
-          900
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_19_11-Window.png": {
-        "start": 1,
-        "end": 1,
-        "count": 1,
-        "ranks": [
-          1
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_17_22-Window.png": {
-        "start": 2,
-        "end": 2,
-        "count": 1,
-        "ranks": [
-          2
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_19_58-Window.png": {
-        "start": 3,
-        "end": 3,
-        "count": 1,
-        "ranks": [
-          3
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_20_12-Window.png": {
-        "start": 4,
-        "end": 4,
-        "count": 1,
-        "ranks": [
-          4
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_16_48-Window.png": {
-        "start": 5,
-        "end": 5,
-        "count": 1,
-        "ranks": [
-          5
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_18_07-Window.png": {
-        "start": 6,
-        "end": 6,
-        "count": 1,
-        "ranks": [
-          6
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_18_36-Window.png": {
-        "start": 7,
-        "end": 7,
-        "count": 1,
-        "ranks": [
-          7
-        ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_17_46-Window.png": {
+      "2026-06-29 14_43_59-Window.png": {
         "start": 8,
         "end": 8,
         "count": 1,
         "ranks": [
           8
         ],
-        "server": 549,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_32_15-Window.png": {
-        "start": 1,
-        "end": 9,
-        "count": 5,
-        "ranks": [
-          1,
-          6,
-          7,
-          8,
-          9
-        ],
-        "server": 550,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_32_29-Window.png": {
-        "start": 3,
-        "end": 18,
-        "count": 5,
-        "ranks": [
-          3,
-          9,
-          10,
-          11,
-          18
-        ],
-        "server": 550,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260702-082028.png": {
-        "start": 5,
-        "end": 19,
-        "count": 8,
-        "ranks": [
-          5,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          19
-        ],
-        "server": 550,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_32_41-Window.png": {
-        "start": 20,
-        "end": 29,
-        "count": 7,
-        "ranks": [
-          20,
-          21,
-          22,
-          23,
-          25,
-          27,
-          29
-        ],
-        "server": 550,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_32_57-Window.png": {
-        "start": 24,
-        "end": 32,
-        "count": 6,
-        "ranks": [
-          24,
-          26,
-          28,
-          30,
-          31,
-          32
-        ],
-        "server": 550,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-28 13_33_38-Window.png": {
-        "start": 1,
-        "end": 1,
-        "count": 1,
-        "ranks": [
-          1
-        ],
-        "server": 550,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082112.png": {
-        "start": 1,
-        "end": 9,
-        "count": 8,
-        "ranks": [
-          1,
-          2,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9
-        ],
-        "server": 550,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_33_09-Window.png": {
-        "start": 3,
-        "end": 3,
-        "count": 1,
-        "ranks": [
-          3
-        ],
-        "server": 550,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-28 13_33_23-Window.png": {
-        "start": 38,
-        "end": 38,
-        "count": 1,
-        "ranks": [
-          38
-        ],
-        "server": 550,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-29 14_43_59-Window.png": {
-        "start": 3,
-        "end": 13,
-        "count": 6,
-        "ranks": [
-          3,
-          4,
-          5,
-          6,
-          8,
-          13
-        ],
         "server": 551,
         "ranking_type": "alliance_power"
       },
       "2026-06-29 14_44_25-Window.png": {
-        "start": 7,
-        "end": 11,
-        "count": 5,
+        "start": 8,
+        "end": 9,
+        "count": 2,
         "ranks": [
-          7,
           8,
-          9,
-          10,
-          11
-        ],
-        "server": 551,
-        "ranking_type": "alliance_power"
-      },
-      "2026-06-29 14_44_46-Window.png": {
-        "start": 12,
-        "end": 19,
-        "count": 7,
-        "ranks": [
-          12,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19
+          9
         ],
         "server": 551,
         "ranking_type": "alliance_power"
       },
       "2026-06-29 14_46_26-Window.png": {
         "start": 1,
-        "end": 1,
-        "count": 1,
-        "ranks": [
-          1
-        ],
-        "server": 551,
-        "ranking_type": "total_hero_power"
-      },
-      "2026-06-29 14_45_40-Window.png": {
-        "start": 1,
-        "end": 4,
+        "end": 3,
         "count": 2,
         "ranks": [
           1,
-          4
+          3
         ],
         "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "2026-06-29 14_46_44-Window.png": {
+      "2026-06-29 14_46_08-Window.png": {
         "start": 2,
         "end": 2,
         "count": 1,
@@ -2017,18 +823,42 @@
         "ranking_type": "total_hero_power"
       },
       "2026-06-29 14_45_10-Window.png": {
-        "start": 3,
+        "start": 2,
         "end": 8,
         "count": 3,
         "ranks": [
+          2,
           3,
-          5,
           8
         ],
         "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "2026-06-29 14_46_08-Window.png": {
+      "2026-06-29 14_45_25-Window.png": {
+        "start": 4,
+        "end": 9,
+        "count": 4,
+        "ranks": [
+          4,
+          5,
+          7,
+          9
+        ],
+        "server": 551,
+        "ranking_type": "total_hero_power"
+      },
+      "2026-06-29 14_48_15-Window.png": {
+        "start": 5,
+        "end": 6,
+        "count": 2,
+        "ranks": [
+          5,
+          6
+        ],
+        "server": 551,
+        "ranking_type": "total_hero_power"
+      },
+      "2026-06-29 14_47_59-Window.png": {
         "start": 6,
         "end": 6,
         "count": 1,
@@ -2038,22 +868,13 @@
         "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "2026-06-29 14_47_59-Window.png": {
-        "start": 7,
-        "end": 7,
-        "count": 1,
-        "ranks": [
-          7
-        ],
-        "server": 551,
-        "ranking_type": "total_hero_power"
-      },
       "2026-06-29 14_49_13-Window.png": {
-        "start": 9,
+        "start": 2,
         "end": 300,
-        "count": 4,
+        "count": 5,
         "ranks": [
-          9,
+          2,
+          4,
           90,
           203,
           300
@@ -2061,760 +882,102 @@
         "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "Screenshot_20260701-003346.png": {
-        "start": 2,
-        "end": 26,
-        "count": 8,
-        "ranks": [
-          2,
-          3,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-003409.png": {
-        "start": 5,
-        "end": 34,
-        "count": 9,
-        "ranks": [
-          5,
-          27,
-          28,
-          29,
-          30,
-          31,
-          32,
-          33,
-          34
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-003252.png": {
-        "start": 4,
-        "end": 11,
-        "count": 8,
-        "ranks": [
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-003328.png": {
-        "start": 12,
-        "end": 20,
-        "count": 9,
-        "ranks": [
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19,
-          20
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-003622.png": {
-        "start": 1,
-        "end": 88,
-        "count": 2,
-        "ranks": [
-          1,
-          88
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003549.png": {
-        "start": 1,
-        "end": 1,
-        "count": 1,
-        "ranks": [
-          1
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003430.png": {
-        "start": 2,
-        "end": 3,
-        "count": 2,
-        "ranks": [
-          2,
-          3
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003446.png": {
-        "start": 4,
-        "end": 10,
-        "count": 3,
-        "ranks": [
-          4,
-          7,
-          10
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003641.png": {
-        "start": 5,
-        "end": 50,
-        "count": 3,
-        "ranks": [
-          5,
-          6,
-          50
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003602.png": {
-        "start": 8,
-        "end": 53,
-        "count": 2,
-        "ranks": [
-          8,
-          53
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003540.png": {
-        "start": 9,
-        "end": 9,
-        "count": 1,
-        "ranks": [
-          9
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003631.png": {
-        "start": 98,
-        "end": 98,
-        "count": 1,
-        "ranks": [
-          98
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-003509.png": {
-        "start": 240,
-        "end": 240,
-        "count": 1,
-        "ranks": [
-          240
-        ],
-        "server": 552,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194347.png": {
-        "start": 2,
-        "end": 27,
-        "count": 10,
-        "ranks": [
-          2,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26,
-          27
-        ],
-        "server": 553,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-194308.png": {
-        "start": 2,
-        "end": 8,
-        "count": 7,
-        "ranks": [
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ],
-        "server": 553,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-194323.png": {
-        "start": 9,
-        "end": 18,
-        "count": 10,
-        "ranks": [
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18
-        ],
-        "server": 553,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260701-194430.png": {
-        "start": 1,
-        "end": 4,
-        "count": 2,
-        "ranks": [
-          1,
-          4
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194402.png": {
-        "start": 2,
-        "end": 10,
-        "count": 4,
-        "ranks": [
-          2,
-          5,
-          6,
-          10
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194444.png": {
-        "start": 3,
-        "end": 88,
-        "count": 3,
-        "ranks": [
-          3,
-          83,
-          88
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194611.png": {
+      "2026-06-29 14_47_05-Window.png": {
         "start": 7,
         "end": 7,
         "count": 1,
         "ranks": [
           7
         ],
-        "server": 553,
+        "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "Screenshot_20260701-194622.png": {
-        "start": 8,
-        "end": 8,
-        "count": 1,
-        "ranks": [
-          8
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194558.png": {
-        "start": 9,
-        "end": 9,
-        "count": 1,
-        "ranks": [
-          9
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194631.png": {
-        "start": 58,
-        "end": 58,
-        "count": 1,
-        "ranks": [
-          58
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260701-194540.png": {
-        "start": 68,
-        "end": 68,
-        "count": 1,
-        "ranks": [
-          68
-        ],
-        "server": 553,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082020.png": {
-        "start": 4,
-        "end": 17,
-        "count": 9,
-        "ranks": [
-          4,
-          5,
-          10,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260702-082010.png": {
+      "2026-06-29 14_47_24-Window.png": {
         "start": 2,
-        "end": 11,
-        "count": 8,
+        "end": 5,
+        "count": 3,
         "ranks": [
           2,
           3,
-          5,
-          6,
-          7,
-          8,
-          9,
-          11
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260702-082043.png": {
-        "start": 18,
-        "end": 26,
-        "count": 9,
-        "ranks": [
-          18,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260702-082210.png": {
-        "start": 1,
-        "end": 3,
-        "count": 2,
-        "ranks": [
-          1,
-          3
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082057.png": {
-        "start": 1,
-        "end": 8,
-        "count": 4,
-        "ranks": [
-          1,
-          6,
-          7,
-          8
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082120.png": {
-        "start": 2,
-        "end": 83,
-        "count": 4,
-        "ranks": [
-          2,
-          4,
-          52,
-          83
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082220.png": {
-        "start": 5,
-        "end": 5,
-        "count": 1,
-        "ranks": [
           5
         ],
-        "server": 554,
+        "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "Screenshot_20260702-082131.png": {
-        "start": 9,
-        "end": 9,
-        "count": 1,
-        "ranks": [
-          9
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082301.png": {
-        "start": 10,
-        "end": 58,
-        "count": 2,
-        "ranks": [
-          10,
-          58
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082154.png": {
-        "start": 11,
-        "end": 11,
-        "count": 1,
-        "ranks": [
-          11
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082202.png": {
-        "start": 63,
-        "end": 63,
-        "count": 1,
-        "ranks": [
-          63
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082231.png": {
-        "start": 88,
-        "end": 89,
-        "count": 2,
-        "ranks": [
-          88,
-          89
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260702-082242.png": {
-        "start": 98,
-        "end": 98,
-        "count": 1,
-        "ranks": [
-          98
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000141.png": {
+      "2026-06-29 14_48_28-Window.png": {
         "start": 5,
-        "end": 25,
-        "count": 8,
-        "ranks": [
-          5,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25
-        ],
-        "server": 555,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260704-000114.png": {
-        "start": 3,
-        "end": 10,
-        "count": 8,
-        "ranks": [
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ],
-        "server": 555,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260704-000123.png": {
-        "start": 11,
-        "end": 18,
-        "count": 8,
-        "ranks": [
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18
-        ],
-        "server": 555,
-        "ranking_type": "alliance_power"
-      },
-      "Screenshot_20260704-000316.png": {
-        "start": 1,
-        "end": 10,
-        "count": 4,
-        "ranks": [
-          1,
-          2,
-          8,
-          10
-        ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000324.png": {
-        "start": 1,
-        "end": 1,
-        "count": 1,
-        "ranks": [
-          1
-        ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000216.png": {
-        "start": 3,
         "end": 6,
         "count": 2,
         "ranks": [
-          3,
+          5,
           6
         ],
-        "server": 555,
+        "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "Screenshot_20260704-000247.png": {
-        "start": 4,
-        "end": 89,
-        "count": 3,
-        "ranks": [
-          4,
-          68,
-          89
-        ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000407.png": {
-        "start": 5,
+      "2026-06-29 14_48_43-Window.png": {
+        "start": 2,
         "end": 5,
-        "count": 1,
+        "count": 2,
         "ranks": [
+          2,
           5
         ],
-        "server": 555,
+        "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "Screenshot_20260704-000341.png": {
-        "start": 7,
-        "end": 7,
-        "count": 1,
+      "2026-06-29 14_48_58-Window.png": {
+        "start": 2,
+        "end": 4,
+        "count": 2,
         "ranks": [
-          7
+          2,
+          4
         ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000239.png": {
-        "start": 9,
-        "end": 9,
-        "count": 1,
-        "ranks": [
-          9
-        ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000229.png": {
-        "start": 58,
-        "end": 58,
-        "count": 1,
-        "ranks": [
-          58
-        ],
-        "server": 555,
-        "ranking_type": "total_hero_power"
-      },
-      "Screenshot_20260704-000352.png": {
-        "start": 98,
-        "end": 98,
-        "count": 1,
-        "ranks": [
-          98
-        ],
-        "server": 555,
+        "server": 551,
         "ranking_type": "total_hero_power"
       }
     },
-    "rank_trace_fixed_reviews": 6,
-    "source_evidence_anchor_reviews": 3,
-    "ambiguous_power_reviews": 9,
-    "ambiguous_power_near_misses": 8,
+    "rank_trace_fixed_reviews": 2,
+    "source_evidence_anchor_reviews": 0,
+    "ambiguous_power_reviews": 3,
+    "ambiguous_power_near_misses": 2,
     "power_recovery_by_family": {
-      "alliance_high_explosion": 5,
-      "thp_high_explosion": 10,
-      "thp_low_truncation": 2
+      "thp_low_truncation": 4,
+      "unclassified": 4
     },
     "ambiguous_power_by_family": {
-      "alliance_high_explosion": 4,
-      "thp_high_explosion": 4,
-      "thp_low_truncation": 1
+      "thp_low_truncation": 3
     },
-    "explosive_power_traces": 11,
-    "seconds_per_screenshot": 34.8826
+    "explosive_power_traces": 0,
+    "seconds_per_screenshot": 55.962
   },
   "imports": [
     {
       "server": null,
       "ranking_type": "ranking_guard_quarantine",
-      "rows": 12,
+      "rows": 3,
       "status": "Quarantine",
       "confidence": 0,
-      "review_count": 12,
-      "screenshots": 12,
+      "review_count": 3,
+      "screenshots": 3,
       "source_files": [
-        "2026-06-28 13_15_08-Window.png",
         "2026-06-29 14_45_40-Window.png",
-        "Screenshot_20260701-003252.png",
-        "Screenshot_20260701-003328.png",
-        "Screenshot_20260701-194308.png",
-        "Screenshot_20260701-194413.png",
-        "Screenshot_20260702-082010.png",
-        "Screenshot_20260702-082020.png",
-        "Screenshot_20260702-082140.png",
-        "Screenshot_20260702-082210.png",
-        "Screenshot_20260704-000114.png",
-        "Screenshot_20260704-000352.png"
+        "2026-06-29 14_46_26-Window.png",
+        "2026-06-29 14_47_24-Window.png"
       ],
       "source": "REVIEW_ranking_guard_quarantine",
       "power_recovery_count": 0,
-      "power_candidate_trace_count": 9,
-      "power_ambiguous_count": 9
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "rows": 44,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 44,
-      "screenshots": 7,
-      "source_files": [
-        "2026-06-28 13_14_06-Window.png",
-        "2026-06-28 13_14_49-Window.png",
-        "2026-06-28 13_15_08-Window.png",
-        "2026-06-28 13_15_25-Window.png",
-        "2026-06-28 13_15_43-Window.png",
-        "2026-06-28 13_16_01-Window.png",
-        "2026-06-28 13_16_27-Window.png"
-      ],
-      "source": "549_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 549,
-      "ranking_type": "total_hero_power",
-      "rows": 12,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 12,
-      "screenshots": 9,
-      "source_files": [
-        "2026-06-28 13_16_48-Window.png",
-        "2026-06-28 13_17_22-Window.png",
-        "2026-06-28 13_17_46-Window.png",
-        "2026-06-28 13_18_07-Window.png",
-        "2026-06-28 13_18_36-Window.png",
-        "2026-06-28 13_19_11-Window.png",
-        "2026-06-28 13_19_58-Window.png",
-        "2026-06-28 13_20_12-Window.png",
-        "2026-06-28 13_20_25-Window.png"
-      ],
-      "source": "549_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 550,
-      "ranking_type": "alliance_power",
-      "rows": 32,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 32,
-      "screenshots": 5,
-      "source_files": [
-        "2026-06-28 13_32_15-Window.png",
-        "2026-06-28 13_32_29-Window.png",
-        "2026-06-28 13_32_41-Window.png",
-        "2026-06-28 13_32_57-Window.png",
-        "Screenshot_20260702-082028.png"
-      ],
-      "source": "550_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 550,
-      "ranking_type": "total_hero_power",
-      "rows": 11,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 11,
-      "screenshots": 4,
-      "source_files": [
-        "2026-06-28 13_33_09-Window.png",
-        "2026-06-28 13_33_23-Window.png",
-        "2026-06-28 13_33_38-Window.png",
-        "Screenshot_20260702-082112.png"
-      ],
-      "source": "550_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
+      "power_candidate_trace_count": 3,
+      "power_ambiguous_count": 3
     },
     {
       "server": 551,
       "ranking_type": "alliance_power",
-      "rows": 19,
+      "rows": 21,
       "status": "Review",
       "confidence": 90,
-      "review_count": 19,
+      "review_count": 21,
       "screenshots": 3,
       "source_files": [
         "2026-06-29 14_43_59-Window.png",
@@ -2829,198 +992,37 @@
     {
       "server": 551,
       "ranking_type": "total_hero_power",
-      "rows": 13,
+      "rows": 105,
       "status": "Review",
       "confidence": 90,
-      "review_count": 13,
-      "screenshots": 7,
+      "review_count": 104,
+      "screenshots": 15,
       "source_files": [
         "2026-06-29 14_45_10-Window.png",
+        "2026-06-29 14_45_25-Window.png",
         "2026-06-29 14_45_40-Window.png",
         "2026-06-29 14_46_08-Window.png",
         "2026-06-29 14_46_26-Window.png",
         "2026-06-29 14_46_44-Window.png",
+        "2026-06-29 14_47_05-Window.png",
+        "2026-06-29 14_47_24-Window.png",
+        "2026-06-29 14_47_40-Window.png",
         "2026-06-29 14_47_59-Window.png",
+        "2026-06-29 14_48_15-Window.png",
+        "2026-06-29 14_48_28-Window.png",
+        "2026-06-29 14_48_43-Window.png",
+        "2026-06-29 14_48_58-Window.png",
         "2026-06-29 14_49_13-Window.png"
       ],
       "source": "551_total_hero_power",
       "power_recovery_count": 1,
-      "power_candidate_trace_count": 1,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 552,
-      "ranking_type": "alliance_power",
-      "rows": 34,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 34,
-      "screenshots": 4,
-      "source_files": [
-        "Screenshot_20260701-003252.png",
-        "Screenshot_20260701-003328.png",
-        "Screenshot_20260701-003346.png",
-        "Screenshot_20260701-003409.png"
-      ],
-      "source": "552_alliance_power",
-      "power_recovery_count": 1,
-      "power_candidate_trace_count": 1,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 552,
-      "ranking_type": "total_hero_power",
-      "rows": 16,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 16,
-      "screenshots": 9,
-      "source_files": [
-        "Screenshot_20260701-003430.png",
-        "Screenshot_20260701-003446.png",
-        "Screenshot_20260701-003509.png",
-        "Screenshot_20260701-003540.png",
-        "Screenshot_20260701-003549.png",
-        "Screenshot_20260701-003602.png",
-        "Screenshot_20260701-003622.png",
-        "Screenshot_20260701-003631.png",
-        "Screenshot_20260701-003641.png"
-      ],
-      "source": "552_total_hero_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 553,
-      "ranking_type": "alliance_power",
-      "rows": 27,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 27,
-      "screenshots": 3,
-      "source_files": [
-        "Screenshot_20260701-194308.png",
-        "Screenshot_20260701-194323.png",
-        "Screenshot_20260701-194347.png"
-      ],
-      "source": "553_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "rows": 14,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 14,
-      "screenshots": 8,
-      "source_files": [
-        "Screenshot_20260701-194402.png",
-        "Screenshot_20260701-194430.png",
-        "Screenshot_20260701-194444.png",
-        "Screenshot_20260701-194540.png",
-        "Screenshot_20260701-194558.png",
-        "Screenshot_20260701-194611.png",
-        "Screenshot_20260701-194622.png",
-        "Screenshot_20260701-194631.png"
-      ],
-      "source": "553_total_hero_power",
-      "power_recovery_count": 3,
-      "power_candidate_trace_count": 3,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "rows": 26,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 26,
-      "screenshots": 3,
-      "source_files": [
-        "Screenshot_20260702-082010.png",
-        "Screenshot_20260702-082020.png",
-        "Screenshot_20260702-082043.png"
-      ],
-      "source": "554_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 554,
-      "ranking_type": "total_hero_power",
-      "rows": 19,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 19,
-      "screenshots": 10,
-      "source_files": [
-        "Screenshot_20260702-082057.png",
-        "Screenshot_20260702-082120.png",
-        "Screenshot_20260702-082131.png",
-        "Screenshot_20260702-082154.png",
-        "Screenshot_20260702-082202.png",
-        "Screenshot_20260702-082210.png",
-        "Screenshot_20260702-082220.png",
-        "Screenshot_20260702-082231.png",
-        "Screenshot_20260702-082242.png",
-        "Screenshot_20260702-082301.png"
-      ],
-      "source": "554_total_hero_power",
-      "power_recovery_count": 1,
-      "power_candidate_trace_count": 1,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 555,
-      "ranking_type": "alliance_power",
-      "rows": 25,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 25,
-      "screenshots": 3,
-      "source_files": [
-        "Screenshot_20260704-000114.png",
-        "Screenshot_20260704-000123.png",
-        "Screenshot_20260704-000141.png"
-      ],
-      "source": "555_alliance_power",
-      "power_recovery_count": 0,
-      "power_candidate_trace_count": 0,
-      "power_ambiguous_count": 0
-    },
-    {
-      "server": 555,
-      "ranking_type": "total_hero_power",
-      "rows": 15,
-      "status": "Review",
-      "confidence": 90,
-      "review_count": 15,
-      "screenshots": 9,
-      "source_files": [
-        "Screenshot_20260704-000216.png",
-        "Screenshot_20260704-000229.png",
-        "Screenshot_20260704-000239.png",
-        "Screenshot_20260704-000247.png",
-        "Screenshot_20260704-000316.png",
-        "Screenshot_20260704-000324.png",
-        "Screenshot_20260704-000341.png",
-        "Screenshot_20260704-000352.png",
-        "Screenshot_20260704-000407.png"
-      ],
-      "source": "555_total_hero_power",
-      "power_recovery_count": 2,
-      "power_candidate_trace_count": 2,
+      "power_candidate_trace_count": 5,
       "power_ambiguous_count": 0
     }
   ],
   "reviews": [
     {
-      "server": 554,
+      "server": 551,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
       "rank": 1,
@@ -3029,120 +1031,7 @@
       "target_rank": 1,
       "raw_review_rank": 1,
       "screenshot_rank_window": null,
-      "rank_trace_source": "explicit_visible_rank",
-      "target_name": "5oh9o3588",
-      "target_alliance": "KOLT",
-      "target_power_original": 776246374,
-      "target_power_selected": 776246374,
-      "target_source_file": "Screenshot_20260702-082140.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.714;margin=0.014",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260702-082140.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "no_promotion",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 553,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 3,
-      "visible_rank": 3,
-      "source_row": null,
-      "target_rank": 3,
-      "raw_review_rank": 3,
-      "screenshot_rank_window": null,
-      "rank_trace_source": "explicit_visible_rank",
-      "target_name": "umar712233",
-      "target_alliance": "EWY",
-      "target_power_original": 798830284,
-      "target_power_selected": 798830284,
-      "target_source_file": "Screenshot_20260701-194413.png",
-      "ocr_rank": 3,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.459;margin=0.001",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194413.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "no_promotion",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 554,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 6,
-      "visible_rank": 6,
-      "source_row": null,
-      "target_rank": 6,
-      "raw_review_rank": 6,
-      "screenshot_rank_window": {
-        "start": 1,
-        "end": 3,
-        "count": 2,
-        "ranks": [
-          1,
-          3
-        ],
-        "server": 554,
-        "ranking_type": "total_hero_power"
-      },
-      "rank_trace_source": "explicit_visible_rank",
-      "target_name": "yochic Rfeoezome#A",
-      "target_alliance": "MBM",
-      "target_power_original": 767730565,
-      "target_power_selected": 767730565,
-      "target_source_file": "Screenshot_20260702-082210.png",
-      "ocr_rank": 6,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.712;margin=0.019",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260702-082210.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "no_promotion",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 551,
-      "ranking_type": "total_hero_power",
-      "expected_ranking_type": "total_hero_power",
-      "rank": 7,
-      "visible_rank": 7,
-      "source_row": null,
-      "target_rank": 7,
-      "raw_review_rank": 7,
-      "screenshot_rank_window": {
-        "start": 1,
-        "end": 4,
-        "count": 2,
-        "ranks": [
-          1,
-          4
-        ],
-        "server": 551,
-        "ranking_type": "total_hero_power"
-      },
-      "rank_trace_source": "explicit_visible_rank",
+      "rank_trace_source": "no_screenshot_window",
       "target_name": "Kg Thunder 升孕)",
       "target_alliance": "IVE",
       "target_power_original": 25009089,
@@ -3164,84 +1053,38 @@
       "row_reconstruction_score": 0.0
     },
     {
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 8,
-      "visible_rank": 8,
-      "source_row": null,
-      "target_rank": 8,
-      "raw_review_rank": 8,
-      "screenshot_rank_window": {
-        "start": 2,
-        "end": 11,
-        "count": 8,
-        "ranks": [
-          2,
-          3,
-          5,
-          6,
-          7,
-          8,
-          9,
-          11
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "explicit_visible_rank",
-      "target_name": "[TOs] tigris rte@R09#B Of shadow",
-      "target_alliance": null,
-      "target_power_original": 77756681920,
-      "target_power_selected": 77756681920,
-      "target_source_file": "Screenshot_20260702-082010.png",
-      "ocr_rank": 8,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.550;margin=0.037",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260702-082010.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 555,
+      "server": 551,
       "ranking_type": "total_hero_power",
       "expected_ranking_type": "total_hero_power",
-      "rank": 9,
-      "visible_rank": 9,
+      "rank": 2,
+      "visible_rank": 2,
       "source_row": null,
-      "target_rank": 9,
-      "raw_review_rank": 9,
+      "target_rank": 2,
+      "raw_review_rank": 2,
       "screenshot_rank_window": {
-        "start": 98,
-        "end": 98,
-        "count": 1,
+        "start": 1,
+        "end": 3,
+        "count": 2,
         "ranks": [
-          98
+          1,
+          3
         ],
-        "server": 555,
+        "server": 551,
         "ranking_type": "total_hero_power"
       },
-      "rank_trace_source": "explicit_visible_rank",
-      "target_name": "HellBilly 世 [tFHe#B3",
-      "target_alliance": "KOS",
-      "target_power_original": 770653976,
-      "target_power_selected": 770653976,
-      "target_source_file": "Screenshot_20260704-000352.png",
-      "ocr_rank": 9,
+      "rank_trace_source": "derived_from_screenshot_window",
+      "target_name": "M0/X HUNI",
+      "target_alliance": "IVE",
+      "target_power_original": 23956100,
+      "target_power_selected": 23956100,
+      "target_source_file": "2026-06-29 14_46_26-Window.png",
+      "ocr_rank": 0,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.697;margin=0.007",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;segment_digit_conflict:best=1.032;margin=0.217;digit=0.640",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260704-000352.png",
+      "screenshot": "2026-06-29 14_46_26-Window.png",
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
@@ -3251,301 +1094,59 @@
       "row_reconstruction_score": 0.0
     },
     {
-      "server": 553,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 8,
-      "visible_rank": 8,
+      "server": 551,
+      "ranking_type": "total_hero_power",
+      "expected_ranking_type": "total_hero_power",
+      "rank": 4,
+      "visible_rank": 4,
       "source_row": null,
-      "target_rank": 7,
-      "raw_review_rank": 7,
+      "target_rank": 3,
+      "raw_review_rank": 3,
       "screenshot_rank_window": {
         "start": 2,
-        "end": 8,
-        "count": 7,
+        "end": 5,
+        "count": 3,
         "ranks": [
           2,
           3,
-          4,
-          5,
-          6,
-          7,
-          8
+          5
         ],
-        "server": 553,
-        "ranking_type": "alliance_power"
+        "server": 551,
+        "ranking_type": "total_hero_power"
       },
       "rank_trace_source": "derived_from_screenshot_window",
-      "target_name": "[kk7] 3arb Rlemow 驺",
+      "target_name": "瓯 Kriegspiel",
       "target_alliance": null,
-      "target_power_original": 77739565950,
-      "target_power_selected": 77739565950,
-      "target_source_file": "Screenshot_20260701-194308.png",
+      "target_power_original": 21900298,
+      "target_power_selected": 21900298,
+      "target_source_file": "2026-06-29 14_47_24-Window.png",
       "ocr_rank": 0,
       "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.934;margin=0.016",
+      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_low_truncation_candidates:best=1.120;margin=0.021",
       "severity": "warning",
       "action": "Review row ranking-type assignment",
       "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-194308.png",
+      "screenshot": "2026-06-29 14_47_24-Window.png",
       "review_ocr_status": "no_promotion",
       "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
       "review_ocr_best_variant": "",
       "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
+      "row_reconstruction_status": "no_promotion",
       "row_reconstruction_reason": "",
       "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 552,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 11,
-      "visible_rank": 11,
-      "source_row": null,
-      "target_rank": 8,
-      "raw_review_rank": 8,
-      "screenshot_rank_window": {
-        "start": 4,
-        "end": 11,
-        "count": 8,
-        "ranks": [
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "derived_from_screenshot_window",
-      "target_name": "[PAN] 己九CIIHNEKOPANC",
-      "target_alliance": null,
-      "target_power_original": 77709655122,
-      "target_power_selected": 77709655122,
-      "target_source_file": "Screenshot_20260701-003252.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.797;margin=0.054",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003252.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 552,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 20,
-      "visible_rank": 20,
-      "source_row": null,
-      "target_rank": 9,
-      "raw_review_rank": 9,
-      "screenshot_rank_window": {
-        "start": 12,
-        "end": 20,
-        "count": 9,
-        "ranks": [
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19,
-          20
-        ],
-        "server": 552,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "derived_from_screenshot_window",
-      "target_name": "[uiz] Eureka [terHmo#33",
-      "target_alliance": null,
-      "target_power_original": 70057779917,
-      "target_power_selected": 70057779917,
-      "target_source_file": "Screenshot_20260701-003328.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:power_recovery_candidates_ambiguous;ambiguous_candidates:best=0.672;margin=0.042",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260701-003328.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0
-    },
-    {
-      "server": 555,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 4,
-      "visible_rank": 4,
-      "source_row": null,
-      "target_rank": 10,
-      "raw_review_rank": 10,
-      "screenshot_rank_window": {
-        "start": 3,
-        "end": 10,
-        "count": 8,
-        "ranks": [
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ],
-        "server": 555,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "source_evidence_anchor",
-      "target_name": "[GOPPJ Bleem6e#凸8 GAME OF PHONES",
-      "target_alliance": null,
-      "target_power_original": 24606329562,
-      "target_power_selected": 24606329562,
-      "target_source_file": "Screenshot_20260704-000114.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:2.63",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260704-000114.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0,
-      "source_evidence_match_score": 8.0
-    },
-    {
-      "server": 554,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "alliance_power",
-      "rank": 4,
-      "visible_rank": 4,
-      "source_row": null,
-      "target_rank": 11,
-      "raw_review_rank": 11,
-      "screenshot_rank_window": {
-        "start": 4,
-        "end": 17,
-        "count": 9,
-        "ranks": [
-          4,
-          5,
-          10,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17
-        ],
-        "server": 554,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "source_evidence_anchor",
-      "target_name": "[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼",
-      "target_alliance": null,
-      "target_power_original": 7677657342,
-      "target_power_selected": 7677657342,
-      "target_source_file": "Screenshot_20260702-082020.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "power_sanity:alliance_power_outlier;power_to_local_median_ratio:3.00",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "Screenshot_20260702-082020.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0,
-      "source_evidence_match_score": 8.0
-    },
-    {
-      "server": 549,
-      "ranking_type": "alliance_power",
-      "expected_ranking_type": "unknown",
-      "rank": 19,
-      "visible_rank": 19,
-      "source_row": null,
-      "target_rank": 12,
-      "raw_review_rank": 12,
-      "screenshot_rank_window": {
-        "start": 13,
-        "end": 19,
-        "count": 6,
-        "ranks": [
-          13,
-          14,
-          15,
-          16,
-          18,
-          19
-        ],
-        "server": 549,
-        "ranking_type": "alliance_power"
-      },
-      "rank_trace_source": "source_evidence_anchor",
-      "target_name": "PENDING REVIEW |",
-      "target_alliance": null,
-      "target_power_original": 1836113187,
-      "target_power_selected": 1836113187,
-      "target_source_file": "2026-06-28 13_15_08-Window.png",
-      "ocr_rank": 0,
-      "title": "Ranking Guard quarantine",
-      "description": "ranking_type_conflict:missing_alliance_name",
-      "severity": "warning",
-      "action": "Review row ranking-type assignment",
-      "reason": "ranking_guard_quarantine",
-      "screenshot": "2026-06-28 13_15_08-Window.png",
-      "review_ocr_status": "no_promotion",
-      "review_ocr_decision": "kept_in_quarantine_after_review_ocr",
-      "review_ocr_best_variant": "",
-      "review_ocr_score": 0.0,
-      "row_reconstruction_status": "not_applicable",
-      "row_reconstruction_reason": "",
-      "row_reconstruction_score": 0.0,
-      "source_evidence_match_score": 4.0
     }
   ],
   "recent_operations": [
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "114 screenshots · 7 servers · 319 rows · 3976.62s",
+      "detail": "18 screenshots · 1 servers · 129 rows · 1007.32s",
       "severity": "warning"
     },
     {
       "time": "latest",
       "title": "Sentinel integrity guards completed",
-      "detail": "319 review item(s) detected",
+      "detail": "128 review item(s) detected",
       "severity": "warning"
     }
   ],
@@ -3695,7 +1296,7 @@
       "end": 676,
       "servers": []
     },
-    "bound_at": "2026-07-04T13:42:20+00:00"
+    "bound_at": "2026-07-04T15:18:39+00:00"
   },
   "snapshot_id": "s6-pre-transfer-2b69ebc1",
   "snapshot_name": "S6 pre Transfer",

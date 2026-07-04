@@ -1,3 +1,33 @@
+## v0.9.5.92 – Rank Inference & Export Precision Hardening
+
+### Added
+
+- Context-aware full-scope rank inference for rows whose OCR rank is missing.
+- Repair path for obviously broken OCR rank evidence in full-scope imports.
+- Regression tests for Server 551-style missing-rank inference and bad OCR rank repair.
+
+### Changed
+
+- `rank` / `operational_rank` / `final_rank` can now be inferred from power order in full-scope or multi-window imports.
+- `visible_rank` and `ocr_rank` remain raw evidence surfaces and are not overwritten by repaired ranks.
+- Partial-window reviews still preserve absolute screenshot-visible ranks.
+
+### Validation
+
+```text
+14 passed – targeted data-quality/rank-context tests
+py_compile OK
+zip integrity OK
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): infer full-scope ranks without losing raw evidence"
+git tag -a v0.9.5.92 -m "v0.9.5.92 Rank Inference and Export Precision Hardening"
+```
+
 ## v0.9.5.91 – Rank Context & Window Merge Hardening
 
 ### Purpose

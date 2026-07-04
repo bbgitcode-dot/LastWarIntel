@@ -1,78 +1,31 @@
-# Handoff Next Chat – Sentinel v0.9.5.91
-
-You are Mimir, strategic copilot for Sentinel. The Proud Owner expects complete ZIP releases, not snippets.
+# Handoff Next Chat – Sentinel v0.9.5.92
 
 ## Baseline
 
 Use:
 
 ```text
-Sentinel_v0.9.5.91.zip
+Sentinel_v0.9.5.92.zip
 ```
 
-## What .91 did
+## Current state
 
-- Hardened `parser/ranking.py` against rank-context corruption.
-- Stopped treating generic `rank` as screenshot-visible rank evidence during merge.
-- Prevented unranked rows from displacing visible slots in mixed ranked contexts.
-- Added diagnostics for cross-window duplicate visible-rank conflicts.
-- Documented 549–555 benchmark lessons across core docs.
-
-## Key benchmark lesson
-
-The screenshot is the only Ground Truth. Console output, Excel, Review Pack and Review History are derived surfaces and must be validated against the screenshot row by row.
+v0.9.5.92 follows the isolated Server 551 Ground Truth validation. v0.9.5.91 achieved 50/50 matched rows, 0 missing rows, and 0 bad matches, but exported many correct rows with `rank=None`. v0.9.5.92 adds full-scope rank inference from power order while preserving OCR rank evidence in `visible_rank` / `ocr_rank`.
 
 ## Next recommended sprint
 
-**v0.9.5.92 – Identity Integrity**
+**v0.9.5.93 – Alliance Power Merge Stabilization**
 
-1. Alliance tag drift: `[SWSq]`, `[SWSQ]`, `[5WSQ]`, `[SWSA]`.
-2. Player identity drift and Unicode canonicalization.
-3. Duplicate identity detection for repeated alliance/player rows.
-4. Route .91 merge diagnostics into explicit Review/Quarantine sheets.
+Focus:
 
-## Rules to keep
+- Run Server 551 again and compare Ground Truth metrics.
+- Run Server 552 Alliance Power as the next targeted benchmark.
+- Validate that top Alliance Power ranks no longer drift or export as `None`.
+- Keep screenshot-first review discipline.
 
-- Screenshot filename/order/upload order is never truth.
-- Data Quality before Intelligence.
-- Quarantine beats false Operational Truth.
-- Cache is performance only and must stay off for data-quality validation unless explicitly requested.
+## Rules
 
----
-
-# Handoff Next Chat – Sentinel v0.9.5.90
-
-You are Mimir, strategic copilot for Sentinel. The Proud Owner expects complete ZIP releases, not snippets.
-
-## Baseline
-
-Use:
-
-```text
-Sentinel_v0.9.5.90.zip
-```
-
-## What .90 did
-
-- Locked visible rank slots in `parser/ranking.py`.
-- Added raw identity preservation fields.
-- Prevented ambiguous high-explosion power candidates from being exposed as Operational Truth power.
-- Preserved low-truncation observed power while keeping candidates in review evidence.
-- Added regression tests around Server 553 `[SWSq] sven the vän`.
-
-## Next recommended sprint
-
-**v0.9.5.91 – Full Smoke Cleanup & Benchmark Re-run**
-
-1. Clean pre-existing invalid smoke command stubs.
-2. Restore or update OCR config compatibility exports expected by smoke tests.
-3. Re-run 549–554 with cache off.
-4. Verify Server 553 THP: `[SWSq] sven the vän` remains in its visible slot with raw display preserved.
-5. Update docs and release as full ZIP with `.commit`.
-
-## Rules to keep
-
-- Screenshot filename/order/upload order is never truth.
-- Data Quality before Intelligence.
-- Quarantine beats false Operational Truth.
-- Cache is performance only and must stay off for data-quality validation unless explicitly requested.
+- Screenshot is Ground Truth.
+- Cache off for benchmark validation.
+- No Intelligence features until DataGuard is stable.
+- Do not treat upload order, filename order, or console output as truth.

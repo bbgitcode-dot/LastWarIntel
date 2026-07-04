@@ -1,49 +1,22 @@
-# Project Status – Sentinel v0.9.5.91
+# Project Status – Sentinel v0.9.5.92
 
-**Current sprint:** v0.9.5.91 Rank Context & Window Merge Hardening  
-**Baseline:** Sentinel v0.9.5.90  
+**Current sprint:** v0.9.5.92 Rank Inference & Export Precision Hardening  
+**Baseline:** Sentinel v0.9.5.91
 
-Sentinel remains in the Data Quality before Intelligence phase. The 549–555 full benchmark changed the diagnosis: OCR/power recovery is no longer the only or main risk. The critical P0 finding is that rows without reliable visible-rank evidence can be promoted by merge order and power sorting, causing cross-window contamination and corrupt Operational Truth. v0.9.5.91 hardens the merge layer accordingly.
+Sentinel remains in the Data Quality before Intelligence phase. The isolated Server 551 run after v0.9.5.91 proved a major improvement: the Ground Truth validator matched all 50 gold-standard THP rows with 0 missing rows and 0 bad matches. However, v0.9.5.91 was too conservative at the export boundary: many valid rows were exported with `rank=None`, producing low precision and zero raw rank matches in the validator despite correct identity/power matching.
 
-## Current guarantees
+v0.9.5.92 introduces rank-context inference for full-scope/multi-window imports. Small forensic screenshot slices still keep screenshot-visible ranks authoritative. Larger imports may safely infer final export ranks from power order when OCR rank evidence is missing or obviously broken, while preserving the raw OCR rank as evidence in `visible_rank`/`ocr_rank` and documenting the repair in `rank_warning`.
 
-- Screenshot observations remain the only Ground Truth for benchmark review.
-- Rows with explicit visible rank evidence keep that visible slot as `final_rank` / `operational_rank`.
-- Rows missing visible rank evidence inside an otherwise ranked context are not promoted to normal Operational Truth.
-- Cross-window duplicate visible-rank conflicts are diagnosed instead of being decided by power.
-- Diagnostics include `window_id`, `rank_context_status`, `final_rank`, `merge_reason` and `rank_warning`.
+## Current quality signal
 
-## Current known risks
+- Server 551 THP gold-standard run after v0.9.5.91: 50/50 matched, 0 missing, 0 bad matches.
+- Remaining issue after v0.9.5.91: many correct rows exported with `rank=None`, hurting rank metrics and review ergonomics.
+- v0.9.5.92 target: improve rank usability and export precision without reintroducing cross-window rank corruption.
 
-- Full 549–555 remains a review benchmark, not a verified Operational Truth baseline.
-- The Ground Truth Validator intentionally covers only Server 551 THP as the Gold-Standard file; extending it to all servers would require high manual effort.
-- OCR still produces known power families (`alliance_high_explosion`, `thp_high_explosion`, `thp_low_truncation`), but these are now secondary to rank/window integrity.
+## Current P0 focus
 
-## Next focus
-
-- Re-run 549–555 with cache off and inspect whether unranked top-window rows are held as diagnostics instead of shifted into false ranks.
-- Route merge diagnostics into explicit Review/Quarantine surfaces instead of only keeping them as export diagnostics.
-- Begin v0.9.5.92 Identity Integrity: alliance-tag drift, duplicate identity and Unicode canonicalization.
-
----
-
-# Project Status – Sentinel v0.9.5.90
-
-**Current sprint:** v0.9.5.90 Operational Truth Hardening  
-**Baseline:** Sentinel v0.9.5.89  
-
-Sentinel remains in the Data Quality before Intelligence phase. The 549–554 benchmark proved that cache-off OCR validation works as a diagnostic, but it also exposed a critical risk: recovered power could move a row away from its visible screenshot rank and normalized identity could hide the raw display. v0.9.5.90 hardens those invariants.
-
-## Current guarantees
-
-- Explicit visible rank slots are preserved as operational rank.
-- Quarantined/review rows do not collapse following ranks.
-- Raw player/alliance identity is stored separately from normalized identity.
-- Ambiguous recovery candidates remain review evidence and do not become Operational Truth.
-- High-explosion OCR values are removed from operational power when held for review.
-
-## Remaining focus
-
-- Clean up stale smoke command-stub tests and OCR config compatibility tests so full smoke collection is trustworthy again.
-- Re-run the complete 549–554 benchmark with .90 and compare Server 553 THP visually, especially `[SWSq] sven the vän`.
-- Continue reducing review count only after the slot and raw identity invariants hold reproducibly.
+1. Preserve screenshot truth for partial windows.
+2. Infer rank from power order only in recognized full-scope or multi-window contexts.
+3. Preserve raw rank evidence separately from repaired final rank.
+4. Keep ambiguous power values in quarantine.
+5. Continue screenshot-first validation; exports are never ground truth.

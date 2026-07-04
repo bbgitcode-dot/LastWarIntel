@@ -1,3 +1,3 @@
 git add .
-git commit -m "fix(data-guard): isolate rank context during window merge"
-git tag -a v0.9.5.91 -m "v0.9.5.91 Rank Context and Window Merge Hardening"
+git commit -m "fix(data-guard): infer full-scope ranks without losing raw evidence"
+git tag -a v0.9.5.92 -m "v0.9.5.92 Rank Inference and Export Precision Hardening"
