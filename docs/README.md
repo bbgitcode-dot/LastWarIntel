@@ -20,3 +20,8 @@ Current project philosophy:
 > Data Quality before Intelligence.
 
 Sentinel must first produce reliable, explainable Operational Truth. Intelligence and recommendations come after the data foundation is stable.
+
+
+## Current handoff baseline
+
+Current documentation release: v0.9.5.88. Start new chats with `docs/HANDOFF_NEXT_CHAT.md`. The canonical documentation path is `/docs`.

@@ -1,3 +1,34 @@
+## v0.9.5.88 – Documentation Consolidation & Handoff Sprint
+
+Purpose: consolidate Sentinel documentation after the v0.9.5.87 data-quality stabilization sprint and prepare a clean handoff for the next chat.
+
+Changed:
+
+- Consolidated the documentation baseline around `/docs` as the canonical documentation path.
+- Updated `PROJECT_STATUS.md` with the current recognition-quality state, cache decision, rank-slot preservation goal, and remaining data-stability risks.
+- Updated `ROAD_TO_V1.md` with the remaining milestones to v1.0.0.
+- Updated `MODUS_OPERANDI.md` to explicitly describe Proud Owner / Mimir roles, full-ZIP sprint delivery, versioning, `.commit`, and no-snippet default delivery.
+- Added/updated `NEXT_CHAT.md` and `START_NEXT_CHAT.md` with copy/paste handoff instructions for the next Sentinel chat.
+- Added `HANDOFF_NEXT_CHAT.md` as the clean standalone next-chat bootstrap document.
+- Updated `SENTINEL_DATA_GUARD.md`, `LESSONS_LEARNED.md`, and `PATCH_SUMMARY.md` with the key lessons from v0.9.5.80–v0.9.5.87.
+- Documented that OCR cache is a performance optimization only and must stay disabled in development/data-quality validation until Operational Truth is stable.
+
+Validation:
+
+```text
+28 passed
+targeted compile OK
+zip integrity OK
+```
+
+Commit:
+
+```bash
+git add .
+git commit -m "docs(project): consolidate handoff and road to v1 after data quality stabilization"
+git tag -a v0.9.5.88 -m "v0.9.5.88 Documentation Consolidation and Handoff"
+```
+
 ## v0.9.5.86 – Source Row Identity & Display Fidelity
 
 - Added same-screenshot source-evidence anchoring for Ranking Guard reviews.
@@ -1210,3 +1241,15 @@ git tag -a v0.9.5.83 -m "v0.9.5.83 Rebuild Report Telemetry Hotfix"
 - Preserved observed identity fields for pending rows (`observed_name`, `observed_alliance`) so review display can distinguish raw screenshot evidence from normalized matching values.
 - Updated recognition-quality decision version to v0.9.5.87.
 - Added regression coverage for development-mode cache behavior and pending slot preservation.
+
+---
+
+## Consolidated legacy release-note sources
+
+The following legacy release-note files remain in `/docs` for traceability, but `docs/RELEASE_NOTES.md` is the canonical ledger going forward:
+
+- `RELEASE_NOTES_PATCH10A.md`
+- `RELEASE_NOTES_v0.9.5.30.md` through `RELEASE_NOTES_v0.9.5.45.md`
+- `docs_RELEASE_NOTES_v0.9.5.17.md`
+
+Future sprints should add new notes to this file first. Legacy files should not be extended unless a migration audit requires it.

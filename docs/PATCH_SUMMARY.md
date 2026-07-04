@@ -1,3 +1,37 @@
+# Patch Summary – v0.9.5.88
+
+## Sentinel v0.9.5.88 – Documentation Consolidation & Handoff Sprint
+
+This patch consolidates the current Sentinel documentation after the v0.9.5.87 data-quality stabilization work. It does not change the recognition engine. Its purpose is to make the next chat safe, clear and productive.
+
+### Changed
+
+- Updated canonical release notes with the v0.9.5.88 documentation release.
+- Rewrote `PROJECT_STATUS.md` around the current truth-first development state.
+- Rewrote `ROAD_TO_V1.md` with milestones from data stability to v1.0.0.
+- Rewrote `MODUS_OPERANDI.md` with Proud Owner / Mimir operating rules.
+- Added `HANDOFF_NEXT_CHAT.md` and updated `START_NEXT_CHAT.md` / `NEXT_CHAT.md`.
+- Updated Data Guard and Lessons Learned with the cache and rank-slot lessons.
+- Updated `.commit` for the documentation sprint.
+
+### Validation
+
+```text
+28 passed
+targeted compile OK
+zip integrity OK
+```
+
+### Git
+
+```bash
+git add .
+git commit -m "docs(project): consolidate handoff and road to v1 after data quality stabilization"
+git tag -a v0.9.5.88 -m "v0.9.5.88 Documentation Consolidation and Handoff"
+```
+
+---
+
 # Patch Summary – v0.9.5.86
 
 **Theme:** Source Row Identity & Display Fidelity

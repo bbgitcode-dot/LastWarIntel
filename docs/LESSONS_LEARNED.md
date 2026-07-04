@@ -51,3 +51,15 @@ The fast report-rebuild feedback loop is now considered mandatory before expensi
 ## v0.9.5.87 Lesson – Cache Is Not Truth
 
 OCR cache is a performance optimization, not an authority. During recognition and ranking-integrity work, cached OCR can preserve old defects and invalidate benchmark conclusions. Development mode must recompute evidence until data quality is stable.
+
+## v0.9.5.88 Lesson – Handoff Is a Product Feature
+
+Sentinel has become large enough that documentation is no longer a side artifact. A clean handoff is part of delivery quality. Each new chat must know the current baseline ZIP, the role model, the no-snippets release rule, the Data Quality priority, and the exact next validation task.
+
+## v0.9.5.88 Lesson – Performance Cannot Validate Truth
+
+The OCR cache can make repeat runs dramatically faster, but fast runs are not proof of better recognition. During data-quality work, speed optimizations must be disabled or version-gated so stale evidence cannot mask defects.
+
+## v0.9.5.88 Lesson – Rank Slots Are Operational Structure
+
+A rank is not only a display number. It is the structural position of an observed row. Quarantine must preserve the slot. Removing a bad row and renumbering later rows creates false Operational Truth.

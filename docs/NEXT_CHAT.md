@@ -1,58 +1,33 @@
-## Next Chat – After v0.9.5.86
+# Next Chat – Sentinel v0.9.5.88
 
-Baseline: `Sentinel_v0.9.5.86.zip`
+Baseline for next chat:
 
-Recommended validation:
+```text
+Sentinel_v0.9.5.88.zip
+```
 
-1. Rebuild reports: `python main.py --rebuild-reports`.
-2. Inspect Server 553 THP review for Sven: it should anchor to the observed Rank 10 row and prefer raw display identity when available.
-3. Run a second identical screenshot import to validate OCR cache hits.
-4. Compare runtime and review count against v0.9.5.85.
+Read `docs/HANDOFF_NEXT_CHAT.md` first. It contains the full copy/paste bootstrap prompt.
 
-Likely next sprint: OCR Cache Effectiveness & Data Quality Loop Profiling, unless source-row identity still shows mismatches.
+## Recommended next sprint
 
-## Next Chat – After v0.9.5.85
+**v0.9.5.89 – Non-cache Data Quality Validation & Rank Slot Regression**
 
-Baseline: `Sentinel_v0.9.5.85.zip`
+Immediate validation target:
 
-Recommended next step:
+```bash
+python main.py
+```
 
-1. Run a small smoke test with `python main.py --rebuild-reports`.
-2. Run a 1–2 screenshot test twice to verify OCR cache hits on the second run.
-3. If stable, run the 99-screenshot benchmark again and compare:
-   - Runtime
-   - OCR cache hit/miss counts
-   - Review items
-   - Ambiguous power recoveries
-   - Critical count
+with cache disabled by default.
 
-Likely next sprint: v0.9.5.86 – OCR Cache Extension & Data Quality Loop Profiling.
+Verify:
 
-# NEXT CHAT – Sentinel v0.9.5.84 Handover
+- no OCR cache hits unless `--ocr-cache` is explicitly passed;
+- rank slots are preserved when rows are quarantined;
+- `[SWSq] Sven the vän` remains raw/observed in review surfaces;
+- pending review rows do not renumber later ranks;
+- Excel, Command Center, Review Dashboard and Evidence Pack agree.
 
-Baseline: **Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry**
+## Do not do next
 
-Use `Sentinel_v0.9.5.84.zip` as the next baseline.
-
-## What changed
-
-- Power recovery traces now include `family`.
-- Import reports summarize `by_family`, `ambiguous_by_family` and `near_miss_ambiguous`.
-- Recognition Quality exposes the same family counters for Command Center review.
-- Command Center power trace tables show the family per trace.
-
-## Recommended next work
-
-Do not run the full 99-screenshot benchmark yet unless a measurable scoring change is expected. First use small targeted runs to inspect:
-
-- alliance high explosions
-- THP high explosions
-- low truncations
-- near-miss ambiguous cases
-
-Next likely sprint: Candidate Scoring Pass focused on one family at a time.
-
-
-## After v0.9.5.87
-
-Run the next 549–554 benchmark in development mode without OCR cache. Confirm that cached OCR no longer masks source-row identity changes, and specifically verify Sven the vän / SWSq plus rank-slot preservation for quarantined rows.
+Do not restart performance optimization until data-quality validation passes without cache.

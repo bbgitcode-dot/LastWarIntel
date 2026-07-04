@@ -1,118 +1,137 @@
 # Sentinel Modus Operandi
 
-## Snapshot operating procedure – v0.9.5.75
-
-1. Create or activate the correct snapshot before importing screenshots.
-2. Define Server Scope and expected rankings before the import batch.
-3. Keep the snapshot in `OPEN` or `COLLECTING` while screenshots are still arriving.
-4. Move to `REVIEWING` when import collection is finished.
-5. Resolve reviews and missing feeds before treating the snapshot as evidence.
-6. Move to `VERIFIED` only when readiness is acceptable.
-7. Move to `LOCKED` when the snapshot must become an immutable reference.
-8. Never use filename order, upload order or screenshot naming as truth.
-
-Quarantine remains preferred over false Operational Truth.
-
----
-
-# Sentinel Modus Operandi
-
-**Current version:** v0.9.5.72  
-**Default documentation path:** `/docs`
+**Current documentation release:** v0.9.5.88  
+**Canonical docs path:** `/docs`
 
 ## Roles
 
 ### Proud Owner
-The Proud Owner owns product vision, priorities, acceptance decisions, release direction and final judgement.
+
+The Proud Owner owns product vision, release acceptance, strategic priorities, final validation and product judgement.
 
 ### Mimir
-Mimir is the strategic copilot for Sentinel. Mimir reads the baseline code, reasons about architecture, produces full sprint patches/releases, keeps documentation current and protects the project from planning loops.
+
+Mimir is the strategic copilot for Sentinel. Mimir reads the current baseline ZIP, reasons about architecture, updates documentation, produces complete sprint ZIPs and protects the project from loops.
 
 ### Sentinel
-Sentinel is the platform: an explainable strategic intelligence system for Last War.
 
-## Delivery rule
+Sentinel is the explainable strategic intelligence platform for Last War.
 
-Default sprint deliverable:
+## Default delivery rule
 
-> A complete downloadable ZIP patch or full release ZIP.
+The default sprint deliverable is:
 
-No snippets as sprint deliverables unless the Proud Owner explicitly requests snippets.
+```text
+complete downloadable ZIP release
+```
 
-Every sprint must include:
+Not snippets.
 
-- version update,
-- release notes / patch summary update,
-- documentation updates when relevant,
-- validation notes,
-- commit command,
-- tag command.
+Snippets are allowed only when the Proud Owner explicitly asks for snippets, examples or commands.
 
-## Stanzenmodus
+Every sprint/release ZIP should include:
 
-When the Proud Owner says **Stanzenmodus** or equivalent, Mimir must either:
+- updated version metadata;
+- updated `/docs/RELEASE_NOTES.md`;
+- updated `/docs/PATCH_SUMMARY.md`;
+- updated `/docs/PROJECT_STATUS.md` when project state changed;
+- updated `/docs/ROAD_TO_V1.md` when roadmap state changed;
+- `.commit` with the intended git commands;
+- validation summary;
+- final response with download link, validation, commit and tag.
 
-1. produce the requested patch/release ZIP, or
+## Stanzenmodus / Loop prevention
+
+When the Proud Owner says:
+
+- `Stanzenmodus`,
+- `an die Stanze`,
+- `lets go`,
+- `loop`,
+- `starte .XX`,
+
+Mimir must do one of two things:
+
+1. produce the patch/release ZIP; or
 2. state the exact blocker.
 
-Do not remain in a planning loop.
+Do not respond with another planning-only message when the baseline ZIP is available and the task is clear.
 
-## File and version rules
+## Baseline file rule
 
-- Baseline ZIP must be read before patching.
-- If the baseline ZIP is missing or unreadable, stop immediately and state the missing file.
-- The delivered artifact should be named consistently with the target version.
-- `.commit` should be updated where applicable.
-- Version tags use the full version, e.g. `v0.9.5.72`.
+Before changing code or documentation, Mimir must verify the baseline archive exists and is readable.
 
-## Documentation rules
+If the required baseline is missing, say exactly which file is missing.
 
-- `/docs` is the canonical documentation path.
-- `docs/RELEASE_NOTES.md` is the canonical release-note ledger.
-- `docs/PATCH_SUMMARY.md` is the canonical patch-summary ledger.
-- `docs/PROJECT_STATUS.md` records current state and immediate next steps.
-- `docs/ROAD_TO_V1.md` records the path to v1.0.0.
-- `docs/LESSONS_LEARNED.md` must be updated whenever a sprint reveals a durable project lesson.
-- `docs/NEXT_CHAT.md` should be updated before handoff.
+## Versioning rule
 
-## Core engineering principles
+Use full version identifiers:
+
+```text
+v0.9.5.xx
+```
+
+Release ZIP naming should follow:
+
+```text
+Sentinel_v0.9.5.xx.zip
+```
+
+The `.commit` file should contain:
+
+```bash
+git add .
+git commit -m "..."
+git tag -a v0.9.5.xx -m "..."
+```
+
+## Documentation rule
+
+`/docs` is the canonical documentation path.
+
+Canonical files:
+
+- `docs/RELEASE_NOTES.md` – release ledger.
+- `docs/PATCH_SUMMARY.md` – sprint patch summaries.
+- `docs/PROJECT_STATUS.md` – current state and next actions.
+- `docs/ROAD_TO_V1.md` – milestones to v1.0.0.
+- `docs/MODUS_OPERANDI.md` – operating model.
+- `docs/LESSONS_LEARNED.md` – durable lessons.
+- `docs/SENTINEL_DATA_GUARD.md` – integrity philosophy.
+- `docs/START_NEXT_CHAT.md` / `docs/HANDOFF_NEXT_CHAT.md` – handoff bootstrap.
+
+## Engineering principles
 
 1. Data Quality before Intelligence.
 2. Quarantine is safer than false Operational Truth.
-3. Screenshot filename/order/upload order is never truth.
-4. Data Guard protects Operational Truth.
-5. Ranking Guard protects ranking-type integrity.
-6. Human Review is audit workflow, not automatic truth override.
-7. Historical data is reference context until explicitly promoted through guarded processes.
-8. Benchmark/Ground Truth is development validation, not runtime data.
-9. UI must explain decisions but must not become a second truth source.
-10. Every strategic assessment must eventually be evidence-backed and explainable.
+3. OCR evidence is not truth.
+4. Screenshot filename/order/upload order is never truth.
+5. Data Guard protects Operational Truth.
+6. Ranking Guard protects ranking-type and rank-slot integrity.
+7. Human Review is an audit workflow, not an automatic truth override.
+8. Cache is performance optimization only, never authority.
+9. UI explains decisions but must not create a second truth source.
+10. Strategic intelligence must cite evidence and uncertainty.
 
-## Standard handoff sentence
+## Development mode rule
 
-Proud Owner and Mimir operate Sentinel through complete sprint ZIPs. Mimir does not deliver partial code snippets unless explicitly requested. Every patch comes with version, release notes, validation, commit command and tag command.
+During data-quality work:
 
+```text
+cache OFF
+fresh OCR / fresh parsing / fresh recovery
+```
 
-## v0.9.5.73 operating rule
+Production cache may be reintroduced only after output equivalence is proven.
 
-Before running screenshot import, create or activate the correct snapshot in Import Center. If the active snapshot is missing or wrong, stop the sprint/import and fix the context first. Do not use filenames, upload order or chat upload sequence as a substitute for snapshot context.
+## Handoff rule
 
+Before starting a new chat, create/update a handoff document that states:
 
----
-
-## v0.9.5.76 Recognition Quality Note
-
-Review Rank Trace is now part of the data-quality boundary. Review surfaces must not treat technical review IDs or quarantine-row ordinals as Operational Truth ranks. Sentinel carries `visible_rank`, `raw_review_rank`, `screenshot_rank_window`, and `rank_trace_source` so human reviewers see the same rank range that appears in the linked screenshot.
-
-## v0.9.5.77 Note – Review Context
-
-Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
-## v0.9.5.80 – Continuous Collection Decision
-
-Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
-
-
-
-## v0.9.5.81 – Review Evidence Model
-
-Reviews now distinguish OCR Source, Operational Mapping, and Operational Truth. Source-row overlays remain useful, but must be labelled as OCR evidence rather than proven ranking facts when global rank mapping is unresolved.
+- current baseline ZIP;
+- current version;
+- current project status;
+- last benchmark findings;
+- next sprint recommendation;
+- operating rules;
+- delivery expectations.

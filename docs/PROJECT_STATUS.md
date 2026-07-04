@@ -1,122 +1,153 @@
-## Current Status – v0.9.5.86
+# Project Status – Sentinel v0.9.5.88
 
-Sentinel is now focused on review identity correctness before further review reduction. v0.9.5.86 fixes misleading review source-row identity by anchoring quarantine reviews to trusted observed rows from the same screenshot when strong identity/power evidence exists.
+**Current baseline:** Sentinel v0.9.5.87 Data Quality Stabilization  
+**Current sprint:** v0.9.5.88 Documentation Consolidation & Handoff  
+**Canonical docs path:** `/docs`  
+**Operating roles:** Mimir = strategic copilot; Proud Owner = product owner and acceptance authority.
 
-Current priority remains **Data Quality before Intelligence**. The next benchmark should verify that `[SWSq] Sven the vän` is shown at the correct observed rank and that raw display identity is preserved for human review.
+## Executive state
 
-Next focus after validation: run a cache second-pass benchmark and confirm OCR cache hits reduce runtime without changing Operational Truth.
+Sentinel is in the **Data Quality before Intelligence** phase. The recent sprint line from v0.9.5.73 through v0.9.5.87 moved Sentinel from raw screenshot ingestion toward an auditable Operational Truth pipeline:
 
-## Current Status – v0.9.5.85
+1. snapshots define import context and expected feed completeness;
+2. OCR creates evidence, not truth;
+3. Ranking Guard and Data Guard prevent unsafe rows from entering Operational Truth;
+4. Review explains uncertainty without silently mutating truth;
+5. v0.9.5.87 made cache opt-in during development and introduced rank-slot preservation for pending review rows.
 
-Sentinel has moved from Review UX stabilization back into recognition quality hardening. The latest benchmark showed v0.9.5.84 reduced runtime from 4446s to 3431s and reduced current review items from 13 to 12. v0.9.5.85 adds the first runtime-focused infrastructure: a content-hash OCR cache.
+The next engineering work should continue hardening data integrity. Intelligence expansion remains intentionally paused until ranking identity, rank-slot preservation, and power recovery are reliable.
 
-Current focus remains **Data Quality before Intelligence**. The next measurable goals are fewer ambiguous power recoveries and lower repeat-run runtime without weakening Data Guard or Ranking Guard.
+## What the last sprints tried to achieve
 
-# Project Status – Sentinel v0.9.5.84
+### Snapshot and completeness foundation
 
-**Current version:** v0.9.5.84  
-**Focus:** Power Recovery diagnostics and measurable recognition tuning.
-
-Sentinel now separates power-recovery telemetry by failure family. This gives the next tuning sprint a clean measurement surface: 77B/79B alliance explosions, 7xxM THP explosions, low truncations and generic context candidates can be counted independently.
-
-## Current priorities
-
-1. Use family telemetry to identify which ambiguous reviews are safe tuning targets.
-2. Reduce `near_miss_ambiguous` without increasing false auto-promotions.
-3. Keep OCR Source / Operational Mapping / Operational Truth separate in all Review surfaces.
-4. Run the 99-screenshot benchmark only after candidate scoring has changed enough to expect a measurable improvement.
-
-# Project Status – Sentinel v0.9.5.82
-
-**Current version:** v0.9.5.82  
-**Focus:** Recognition Quality Pass / measurable data-recognition improvement.
-
-Sentinel now records runtime and recognition-quality telemetry for screenshot imports. The goal is to reduce avoidable human reviews and make the expensive 99-screenshot benchmark measurable before deeper OCR tuning.
-
-## Current priorities
-
-1. Reduce false high-power OCR explosions.
-2. Reduce ambiguous candidate reviews where the evidence is already strong.
-3. Use runtime telemetry to identify the real performance bottleneck before optimizing.
-4. Keep review explainability from .81 intact: OCR Source, Operational Mapping and Operational Truth remain separate.
-
-# Project Status – Sentinel v0.9.5.81
-
-**Current version:** v0.9.5.81  
-**Focus:** Review Evidence Model / Explainability clarity.
-
-Sentinel now separates OCR Source from Operational Mapping in review surfaces. A highlighted screenshot row is evidence, not a proven rank unless the rank mapping is explicitly resolved.
-
-# Project Status – Sentinel v0.9.5.80
-
-**Current version:** v0.9.5.80  
-**Focus:** Continuous screenshot collection and conservative review rank display.
-
-## v0.9.5.80 Note
-
-Normal screenshot import runs now keep the active snapshot in `COLLECTING`. The system no longer assumes a batch run means collection is finished. This supports 24/7 screenshot intake while still allowing operators to explicitly move to `REVIEWING` with `--finish-collection` or UI lifecycle controls.
-
-Review rendering now treats `source_row_only` evidence conservatively. If Sentinel only knows the row within a screenshot, it displays `Source Row` and leaves visible rank unresolved instead of claiming a global rank.
-
-# Project Status
-
-**Current version:** v0.9.5.80  
-
-## v0.9.5.80 Note – Review Identity Consistency
-
-Review IDs now continue from persistent Review History and Review surfaces no longer treat screenshot row ordinals as proven visible/global ranks. If Sentinel only knows the row in a screenshot, it shows `Source Row` and keeps the visible rank unresolved until stronger evidence is available.
-
-## v0.9.5.78 Note – Developer Benchmark & Report Rebuild
-
-The 99-screenshot run is now treated as an integration benchmark, not as the default validation path for every UI/reporting change. Sentinel now supports targeted developer runs and report-only rebuilds:
-
-- `python main.py --rebuild-reports` regenerates Command Center, Review Dashboard and Evidence Pack from `data/latest_import_report.json` without OCR.
-- `python main.py --screenshots "<filename-or-glob>"` limits OCR to explicit test screenshots for Review Context and recognition debugging.
-- `--skip-excel`, `--skip-command-center` and `--limit` reduce iteration time for small quality checks.
-
-These modes are developer conveniences only. They do not alter the rule that screenshot filename/order/upload order must never be treated as truth.
-
-**Sprint:** Recognition Quality & Data Integrity Pass
-
-## Status
-
-Snapshot foundation is functionally closed for now. The active focus has moved back to screenshot-derived data integrity and recognition quality.
-
-## v0.9.5.76 outcome
-
-The first production-style run over 99 screenshots exposed a critical review-reporting issue: review IDs/raw quarantine indices were being presented like visible ranking ranks. This release fixes that by deriving the visible rank from the same screenshot's trusted rank window and preserving the raw review row separately.
-
-Sentinel now reports review location as:
+The snapshot system was hardened so a collection can represent a real event scope instead of an implicit global 128-server target. Expected evidence is defined as:
 
 ```text
-Server
-Ranking Type
-Visible Rank
-Screenshot Window
-Raw Review Row
+Expected Feed = Server × Ranking Type
 ```
 
-instead of collapsing those concepts into a single misleading `rank`.
+This solved two important product cases:
 
-## Next priority
+- small events with only 8 participating servers should not be judged against 128 servers;
+- broad transfer/season snapshots can use server ranges like `549-676` without manually entering 128 servers.
 
-Continue Recognition Quality hardening:
+### Continuous collection
 
-- reduce ambiguous candidate margins,
-- tighten false/aggressive power explosion handling,
-- use recognition telemetry to locate runtime bottlenecks,
-- keep quarantine preferred over false Operational Truth.
+Normal import runs no longer close a snapshot automatically. This is mandatory for a real system where users may upload screenshots 24/7. Transition to `REVIEWING`, `VERIFIED`, or `LOCKED` must be explicit.
 
-## v0.9.5.77 Note – Review Context
+### Review explainability
 
-Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
+Review UX was rebuilt around three separate concepts:
 
+```text
+OCR Source          = what Sentinel saw
+Operational Mapping = what Sentinel thinks it may correspond to
+Operational Truth   = accepted/current truth only after guards pass or review resolves
+```
 
-## v0.9.5.83 Note
+This is crucial: a highlighted OCR row is evidence, not automatically a proven rank.
 
-The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.
+### Recognition quality and power recovery
 
+Runtime telemetry and power-recovery family telemetry were added. The 99-screenshot benchmark over servers 549–554 showed the main families:
 
-## Current Status – v0.9.5.87
+- `alliance_high_explosion` such as `77B` / `79B` values;
+- `thp_high_explosion` such as `7xxM` values that should be around `1xxM–2xxM`;
+- `thp_low_truncation` where values miss one or two trailing digits.
 
-Sentinel is back in Truth-First development mode. Cache behavior no longer masks OCR/parser changes by default. Ranking integrity now preserves pending review slots so quarantine does not implicitly renumber downstream rows. The next benchmark should be run without cache unless explicitly testing production performance.
+Power recovery now works in some cases, but ambiguous candidate margins still require careful review.
+
+### Cache lesson
+
+The OCR cache produced a large repeat-run speed gain, but it also masked data-quality changes by replaying old OCR evidence. Therefore v0.9.5.87 made cache opt-in during development.
+
+Current rule:
+
+```text
+Development / Data Quality Mode: cache OFF
+Production / Performance Mode: cache may be explicitly enabled later
+```
+
+## Current risks
+
+1. **Rank-slot drift:** quarantined rows must not make later rows move up. Rank 10 pending review must stay rank 10; rank 11 must remain rank 11.
+2. **Identity fidelity:** observed display identity must preserve source text such as `[SWSq]` and `Sven the vän`; normalized forms are internal only.
+3. **Cache masking:** any benchmark meant to validate recognition logic must run with cache disabled.
+4. **Review history debt:** stale open reviews still need lifecycle cleanup so historical review items do not inflate current work.
+5. **Promotion thresholds:** near-miss ambiguous cases are tempting to auto-promote but must not be promoted until rank, identity, and context confidence are combined safely.
+
+## Immediate next engineering priorities
+
+### P0 – Validate v0.9.5.87 without cache
+
+Run the 549–554 benchmark with cache disabled and verify:
+
+- no OCR cache hits;
+- no rank shifting after quarantines;
+- `Sven the vän` / `[SWSq]` display fidelity;
+- pending review rows remain in their original rank slots;
+- exports and HTML reports agree on rank slots.
+
+### P0 – Rank Slot Preservation hardening
+
+If any quarantined row disappears from the ranked export and later rows are renumbered, fix this before further recognition tuning.
+
+Target behavior:
+
+```text
+10  PENDING REVIEW / QUARANTINED
+11  next observed row remains 11
+12  next observed row remains 12
+```
+
+### P0 – Raw observed identity fields
+
+Review and export surfaces should carry:
+
+```text
+observed_name
+normalized_name
+canonical_name
+observed_alliance
+normalized_alliance
+canonical_alliance
+```
+
+Only observed fields should be used for human-facing review unless a reviewer chooses a canonical identity.
+
+### P1 – Review History cleanup
+
+Separate:
+
+- current open reviews;
+- stale open reviews;
+- resolved reviews;
+- historical references;
+- reopened reviews.
+
+### P1 – Candidate confidence model
+
+Move from power-only confidence to combined confidence:
+
+```text
+rank_confidence × identity_confidence × power_confidence × context_confidence
+```
+
+Only combined confidence should allow auto-promotion.
+
+## Acceptance philosophy
+
+Sentinel should prefer:
+
+```text
+missing / pending / review
+```
+
+over:
+
+```text
+plausible but false Operational Truth
+```
+
+This remains the main product principle until v1.0.0.

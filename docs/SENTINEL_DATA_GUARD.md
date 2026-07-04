@@ -97,3 +97,32 @@ Screenshot import runs are not collection boundaries. A snapshot may remain `COL
 ## v0.9.5.81 – Review Evidence Model
 
 Reviews now distinguish OCR Source, Operational Mapping, and Operational Truth. Source-row overlays remain useful, but must be labelled as OCR evidence rather than proven ranking facts when global rank mapping is unresolved.
+
+## v0.9.5.88 – Current Data Guard Doctrine
+
+Data Guard is the authority that protects Operational Truth from bad evidence. The current doctrine is:
+
+1. OCR output is evidence, not truth.
+2. Screenshot row order is evidence, not truth.
+3. Filename/order/upload order is never truth.
+4. Snapshot context defines expected evidence.
+5. Ranking Guard protects rank type and rank-slot integrity.
+6. Quarantine preserves evidence and blocks unsafe truth mutation.
+7. Human Review records auditable decisions.
+8. Cache is never authority.
+
+### Rank-slot preservation
+
+If a row is unsafe, the row must remain visible as pending/quarantined in its original slot:
+
+```text
+10  PENDING REVIEW
+11  remains 11
+12  remains 12
+```
+
+Data Guard must reject any pipeline behavior that removes a quarantined row and renumbers subsequent Operational Truth rows.
+
+### Development mode
+
+During recognition and data-quality validation, all caches should be disabled by default. Recomputed evidence is the only valid basis for judging new recognition logic.
