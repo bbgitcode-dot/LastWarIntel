@@ -1,7 +1,7 @@
-Sentinel v0.9.5.98
+Sentinel v0.9.5.99
 
 Title:
-fix(data-guard): activate character re-ocr evidence by default
+fix(data-guard): convert character re-ocr crops for EasyOCR
 
 Summary:
 - Auto-discovers screenshot directories and ZIP files for Ground Truth Character Re-OCR.
@@ -17,7 +17,7 @@ Validation:
 
 Commit command:
 git add .
-git commit -m "fix(data-guard): activate character re-ocr evidence by default"
+git commit -m "fix(data-guard): convert character re-ocr crops for EasyOCR"
 
 Tag command:
-git tag -a v0.9.5.98 -m "v0.9.5.98 Auto Character Re-OCR Activation"
+git tag -a v0.9.5.99 -m "v0.9.5.99 Character Re-OCR Provider Input Fix"

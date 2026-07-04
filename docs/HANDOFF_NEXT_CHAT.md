@@ -1,6 +1,6 @@
-# Handoff Next Chat – Sentinel v0.9.5.98
+# Handoff Next Chat – Sentinel v0.9.5.99
 
-Use `Sentinel_v0.9.5.98.zip` as the next baseline.
+Use `Sentinel_v0.9.5.99.zip` as the next baseline.
 
 ## What changed
 

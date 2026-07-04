@@ -1,4 +1,4 @@
-# Road to V1 – Sentinel v0.9.5.98
+# Road to V1 – Sentinel v0.9.5.99
 
 ## Strategic sequence
 
@@ -9,7 +9,7 @@
 
 ## Current milestone
 
-v0.9.5.98 introduces targeted character re-OCR evidence. This is the missing bridge between OCR output and Gold Fidelity validation.
+v0.9.5.99 introduces targeted character re-OCR evidence. This is the missing bridge between OCR output and Gold Fidelity validation.
 
 ## Not yet V1-ready
 
@@ -17,7 +17,7 @@ Sentinel is not ready for reliable long-term joiner/leaver intelligence until na
 
 ## Next milestone candidate
 
-v0.9.5.98 should focus on improving crop localization and real OCR vote quality on the Server 551 screenshot set, especially:
+v0.9.5.99 should focus on improving crop localization and real OCR vote quality on the Server 551 screenshot set, especially:
 
 - `Joncollins21` vs `Joncollinszl`
 - `[PbC]` vs `[PBC]`

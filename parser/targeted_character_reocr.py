@@ -18,6 +18,11 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+try:
+    import numpy as np
+except Exception:  # pragma: no cover - import environment dependent
+    np = None  # type: ignore
+
 try:  # Pillow is already required by the importer, but keep imports lazy-safe.
     from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 except Exception:  # pragma: no cover - import environment dependent
@@ -151,13 +156,27 @@ def _image_variants(image):
     yield "invert_x6", ImageEnhance.Contrast(inverted).enhance(2.0).resize((gray.width * 6, gray.height * 6))
 
 
+def _to_ocr_input(image):
+    """Convert PIL crops into an OCR-provider compatible input.
+
+    EasyOCR accepts paths, bytes, or numpy arrays.  The targeted re-OCR
+    variants are PIL images, so passing them through directly raises
+    ValueError.  Keep this conversion local so fake readers in tests can still
+    receive image-like objects when numpy is unavailable.
+    """
+    if np is not None and Image is not None and isinstance(image, Image.Image):
+        return np.asarray(image.convert("RGB"))
+    return image
+
+
 def _read_variant(reader: Any, image) -> list[tuple[str, float]]:
     if reader is None:
         return []
+    ocr_input = _to_ocr_input(image)
     if hasattr(reader, "read_rows"):
-        results = reader.read_rows(image)
+        results = reader.read_rows(ocr_input)
     elif callable(reader):
-        results = reader(image)
+        results = reader(ocr_input)
     else:
         return []
     values: list[tuple[str, float]] = []

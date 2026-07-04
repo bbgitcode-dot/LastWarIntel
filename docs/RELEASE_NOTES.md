@@ -1,6 +1,27 @@
-## v0.9.5.98 – Auto Character Re-OCR Activation
+## v0.9.5.99 – Character Re-OCR Provider Input Fix
 
-v0.9.5.98 fixes the v0.9.5.97 validation gap where Character Verification candidates were counted but no targeted re-OCR targets were emitted in the standard validator run.
+v0.9.5.99 fixes the runtime blocker found in v0.9.5.98 where targeted character re-OCR passed PIL image crops directly into EasyOCR. EasyOCR expects a file path, bytes or numpy array, so the validator crashed with `ValueError: Invalid input type`.
+
+### Changed
+- Convert PIL crop variants to RGB numpy arrays before calling Sentinel's EasyOCR provider.
+- Keep fallback behavior conservative: if no OCR provider is available, evidence can still be emitted as unresolved rather than modifying Operational Truth.
+- Version and documentation updated to v0.9.5.99.
+
+### Validation
+- `python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py`
+- Targeted unit smoke with fake reader confirms PIL crops are converted and evidence is produced.
+- ZIP integrity check.
+
+### Commit
+```bash
+git add .
+git commit -m "fix(data-guard): convert character re-ocr crops for EasyOCR"
+git tag -a v0.9.5.99 -m "v0.9.5.99 Character Re-OCR Provider Input Fix"
+```
+
+## v0.9.5.99 – Character Re-OCR Provider Input Fix
+
+v0.9.5.99 fixes the v0.9.5.97 validation gap where Character Verification candidates were counted but no targeted re-OCR targets were emitted in the standard validator run.
 
 ### Added
 - Ground Truth validator now auto-discovers screenshot evidence by default.
@@ -18,7 +39,7 @@ v0.9.5.98 fixes the v0.9.5.97 validation gap where Character Verification candid
 ```bash
 git add .
 git commit -m "fix(data-guard): activate character re-ocr evidence by default"
-git tag -a v0.9.5.98 -m "v0.9.5.98 Auto Character Re-OCR Activation"
+git tag -a v0.9.5.99 -m "v0.9.5.99 Character Re-OCR Provider Input Fix"
 ```
 
 ## v0.9.5.97 – Targeted Character Re-OCR Evidence
