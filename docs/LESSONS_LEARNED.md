@@ -1,3 +1,11 @@
+## v0.9.5.93 Lesson – Review Is Not Operational Truth
+
+`PENDING REVIEW` placeholders are useful internal evidence, but they must not appear as normal operational ranks. If a quarantined row becomes THP rank 102 or 103, Sentinel has mixed review state into Operational Truth. v0.9.5.93 separates these surfaces: normal sheets show accepted rows; review sheets show unresolved rows.
+
+## v0.9.5.93 Lesson – OCR Match Is Not Identity Fidelity
+
+`Joncollins21` and `Joncollinszl` are similar for OCR, but they are not the same operational identity. The same applies to alliance tags such as `DAY` and `daY`. Sentinel must preserve exact observed identity for historical tracking and transfer intelligence.
+
 ## v0.9.5.92 Lesson – Over-Quarantine Can Also Harm Truth
 
 v0.9.5.91 protected recall but exported many correct Server 551 rows with `rank=None`. The lesson is that Data Guard must not only block false truth; it must also provide usable truth when context is strong enough. In full-scope ranking imports, power order is valid rank context because Last War ranking screens are sorted by power.

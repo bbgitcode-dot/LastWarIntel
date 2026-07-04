@@ -24,4 +24,4 @@ Sentinel must first produce reliable, explainable Operational Truth. Intelligenc
 
 ## Current handoff baseline
 
-Current documentation release: v0.9.5.92. Start new chats with `docs/HANDOFF_NEXT_CHAT.md`. The canonical documentation path is `/docs`.
+Current documentation release: v0.9.5.93. Start new chats with `docs/HANDOFF_NEXT_CHAT.md`. The canonical documentation path is `/docs`.

@@ -1,3 +1,33 @@
+## v0.9.5.93 – Review Export Separation & Identity Fidelity Guard
+
+### Added
+
+- Initial Identity Guard metadata for case-sensitive alliance tags and player-name fidelity risk.
+- Regression tests for review placeholder filtering and identity-fidelity warnings.
+
+### Changed
+
+- Synthetic `PENDING REVIEW` placeholders are filtered from normal ranking summaries and Excel sheets.
+- Review/quarantine rows remain in review surfaces only.
+- Source evidence windows ignore pending placeholders, preventing artificial rank windows like 15-103.
+- Documentation now distinguishes OCR Success from Identity Fidelity.
+
+### Validation
+
+```text
+20 passed – targeted data-quality, review-export and ground-truth regression set
+py_compile OK – main.py, parser/excel.py, parser/identity_guard.py, parser/player_ranking.py, models/player_ranking.py, services/import_repository.py, version.py
+zip integrity OK
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): separate review placeholders from operational export"
+git tag -a v0.9.5.93 -m "v0.9.5.93 Review Export Separation and Identity Fidelity Guard"
+```
+
 ## v0.9.5.92 – Rank Inference & Export Precision Hardening
 
 ### Added

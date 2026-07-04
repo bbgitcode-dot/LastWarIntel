@@ -2,6 +2,20 @@ from pathlib import Path
 import pandas as pd
 
 
+def _is_pending_review_row(row):
+    if not isinstance(row, dict):
+        return False
+    if row.get("pending_review") is True:
+        return True
+    return str(row.get("name") or "").startswith("PENDING REVIEW |")
+
+
+def _exportable_rows(server, ranking_type, rows):
+    if ranking_type in {"alliance_power", "total_hero_power"}:
+        return [row for row in rows if not _is_pending_review_row(row)]
+    return rows
+
+
 def export(grouped, filename="output/lastwar_export.xlsx"):
 
     output = Path(filename)
@@ -11,6 +25,7 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
 
         for (server, ranking_type), rows in grouped.items():
 
+            rows = _exportable_rows(server, ranking_type, list(rows or []))
             df = pd.DataFrame(rows)
 
             if df.empty:
@@ -81,6 +96,11 @@ def export(grouped, filename="output/lastwar_export.xlsx"):
                     "parse_warnings",
                     "parse_corrections",
                     "normalized_identity",
+                    "identity_fidelity_status",
+                    "identity_fidelity_risk",
+                    "identity_fidelity_warnings",
+                    "case_sensitive_alliance_tag",
+                    "canonical_alliance_tag",
                     "server_confidence",
                     "server_source",
                     "server_warning",

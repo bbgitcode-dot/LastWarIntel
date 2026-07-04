@@ -74,7 +74,7 @@ def test_power_placeholder_preserves_sven_raw_display_for_review():
     assert pending["power_sort_anchor"] == 203_127_000
 
 
-def test_export_surfaces_pending_slot_and_raw_display_fidelity(tmp_path: Path):
+def test_export_keeps_pending_rows_out_of_operational_sheet(tmp_path: Path):
     out = tmp_path / "rank_slot_export.xlsx"
     grouped = {
         (553, "alliance_power"): [
@@ -86,11 +86,7 @@ def test_export_surfaces_pending_slot_and_raw_display_fidelity(tmp_path: Path):
                 "pending_review_reason": "thp_power_outlier",
                 "rank_slot_preserved": True,
                 "observed_name": "Sven the vän",
-                "normalized_name": "sven the van",
-                "canonical_name": "",
                 "observed_alliance": "SWSq",
-                "normalized_alliance": "swsq",
-                "canonical_alliance": "",
                 "alliance_tag": "SWSq",
                 "player_name": "Sven the vän",
                 "name": "PENDING REVIEW | Sven the vän",
@@ -114,12 +110,11 @@ def test_export_surfaces_pending_slot_and_raw_display_fidelity(tmp_path: Path):
     wb = openpyxl.load_workbook(out)
     ws = wb["553_alliance_power"]
     headers = [cell.value for cell in ws[1]]
-    row_10 = {headers[index]: value for index, value in enumerate(next(ws.iter_rows(min_row=2, max_row=2, values_only=True)))}
-    row_11 = {headers[index]: value for index, value in enumerate(next(ws.iter_rows(min_row=3, max_row=3, values_only=True)))}
+    rows = [
+        {headers[index]: value for index, value in enumerate(values)}
+        for values in ws.iter_rows(min_row=2, values_only=True)
+    ]
 
-    assert row_10["rank"] == 10
-    assert row_10["pending_review"] is True
-    assert row_10["rank_slot_preserved"] is True
-    assert row_10["observed_name"] == "Sven the vän"
-    assert row_10["observed_alliance"] == "SWSq"
-    assert row_11["rank"] == 11
+    assert len(rows) == 1
+    assert rows[0]["rank"] == 11
+    assert rows[0]["name"] == "Next Wolf"

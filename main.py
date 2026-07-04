@@ -74,6 +74,27 @@ def _safe_print(*values) -> None:
 
 
 
+
+def _is_pending_review_row(row):
+    """Return True for synthetic review placeholders.
+
+    Quarantined rows must remain in REVIEW/ranking_guard_quarantine, but
+    PENDING REVIEW placeholders must not be promoted into normal operational
+    ranking sheets or console summaries as artificial ranks.
+    """
+    if not isinstance(row, dict):
+        return False
+    if row.get("pending_review") is True:
+        return True
+    name = str(row.get("name") or "")
+    return name.startswith("PENDING REVIEW |")
+
+
+def _operational_rows(rows):
+    """Filter normal ranking rows to exportable Operational Truth rows."""
+    return [row for row in rows if not _is_pending_review_row(row)]
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         description="Sentinel screenshot import runner",
@@ -400,9 +421,10 @@ def main(argv=None):
             print(f"\n{key[0]} - {key[1]}: {len(rows)} screenshots require review")
             continue
 
+        operational_input_rows = _operational_rows(rows) if key[1] in {"alliance_power", "total_hero_power"} else rows
         tolerance = 0.003 if key[1] == "alliance_power" else 0.0003
         with _timed_stage(runtime_timings, "merge_rows"):
-            merged = merge_rows_by_power(rows, limit=150, tolerance=tolerance)
+            merged = merge_rows_by_power(operational_input_rows, limit=150, tolerance=tolerance)
 
         final_grouped[key] = merged
 

@@ -128,6 +128,12 @@ def _power_value(row: dict[str, Any]) -> int | None:
     return value or None
 
 
+def _is_pending_review_row(row: dict[str, Any]) -> bool:
+    if row.get("pending_review") is True:
+        return True
+    return str(row.get("name") or "").startswith("PENDING REVIEW |")
+
+
 def _display_name_value(row: dict[str, Any]) -> str:
     return str(_first_present(row, [
         "raw_name", "ocr_name", "observed_name", "source_name", "display_name",
@@ -156,6 +162,8 @@ def _build_source_evidence_index(grouped: dict[tuple[Any, str], list[dict[str, A
         if ranking_type in {"data_guard_quarantine", "ranking_guard_quarantine"}:
             continue
         for row in rows or []:
+            if _is_pending_review_row(row):
+                continue
             source = str(row.get("source_file") or "")
             rank = _rank_value(row)
             if not source or rank is None:
@@ -253,6 +261,8 @@ def _build_source_rank_windows(grouped: dict[tuple[Any, str], list[dict[str, Any
         if ranking_type in {"data_guard_quarantine", "ranking_guard_quarantine"}:
             continue
         for row in rows or []:
+            if _is_pending_review_row(row):
+                continue
             source = str(row.get("source_file") or "")
             rank = _rank_value(row)
             if not source or rank is None:

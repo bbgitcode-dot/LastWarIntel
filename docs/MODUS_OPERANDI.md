@@ -1,6 +1,6 @@
 # Modus Operandi – Sentinel
 
-**Current release:** v0.9.5.92
+**Current release:** v0.9.5.93
 
 ## Roles
 
@@ -30,3 +30,7 @@ For data-quality validation, OCR cache is off unless explicitly requested. Cache
 ## Rank rule
 
 `visible_rank` / `ocr_rank` are evidence. `rank` / `operational_rank` / `final_rank` are output truth surfaces. In partial forensic windows, visible ranks remain authoritative. In full-scope imports, power-order inference may repair missing or impossible OCR ranks while retaining the raw evidence.
+
+## Identity rule
+
+Identity fidelity is stricter than OCR similarity. Alliance tags are case-sensitive. Player names with digit/letter confusions must be treated as identity-risk evidence, not automatically corrected truth. Fuzzy matching may assist review, but it must never silently rewrite Operational Truth.

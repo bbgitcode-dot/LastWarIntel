@@ -1,22 +1,24 @@
-# Project Status – Sentinel v0.9.5.92
+# Project Status – Sentinel v0.9.5.93
 
-**Current sprint:** v0.9.5.92 Rank Inference & Export Precision Hardening  
-**Baseline:** Sentinel v0.9.5.91
+**Current sprint:** v0.9.5.93 Review Export Separation & Identity Fidelity Guard  
+**Baseline:** Sentinel v0.9.5.92
 
-Sentinel remains in the Data Quality before Intelligence phase. The isolated Server 551 run after v0.9.5.91 proved a major improvement: the Ground Truth validator matched all 50 gold-standard THP rows with 0 missing rows and 0 bad matches. However, v0.9.5.91 was too conservative at the export boundary: many valid rows were exported with `rank=None`, producing low precision and zero raw rank matches in the validator despite correct identity/power matching.
+Sentinel remains in Data Quality before Intelligence. v0.9.5.92 proved that Server 551 can produce complete operational rows again: Alliance Power exported ranks 1-21 cleanly, THP exported ranks 1-101 cleanly, and the Server 551 THP Ground Truth validator reported 50/50 matched rows, 0 missing rows and 0 bad matches.
 
-v0.9.5.92 introduces rank-context inference for full-scope/multi-window imports. Small forensic screenshot slices still keep screenshot-visible ranks authoritative. Larger imports may safely infer final export ranks from power order when OCR rank evidence is missing or obviously broken, while preserving the raw OCR rank as evidence in `visible_rank`/`ocr_rank` and documenting the repair in `rank_warning`.
+The remaining defect was review leakage: `PENDING REVIEW` placeholders appeared as normal THP ranks 102-105. v0.9.5.93 separates review placeholders from Operational Truth exports and console summaries. Quarantined rows remain available in `REVIEW/ranking_guard_quarantine`, Review Dashboard and Evidence Pack, but they no longer become artificial ranking rows.
+
+A second lesson is now P0 for V1: matching a row is not the same as preserving identity. `Joncollins21` vs `Joncollinszl` and `DAY` vs `daY` are not harmless OCR variations. v0.9.5.93 introduces initial Identity Guard metadata so Sentinel can distinguish OCR similarity from exact historical identity fidelity.
 
 ## Current quality signal
 
-- Server 551 THP gold-standard run after v0.9.5.91: 50/50 matched, 0 missing, 0 bad matches.
-- Remaining issue after v0.9.5.91: many correct rows exported with `rank=None`, hurting rank metrics and review ergonomics.
-- v0.9.5.92 target: improve rank usability and export precision without reintroducing cross-window rank corruption.
+- Server 551 THP Ground Truth after v0.9.5.92: 50/50 matched, 0 missing, 0 bad matches.
+- Remaining export issue: review placeholders leaked into normal operational sheets as synthetic ranks.
+- Identity issue: exact alliance tags are case-sensitive and player names must preserve digit/letter fidelity for future transfer tracking.
 
 ## Current P0 focus
 
-1. Preserve screenshot truth for partial windows.
-2. Infer rank from power order only in recognized full-scope or multi-window contexts.
-3. Preserve raw rank evidence separately from repaired final rank.
-4. Keep ambiguous power values in quarantine.
+1. Keep review/quarantine rows out of normal Operational Truth sheets.
+2. Preserve Recall 1.0 while improving export precision.
+3. Treat alliance tags as case-sensitive Last War identifiers.
+4. Surface Identity Fidelity risk instead of silently relying on fuzzy matching.
 5. Continue screenshot-first validation; exports are never ground truth.

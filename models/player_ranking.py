@@ -39,6 +39,11 @@ class PlayerRankingEntry:
     parse_warnings: list[str] = field(default_factory=list)
     parse_corrections: list[str] = field(default_factory=list)
     normalized_identity: Optional[str] = None
+    identity_fidelity_status: str = "PASS"
+    identity_fidelity_risk: str = "low"
+    identity_fidelity_warnings: list[str] = field(default_factory=list)
+    case_sensitive_alliance_tag: Optional[str] = None
+    canonical_alliance_tag: Optional[str] = None
     visual_y: Optional[float] = None
 
     def to_legacy_row(self) -> dict:
@@ -70,6 +75,11 @@ class PlayerRankingEntry:
             "parse_warnings": ";".join(self.parse_warnings),
             "parse_corrections": ";".join(self.parse_corrections),
             "normalized_identity": self.normalized_identity,
+            "identity_fidelity_status": self.identity_fidelity_status,
+            "identity_fidelity_risk": self.identity_fidelity_risk,
+            "identity_fidelity_warnings": ";".join(self.identity_fidelity_warnings),
+            "case_sensitive_alliance_tag": self.case_sensitive_alliance_tag,
+            "canonical_alliance_tag": self.canonical_alliance_tag,
             "visual_y": self.visual_y,
         }
 
