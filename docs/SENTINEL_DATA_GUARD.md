@@ -1,17 +1,14 @@
-# Sentinel Data Guard – v0.9.5.96 Addendum
+# Sentinel Data Guard – v0.9.5.98 Addendum
 
-## Gold Fidelity Gate
+Data Guard now treats targeted character re-OCR as supporting evidence, not as a promotion mechanism.
 
-Data Guard now distinguishes protected Operational Truth from Gold Fidelity. A row can be protected and matched while still blocking Gold status because its displayed identity is not exact.
+Rules:
 
-## Rules
+1. No fuzzy identity correction.
+2. No normalized identity promotion.
+3. No cache-driven validation.
+4. Character re-OCR evidence may reduce uncertainty only when it is based on the screenshot crop.
+5. If the crop vote is ambiguous, the row remains unresolved.
+6. Alliance tag case is Operational Truth.
 
-- Cache remains disabled during data-quality validation unless the Proud Owner explicitly enables it.
-- Screenshot truth overrides filename, upload order, fuzzy matching and historical assumptions.
-- Fuzzy identity may help review prioritization but never creates Operational Truth.
-- Alliance tags are case-sensitive.
-- Stable but confusable characters are not blockers by default; actual drift is.
-
-## Current Objective
-
-Produce one Server 551 run where player names, alliance tags, rank and power match the screenshots exactly.
+The purpose is to move toward a 551 Gold Run without compromising the principle that the screenshot is the source of truth.

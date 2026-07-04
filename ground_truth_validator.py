@@ -20,6 +20,8 @@ import argparse
 import json
 import re
 import unicodedata
+import tempfile
+import zipfile
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -32,6 +34,7 @@ from parser.name_normalization import normalize_player_name, normalized_name_sim
 from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
 from parser.character_verification import analyze_player_name_characters, analyze_alliance_tag_characters, merge_verification_plans
+from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, summarize_evidence
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
 from parser.evidence_resolver import find_same_server_evidence_candidate
@@ -109,6 +112,10 @@ class ValidationSummary:
     power_display_drift_rows: int
     rank_display_drift_rows: int
     gold_fidelity_ready: bool
+    character_reocr_target_count: int
+    character_reocr_verified_expected: int
+    character_reocr_verified_observed: int
+    character_reocr_unresolved: int
     score: float
 
 
@@ -577,7 +584,21 @@ def _find_match(gt_row: pd.Series, ocr: pd.DataFrame, alliance_vocabulary=None) 
 
     return None, "missing", None
 
-def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataFrame | None = None) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
+def _ground_truth_row_slots(ground_truth: pd.DataFrame) -> dict[tuple[str, int], int]:
+    slots: dict[tuple[str, int], int] = {}
+    if "screenshot" not in ground_truth.columns or "rank" not in ground_truth.columns:
+        return slots
+    for screenshot, group in ground_truth.groupby("screenshot", dropna=False):
+        ordered = group.sort_values("rank")
+        for slot, (_, row) in enumerate(ordered.iterrows()):
+            try:
+                slots[(normalize_text(screenshot), int(row["rank"]))] = slot
+            except Exception:
+                continue
+    return slots
+
+
+def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataFrame | None = None, *, character_reocr_reader=None, screenshots_dir: Path | None = None) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, Any]] = []
     scoped_ocr = _scope_ocr_to_ground_truth(ground_truth, ocr)
     scoped_quarantine = _scope_ocr_to_ground_truth(ground_truth, quarantine) if quarantine is not None and not quarantine.empty else pd.DataFrame()
@@ -586,6 +607,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     # such as PC/IV here, otherwise they become false exact candidates instead
     # of being corrected to PBC/IVE.
     alliance_vocabulary = build_alliance_vocabulary(ground_truth.get("alliance", []))
+    row_slots = _ground_truth_row_slots(ground_truth)
     for _, gt_row in ground_truth.iterrows():
         match, match_method, sequence_candidate = _find_match(gt_row, ocr, alliance_vocabulary)
         expected_name = normalize_name(gt_row["true_name"])
@@ -678,6 +700,37 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         alliance_char_plan = analyze_alliance_tag_characters(expected_alliance_display, actual_alliance_display)
         character_verification_plan = merge_verification_plans(player_char_plan, alliance_char_plan)
         character_verification_candidate = bool(accepted_match and character_verification_plan.required)
+        reocr_evidence_json = "[]"
+        reocr_status = "not_requested"
+        reocr_summary = {"targets": 0, "verified_expected": 0, "verified_observed": 0, "ambiguous": 0, "unresolved": 0}
+        gt_screenshot = normalize_text(gt_row.get("screenshot", ""))
+        row_slot = row_slots.get((gt_screenshot, expected_rank)) if expected_rank is not None else None
+        if character_verification_candidate and screenshots_dir is not None and gt_screenshot:
+            evidence_items = []
+            screenshot_path = screenshots_dir / gt_screenshot
+            for target in parse_reocr_targets(character_verification_plan.to_json()):
+                expected_text = expected_name if target.field == "player_name" else expected_alliance_display
+                observed_text = actual_name if target.field == "player_name" else actual_alliance_display
+                evidence_items.append(verify_target_from_screenshot(
+                    screenshot_path=screenshot_path,
+                    target=target,
+                    expected_text=expected_text,
+                    observed_text=observed_text,
+                    row_slot=row_slot,
+                    reader=character_reocr_reader,
+                ))
+            reocr_summary = summarize_evidence(evidence_items)
+            reocr_evidence_json = json.dumps([item.to_dict() for item in evidence_items], ensure_ascii=False)
+            if reocr_summary["targets"] == 0:
+                reocr_status = "no_targets"
+            elif reocr_summary["verified_expected"] == reocr_summary["targets"]:
+                reocr_status = "verified_expected"
+            elif reocr_summary["verified_observed"] == reocr_summary["targets"]:
+                reocr_status = "verified_observed"
+            elif reocr_summary["unresolved"] == reocr_summary["targets"]:
+                reocr_status = "unresolved"
+            else:
+                reocr_status = "mixed"
         if character_verification_candidate:
             identity_risk_reasons.append("targeted_character_verification_required")
         gold_fidelity_blocker = bool(accepted_match and not exact_identity)
@@ -744,6 +797,13 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "character_verification_targets": character_verification_plan.to_json(),
             "player_name_character_verification_targets": player_char_plan.to_json(),
             "alliance_tag_character_verification_targets": alliance_char_plan.to_json(),
+            "character_reocr_status": reocr_status,
+            "character_reocr_targets": reocr_summary.get("targets", 0),
+            "character_reocr_verified_expected": reocr_summary.get("verified_expected", 0),
+            "character_reocr_verified_observed": reocr_summary.get("verified_observed", 0),
+            "character_reocr_unresolved": reocr_summary.get("unresolved", 0),
+            "character_reocr_evidence": reocr_evidence_json,
+            "ground_truth_row_slot": row_slot,
             "name_category": gt_row["name_category"],
             "match_method": match_method,
             "bad_match": bad_match,
@@ -812,6 +872,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     alliance_tag_display_drift_rows = int((valid_detail.get("alliance_display_exact_match", pd.Series(dtype=bool)) == False).sum())
     power_display_drift_rows = int((valid_detail.get("power_exact_match", pd.Series(dtype=bool)) == False).sum())
     rank_display_drift_rows = int((valid_detail.get("rank_match", pd.Series(dtype=bool)) == False).sum())
+    character_reocr_target_count = int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum())
+    character_reocr_verified_expected = int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum())
+    character_reocr_verified_observed = int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum())
+    character_reocr_unresolved = int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum())
     gold_fidelity_ready = bool(
         matched == total
         and bad_matches == 0
@@ -889,6 +953,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         power_display_drift_rows=power_display_drift_rows,
         rank_display_drift_rows=rank_display_drift_rows,
         gold_fidelity_ready=gold_fidelity_ready,
+        character_reocr_target_count=character_reocr_target_count,
+        character_reocr_verified_expected=character_reocr_verified_expected,
+        character_reocr_verified_observed=character_reocr_verified_observed,
+        character_reocr_unresolved=character_reocr_unresolved,
         score=score,
     )
 
@@ -913,6 +981,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
         gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
+        character_reocr_targets=("character_reocr_targets", "sum"),
+        character_reocr_verified_expected=("character_reocr_verified_expected", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
 
@@ -953,6 +1023,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
         gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
+        character_reocr_targets=("character_reocr_targets", "sum"),
+        character_reocr_verified_expected=("character_reocr_verified_expected", "sum"),
     ).reset_index()
 
     json_path = output_dir / "ground_truth_validation_report.json"
@@ -981,6 +1053,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_verification_summary": character_verification_summary.to_dict(orient="records"),
         "character_verification_candidates": character_verification_detail.to_dict(orient="records"),
         "gold_fidelity_blockers": gold_fidelity_blockers.to_dict(orient="records"),
+        "character_reocr": {
+            "target_count": int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum()),
+            "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
+            "verified_observed": int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum()),
+            "unresolved": int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum()),
+        },
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -1026,11 +1104,52 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Inference Excel: {inference_xlsx_path}")
 
 
+
+def _discover_screenshots_dir(explicit_value: str | None, ocr_output_path: Path) -> tuple[Path | None, tempfile.TemporaryDirectory | None, str]:
+    """Find screenshots for targeted character verification.
+
+    Accepts either a directory or a ZIP file.  The default search order is
+    deliberately project-local and conservative: the snapshot export's sibling
+    `screenshots/`, project `screenshots/`, and common 551 benchmark zips.
+    """
+    temp_dir: tempfile.TemporaryDirectory | None = None
+    candidates: list[Path] = []
+    if explicit_value:
+        candidates.append(Path(explicit_value))
+    try:
+        candidates.append(ocr_output_path.parent / "screenshots")
+        candidates.append(ocr_output_path.parent.parent / "screenshots")
+    except Exception:
+        pass
+    candidates.extend([
+        Path("screenshots"),
+        Path("551"),
+        Path("551.zip"),
+        Path("data/screenshots"),
+        Path("input/screenshots"),
+        Path("benchmarks/screenshots"),
+    ])
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        if candidate.is_dir():
+            return candidate, None, "directory"
+        if candidate.is_file() and candidate.suffix.lower() == ".zip":
+            temp_dir = tempfile.TemporaryDirectory(prefix="sentinel_char_reocr_")
+            with zipfile.ZipFile(candidate) as archive:
+                archive.extractall(temp_dir.name)
+            return Path(temp_dir.name), temp_dir, "zip"
+    return None, None, "not_found"
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate Sentinel OCR output against a Ground Truth Excel file.")
     parser.add_argument("--ground-truth", default="ground_truth/S6/server_551/top50_THP.xlsx", help="Path to manually curated ground truth Excel file.")
     parser.add_argument("--ocr-output", default="output/lastwar_export.xlsx", help="Path to Sentinel OCR export Excel file.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Directory for validation reports.")
+    parser.add_argument("--verify-characters", action="store_true", help="Force targeted screenshot re-OCR for Character Verification candidates. Conservative: adds evidence columns only and never changes Operational Truth.")
+    parser.add_argument("--no-verify-characters", action="store_true", help="Disable automatic targeted character re-OCR.")
+    parser.add_argument("--screenshots-dir", default=None, help="Screenshot directory or ZIP used for character re-OCR. If omitted, Sentinel auto-discovers common locations such as 551.zip and snapshot/screenshots.")
     args = parser.parse_args()
 
     ground_truth_path = Path(args.ground_truth)
@@ -1040,8 +1159,28 @@ def main() -> None:
     gt = load_ground_truth(ground_truth_path)
     ocr = load_ocr_output(ocr_output_path)
     quarantine = load_ranking_guard_quarantine(ocr_output_path)
-    summary, detail, category = validate(gt, ocr, quarantine)
+    character_reader = None
+    screenshots_path = None
+    screenshots_temp = None
+    verification_enabled = not args.no_verify_characters
+    if verification_enabled:
+        screenshots_path, screenshots_temp, screenshot_source_kind = _discover_screenshots_dir(args.screenshots_dir, ocr_output_path)
+        if screenshots_path is not None:
+            try:
+                from parser.ocr import create_reader
+                character_reader = create_reader()
+                print(f"Character re-OCR enabled using {screenshot_source_kind}: {screenshots_path}")
+            except Exception as exc:
+                character_reader = None
+                print(f"Character re-OCR evidence enabled without OCR provider ({exc}). Targets will be emitted as unresolved evidence.")
+        elif args.verify_characters:
+            raise FileNotFoundError("--verify-characters requested, but no screenshots directory or ZIP was found. Use --screenshots-dir <path>.")
+        else:
+            print("Character re-OCR skipped: no screenshots directory/ZIP found. Use --screenshots-dir <path> or --no-verify-characters.")
+    summary, detail, category = validate(gt, ocr, quarantine, character_reocr_reader=character_reader, screenshots_dir=screenshots_path)
     write_report(summary, detail, category, output_dir)
+    if screenshots_temp is not None:
+        screenshots_temp.cleanup()
 
 
 if __name__ == "__main__":

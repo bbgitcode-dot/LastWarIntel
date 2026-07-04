@@ -1,29 +1,19 @@
-# Patch Summary – v0.9.5.96
+# Patch Summary – v0.9.5.98
 
-## Sentinel v0.9.5.96 – 551 Gold Fidelity Gate
+## Sentinel v0.9.5.98 – Auto Character Re-OCR Activation
 
-This sprint tightens Sentinel around the immediate goal agreed with the Proud Owner: one server must become a trustworthy Gold Run before wider entity intelligence or full-scope acquisition matters. Runtime and cache remain secondary. OCR cache stays disabled for validation unless explicitly requested.
+### Why this patch exists
+The v0.9.5.97 run exposed the right blocker: `character_verification_candidate_rows = 41`, but `character_reocr_target_count = 0` in the normal command path. That meant the evidence layer existed but was not activated unless the exact optional flags were supplied.
 
-## Implemented
+### What changed
+- Character re-OCR is now auto-enabled by default when screenshots can be found.
+- The validator can read screenshots from a directory or directly from a ZIP such as `551.zip`.
+- `--no-verify-characters` disables the behavior explicitly.
+- If the OCR provider is missing, Sentinel still records unresolved target evidence instead of silently emitting zero targets.
+- Added regression coverage for ZIP discovery and target emission without a provider.
 
-- Added Gold Fidelity summary metrics to the Ground Truth Validator.
-- Added `gold_fidelity_ready` and `gold_fidelity_blocker_rows`.
-- Added explicit blocker counts for player-name display drift, alliance-tag display drift, power drift and rank drift.
-- Added a dedicated `gold_fidelity_blockers` sheet and JSON section.
-- Refined Character Verification planning so stable-but-confusable characters are not counted as blockers by default.
-- Kept alliance tags case-sensitive: `PbC` is not `PBC`; `DAY` is not `daY`.
+### Expected result
+Running the same validator command should now produce non-zero `character_reocr_target_count` when `551.zip` or a screenshot directory is available.
 
-## Validation
-
-- Character verification smoke tests: passed.
-- Validator discipline smoke tests: passed.
-- 551 Ground Truth Validator run against current export: completed.
-- py_compile: passed for touched files.
-
-## Current 551 Gold Status
-
-The current 551 benchmark still is **not Gold-ready**. It has 100% recall and 0 bad matches, but 44 Gold Fidelity blockers remain. The patch makes those blockers explicit instead of hiding them behind usable/fuzzy identity matches.
-
-## Version
-
-`0.9.5.96`
+### Version
+`0.9.5.98`

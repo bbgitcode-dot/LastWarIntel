@@ -1,36 +1,25 @@
-# Project Status – Sentinel v0.9.5.96
+# Project Status – Sentinel v0.9.5.98
 
-**Current sprint:** v0.9.5.96 551 Gold Fidelity Gate  
-**Primary benchmark:** Server 551 Total Hero Power and Alliance Power screenshots  
-**Operating priority:** Screenshot fidelity before runtime, cache, or intelligence.
+**Current sprint:** v0.9.5.98 Auto Character Re-OCR Activation  
+**Primary objective:** Make targeted Character Verification evidence actually run in the normal 551 Gold Fidelity validation path.
 
-## Current State
+## Current state
 
-Sentinel now preserves data integrity for the 551 benchmark: no Ground Truth rows are lost and there are no bad matches. The remaining blocker is exact screenshot fidelity. Several rows are still usable for fuzzy matching, but not safe as exact historical identities.
+The import pipeline remains stable for Server 551: recall is 100%, missing rows are 0, bad matches are 0. The remaining blocker is Gold Fidelity: player display names and alliance tags are not yet screenshot-exact.
 
-The current 551 run is therefore **operationally protected but not Gold-ready**.
+## v0.9.5.98 result
 
-## Gold Fidelity Definition
+v0.9.5.98 fixes the activation gap from v0.9.5.97. Character Verification candidates no longer stay dormant when screenshots are available. The validator can auto-discover screenshots, including `551.zip`, and emits target evidence even when the OCR provider is not available in the validation environment.
 
-A 551 Gold Run requires:
+## Still not Gold-ready
 
-- Rank exact.
-- Power exact.
-- Player name display exact.
-- Alliance tag display exact, including case.
-- No hidden fuzzy/normalized identity substitutions.
-- No unresolved review items that affect the Gold truth set.
+This patch does not claim that Server 551 is now Gold-ready. It makes the next bottleneck measurable: targets are emitted and can be verified/unresolved rather than silently counted as zero.
 
-## v0.9.5.96 Result
+## Next focus
 
-The validator now reports Gold blockers directly. This makes the next work concrete: target the rows and character regions that prevent exact screenshot fidelity instead of treating OCR success, usable identity, or normalized matching as sufficient.
+Use real OCR-provider output on the targeted crops to increase `character_reocr_verified_expected` for high-value rows, starting with:
 
-## Not In Scope
-
-- OCR cache activation.
-- Performance tuning.
-- Full 128-server acquisition.
-- Joiner/leaver intelligence.
-- Automatic canonical identity resolution.
-
-Those only become meaningful after at least one server can be read with trusted screenshot fidelity.
+- `Joncollins21` vs `Joncollinszl`
+- `PbC` vs `PBC`
+- `Pumpkin G` vs `Pumpkin 6`
+- short tags with missing or case-drifted glyphs

@@ -1,27 +1,27 @@
-# Road to V1 – Sentinel v0.9.5.96
+# Road to V1 – Sentinel v0.9.5.98
 
-## Current Road
+## Strategic sequence
 
-1. Stabilize one Gold benchmark server.
-2. Extend the same fidelity discipline to more servers.
-3. Only then scale acquisition to the full transfer group.
-4. Only after full acquisition is reliable: entity intelligence, joiner/leaver detection, growth/decline analysis.
+1. Stabilize 551 as a Gold Fidelity benchmark.
+2. Expand screenshot-fidelity validation to more servers only after 551 is trusted.
+3. Build reliable full-scope acquisition across 549–676.
+4. Only then build player/entity intelligence for joiners, leavers, growth and decline.
 
-## Why This Changed
+## Current milestone
 
-The latest 551 work proved that recall can be perfect while identity fidelity remains weak. Sentinel must not confuse these two qualities. A player can be matched by context and still be wrong as a reusable identity if the displayed name or alliance tag differs from the screenshot.
+v0.9.5.98 introduces targeted character re-OCR evidence. This is the missing bridge between OCR output and Gold Fidelity validation.
 
-## v0.9.5.96 Milestone
+## Not yet V1-ready
 
-v0.9.5.96 adds a Gold Fidelity Gate. It does not claim 551 is solved. It exposes the exact blockers that must be eliminated before a Gold Run is accepted.
+Sentinel is not ready for reliable long-term joiner/leaver intelligence until names and alliance tags can be read screenshot-faithfully or explicitly marked unresolved.
 
-## Next Milestone
+## Next milestone candidate
 
-v0.9.5.97 should implement actual targeted character re-OCR for the blocker rows now surfaced by the validator, starting with:
+v0.9.5.98 should focus on improving crop localization and real OCR vote quality on the Server 551 screenshot set, especially:
 
 - `Joncollins21` vs `Joncollinszl`
-- `PbC` vs `PBC`
+- `[PbC]` vs `[PBC]`
 - `PBC` vs `PC`
-- mixed-script player-name suffix drift
-
-The goal remains: one verified 551 Gold Run before wider scaling.
+- `Mizzenmast` vs `Mzzenmast`
+- `Drpeek` vs `Ieek`
+- multilingual display-name fragments

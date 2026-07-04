@@ -1,24 +1,25 @@
-# Handoff Next Chat – Sentinel v0.9.5.96
+# Handoff Next Chat – Sentinel v0.9.5.98
 
-Use `Sentinel_v0.9.5.96.zip` as the next baseline.
+Use `Sentinel_v0.9.5.98.zip` as the next baseline.
 
-## Current Objective
+## What changed
 
-Do not broaden scope yet. The next sprint should continue the 551 Gold Fidelity effort. The cache should remain disabled. Runtime is secondary.
+The Ground Truth validator now auto-activates targeted Character Re-OCR evidence when screenshots are available. `--screenshots-dir` can point to either a directory or a ZIP, including `551.zip`. If no OCR provider is available, targets are still emitted as unresolved instead of staying at zero.
 
-## What v0.9.5.96 Added
+## Recommended validation
 
-- Gold Fidelity blocker metrics.
-- `gold_fidelity_ready` flag.
-- `gold_fidelity_blockers` report section/sheet.
-- Character Verification refinement: exact stable confusables no longer produce default blockers.
+```bash
+python ground_truth_validator.py --ocr-output output\snapshots\s6-pre-transfer-2b69ebc1\lastwar_export.xlsx --screenshots-dir 551.zip
+```
 
-## Next Recommended Sprint
+Expected important change versus v0.9.5.97:
 
-`v0.9.5.97 – Targeted Character Re-OCR Execution`
+```text
+character_reocr_target_count > 0
+```
 
-Implement actual crop/re-OCR for blocker rows. Start with high-value 551 blockers and alliance tag case drift.
+Gold-ready is still expected to be false until targeted crop OCR starts verifying expected glyphs reliably.
 
-## Validation Rule
+## Next sprint recommendation
 
-A run is not Gold-ready until `gold_fidelity_ready = true`, `gold_fidelity_blocker_rows = 0`, and exact player/alliance/rank/power metrics all match the Ground Truth set.
+v0.9.5.99 should focus on crop geometry and voting quality for high-value Character Verification targets, not cache or broad performance.
