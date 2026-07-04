@@ -1,111 +1,31 @@
-# Project Status – Sentinel v0.9.5.88
+# Project Status – Sentinel v0.9.5.89
 
-**Current baseline:** Sentinel v0.9.5.87 Data Quality Stabilization  
-**Current sprint:** v0.9.5.88 Documentation Consolidation & Handoff  
+**Current baseline:** Sentinel v0.9.5.88 Documentation Consolidation & Handoff  
+**Current sprint:** v0.9.5.89 Non-cache Data Quality Validation & Rank Slot Regression  
 **Canonical docs path:** `/docs`  
 **Operating roles:** Mimir = strategic copilot; Proud Owner = product owner and acceptance authority.
 
 ## Executive state
 
-Sentinel is in the **Data Quality before Intelligence** phase. The recent sprint line from v0.9.5.73 through v0.9.5.87 moved Sentinel from raw screenshot ingestion toward an auditable Operational Truth pipeline:
+Sentinel remains in the **Data Quality before Intelligence** phase. v0.9.5.89 is a targeted engineering sprint after the v0.9.5.88 documentation consolidation. It does not expand strategic intelligence. It hardens the protected path from screenshot observation to reviewable Operational Truth.
 
-1. snapshots define import context and expected feed completeness;
-2. OCR creates evidence, not truth;
-3. Ranking Guard and Data Guard prevent unsafe rows from entering Operational Truth;
-4. Review explains uncertainty without silently mutating truth;
-5. v0.9.5.87 made cache opt-in during development and introduced rank-slot preservation for pending review rows.
+The sprint focus is narrow:
 
-The next engineering work should continue hardening data integrity. Intelligence expansion remains intentionally paused until ranking identity, rank-slot preservation, and power recovery are reliable.
+1. keep data-quality validation cache-off by default;
+2. preserve rank slots when rows are pending review or quarantined;
+3. expose raw observed identity and pending-slot state in Excel exports;
+4. add regression coverage for `Sven the vän`, `[SWSq]`, quarantined rank slots and low-truncation recovery behavior.
 
-## What the last sprints tried to achieve
+## What changed in v0.9.5.89
 
-### Snapshot and completeness foundation
+### Export fidelity for pending slots
 
-The snapshot system was hardened so a collection can represent a real event scope instead of an implicit global 128-server target. Expected evidence is defined as:
-
-```text
-Expected Feed = Server × Ranking Type
-```
-
-This solved two important product cases:
-
-- small events with only 8 participating servers should not be judged against 128 servers;
-- broad transfer/season snapshots can use server ranges like `549-676` without manually entering 128 servers.
-
-### Continuous collection
-
-Normal import runs no longer close a snapshot automatically. This is mandatory for a real system where users may upload screenshots 24/7. Transition to `REVIEWING`, `VERIFIED`, or `LOCKED` must be explicit.
-
-### Review explainability
-
-Review UX was rebuilt around three separate concepts:
+Excel export columns now include the fields needed to audit pending/quarantined rows in their original visible slot:
 
 ```text
-OCR Source          = what Sentinel saw
-Operational Mapping = what Sentinel thinks it may correspond to
-Operational Truth   = accepted/current truth only after guards pass or review resolves
-```
-
-This is crucial: a highlighted OCR row is evidence, not automatically a proven rank.
-
-### Recognition quality and power recovery
-
-Runtime telemetry and power-recovery family telemetry were added. The 99-screenshot benchmark over servers 549–554 showed the main families:
-
-- `alliance_high_explosion` such as `77B` / `79B` values;
-- `thp_high_explosion` such as `7xxM` values that should be around `1xxM–2xxM`;
-- `thp_low_truncation` where values miss one or two trailing digits.
-
-Power recovery now works in some cases, but ambiguous candidate margins still require careful review.
-
-### Cache lesson
-
-The OCR cache produced a large repeat-run speed gain, but it also masked data-quality changes by replaying old OCR evidence. Therefore v0.9.5.87 made cache opt-in during development.
-
-Current rule:
-
-```text
-Development / Data Quality Mode: cache OFF
-Production / Performance Mode: cache may be explicitly enabled later
-```
-
-## Current risks
-
-1. **Rank-slot drift:** quarantined rows must not make later rows move up. Rank 10 pending review must stay rank 10; rank 11 must remain rank 11.
-2. **Identity fidelity:** observed display identity must preserve source text such as `[SWSq]` and `Sven the vän`; normalized forms are internal only.
-3. **Cache masking:** any benchmark meant to validate recognition logic must run with cache disabled.
-4. **Review history debt:** stale open reviews still need lifecycle cleanup so historical review items do not inflate current work.
-5. **Promotion thresholds:** near-miss ambiguous cases are tempting to auto-promote but must not be promoted until rank, identity, and context confidence are combined safely.
-
-## Immediate next engineering priorities
-
-### P0 – Validate v0.9.5.87 without cache
-
-Run the 549–554 benchmark with cache disabled and verify:
-
-- no OCR cache hits;
-- no rank shifting after quarantines;
-- `Sven the vän` / `[SWSq]` display fidelity;
-- pending review rows remain in their original rank slots;
-- exports and HTML reports agree on rank slots.
-
-### P0 – Rank Slot Preservation hardening
-
-If any quarantined row disappears from the ranked export and later rows are renumbered, fix this before further recognition tuning.
-
-Target behavior:
-
-```text
-10  PENDING REVIEW / QUARANTINED
-11  next observed row remains 11
-12  next observed row remains 12
-```
-
-### P0 – Raw observed identity fields
-
-Review and export surfaces should carry:
-
-```text
+pending_review
+pending_review_reason
+rank_slot_preserved
 observed_name
 normalized_name
 canonical_name
@@ -114,27 +34,46 @@ normalized_alliance
 canonical_alliance
 ```
 
-Only observed fields should be used for human-facing review unless a reviewer chooses a canonical identity.
+This closes a practical review gap: the internal pipeline already carried pending-slot state, but exports could hide the important distinction between observed evidence, normalized identity and canonical identity.
 
-### P1 – Review History cleanup
+### Regression coverage
 
-Separate:
+Added `tests/smoke/test_data_quality_89.py` covering:
 
-- current open reviews;
-- stale open reviews;
-- resolved reviews;
-- historical references;
-- reopened reviews.
+- development-mode cache-off defaults;
+- Ranking Guard placeholder behavior preserving rank 10 while ranks 11 and 12 remain unchanged;
+- raw display fidelity for `Sven the vän` / `[SWSq]` on power-recovery placeholders;
+- Excel export of pending slot state and observed identity.
 
-### P1 – Candidate confidence model
+Updated recognition-quality smoke expectations to the current telemetry version while preserving the v0.9.5.87 power-recovery decision version for unchanged recovery logic.
 
-Move from power-only confidence to combined confidence:
+## Current risks
 
-```text
-rank_confidence × identity_confidence × power_confidence × context_confidence
-```
+1. **Full smoke collection debt:** the whole `tests/smoke` collection still contains legacy invalid test files and stale OCR-config imports unrelated to this sprint. Targeted validation passes; full collection stops during collection.
+2. **Rank-slot drift:** still remains a P0 class. Any future export/report path that omits pending slots can create false rank continuity.
+3. **Identity fidelity:** observed fields must remain human-facing until a reviewer chooses a canonical identity.
+4. **Cache masking:** benchmark recognition work must run with cache disabled unless the explicit purpose is cache/performance validation.
+5. **Review lifecycle debt:** current/stale/resolved reviews still need a dedicated cleanup sprint.
 
-Only combined confidence should allow auto-promotion.
+## Immediate next engineering priorities
+
+### P0 – Clean smoke-test collection
+
+Fix or quarantine legacy smoke files that are not valid pytest modules and stale OCR-config import tests. Sentinel needs a reliable full smoke command before v1.
+
+### P0 – Run 549–554 non-cache benchmark
+
+Use the 549–554 screenshot pack with OCR cache disabled. Verify:
+
+- cache hits remain zero;
+- `Sven the vän` / `[SWSq]` are visible as observed evidence;
+- quarantined rows do not collapse subsequent ranks;
+- Excel exports and HTML reports agree on pending rank slots;
+- power recovery families remain explainable.
+
+### P0 – Report/export parity
+
+After the Excel export fix, verify that Command Center, Review Dashboard and Evidence Pack also surface pending-slot state consistently.
 
 ## Acceptance philosophy
 

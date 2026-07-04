@@ -1,3 +1,19 @@
+## v0.9.5.89 – Export Boundary Is Part of Data Guard
+
+Data Guard protection must survive export. A row that is pending review inside the pipeline must remain visibly pending in Excel and report surfaces. Export code must carry:
+
+```text
+pending_review
+pending_review_reason
+rank_slot_preserved
+observed_name / normalized_name / canonical_name
+observed_alliance / normalized_alliance / canonical_alliance
+```
+
+The observed fields are the human-facing evidence. Normalized fields are matching aids. Canonical fields are accepted identity only after review or trusted mapping.
+
+Any export that drops a pending slot or renumbers subsequent rows creates false Operational Truth and must be treated as a data-quality defect.
+
 # Sentinel Data Guard
 
 ## Snapshot lifecycle and Data Guard – v0.9.5.75

@@ -1,4 +1,4 @@
-# Handoff Next Chat – Sentinel v0.9.5.88
+# Handoff Next Chat – Sentinel v0.9.5.89
 
 Copy/paste this into the next chat.
 
@@ -13,13 +13,13 @@ Sentinel is an explainable strategic intelligence platform for Last War. It tran
 Use this ZIP as the next baseline:
 
 ```text
-Sentinel_v0.9.5.88.zip
+Sentinel_v0.9.5.89.zip
 ```
 
-The source baseline for this documentation sprint was:
+The source baseline for this sprint was:
 
 ```text
-Sentinel_v0.9.87.zip / Sentinel_v0.9.5.87.zip
+Sentinel_v0.9.88.zip / Sentinel_v0.9.5.88.zip
 ```
 
 ## First task in the new chat
@@ -57,7 +57,36 @@ Sentinel_v0.9.87.zip / Sentinel_v0.9.5.87.zip
 - Review surfaces separate OCR Source, Operational Mapping and Operational Truth.
 - Runtime telemetry and power-recovery family telemetry exist.
 - OCR cache exists but is opt-in in development after v0.9.5.87.
-- Rank-slot preservation and raw display fidelity are the critical data-quality concerns.
+- v0.9.5.89 added export visibility for pending slots and observed/normalized/canonical identity fields.
+- Rank-slot preservation and raw display fidelity remain critical data-quality concerns.
+
+## Validation state from v0.9.5.89
+
+Passed:
+
+```text
+pytest tests/smoke/test_data_quality_87.py tests/smoke/test_data_quality_89.py -q
+7 passed
+
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_data_quality_87.py tests/smoke/test_data_quality_89.py tests/smoke/test_recognition_quality_82.py -q
+27 passed
+
+python -m compileall -q main.py parser services application web version.py
+OK
+```
+
+Attempted full smoke:
+
+```text
+pytest tests/smoke -q
+```
+
+Blocked during collection by pre-existing legacy invalid/stale tests:
+
+- `tests/smoke/test_calculator.py` contains a shell command, not Python test code.
+- `tests/smoke/test_orchestrator.py` contains a shell command, not Python test code.
+- `tests/smoke/test_easyocr_language_compatibility_hotfix.py` imports stale/removed `get_ocr_language_groups`.
+- `tests/smoke/test_multilingual_ocr_configuration.py` imports stale/removed `DEFAULT_OCR_LANGUAGES`.
 
 ## Known benchmark context
 
@@ -73,19 +102,19 @@ Recent 549–554 benchmark observations:
 
 ## Recommended next engineering sprint
 
-**v0.9.5.89 – Non-cache Data Quality Validation & Rank Slot Regression**
+**v0.9.5.90 – Smoke Collection Hygiene & Non-cache Benchmark Run Prep**
 
 Purpose:
 
-- Run/prepare validation without OCR cache.
-- Confirm v0.9.5.87 data-quality behavior with fresh OCR evidence.
-- Fix any remaining rank-slot drift.
-- Add regression tests for `Sven the vän`, `[SWSq]`, quarantined rank slots, and low-truncation recovery.
+- Make full smoke collection reliable.
+- Fix or quarantine stale invalid smoke tests.
+- Prepare a repeatable 549–554 non-cache benchmark command path.
+- Confirm Excel and HTML report parity for pending rank slots.
 
 Expected deliverable:
 
 ```text
-Sentinel_v0.9.5.89.zip
+Sentinel_v0.9.5.90.zip
 ```
 
 with `.commit`, validation summary and updated docs.

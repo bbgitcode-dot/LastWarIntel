@@ -1,6 +1,6 @@
 # Sentinel Modus Operandi
 
-**Current documentation release:** v0.9.5.88  
+**Current release:** v0.9.5.89  
 **Canonical docs path:** `/docs`
 
 ## Roles

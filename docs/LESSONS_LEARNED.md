@@ -1,3 +1,11 @@
+## v0.9.5.89 Lesson – Exports Are Review Surfaces Too
+
+It is not enough for the internal pipeline to preserve `pending_review`, `rank_slot_preserved` and raw observed identity. If Excel exports omit those fields, alliance leadership or reviewers may see a clean-looking rank list while the system actually held uncertainty. Every human-facing surface must show pending rank slots and observed identity before normalized/canonical identity.
+
+## v0.9.5.89 Lesson – Full Smoke Must Be Trustworthy
+
+Targeted smoke tests are useful for sprint validation, but v1 needs a full smoke command that can be trusted. Legacy files that are shell commands or import stale config symbols create noise and hide real failures. Cleaning the smoke collection is now a data-quality priority, not housekeeping.
+
 ## v0.9.5.86 Lesson – Review Identity Must Follow Observed Evidence
 
 A quarantined row ordinal is not enough to identify the human review target. If the same screenshot contains a trusted observed row matching the quarantined identity, the review must anchor to that observed row. Review UI may normalize internally for matching, but must display the observed spelling and alliance tag when available.

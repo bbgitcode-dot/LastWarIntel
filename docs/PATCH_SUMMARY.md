@@ -1,178 +1,42 @@
-# Patch Summary – v0.9.5.88
+# Patch Summary – v0.9.5.89
 
-## Sentinel v0.9.5.88 – Documentation Consolidation & Handoff Sprint
+## Sentinel v0.9.5.89 – Non-cache Data Quality Validation & Rank Slot Regression
 
-This patch consolidates the current Sentinel documentation after the v0.9.5.87 data-quality stabilization work. It does not change the recognition engine. Its purpose is to make the next chat safe, clear and productive.
+This patch continues the data-quality stabilization line. It does not expand Intelligence. It protects rank-slot visibility and raw display fidelity across validation and export surfaces.
 
 ### Changed
 
-- Updated canonical release notes with the v0.9.5.88 documentation release.
-- Rewrote `PROJECT_STATUS.md` around the current truth-first development state.
-- Rewrote `ROAD_TO_V1.md` with milestones from data stability to v1.0.0.
-- Rewrote `MODUS_OPERANDI.md` with Proud Owner / Mimir operating rules.
-- Added `HANDOFF_NEXT_CHAT.md` and updated `START_NEXT_CHAT.md` / `NEXT_CHAT.md`.
-- Updated Data Guard and Lessons Learned with the cache and rank-slot lessons.
-- Updated `.commit` for the documentation sprint.
+- Bumped project version to `0.9.5.89`.
+- Added v0.9.5.89 smoke regressions for cache-off validation defaults, rank-slot preservation, `Sven the vän` / `[SWSq]` raw display fidelity and export visibility.
+- Excel exports now include pending-slot and observed/normalized/canonical identity fields for normal ranking sheets and quarantine/review sheets.
+- Recognition-quality telemetry version now reports `v0.9.5.89` while unchanged power-recovery decisions still report their original decision version.
+- Updated `/docs` with the v0.9.5.89 state, validation results and next-chat handoff.
 
 ### Validation
 
 ```text
-28 passed
-targeted compile OK
-zip integrity OK
-```
+pytest tests/smoke/test_data_quality_87.py tests/smoke/test_data_quality_89.py -q
+7 passed
 
-### Git
+pytest tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_data_quality_87.py tests/smoke/test_data_quality_89.py tests/smoke/test_recognition_quality_82.py -q
+27 passed
 
-```bash
-git add .
-git commit -m "docs(project): consolidate handoff and road to v1 after data quality stabilization"
-git tag -a v0.9.5.88 -m "v0.9.5.88 Documentation Consolidation and Handoff"
-```
-
----
-
-# Patch Summary – v0.9.5.86
-
-**Theme:** Source Row Identity & Display Fidelity
-
-This patch fixes the class of review errors where Sentinel described the right-looking candidate but highlighted or labelled the wrong screenshot row. The motivating case was Server 553 THP: `[SWSq] Sven the vän` was visually Rank 10, while the review rendered `[SWSQ] Sven the Van` at Rank 12.
-
-## Changed
-
-- `services/import_repository.py` now builds a same-screenshot source-evidence index from trusted non-quarantine rows.
-- Ranking Guard quarantine reviews can be anchored to the observed screenshot row when name/alliance/power evidence matches strongly enough.
-- Review target context prefers raw/observed identity fields before normalized fields.
-- Recognition quality telemetry now reports `source_evidence_anchor_reviews`.
-- Added smoke coverage for source-evidence anchoring and raw display preservation.
-
-## Safety
-
-The anchor uses only rows already observed on the same screenshot. It does not use filename order, upload order or screenshot order as truth. If no strong same-screenshot match exists, Sentinel keeps the conservative source-row / unresolved-rank behavior.
-
-# Patch Summary – v0.9.5.85
-
-**Theme:** Recovery Promotion Rules & OCR Cache
-
-This patch turns the v0.9.5.84 diagnostics into two practical improvements: cached OCR observations for repeat/benchmark runs and a guarded promotion rule for one class of near-miss low-truncation power recoveries.
-
-## Changed
-
-- `parser/ocr_cache.py` introduces a persistent OCR cache under `data/ocr_cache/`.
-- `main.py` now uses cached metadata/row OCR by default and exposes `--no-ocr-cache`.
-- Runtime telemetry now includes `ocr_cache_hits`, `ocr_cache_misses`, `ocr_cache_writes`, and `ocr_cache_errors`.
-- `parser/ranking_power_sanity_guard.py` adds a conservative near-miss low-truncation recovery path.
-- `services/import_repository.py` reports recognition quality as `v0.9.5.85`.
-- New smoke tests cover cache behavior and the promoted near-miss recovery class.
-
-## Safety
-
-The OCR cache is an observation cache only. It does not create Operational Truth, change Data Guard decisions, or infer server/rank from filename, upload order or screenshot order. Cache misses and cache errors fall back to live OCR.
-
-# Patch Summary – v0.9.5.84
-
-## Sentinel v0.9.5.84 – Power Recovery Diagnostics & Candidate Family Telemetry
-
-This patch prepares the next recognition-tuning step by making power-recovery failures measurable by class. It does not relax Data Guard or Ranking Guard. Quarantine remains preferred over false Operational Truth.
-
-### Changed
-
-- Added `power_recovery_family` on recovered and ambiguous power-recovery rows.
-- Added import-report counters:
-  - `power_recovery.by_family`
-  - `power_recovery.ambiguous_by_family`
-  - `power_recovery.near_miss_ambiguous`
-  - `recognition_quality.power_recovery_by_family`
-  - `recognition_quality.ambiguous_power_by_family`
-  - `recognition_quality.ambiguous_power_near_misses`
-- Added recovery family labels to static Command Center trace tables.
-- Added near-miss counts to Power Recovered metric cards.
-- Bumped recognition quality telemetry version to `v0.9.5.84`.
-
-### Validation
-
-```text
-19 passed (ranking power sanity + recognition quality smoke)
 python -m compileall -q main.py parser services application web version.py
-zip integrity OK
+OK
+
+Full smoke collection attempted:
+pytest tests/smoke -q
+blocked during collection by pre-existing legacy invalid/stale tests:
+- tests/smoke/test_calculator.py contains a shell command, not Python test code
+- tests/smoke/test_orchestrator.py contains a shell command, not Python test code
+- tests/smoke/test_easyocr_language_compatibility_hotfix.py imports removed/stale config symbol get_ocr_language_groups
+- tests/smoke/test_multilingual_ocr_configuration.py imports removed/stale config symbol DEFAULT_OCR_LANGUAGES
 ```
 
 ### Git
 
 ```bash
 git add .
-git commit -m "feat(recognition): classify power recovery families"
-git tag -a v0.9.5.84 -m "v0.9.5.84 Power Recovery Diagnostics"
+git commit -m "test(data-quality): preserve rank slots and raw identity in exports"
+git tag -a v0.9.5.89 -m "v0.9.5.89 Non-cache Data Quality Validation and Rank Slot Regression"
 ```
-
----
-
-# Patch Summary – v0.9.5.82
-
-## Sentinel v0.9.5.82 – Recognition Quality Pass
-
-This patch turns the 99-screenshot production batch into measurable recognition quality telemetry. It does not expand Intelligence. It improves the ability to see where OCR/recovery time and review load are produced.
-
-### Changed
-
-- Added per-stage runtime telemetry to `main.py`.
-- Extended import reports to schema `sentinel.import_run.v5`.
-- Added recognition quality counters and recovery success rate.
-- Added conservative high-explosion candidate auto-promotion for strong, order-consistent alliance-power candidates.
-- Added Command Center cards for Recognition Quality and Runtime / Screenshot.
-- Documentation updated for the recognition-quality sprint.
-
-### Validation
-
-```text
-16 passed
-compileall OK
-zip integrity OK
-```
-
-### Git
-
-```bash
-git add .
-git commit -m "feat(data-guard): add recognition quality telemetry"
-git tag -a v0.9.5.82 -m "v0.9.5.82 Recognition Quality Pass"
-```
-
-
----
-
-# Patch Summary – v0.9.5.83
-
-## Sentinel v0.9.5.83 – Rebuild Report Telemetry Hotfix
-
-This patch fixes the fast report-rebuild loop introduced for recognition-quality work. `--rebuild-reports` now initializes runtime telemetry before any branch-specific code executes and can rebuild the Command Center, Review Dashboard and Evidence Pack without running OCR.
-
-### Changed
-
-- Moved `start_time` and `runtime_timings` initialization to the top of `main()`.
-- Rebuild mode now records `html_report_render` and `total_runtime`.
-- Rebuild mode prints runtime telemetry just like normal imports.
-- Added a smoke test that exercises `main(["--rebuild-reports"])` with a mocked report renderer.
-
-### Validation
-
-```text
-pytest tests/smoke/test_developer_run_modes.py -q
-python -m compileall -q main.py services parser application version.py
-zip integrity OK
-```
-
-### Git
-
-```bash
-git add .
-git commit -m "fix(dev): initialize rebuild report telemetry"
-git tag -a v0.9.5.83 -m "v0.9.5.83 Rebuild Report Telemetry Hotfix"
-```
-
-
-## v0.9.5.87 – Data Quality Stabilization
-
-Patch focus: Operational Truth before performance. The OCR cache is now opt-in during development, quarantine keeps pending rank slots, and pending review rows preserve raw observed identity.
-
-Validation: targeted smoke tests and compile checks.

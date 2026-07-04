@@ -1,3 +1,36 @@
+## v0.9.5.89 – Non-cache Data Quality Validation & Rank Slot Regression
+
+Purpose: continue the truth-first data-quality sprint line by making pending rank slots and raw observed identity visible in exports and covered by regression tests.
+
+### Changed
+
+- Added `tests/smoke/test_data_quality_89.py`.
+- Added regression coverage for development cache-off defaults, quarantined rank-slot preservation, `Sven the vän` / `[SWSq]` display fidelity and pending-slot Excel export visibility.
+- Extended Excel export preferred columns with pending-review state and observed/normalized/canonical identity fields.
+- Bumped `version.py` to `0.9.5.89`.
+- Bumped recognition-quality telemetry version to `v0.9.5.89`.
+- Updated docs, patch summary, handoff and `.commit`.
+
+### Validation
+
+```text
+7 passed  – targeted data-quality tests
+27 passed – ranking power sanity + data-quality + recognition-quality targeted suite
+compileall OK
+full smoke collection blocked by pre-existing legacy invalid/stale smoke tests
+zip integrity OK
+```
+
+### Git
+
+```bash
+git add .
+git commit -m "test(data-quality): preserve rank slots and raw identity in exports"
+git tag -a v0.9.5.89 -m "v0.9.5.89 Non-cache Data Quality Validation and Rank Slot Regression"
+```
+
+---
+
 ## v0.9.5.88 – Documentation Consolidation & Handoff Sprint
 
 Purpose: consolidate Sentinel documentation after the v0.9.5.87 data-quality stabilization sprint and prepare a clean handoff for the next chat.

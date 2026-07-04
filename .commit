@@ -1,3 +1,3 @@
 git add .
-git commit -m "docs(project): consolidate handoff and road to v1 after data quality stabilization"
-git tag -a v0.9.5.88 -m "v0.9.5.88 Documentation Consolidation and Handoff"
+git commit -m "test(data-quality): preserve rank slots and raw identity in exports"
+git tag -a v0.9.5.89 -m "v0.9.5.89 Non-cache Data Quality Validation and Rank Slot Regression"

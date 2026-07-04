@@ -15,8 +15,8 @@ Performance last.
 
 ## Current baseline
 
-**Current development baseline:** v0.9.5.87  
-**Current documentation release:** v0.9.5.88
+**Current development baseline:** v0.9.5.89  
+**Current documentation release:** v0.9.5.89
 
 The project is in the final data-stability phase before broader intelligence expansion.
 
@@ -32,6 +32,7 @@ Goals:
 - Raw observed identity preserved separately from normalized/canonical identity.
 - Review does not silently mutate Operational Truth.
 - All import reports, HTML reports and Excel exports agree on rank slots.
+- Export surfaces show pending-review state and observed/normalized/canonical identity fields.
 
 Exit criteria:
 
@@ -40,7 +41,21 @@ Exit criteria:
 - Quarantined rows remain visible as pending slots.
 - Critical Data Guard count remains zero.
 
-## Milestone 2 – Review Lifecycle & History Hygiene
+## Milestone 2 – Smoke Collection Hygiene & Non-cache Benchmark
+
+Goals:
+
+- Full smoke collection runs without legacy syntax/import blockers.
+- 549–554 benchmark can be repeated with OCR cache disabled.
+- Excel and HTML reports show the same pending rank slots and raw observed identity.
+
+Exit criteria:
+
+- `pytest tests/smoke -q` collects cleanly or explicitly skips known external-dependency tests.
+- Non-cache benchmark validation has zero cache hits.
+- `[SWSq] Sven the vän` and quarantined rank-slot fixtures remain stable.
+
+## Milestone 3 – Review Lifecycle & History Hygiene
 
 Goals:
 
@@ -55,7 +70,7 @@ Exit criteria:
 - Stale open reviews are either archived/historical or reopened with explicit reason.
 - Evidence Pack and Review Dashboard show the same current review set.
 
-## Milestone 3 – Recognition Confidence Model
+## Milestone 4 – Recognition Confidence Model
 
 Goals:
 
@@ -81,7 +96,7 @@ Exit criteria:
   - low truncation;
   - rank/row ambiguity.
 
-## Milestone 4 – Ground Truth Regression Suite
+## Milestone 5 – Ground Truth Regression Suite
 
 Goals:
 
@@ -102,7 +117,7 @@ Exit criteria:
 
 - Any future change that breaks these cases fails smoke/regression tests.
 
-## Milestone 5 – Production Cache Reintroduction
+## Milestone 6 – Production Cache Reintroduction
 
 Cache returns only after data quality is stable.
 
@@ -117,7 +132,7 @@ Exit criteria:
 - Same screenshot set with cache off and cache on produces identical Operational Truth, reviews and exports.
 - Cache only changes runtime.
 
-## Milestone 6 – Operational Readiness & Snapshot Verification
+## Milestone 7 – Operational Readiness & Snapshot Verification
 
 Goals:
 
@@ -130,7 +145,7 @@ Exit criteria:
 - A snapshot can be moved from collecting to verified only with explicit readiness gates satisfied.
 - Readiness is explainable in Command Center.
 
-## Milestone 7 – Strategic Intelligence Expansion
+## Milestone 8 – Strategic Intelligence Expansion
 
 Only after data stability.
 
