@@ -230,7 +230,15 @@ def infer_ranking_type_from_values(current_type, rows):
 
 
 def _explicit_visible_rank(row):
-    for key in ("visible_rank", "ocr_rank", "rank"):
+    """Return only rank evidence that was actually observed on the screenshot.
+
+    v0.9.5.91 deliberately stops treating computed/export ranks as visible
+    evidence.  Earlier builds used the generic ``rank`` field as fallback; that
+    allowed merge order to become Operational Truth and produced rank-context
+    corruption when rows without a visible rank were mixed with rows from other
+    windows.
+    """
+    for key in ("visible_rank", "ocr_rank"):
         value = row.get(key)
         try:
             if value is not None and value != "":
@@ -238,6 +246,28 @@ def _explicit_visible_rank(row):
         except (TypeError, ValueError):
             continue
     return None
+
+
+def _source_window_id(row):
+    return str(row.get("source_file") or row.get("screenshot") or "unknown_window")
+
+
+def _identity_fingerprint(row):
+    return "|".join([
+        str(row.get("raw_alliance_tag") or row.get("alliance_tag") or "").strip().lower(),
+        str(row.get("raw_player_name") or row.get("player_name") or row.get("raw_alliance_name") or row.get("name") or "").strip().lower(),
+        str(row.get("power") or "").strip(),
+    ])
+
+
+def _append_warning(row, *warnings):
+    existing = []
+    for key in ("rank_warning", "alignment_warning"):
+        if row.get(key):
+            existing.extend(str(row.get(key)).split(";"))
+    existing.extend(warnings)
+    row["rank_warning"] = ";".join(dict.fromkeys(part for part in existing if part))
+    return row
 
 
 def _raw_identity_lock(row):
@@ -256,13 +286,13 @@ def _raw_identity_lock(row):
 
 
 def merge_rows_by_power(items, limit=10, tolerance=0.003):
-    """Merge ranking rows while preserving visible rank slots when available.
+    """Merge ranking rows while preserving screenshot-visible slots.
 
-    The historical implementation sorted every row by power and then rewrote
-    ranks. That is unsafe for OCR pipelines: one recovered/truncated power can
-    move a screenshot row to a different slot. Since v0.9.5.90, an explicit
-    visible rank is a lock. Power is still used for duplicate handling and for
-    rows without rank evidence, but it cannot rewrite a visible slot.
+    v0.9.5.91 hardens the v0.9.5.90 rank lock: rows that do not carry an
+    observed visible rank are not allowed to receive a normal Operational Truth
+    rank merely because they sorted high by power.  This prevents cross-window
+    merge contamination from promoting rows from a different screenshot window
+    into the top of the ranking.
     """
     prepared = [_raw_identity_lock(dict(item)) for item in items if item.get("power") not in (None, "")]
     has_visible_slots = any(_explicit_visible_rank(row) is not None for row in prepared)
@@ -270,12 +300,14 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
     if not has_visible_slots:
         merged = []
         for item in sorted(prepared, key=lambda row: row["power"], reverse=True):
+            item["window_id"] = _source_window_id(item)
+            item["rank_context_status"] = "computed_only_no_visible_rank_evidence"
             power = item.get("power")
             duplicate = None
             for existing in merged:
                 existing_power = existing["power"]
                 diff = abs(existing_power - power) / max(existing_power, power)
-                if diff <= tolerance:
+                if diff <= tolerance and _identity_fingerprint(existing) == _identity_fingerprint(item):
                     duplicate = existing
                     break
             if duplicate:
@@ -293,35 +325,63 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
             row["computed_rank"] = idx
             row["rank"] = idx
             row["operational_rank"] = idx
+            row["final_rank"] = idx
             row["rank_slot_preserved"] = False
             row["rank_warning"] = row.get("rank_warning") or ""
         return merged[:limit]
 
     by_slot = {}
-    unranked = []
+    quarantined_unranked = []
+    duplicate_conflicts = []
     for item in prepared:
+        item["window_id"] = _source_window_id(item)
         slot = _explicit_visible_rank(item)
         if slot is None:
-            unranked.append(item)
+            item["rank"] = None
+            item["operational_rank"] = None
+            item["final_rank"] = None
+            item["computed_rank"] = None
+            item["rank_slot_preserved"] = False
+            item["rank_context_status"] = "quarantine_missing_visible_rank"
+            _append_warning(item, "missing_visible_rank_in_ranked_context", "not_promoted_to_operational_truth")
+            quarantined_unranked.append(item)
             continue
+
         item["visible_rank"] = slot
         item.setdefault("ocr_rank", slot)
+        item["rank_context_status"] = "visible_rank_locked"
         existing = by_slot.get(slot)
         if existing is None:
             by_slot[slot] = item
             continue
-        existing_power = existing.get("power") or 0
-        item_power = item.get("power") or 0
-        if item_power > existing_power or len(str(item.get("name") or "")) > len(str(existing.get("name") or "")):
-            warnings = [str(existing.get("rank_warning") or "").strip(), "duplicate_visible_rank_slot"]
-            item["rank_warning"] = ";".join(part for part in dict.fromkeys(warnings) if part)
-            by_slot[slot] = item
-        else:
-            warnings = [str(existing.get("rank_warning") or "").strip(), "duplicate_visible_rank_slot"]
-            existing["rank_warning"] = ";".join(part for part in dict.fromkeys(warnings) if part)
+
+        same_window = _source_window_id(existing) == _source_window_id(item)
+        same_identity = _identity_fingerprint(existing) == _identity_fingerprint(item)
+        if same_window and same_identity:
+            # same screenshot, same identity: duplicate OCR fragment; keep richer row
+            existing_power = existing.get("power") or 0
+            item_power = item.get("power") or 0
+            if item_power > existing_power or len(str(item.get("name") or "")) > len(str(existing.get("name") or "")):
+                _append_warning(item, "duplicate_visible_rank_slot_same_window_collapsed")
+                by_slot[slot] = item
+            else:
+                _append_warning(existing, "duplicate_visible_rank_slot_same_window_collapsed")
+            continue
+
+        # Different source window or different identity for same visible rank is
+        # unsafe.  Do not let power decide which screenshot becomes truth. Keep
+        # the first visible slot as the export candidate but mark both candidates
+        # with explicit diagnostics for human review / future quarantine routing.
+        _append_warning(existing, "duplicate_visible_rank_slot_cross_window_conflict")
+        _append_warning(item, "duplicate_visible_rank_slot_cross_window_conflict", "not_promoted_to_operational_truth")
+        existing["rank_context_status"] = "visible_rank_conflict_needs_review"
+        item["rank_context_status"] = "quarantine_duplicate_visible_rank_conflict"
+        item["rank"] = None
+        item["operational_rank"] = None
+        item["final_rank"] = None
+        duplicate_conflicts.append(item)
 
     merged = [by_slot[slot] for slot in sorted(by_slot)]
-    merged.extend(sorted(unranked, key=lambda row: row.get("power") or 0, reverse=True))
 
     previous_visible_rank = None
     power_order = {id(row): idx for idx, row in enumerate(sorted(merged, key=lambda row: row.get("power") or 0, reverse=True), start=1)}
@@ -333,22 +393,25 @@ def merge_rows_by_power(items, limit=10, tolerance=0.003):
                 warnings.extend(str(row.get(key)).split(";"))
 
         row["computed_rank"] = idx
-        if visible_rank is not None:
-            row["visible_rank"] = visible_rank
-            row["rank"] = visible_rank
-            row["operational_rank"] = visible_rank
-            row["rank_slot_preserved"] = True
-            if power_order.get(id(row)) != idx:
-                warnings.append(f"power_order_differs_from_visible_slot:{power_order.get(id(row))}!={idx}")
-            if previous_visible_rank is not None and visible_rank > previous_visible_rank + 1:
-                missing = ",".join(str(value) for value in range(previous_visible_rank + 1, visible_rank))
-                warnings.append(f"possible_missing_rank_before:{missing}")
-            previous_visible_rank = visible_rank
-        else:
-            row["rank"] = idx
-            row["operational_rank"] = idx
-            row["rank_slot_preserved"] = False
-
+        row["visible_rank"] = visible_rank
+        row["rank"] = visible_rank
+        row["operational_rank"] = visible_rank
+        row["final_rank"] = visible_rank
+        row["rank_slot_preserved"] = True
+        row["merge_reason"] = "visible_rank_locked"
+        if power_order.get(id(row)) != idx:
+            warnings.append(f"power_order_differs_from_visible_slot:{power_order.get(id(row))}!={idx}")
+        if previous_visible_rank is not None and visible_rank > previous_visible_rank + 1:
+            missing = ",".join(str(value) for value in range(previous_visible_rank + 1, visible_rank))
+            warnings.append(f"possible_missing_rank_before:{missing}")
+        previous_visible_rank = visible_rank
         row["rank_warning"] = ";".join(dict.fromkeys(part for part in warnings if part))
 
-    return merged[:limit]
+    diagnostics = quarantined_unranked + duplicate_conflicts
+    for row in diagnostics:
+        row["merge_reason"] = row.get("rank_context_status")
+
+    # Diagnostics are returned after locked Operational Truth candidates so they
+    # remain visible in export/review surfaces, but they carry no final rank and
+    # cannot displace a screenshot-visible slot.
+    return (merged[:limit] + diagnostics)[:limit]

@@ -1,5 +1,30 @@
 # Sentinel Modus Operandi
 
+**Current release:** v0.9.5.91  
+**Canonical docs path:** `/docs`
+
+## Benchmark Review Rule
+
+For every benchmark run, the validation order is mandatory:
+
+```text
+1. Open screenshot.
+2. Read the visible row as Ground Truth.
+3. Compare Sentinel output row by row.
+4. Classify every deviation.
+5. Only then judge architecture, OCR, merge, review or strategy.
+```
+
+Never validate a run from console output alone. Never assume Excel or Review Pack is truth.
+
+## Sprint Delivery Rule
+
+The default sprint deliverable remains a complete downloadable ZIP release with version update, docs, validation, `.commit`, commit command and tag command.
+
+---
+
+# Sentinel Modus Operandi
+
 **Current release:** v0.9.5.90  
 **Canonical docs path:** `/docs`
 

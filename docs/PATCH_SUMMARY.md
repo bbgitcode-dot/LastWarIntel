@@ -1,3 +1,45 @@
+# Patch Summary – v0.9.5.91
+
+## Sentinel v0.9.5.91 – Rank Context & Window Merge Hardening
+
+This sprint addresses the P0 finding from the 549–555 benchmark: Sentinel could mix rows from different screenshot windows and assign computed ranks to rows without visible-rank evidence. That made output look plausible while violating the screenshot. v0.9.5.91 makes the merge layer more conservative.
+
+## Implemented
+
+- Version bumped to `0.9.5.91`.
+- `merge_rows_by_power` no longer treats generic `rank` as visible evidence; only `visible_rank` and `ocr_rank` can lock a slot.
+- Rows missing visible rank evidence inside a ranked context are marked `quarantine_missing_visible_rank` and do not receive `final_rank`.
+- Cross-window duplicate visible-rank conflicts are marked `duplicate_visible_rank_slot_cross_window_conflict`; power no longer decides which window becomes truth.
+- Added merge diagnostics: `window_id`, `rank_context_status`, `final_rank`, `merge_reason`, stronger `rank_warning`.
+- Added v0.9.5.91 regression tests for unranked rows not displacing visible slots and cross-window duplicate-slot conflicts.
+- Updated core docs with the 549–555 benchmark findings and the corrected sprint strategy.
+
+## Validation
+
+```text
+pytest tests/smoke/test_data_quality_91.py tests/smoke/test_data_quality_90.py tests/smoke/test_data_quality_89.py -q
+9 passed
+
+pytest tests/smoke/test_power_first_reconstruction.py tests/smoke/test_ranking_integrity_validation.py tests/smoke/test_ranking_power_sanity_guard.py tests/smoke/test_data_quality_91.py tests/smoke/test_data_quality_90.py tests/smoke/test_data_quality_89.py -q
+29 passed
+
+python -m py_compile version.py main.py parser/ranking.py
+OK
+
+zip -T Sentinel_v0.9.5.91.zip
+OK
+```
+
+## Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): isolate rank context during window merge"
+git tag -a v0.9.5.91 -m "v0.9.5.91 Rank Context and Window Merge Hardening"
+```
+
+---
+
 # Patch Summary – v0.9.5.90
 
 ## Sentinel v0.9.5.90 – Operational Truth Hardening

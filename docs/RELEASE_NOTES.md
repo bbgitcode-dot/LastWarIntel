@@ -1,3 +1,35 @@
+## v0.9.5.91 – Rank Context & Window Merge Hardening
+
+### Purpose
+- Convert the 549–555 screenshot-forensic findings into hard merge invariants.
+- Prevent rows without screenshot-visible rank evidence from becoming false Operational Truth through power sorting or merge order.
+- Document that Ground Truth Validator remains intentionally scoped to Server 551 THP because full manual GT for all servers is too expensive.
+
+### Changed
+- `parser/ranking.py` now accepts only `visible_rank` and `ocr_rank` as visible rank evidence. Generic `rank` is no longer treated as screenshot truth during merge.
+- Rows missing visible rank evidence in a ranked context are marked `quarantine_missing_visible_rank` and carry no `final_rank`.
+- Cross-window duplicate visible-rank conflicts are diagnosed and no longer resolved by highest power.
+- Added `window_id`, `rank_context_status`, `final_rank`, `merge_reason` and stronger `rank_warning` diagnostics.
+- Added `tests/smoke/test_data_quality_91.py`.
+- Updated docs to reflect the corrected P0 focus: rank/window/merge integrity before OCR tuning or intelligence.
+
+### Validation
+```text
+9 passed – .89/.90/.91 Data Quality tests
+29 passed – targeted ranking/data-quality/power-sanity regression set
+py_compile OK – version.py, main.py, parser/ranking.py
+zip integrity OK
+```
+
+### Commit
+```bash
+git add .
+git commit -m "fix(data-guard): isolate rank context during window merge"
+git tag -a v0.9.5.91 -m "v0.9.5.91 Rank Context and Window Merge Hardening"
+```
+
+---
+
 ## v0.9.5.90 – Operational Truth Hardening
 
 ### Purpose

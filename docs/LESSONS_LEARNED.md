@@ -1,3 +1,21 @@
+## v0.9.5.91 Lesson – Screenshot First, Export Second
+
+Benchmark review must start from the screenshot, not the console summary or Excel export. The export is a derived surface. If it is used as the reference, obvious identity and rank errors can be missed.
+
+## v0.9.5.91 Lesson – Rank Context Is a Container
+
+A row belongs to a screenshot window before it belongs to a global rank list. Rows without visible-rank evidence inside a ranked context must not be promoted merely because their power sorts high.
+
+## v0.9.5.91 Lesson – High Ranks Are Not Invalid by Themselves
+
+Rank 203 or 300 can be legitimate in a future THP Top-300 context. The error is not the number alone; the error is a rank that violates the recognized ranking mode and screenshot context. The correct failure family is `rank_scope_violation`, not a blanket high-rank ban.
+
+## v0.9.5.91 Lesson – Full Ground Truth Is Expensive
+
+Server 551 THP remains the Gold-Standard Ground Truth set. Extending manual GT to every server would be too expensive; use targeted mini-GT only for new P0 regressions.
+
+---
+
 ## v0.9.5.90 Lesson – Visible Rank Is Structure, Not a Hint
 
 Power sorting is useful only when no visible rank evidence exists. Once OCR or review evidence sees a rank slot, that slot is part of Operational Truth structure and must not be rewritten by recovery.

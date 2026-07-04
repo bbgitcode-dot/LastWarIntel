@@ -1,5 +1,28 @@
 # Road to Sentinel v1.0.0
 
+## Current baseline
+
+**Current development baseline:** v0.9.5.91  
+**Current documentation release:** v0.9.5.91
+
+## Updated milestone sequence after 549–555 benchmark
+
+```text
+v0.9.5.91  Rank Context & Window Merge Hardening
+v0.9.5.92  Identity Integrity
+v0.9.5.93  Context-aware Operational Truth
+v0.9.5.94  Regression Replay & Review Routing
+v1.0.0     Strategic Intelligence on verified Operational Truth
+```
+
+## v1 bar
+
+Sentinel v1.0.0 is reached only when screenshot observations can be transformed into protected Operational Truth without rank/window corruption, identity drift or silent candidate promotion. Strategic Intelligence starts after that, not before.
+
+---
+
+# Road to Sentinel v1.0.0
+
 ## v1 definition
 
 Sentinel v1.0.0 is not just a working OCR importer. It is an explainable strategic intelligence platform that can turn screenshot evidence into trustworthy Operational Truth and then into decision support for Last War alliance leadership.

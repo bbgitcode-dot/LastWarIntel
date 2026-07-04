@@ -1,3 +1,26 @@
+# Sentinel Data Guard
+
+**Current version:** v0.9.5.91
+
+## v0.9.5.91 Addendum – Rank/Window Integrity
+
+The 549–555 benchmark exposed a P0 family where the OCR text could be plausible but Operational Truth became corrupt because rows were merged outside their screenshot-window context. Data Guard now treats rank/window integrity as a first-class protection area.
+
+### New protected failure families
+
+- `rank_context_corruption`: final output no longer matches the screenshot rank context.
+- `window_merge_contamination`: rows from one screenshot window displace rows from another window.
+- `visible_rank_loss`: no observed visible rank survives into Operational Truth.
+- `rank_scope_violation`: rank is incompatible with ranking mode/window context, without banning future Top-300 ranks.
+- `duplicate_visible_rank_slot_cross_window_conflict`: same visible rank appears from conflicting windows/identities.
+- `quarantine_missing_visible_rank`: a ranked context exists, but the row has no visible rank evidence.
+
+### Current rule
+
+A computed rank may be useful telemetry, but it is not screenshot truth. In a ranked context, visible-rank evidence must anchor Operational Truth; missing or conflicting evidence must be routed to review/diagnostics before intelligence consumes it.
+
+---
+
 ## v0.9.5.90 – Export Boundary Is Part of Data Guard
 
 Data Guard protection must survive export. A row that is pending review inside the pipeline must remain visibly pending in Excel and report surfaces. Export code must carry:

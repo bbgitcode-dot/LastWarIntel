@@ -1,14 +1,3 @@
-fix(data-guard): lock visible rank slots and raw identity
-
-- bump version to 0.9.5.90
-- preserve explicit visible rank slots during ranking merge/export
-- add raw identity lock fields for player/alliance display values
-- keep ambiguous power candidates as review evidence instead of Operational Truth
-- prevent high-explosion review placeholders from exposing false high OCR power
-- add .90 regressions for [SWSq] sven the vän, low-truncation candidates and quarantine slot preservation
-
-Validation:
-- 10 passed: data-quality .89/.90 rank-slot regression set
-- 29 passed: ranking power sanity, THP sanity, review rank trace and identity consistency
-- py_compile OK: patched runtime modules
-- full smoke/compileall note: baseline contains pre-existing invalid command-stub/RTF Python files outside this patch
+git add .
+git commit -m "fix(data-guard): isolate rank context during window merge"
+git tag -a v0.9.5.91 -m "v0.9.5.91 Rank Context and Window Merge Hardening"
