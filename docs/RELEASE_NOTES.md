@@ -1,3 +1,17 @@
+## v0.9.5.94 – Identity Fidelity Metrics & Risk Reporting
+
+- Added strict Ground Truth identity metrics for exact player names and exact case-sensitive alliance tags.
+- Added identity-risk reporting for fuzzy/normalized matches that are useful for row recovery but unsafe for historical identity.
+- Added high-value identity risk detection for top-rank rows.
+- Added `identity_risk_summary` and `identity_risks` report sections.
+- Added tests for `Joncollins21`-style player drift and `DAY`/`daY` alliance tag drift.
+
+```bash
+git add .
+git commit -m "feat(data-guard): report exact identity fidelity risks"
+git tag -a v0.9.5.94 -m "v0.9.5.94 Identity Fidelity Metrics and Risk Reporting"
+```
+
 ## v0.9.5.93 – Review Export Separation & Identity Fidelity Guard
 
 ### Added

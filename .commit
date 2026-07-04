@@ -1,3 +1,3 @@
 git add .
-git commit -m "fix(data-guard): separate review placeholders from operational export"
-git tag -a v0.9.5.93 -m "v0.9.5.93 Review Export Separation and Identity Fidelity Guard"
+git commit -m "feat(data-guard): report exact identity fidelity risks"
+git tag -a v0.9.5.94 -m "v0.9.5.94 Identity Fidelity Metrics and Risk Reporting"

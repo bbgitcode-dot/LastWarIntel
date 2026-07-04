@@ -1,5 +1,48 @@
 # Sentinel Data Guard
 
+**Current version:** v0.9.5.94
+
+## Principle
+
+Data Quality comes before Intelligence. Quarantine is preferred over false Operational Truth. Screenshot evidence is the only ground truth.
+
+## v0.9.5.94 Addendum – Exact Identity Fidelity
+
+v0.9.5.94 upgrades Identity Guard from an initial metadata layer into a measured validation dimension. The Ground Truth validator now reports:
+
+- `player_name_display_exact_matches`
+- `alliance_tag_display_exact_matches`
+- `exact_identity_matches`
+- `identity_risk_rows`
+- `high_value_identity_risk_rows`
+- `alliance_tag_case_sensitive_mismatches`
+- `player_name_drift_rows`
+- `identity_fidelity_score`
+
+A row can be a valid OCR/Power match and still be an identity-risk row. Example: `Joncollins21` -> `Joncollinszl` must remain visible as drift even when power and rank match.
+
+## Hard rule
+
+Fuzzy matching may suggest candidates and explain recovery. It must not silently mutate Operational Truth or mark identity as safe.
+
+## Protected failure families
+
+- Exact Player Name Drift
+- Case-Sensitive Alliance Tag Drift
+- Fuzzy Identity Treated As Safe
+- Review Leakage into Operational Truth
+- Rank Context Corruption
+- Window Merge Contamination
+- Visible Rank Loss
+- Rank Scope Violation
+- Duplicate Identity
+- Power Explosion
+- Low-Truncation Power Ambiguity
+
+---
+
+# Sentinel Data Guard
+
 **Current version:** v0.9.5.93
 
 ## Principle

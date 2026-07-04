@@ -1,34 +1,30 @@
-# Handoff Next Chat – Sentinel v0.9.5.93
+# Handoff Next Chat – Sentinel v0.9.5.94
 
 ## Baseline
 
 Use:
 
 ```text
-Sentinel_v0.9.5.93.zip
+Sentinel_v0.9.5.94.zip
 ```
 
 ## Current state
 
-v0.9.5.93 follows the Server 551 v0.9.5.92 validation. Accepted rows now export cleanly and `PENDING REVIEW` placeholders are filtered from normal Operational Truth sheets and console summaries. Quarantine/review evidence remains available in the dedicated review surfaces.
+v0.9.5.94 follows the Server 551 v0.9.5.93 validation. Review placeholders no longer leak into normal ranking sheets. The remaining strategic risk is Identity Fidelity: players and alliance tags can match by power/rank but still be unsafe for historical tracking if their visible identity changed.
 
-The new strategic data-quality focus is Identity Fidelity: exact alliance tags and player names matter for historical transfer intelligence. Fuzzy matching can help review, but it cannot be allowed to silently mutate Operational Truth.
+The Ground Truth validator now reports exact identity metrics and emits an `identity_risks` sheet/JSON section. Use this before any future transfer/player-history work.
 
 ## Next recommended sprint
 
-**v0.9.5.94 – Identity Fidelity Regression & Alliance Tag Case Sensitivity**
+**v0.9.5.95 – Identity Regression / Screenshot Replay**
 
-Focus:
+Purpose:
 
-- Create targeted regression cases for `Joncollins21` vs `Joncollinszl`.
-- Create alliance-tag case-sensitivity tests such as `DAY` vs `daY`.
-- Improve Identity Guard reporting in export/review dashboards.
-- Run Server 551 again and confirm Recall remains 1.0 while review rows no longer appear as ranks 102-105.
-- Then run Server 552 Alliance Power as the next screenshot-based benchmark.
+- Run Server 551 and selected 549-555 screenshots against v0.9.5.94.
+- Inspect `identity_risks` line by line against screenshots.
+- Decide which OCR identity risks require code fixes versus human alias review.
+- Add regression fixtures for `Joncollins21`, case-sensitive tags and high-value top-rank players.
 
-## Rules
+## Operating rule
 
-- Screenshot is Ground Truth.
-- Cache off for benchmark validation.
-- No Intelligence features until DataGuard and Identity Guard are stable.
-- Do not treat upload order, filename order, console output or fuzzy match score as truth.
+The screenshot remains the truth. A fuzzy match is not a safe identity.

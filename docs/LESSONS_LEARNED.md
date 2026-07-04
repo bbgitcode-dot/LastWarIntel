@@ -1,3 +1,11 @@
+## v0.9.5.94 Lesson – Recall Can Hide Identity Failure
+
+A row can match by server, rank and power while still being strategically unsafe. `Joncollins21` matched as a row, but `Joncollinszl` is not the same searchable identity for future VIP tracking. Sentinel must report this as Identity Drift, not celebrate it as success.
+
+## v0.9.5.94 Lesson – Alliance Tags Are Case-Sensitive Intelligence Keys
+
+Alliance tags are short identifiers. `DAY` and `daY` may be different alliances in a 128-server group. Normalized matching is useful for review, but exact display tags must be preserved for Operational Truth and historical comparisons.
+
 ## v0.9.5.93 Lesson – Review Is Not Operational Truth
 
 `PENDING REVIEW` placeholders are useful internal evidence, but they must not appear as normal operational ranks. If a quarantined row becomes THP rank 102 or 103, Sentinel has mixed review state into Operational Truth. v0.9.5.93 separates these surfaces: normal sheets show accepted rows; review sheets show unresolved rows.

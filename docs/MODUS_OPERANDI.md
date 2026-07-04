@@ -1,36 +1,39 @@
-# Modus Operandi – Sentinel
-
-**Current release:** v0.9.5.93
+# Modus Operandi – Sentinel v0.9.5.94
 
 ## Roles
 
-- Proud Owner: product owner and final strategic authority.
-- Mimir: strategic copilot and implementation partner.
+- Proud Owner owns decisions and validation priority.
+- Mimir produces complete ZIP releases, not snippets, unless snippets are explicitly requested.
 
-## Delivery rule
+## Release discipline
 
-No snippets as sprint deliverables unless explicitly requested. Every sprint produces a complete downloadable ZIP with version update, documentation, validation summary, `.commit`, commit command and tag command.
+Every sprint deliverable must include:
 
-## Benchmark rule
+- full downloadable ZIP release;
+- version update;
+- release notes;
+- validation summary;
+- `.commit`;
+- commit command and tag command.
 
-The screenshot is the only Ground Truth.
+## Benchmark review rule
 
-Benchmark review order:
+The screenshot is the truth. Validate rows in this order:
 
-1. Read screenshot.
-2. Establish observed truth row by row.
-3. Compare Sentinel output to screenshot.
-4. Classify every deviation.
-5. Only then produce assessment or strategy.
+1. Screenshot observation.
+2. Manual/Ground Truth expectation.
+3. Sentinel output.
+4. Error classification.
+5. Strategy.
 
-## Cache rule
+Never infer screenshot correctness from the export.
 
-For data-quality validation, OCR cache is off unless explicitly requested. Cache is a performance tool, not a truth source.
+## Data Quality rule
 
-## Rank rule
+Data Quality comes before Intelligence. Quarantine is preferred over false Operational Truth. Cache is performance optimization only and should be off during data-quality validation unless explicitly requested.
 
-`visible_rank` / `ocr_rank` are evidence. `rank` / `operational_rank` / `final_rank` are output truth surfaces. In partial forensic windows, visible ranks remain authoritative. In full-scope imports, power-order inference may repair missing or impossible OCR ranks while retaining the raw evidence.
+## Identity review rule
 
-## Identity rule
+Fuzzy matching is not identity proof. Any drift in player name or case-sensitive alliance tag must remain visible as risk until manually accepted or fixed by code.
 
-Identity fidelity is stricter than OCR similarity. Alliance tags are case-sensitive. Player names with digit/letter confusions must be treated as identity-risk evidence, not automatically corrected truth. Fuzzy matching may assist review, but it must never silently rewrite Operational Truth.
+Alliance tags are case-sensitive Last War identifiers: `DAY` and `daY` must not collapse into a single trusted identity.

@@ -90,6 +90,14 @@ class ValidationSummary:
     power_recovered_matches: int
     rank_matches: int
     usable_identity_matches: int
+    player_name_display_exact_matches: int
+    alliance_tag_display_exact_matches: int
+    exact_identity_matches: int
+    identity_risk_rows: int
+    high_value_identity_risk_rows: int
+    alliance_tag_case_sensitive_mismatches: int
+    player_name_drift_rows: int
+    identity_fidelity_score: float
     score: float
 
 
@@ -179,6 +187,24 @@ def normalize_tag(value: Any) -> str:
     return text.strip().upper()
 
 
+def extract_display_tag(value: Any) -> str:
+    """Return the visible alliance tag exactly as displayed, preserving case.
+
+    The normal matcher still uses uppercase/canonical tags for row matching, but
+    Identity Fidelity must keep Last War tags case-sensitive: DAY and daY are
+    different identifiers for historical intelligence.
+    """
+    text = normalize_text(value)
+    match = TAG_RE.match(text)
+    if match:
+        return match.group(1).strip()
+    return text.strip()
+
+
+def exact_display_match(expected: Any, actual: Any) -> bool:
+    return normalize_text(expected) == normalize_text(actual)
+
+
 def classify_name(value: Any) -> str:
     name = normalize_name(value)
     has_latin = bool(LATIN_RE.search(name))
@@ -227,6 +253,7 @@ def load_ground_truth(path: Path) -> pd.DataFrame:
     gt["server"] = gt["server"].map(safe_int)
     gt["rank"] = gt["rank"].map(safe_int)
     gt["power"] = gt["power"].map(safe_int)
+    gt["alliance_display"] = gt["alliance"].map(extract_display_tag)
     gt["alliance"] = gt["alliance"].map(normalize_tag)
     gt["true_name"] = gt["true_name"].map(normalize_name)
     if "screenshot" in gt.columns:
@@ -317,6 +344,7 @@ def load_ocr_output(path: Path) -> pd.DataFrame:
     ocr["server"] = ocr["server"].map(safe_int)
     ocr["rank"] = ocr["rank"].map(safe_int)
     ocr["power"] = ocr["power"].map(safe_int)
+    ocr["alliance_display"] = ocr["alliance"].map(extract_display_tag)
     ocr["alliance"] = ocr["alliance"].map(normalize_tag)
     ocr["ocr_name"] = ocr["ocr_name"].map(normalize_name)
     if "source_file" not in ocr.columns:
@@ -358,6 +386,7 @@ def load_ranking_guard_quarantine(path: Path) -> pd.DataFrame:
     quarantine["server"] = quarantine["server"].map(safe_int)
     quarantine["rank"] = quarantine.get("rank", pd.Series([None] * len(quarantine))).map(safe_int)
     quarantine["power"] = quarantine.get("power", pd.Series([None] * len(quarantine))).map(safe_int)
+    quarantine["alliance_display"] = quarantine["alliance"].map(extract_display_tag)
     quarantine["alliance"] = quarantine["alliance"].map(normalize_tag)
     quarantine["ocr_name"] = quarantine["ocr_name"].map(normalize_name)
     if "source_file" not in quarantine.columns:
@@ -550,6 +579,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         match, match_method, sequence_candidate = _find_match(gt_row, ocr, alliance_vocabulary)
         expected_name = normalize_name(gt_row["true_name"])
         expected_alliance = normalize_tag(gt_row["alliance"])
+        expected_alliance_display = extract_display_tag(gt_row.get("alliance_display", gt_row.get("alliance", "")))
         expected_power = safe_int(gt_row["power"])
         expected_rank = safe_int(gt_row["rank"])
 
@@ -558,6 +588,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         if match is None:
             actual_name = ""
             actual_alliance = ""
+            actual_alliance_display = ""
             actual_power = None
             actual_rank = None
             source_file = ""
@@ -565,6 +596,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         else:
             actual_name = normalize_name(match.get("ocr_name", ""))
             actual_alliance = normalize_tag(match.get("alliance", ""))
+            actual_alliance_display = extract_display_tag(match.get("alliance_display", match.get("alliance", "")))
             actual_power = safe_int(match.get("power"))
             actual_rank = safe_int(match.get("rank"))
             source_file = normalize_text(match.get("source_file", ""))
@@ -584,12 +616,20 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         expected_name_normalized = normalize_player_name(expected_name)
         actual_name_normalized = normalize_player_name(actual_name)
         raw_name_exact = normalize_name(expected_name).casefold() == normalize_name(actual_name).casefold()
+        raw_name_display_exact = exact_display_match(expected_name, actual_name)
         raw_name_normalized_match = bool(name_normalized_similarity >= 0.88)
         expected_alliance_result = normalize_alliance_against_vocabulary(expected_alliance, alliance_vocabulary)
         actual_alliance_result = normalize_alliance_against_vocabulary(actual_alliance, alliance_vocabulary)
         expected_alliance_normalized = expected_alliance_result.value
         actual_alliance_normalized = actual_alliance_result.value
         raw_alliance_exact_match = expected_alliance == actual_alliance
+        raw_alliance_display_exact_match = expected_alliance_display == actual_alliance_display
+        raw_alliance_case_sensitive_mismatch = bool(
+            expected_alliance_display
+            and actual_alliance_display
+            and expected_alliance_display.upper() == actual_alliance_display.upper()
+            and expected_alliance_display != actual_alliance_display
+        )
         raw_alliance_match = expected_alliance_normalized == actual_alliance_normalized
         raw_alliance_normalized_match = bool(raw_alliance_match and not raw_alliance_exact_match)
         power_result = compare_power(expected_power, actual_power)
@@ -602,8 +642,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         # counted as valid matches, even if one incidental field happens to fit.
         accepted_match = not bad_match and not blocked_match
         name_exact = bool(raw_name_exact and accepted_match)
+        name_display_exact = bool(raw_name_display_exact and accepted_match)
         name_normalized_match = bool(raw_name_normalized_match and accepted_match)
         alliance_exact_match = bool(raw_alliance_exact_match and accepted_match)
+        alliance_display_exact_match = bool(raw_alliance_display_exact_match and accepted_match)
         alliance_match = bool(raw_alliance_match and accepted_match)
         alliance_normalized_match = bool(raw_alliance_normalized_match and accepted_match)
         power_match = bool(raw_power_match and accepted_match)
@@ -611,6 +653,18 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         power_recovered_match = bool(raw_power_recovered_match and accepted_match)
         rank_match = bool(raw_rank_match and accepted_match)
         usable_identity = bool(match is not None and accepted_match and power_match and alliance_match and max(name_similarity, name_normalized_similarity) >= 0.80)
+        exact_identity = bool(accepted_match and rank_match and power_match and alliance_display_exact_match and name_display_exact)
+        identity_risk_reasons = []
+        if accepted_match and not name_display_exact:
+            identity_risk_reasons.append("player_name_display_drift")
+        if accepted_match and not alliance_display_exact_match:
+            identity_risk_reasons.append("alliance_tag_display_drift")
+        if accepted_match and raw_alliance_case_sensitive_mismatch:
+            identity_risk_reasons.append("alliance_tag_case_sensitive_mismatch")
+        if usable_identity and not exact_identity:
+            identity_risk_reasons.append("fuzzy_or_normalized_identity_not_exact")
+        identity_risk = bool(identity_risk_reasons)
+        high_value_identity_risk = bool(identity_risk and (expected_rank is not None and expected_rank <= 10))
         if accepted_match and match_method not in ["missing", "blocked_rank_fallback"]:
             failure_class = "matched"
         elif quarantine_match is not None:
@@ -627,11 +681,15 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "rank": expected_rank,
             "expected_alliance": expected_alliance,
             "ocr_alliance": actual_alliance,
+            "expected_alliance_display": expected_alliance_display,
+            "ocr_alliance_display": actual_alliance_display,
             "expected_alliance_normalized": expected_alliance_normalized,
             "ocr_alliance_normalized": actual_alliance_normalized,
             "alliance_match": alliance_match,
             "alliance_exact_match": alliance_exact_match,
+            "alliance_display_exact_match": alliance_display_exact_match,
             "alliance_normalized_match": alliance_normalized_match,
+            "alliance_tag_case_sensitive_mismatch": bool(raw_alliance_case_sensitive_mismatch and accepted_match),
             "alliance_match_type": actual_alliance_result.match_type,
             "expected_power": expected_power,
             "ocr_power": actual_power,
@@ -649,10 +707,15 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "expected_name_key": expected_name_normalized.comparison_key,
             "ocr_name_key": actual_name_normalized.comparison_key,
             "name_exact_match": name_exact,
+            "name_display_exact_match": name_display_exact,
             "name_normalized_match": name_normalized_match,
             "name_similarity": round(name_similarity, 4),
             "name_normalized_similarity": round(name_normalized_similarity, 4),
             "usable_identity_match": usable_identity,
+            "exact_identity_match": exact_identity,
+            "identity_risk": identity_risk,
+            "identity_risk_reasons": ";".join(identity_risk_reasons),
+            "high_value_identity_risk": high_value_identity_risk,
             "name_category": gt_row["name_category"],
             "match_method": match_method,
             "bad_match": bad_match,
@@ -704,6 +767,14 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     power_recovered_matches = int(detail["power_recovered_match"].sum())
     rank_matches = int(detail["rank_match"].sum())
     usable_matches = int(detail["usable_identity_match"].sum())
+    player_name_display_exact_matches = int(detail["name_display_exact_match"].sum())
+    alliance_tag_display_exact_matches = int(detail["alliance_display_exact_match"].sum())
+    exact_identity_matches = int(detail["exact_identity_match"].sum())
+    identity_risk_rows = int(detail["identity_risk"].sum())
+    high_value_identity_risk_rows = int(detail["high_value_identity_risk"].sum())
+    alliance_tag_case_sensitive_mismatches = int(detail["alliance_tag_case_sensitive_mismatch"].sum())
+    player_name_drift_rows = int((detail["valid_match"] & ~detail["name_display_exact_match"]).sum())
+    identity_fidelity_score = round((exact_identity_matches / max(total, 1)) * 100, 2)
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
     avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
 
@@ -757,6 +828,14 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         power_recovered_matches=power_recovered_matches,
         rank_matches=rank_matches,
         usable_identity_matches=usable_matches,
+        player_name_display_exact_matches=player_name_display_exact_matches,
+        alliance_tag_display_exact_matches=alliance_tag_display_exact_matches,
+        exact_identity_matches=exact_identity_matches,
+        identity_risk_rows=identity_risk_rows,
+        high_value_identity_risk_rows=high_value_identity_risk_rows,
+        alliance_tag_case_sensitive_mismatches=alliance_tag_case_sensitive_mismatches,
+        player_name_drift_rows=player_name_drift_rows,
+        identity_fidelity_score=identity_fidelity_score,
         score=score,
     )
 
@@ -774,6 +853,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         power_exact_matches=("power_exact_match", "sum"),
         power_recovered_matches=("power_recovered_match", "sum"),
         usable_identity_matches=("usable_identity_match", "sum"),
+        player_name_display_exact_matches=("name_display_exact_match", "sum"),
+        alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
+        exact_identity_matches=("exact_identity_match", "sum"),
+        identity_risk_rows=("identity_risk", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
 
@@ -799,6 +882,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         | (~detail["name_exact_match"])
         | (~detail["alliance_match"])
         | (~detail["power_match"])
+        | (detail["identity_risk"])
     ].copy()
 
     failure_summary = detail.groupby("failure_class", dropna=False).agg(
@@ -806,13 +890,27 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         power_matches=("power_match", "sum"),
         alliance_matches=("alliance_match", "sum"),
         usable_identity_matches=("usable_identity_match", "sum"),
+        player_name_display_exact_matches=("name_display_exact_match", "sum"),
+        alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
+        exact_identity_matches=("exact_identity_match", "sum"),
+        identity_risk_rows=("identity_risk", "sum"),
     ).reset_index()
 
     json_path = output_dir / "ground_truth_validation_report.json"
+    identity_risk_detail = detail[detail["identity_risk"]].copy()
+    identity_risk_summary = identity_risk_detail.groupby("identity_risk_reasons", dropna=False).agg(
+        rows=("rank", "count"),
+        high_value_rows=("high_value_identity_risk", "sum"),
+        usable_identity_matches=("usable_identity_match", "sum"),
+        exact_identity_matches=("exact_identity_match", "sum"),
+    ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches"])
+
     json_payload = {
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
         "failure_summary": failure_summary.to_dict(orient="records"),
+        "identity_risk_summary": identity_risk_summary.to_dict(orient="records"),
+        "identity_risks": identity_risk_detail.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -833,6 +931,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         pd.DataFrame(summary_rows).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(category).to_excel(writer, sheet_name="category_summary", index=False)
         _sanitize_frame(failure_summary).to_excel(writer, sheet_name="failure_summary", index=False)
+        _sanitize_frame(identity_risk_summary).to_excel(writer, sheet_name="identity_risk_summary", index=False)
+        _sanitize_frame(identity_risk_detail).to_excel(writer, sheet_name="identity_risks", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
 

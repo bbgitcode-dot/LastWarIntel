@@ -1,34 +1,31 @@
-# Patch Summary – v0.9.5.93
+# Patch Summary – v0.9.5.94
 
-## Sentinel v0.9.5.93 – Review Export Separation & Identity Fidelity Guard
+## Sentinel v0.9.5.94 – Identity Fidelity Metrics & Risk Reporting
 
-This sprint follows the Server 551 v0.9.5.92 validation. v0.9.5.92 restored clean rank output for accepted rows, but review placeholders leaked into normal THP output as artificial ranks 102-105. v0.9.5.93 removes these placeholders from normal Operational Truth exports and console summaries while preserving them in review/quarantine surfaces.
+This sprint follows the Server 551 v0.9.5.93 validation. v0.9.5.93 fixed review leakage, but the Ground Truth report still showed that row matching can hide identity drift such as `Joncollins21` -> `Joncollinszl`. v0.9.5.94 makes exact identity preservation measurable.
 
-## Changes
+## Changed
 
-- Version bumped to `0.9.5.93`.
-- Normal ranking summaries and Excel sheets filter synthetic `PENDING REVIEW` rows.
-- Review/quarantine rows remain available in `REVIEW_ranking_guard_quarantine`, Review Dashboard and Evidence Pack.
-- Source evidence and screenshot rank-window inference ignore pending placeholders so review windows are not stretched by artificial ranks.
-- Added `parser/identity_guard.py` with first Identity Fidelity risk metadata.
-- Added identity fields to THP rows: `identity_fidelity_status`, `identity_fidelity_risk`, `identity_fidelity_warnings`, `case_sensitive_alliance_tag`, `canonical_alliance_tag`.
-- Documented that alliance tags are case-sensitive and player names such as `Joncollins21` must not be reduced to fuzzy OCR matches.
+- Version bumped to `0.9.5.94`.
+- Ground Truth validator now preserves case-sensitive display alliance tags before canonical matching.
+- Added strict identity metrics: exact player display match, exact alliance display match, exact identity match, identity risk rows, high-value identity risk rows, case-sensitive tag mismatches, player-name drift rows and identity fidelity score.
+- Added `identity_risk_summary` and `identity_risks` to JSON/XLSX reports.
+- Added smoke tests for fuzzy player-name drift and case-sensitive alliance-tag drift.
+- Updated docs to make Identity Fidelity a V1 gate.
 
 ## Validation
 
 ```text
-pytest tests/smoke/test_data_quality_89.py tests/smoke/test_data_quality_90.py tests/smoke/test_data_quality_91.py tests/smoke/test_data_quality_92.py tests/smoke/test_data_quality_93.py tests/smoke/test_ground_truth_validator.py -q
-20 passed
-python -m py_compile main.py parser/excel.py parser/identity_guard.py parser/player_ranking.py models/player_ranking.py services/import_repository.py version.py
-zip -T Sentinel_v0.9.5.93.zip
+pytest -q tests/smoke/test_identity_fidelity_validator.py
+pytest -q tests/smoke/test_ground_truth_validator.py tests/smoke/test_validator_match_discipline.py tests/smoke/test_command_center.py tests/smoke/test_gap_resolver.py
+python -m py_compile ground_truth_validator.py parser/identity_guard.py
+zip -T Sentinel_v0.9.5.94.zip
 ```
-
-Full smoke collection still contains pre-existing invalid/legacy tests unrelated to this sprint (`test_calculator.py`, `test_orchestrator.py`, and missing OCR config symbols).
 
 ## Commit
 
 ```bash
 git add .
-git commit -m "fix(data-guard): separate review placeholders from operational export"
-git tag -a v0.9.5.93 -m "v0.9.5.93 Review Export Separation and Identity Fidelity Guard"
+git commit -m "feat(data-guard): report exact identity fidelity risks"
+git tag -a v0.9.5.94 -m "v0.9.5.94 Identity Fidelity Metrics and Risk Reporting"
 ```

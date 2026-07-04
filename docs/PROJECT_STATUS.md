@@ -1,3 +1,29 @@
+# Project Status – Sentinel v0.9.5.94
+
+**Current sprint:** v0.9.5.94 Identity Fidelity Metrics & Risk Reporting  
+**Baseline:** Sentinel v0.9.5.93
+
+v0.9.5.93 successfully removed review placeholders from normal Operational Truth output. The follow-up Server 551 run still produced 50/50 Ground Truth matches, 0 missing rows and 0 bad matches, but it also made the next V1 blocker explicit: Recall is not Identity Fidelity. `Joncollins21` matched by rank/power/alliance, yet the OCR export still showed `Joncollinszl`. That is operationally dangerous for future VIP tracking and transfer intelligence.
+
+v0.9.5.94 therefore adds strict Identity Fidelity metrics to the Ground Truth validator. The validator now preserves case-sensitive display tags, separates usable/fuzzy identity from exact identity, reports player-name display drift, alliance-tag display drift, case-sensitive tag mismatches, high-value identity risks and an `identity_fidelity_score`.
+
+## Current quality signal
+
+- Server 551 THP remains the Gold Standard Ground Truth benchmark.
+- Recall and row coverage are no longer enough to qualify data for V1.
+- Exact player name and exact alliance tag preservation are now first-class measurements.
+- Fuzzy/normalized matches may explain rows, but they do not prove stable historical identity.
+
+## Current P0 focus
+
+1. Preserve screenshot-visible identity exactly where possible.
+2. Treat alliance tags as case-sensitive Last War identifiers.
+3. Highlight VIP/top-rank identity risks, not just row-matching success.
+4. Keep quarantine preferred over false Operational Truth.
+5. Keep screenshot-first validation as the review standard.
+
+---
+
 # Project Status – Sentinel v0.9.5.93
 
 **Current sprint:** v0.9.5.93 Review Export Separation & Identity Fidelity Guard  
