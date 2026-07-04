@@ -1,8 +1,16 @@
-## v0.9.5.89 Lesson – Exports Are Review Surfaces Too
+## v0.9.5.90 Lesson – Visible Rank Is Structure, Not a Hint
+
+Power sorting is useful only when no visible rank evidence exists. Once OCR or review evidence sees a rank slot, that slot is part of Operational Truth structure and must not be rewritten by recovery.
+
+## v0.9.5.90 Lesson – Candidates Are Evidence, Not Truth
+
+A recovery candidate can be highly plausible and still be unsafe. Ambiguous high-explosion and low-truncation cases must expose candidates to review without silently replacing the observed value or identity.
+
+## v0.9.5.90 Lesson – Exports Are Review Surfaces Too
 
 It is not enough for the internal pipeline to preserve `pending_review`, `rank_slot_preserved` and raw observed identity. If Excel exports omit those fields, alliance leadership or reviewers may see a clean-looking rank list while the system actually held uncertainty. Every human-facing surface must show pending rank slots and observed identity before normalized/canonical identity.
 
-## v0.9.5.89 Lesson – Full Smoke Must Be Trustworthy
+## v0.9.5.90 Lesson – Full Smoke Must Be Trustworthy
 
 Targeted smoke tests are useful for sprint validation, but v1 needs a full smoke command that can be trusted. Legacy files that are shell commands or import stale config symbols create noise and hide real failures. Cleaning the smoke collection is now a data-quality priority, not housekeeping.
 

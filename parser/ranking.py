@@ -229,69 +229,126 @@ def infer_ranking_type_from_values(current_type, rows):
     return "total_hero_power"
 
 
-def merge_rows_by_power(items, limit=10, tolerance=0.003):
-    merged = []
-
-    for item in sorted(items, key=lambda row: row["power"], reverse=True):
-        power = item.get("power")
-        if not power:
+def _explicit_visible_rank(row):
+    for key in ("visible_rank", "ocr_rank", "rank"):
+        value = row.get(key)
+        try:
+            if value is not None and value != "":
+                return int(float(value))
+        except (TypeError, ValueError):
             continue
+    return None
 
-        duplicate = None
 
-        for existing in merged:
-            existing_power = existing["power"]
-            diff = abs(existing_power - power) / max(existing_power, power)
+def _raw_identity_lock(row):
+    """Keep raw OCR identity alongside normalized/canonical identity fields.
 
-            if diff <= tolerance:
-                duplicate = existing
-                break
+    v0.9.5.90 makes raw identity a protected Operational Truth surface.
+    Normalized names can still exist for matching, but they must never replace
+    the observed screenshot display in exports or review placeholders.
+    """
+    row.setdefault("raw_player_name", row.get("player_name") or row.get("name"))
+    row.setdefault("raw_alliance_tag", row.get("alliance_tag"))
+    row.setdefault("raw_alliance_name", row.get("name"))
+    row.setdefault("observed_name", row.get("player_name") or row.get("name"))
+    row.setdefault("observed_alliance", row.get("alliance_tag"))
+    return row
 
-        if duplicate:
-            old_name = duplicate.get("name", "")
-            new_name = item.get("name", "")
 
-            if len(new_name) > len(old_name):
-                duplicate["name"] = new_name
+def merge_rows_by_power(items, limit=10, tolerance=0.003):
+    """Merge ranking rows while preserving visible rank slots when available.
 
-            duplicate["power"] = max(duplicate["power"], power)
+    The historical implementation sorted every row by power and then rewrote
+    ranks. That is unsafe for OCR pipelines: one recovered/truncated power can
+    move a screenshot row to a different slot. Since v0.9.5.90, an explicit
+    visible rank is a lock. Power is still used for duplicate handling and for
+    rows without rank evidence, but it cannot rewrite a visible slot.
+    """
+    prepared = [_raw_identity_lock(dict(item)) for item in items if item.get("power") not in (None, "")]
+    has_visible_slots = any(_explicit_visible_rank(row) is not None for row in prepared)
+
+    if not has_visible_slots:
+        merged = []
+        for item in sorted(prepared, key=lambda row: row["power"], reverse=True):
+            power = item.get("power")
+            duplicate = None
+            for existing in merged:
+                existing_power = existing["power"]
+                diff = abs(existing_power - power) / max(existing_power, power)
+                if diff <= tolerance:
+                    duplicate = existing
+                    break
+            if duplicate:
+                old_name = duplicate.get("name", "")
+                new_name = item.get("name", "")
+                if len(new_name) > len(old_name):
+                    duplicate["name"] = new_name
+                    duplicate["raw_alliance_name"] = item.get("raw_alliance_name") or new_name
+                    duplicate["raw_player_name"] = item.get("raw_player_name") or item.get("player_name")
+                duplicate["power"] = max(duplicate["power"], power)
+            else:
+                merged.append(item)
+        merged.sort(key=lambda row: row["power"], reverse=True)
+        for idx, row in enumerate(merged[:limit], start=1):
+            row["computed_rank"] = idx
+            row["rank"] = idx
+            row["operational_rank"] = idx
+            row["rank_slot_preserved"] = False
+            row["rank_warning"] = row.get("rank_warning") or ""
+        return merged[:limit]
+
+    by_slot = {}
+    unranked = []
+    for item in prepared:
+        slot = _explicit_visible_rank(item)
+        if slot is None:
+            unranked.append(item)
+            continue
+        item["visible_rank"] = slot
+        item.setdefault("ocr_rank", slot)
+        existing = by_slot.get(slot)
+        if existing is None:
+            by_slot[slot] = item
+            continue
+        existing_power = existing.get("power") or 0
+        item_power = item.get("power") or 0
+        if item_power > existing_power or len(str(item.get("name") or "")) > len(str(existing.get("name") or "")):
+            warnings = [str(existing.get("rank_warning") or "").strip(), "duplicate_visible_rank_slot"]
+            item["rank_warning"] = ";".join(part for part in dict.fromkeys(warnings) if part)
+            by_slot[slot] = item
         else:
-            merged.append(item)
+            warnings = [str(existing.get("rank_warning") or "").strip(), "duplicate_visible_rank_slot"]
+            existing["rank_warning"] = ";".join(part for part in dict.fromkeys(warnings) if part)
 
-    merged.sort(key=lambda row: row["power"], reverse=True)
+    merged = [by_slot[slot] for slot in sorted(by_slot)]
+    merged.extend(sorted(unranked, key=lambda row: row.get("power") or 0, reverse=True))
 
-    previous_ocr_rank = None
+    previous_visible_rank = None
+    power_order = {id(row): idx for idx, row in enumerate(sorted(merged, key=lambda row: row.get("power") or 0, reverse=True), start=1)}
     for idx, row in enumerate(merged[:limit], start=1):
-        row["computed_rank"] = idx
-        ocr_rank = row.get("ocr_rank")
+        visible_rank = _explicit_visible_rank(row)
         warnings = []
-        existing_warning = row.get("rank_warning")
-        if existing_warning:
-            warnings.extend(str(existing_warning).split(";"))
-        alignment_warning = row.get("alignment_warning")
-        if alignment_warning:
-            warnings.extend(str(alignment_warning).split(";"))
+        for key in ("rank_warning", "alignment_warning"):
+            if row.get(key):
+                warnings.extend(str(row.get(key)).split(";"))
 
-        # Final exported rank is power-order rank. For Last War THP lists, the
-        # power column is the strongest row anchor and the final ranking is
-        # therefore derived from descending power order. OCR rank remains
-        # available as evidence in `ocr_rank`, but it must not overwrite the
-        # computed rank because a single shifted or duplicated OCR rank can
-        # poison validation and downstream identity matching.
-        row["rank"] = idx
-
-        if ocr_rank is not None:
-            if int(ocr_rank) != idx:
-                warnings.append(f"ocr_rank_differs_from_power_rank:{ocr_rank}!={idx}")
-            if previous_ocr_rank is not None and int(ocr_rank) > previous_ocr_rank + 1:
-                missing = ",".join(str(value) for value in range(previous_ocr_rank + 1, int(ocr_rank)))
-                warnings.append(f"possible_missing_ocr_rank_before:{missing}")
-            previous_ocr_rank = int(ocr_rank)
+        row["computed_rank"] = idx
+        if visible_rank is not None:
+            row["visible_rank"] = visible_rank
+            row["rank"] = visible_rank
+            row["operational_rank"] = visible_rank
+            row["rank_slot_preserved"] = True
+            if power_order.get(id(row)) != idx:
+                warnings.append(f"power_order_differs_from_visible_slot:{power_order.get(id(row))}!={idx}")
+            if previous_visible_rank is not None and visible_rank > previous_visible_rank + 1:
+                missing = ",".join(str(value) for value in range(previous_visible_rank + 1, visible_rank))
+                warnings.append(f"possible_missing_rank_before:{missing}")
+            previous_visible_rank = visible_rank
         else:
-            # Missing OCR rank is common when OCR captures only names/power.
-            # Do not mark every row as a ranking integrity warning.
-            pass
+            row["rank"] = idx
+            row["operational_rank"] = idx
+            row["rank_slot_preserved"] = False
 
-        row["rank_warning"] = ";".join(dict.fromkeys(warnings))
+        row["rank_warning"] = ";".join(dict.fromkeys(part for part in warnings if part))
 
     return merged[:limit]

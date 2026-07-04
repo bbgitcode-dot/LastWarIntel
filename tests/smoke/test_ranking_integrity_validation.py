@@ -10,7 +10,7 @@ def test_merge_preserves_ocr_rank_and_detects_gap():
 
     assert merged[0]["rank"] == 79
     assert merged[0]["computed_rank"] == 1
-    assert "ocr_rank_differs_from_computed" in merged[0]["rank_warning"]
+    assert merged[0]["rank_slot_preserved"] is True
     assert merged[1]["rank"] == 81
     assert "possible_missing_rank_before:80" in merged[1]["rank_warning"]
 

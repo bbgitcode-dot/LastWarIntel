@@ -203,8 +203,12 @@ def _pending_placeholder(row: dict[str, Any], *, reason: str) -> dict[str, Any]:
     pending["pending_review"] = True
     pending["pending_review_reason"] = reason
     pending["rank_slot_preserved"] = True
-    pending["name"] = f"PENDING REVIEW | {str(row.get('name') or row.get('player_name') or '').strip()}".strip()
-    pending.setdefault("observed_name", row.get("name") or row.get("player_name"))
+    label = str(row.get("player_name") or row.get("name") or "").strip()
+    pending["name"] = f"PENDING REVIEW | {label}".strip()
+    pending.setdefault("raw_player_name", row.get("player_name") or row.get("name"))
+    pending.setdefault("raw_alliance_tag", row.get("alliance_tag"))
+    pending.setdefault("raw_alliance_name", row.get("name"))
+    pending.setdefault("observed_name", row.get("player_name") or row.get("name"))
     pending.setdefault("observed_alliance", row.get("alliance_tag"))
     return pending
 
@@ -223,6 +227,11 @@ def _mark_quarantined(row: dict[str, Any], *, server: object, decision: RankingG
     quarantined["ranking_guard_reason"] = reason
     quarantined["ranking_guard_warning"] = warning if not previous_warning else f"{previous_warning};{warning}"
     quarantined["quarantine_reason"] = "ranking_type_conflict"
+    quarantined.setdefault("raw_player_name", row.get("player_name") or row.get("name"))
+    quarantined.setdefault("raw_alliance_tag", row.get("alliance_tag"))
+    quarantined.setdefault("raw_alliance_name", row.get("name"))
+    quarantined.setdefault("observed_name", row.get("player_name") or row.get("name"))
+    quarantined.setdefault("observed_alliance", row.get("alliance_tag"))
     return quarantined
 
 

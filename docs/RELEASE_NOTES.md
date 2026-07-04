@@ -1,4 +1,36 @@
-## v0.9.5.89 – Non-cache Data Quality Validation & Rank Slot Regression
+## v0.9.5.90 – Operational Truth Hardening
+
+### Purpose
+- Harden Data Guard after the 549–554 non-cache benchmark exposed rank-slot drift and raw-display corruption around Server 553 THP (`[SWSq] sven the vän`).
+- Keep Data Quality ahead of Intelligence: no strategic assessment should consume rows whose visible rank or raw identity has been rewritten by recovery logic.
+
+### Changed
+- Added a visible-rank lock in `parser/ranking.py`: explicit `visible_rank` / `ocr_rank` / `rank` now preserves the operational slot instead of being overwritten by power sorting.
+- Added raw identity protection fields: `raw_player_name`, `raw_alliance_tag`, `raw_alliance_name`, plus existing observed/normalized/canonical fields.
+- Changed ambiguous power-review placeholders so high-explosion candidates no longer overwrite `power`; candidate values remain review evidence only.
+- Low-truncation review placeholders preserve observed power and raw identity while exposing recovery candidates separately.
+- Added v0.9.5.90 regression tests for Server 553 `sven the vän`, `[SWSq]`, quarantined-slot preservation and candidate-only recovery behavior.
+- Export now includes explicit `operational_rank`, `visible_rank` and raw identity columns when present.
+
+### Validation
+```text
+10 passed – data-quality .89/.90 rank-slot regression set
+29 passed – ranking power sanity, THP sanity, review rank trace and identity consistency
+py_compile OK for patched runtime modules; full runtime compileall still has pre-existing invalid RTF/stub files
+zip integrity OK
+```
+
+### Known validation note
+- Full `tests/smoke` collection still contains pre-existing command-stub files (`test_calculator.py`, `test_orchestrator.py`) and OCR config compatibility tests that fail at collection/import in this baseline. They are not introduced by v0.9.5.90 and are documented as a separate cleanup item.
+
+### Commit
+```bash
+git add .
+git commit -m "fix(data-guard): lock visible rank slots and raw identity"
+git tag -a v0.9.5.90 -m "v0.9.5.90 Operational Truth Hardening"
+```
+
+## v0.9.5.90 – Non-cache Data Quality Validation & Rank Slot Regression
 
 Purpose: continue the truth-first data-quality sprint line by making pending rank slots and raw observed identity visible in exports and covered by regression tests.
 
@@ -7,8 +39,8 @@ Purpose: continue the truth-first data-quality sprint line by making pending ran
 - Added `tests/smoke/test_data_quality_89.py`.
 - Added regression coverage for development cache-off defaults, quarantined rank-slot preservation, `Sven the vän` / `[SWSq]` display fidelity and pending-slot Excel export visibility.
 - Extended Excel export preferred columns with pending-review state and observed/normalized/canonical identity fields.
-- Bumped `version.py` to `0.9.5.89`.
-- Bumped recognition-quality telemetry version to `v0.9.5.89`.
+- Bumped `version.py` to `0.9.5.90`.
+- Bumped recognition-quality telemetry version to `v0.9.5.90`.
 - Updated docs, patch summary, handoff and `.commit`.
 
 ### Validation
@@ -26,7 +58,7 @@ zip integrity OK
 ```bash
 git add .
 git commit -m "test(data-quality): preserve rank slots and raw identity in exports"
-git tag -a v0.9.5.89 -m "v0.9.5.89 Non-cache Data Quality Validation and Rank Slot Regression"
+git tag -a v0.9.5.90 -m "v0.9.5.90 Non-cache Data Quality Validation and Rank Slot Regression"
 ```
 
 ---

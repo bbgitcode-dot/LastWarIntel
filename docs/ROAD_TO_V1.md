@@ -15,8 +15,8 @@ Performance last.
 
 ## Current baseline
 
-**Current development baseline:** v0.9.5.89  
-**Current documentation release:** v0.9.5.89
+**Current development baseline:** v0.9.5.90  
+**Current documentation release:** v0.9.5.90
 
 The project is in the final data-stability phase before broader intelligence expansion.
 

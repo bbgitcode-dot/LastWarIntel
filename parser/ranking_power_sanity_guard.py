@@ -1089,8 +1089,23 @@ def _pending_placeholder(row: dict[str, Any], *, ranking_type: str, reason: str,
     pending["pending_review_reason"] = reason
     pending["rank_slot_preserved"] = True
     pending["power_sanity_status"] = "pending_review"
-    pending.setdefault("observed_name", row.get("name") or row.get("player_name"))
+    pending.setdefault("raw_player_name", row.get("player_name") or row.get("name"))
+    pending.setdefault("raw_alliance_tag", row.get("alliance_tag"))
+    pending.setdefault("raw_alliance_name", row.get("name"))
+    pending.setdefault("observed_name", row.get("player_name") or row.get("name"))
     pending.setdefault("observed_alliance", row.get("alliance_tag"))
+    observed_power = _power(row)
+    pending["power_original_observed"] = observed_power
+    is_high_explosion = (
+        (ranking_type == "alliance_power" and observed_power is not None and observed_power >= 50_000_000_000)
+        or (ranking_type == "total_hero_power" and observed_power is not None and observed_power >= 500_000_000)
+    )
+    if is_high_explosion:
+        pending["power"] = None
+        if pending.get("hero_power") is not None:
+            pending["hero_power"] = None
+        if pending.get("alliance_power") is not None:
+            pending["alliance_power"] = None
     if candidates:
         pending["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
         pending["power_candidate_best"] = candidates[0].value
@@ -1099,15 +1114,10 @@ def _pending_placeholder(row: dict[str, Any], *, ranking_type: str, reason: str,
             pending["power_candidate_second"] = candidates[1].value
             pending["power_candidate_second_score"] = round(candidates[1].score, 4)
             pending["power_candidate_margin"] = round(candidates[0].score - candidates[1].score, 4)
-        # Use the leading candidate only as a sort anchor so the slot stays near
-        # its visual position.  It remains visibly pending and is not promoted.
+        # v0.9.5.90: candidates are review evidence only. They must never
+        # overwrite the observed power or drive slot movement in Operational Truth.
         pending["power_sort_anchor"] = candidates[0].value
-        pending["power"] = candidates[0].value
-        if pending.get("hero_power") is not None:
-            pending["hero_power"] = candidates[0].value
-        if pending.get("alliance_power") is not None:
-            pending["alliance_power"] = candidates[0].value
-    label = str(row.get("name") or row.get("player_name") or "").strip()
+    label = str(row.get("player_name") or row.get("name") or "").strip()
     pending["name"] = f"PENDING REVIEW | {label}".strip()
     return pending
 

@@ -1,4 +1,4 @@
-## v0.9.5.89 – Export Boundary Is Part of Data Guard
+## v0.9.5.90 – Export Boundary Is Part of Data Guard
 
 Data Guard protection must survive export. A row that is pending review inside the pipeline must remain visibly pending in Excel and report surfaces. Export code must carry:
 
