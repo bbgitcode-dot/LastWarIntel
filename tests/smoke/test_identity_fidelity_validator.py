@@ -26,7 +26,8 @@ def test_validator_separates_fuzzy_match_from_exact_identity(tmp_path: Path):
     assert summary.identity_risk_rows == 1
     assert summary.high_value_identity_risk_rows == 1
     assert summary.identity_fidelity_score == 0.0
-    assert detail.iloc[0]["identity_risk_reasons"] == "player_name_display_drift;fuzzy_or_normalized_identity_not_exact"
+    assert "player_name_display_drift" in detail.iloc[0]["identity_risk_reasons"]
+    assert "fuzzy_or_normalized_identity_not_exact" in detail.iloc[0]["identity_risk_reasons"]
 
 
 def test_validator_flags_case_sensitive_alliance_tag_drift(tmp_path: Path):

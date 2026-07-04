@@ -1,30 +1,17 @@
-# Handoff Next Chat – Sentinel v0.9.5.94
 
-## Baseline
+# Handoff Next Chat – Sentinel v0.9.5.95
 
-Use:
+Use `Sentinel_v0.9.5.95.zip` as the next baseline.
 
-```text
-Sentinel_v0.9.5.94.zip
-```
+## What changed
 
-## Current state
-
-v0.9.5.94 follows the Server 551 v0.9.5.93 validation. Review placeholders no longer leak into normal ranking sheets. The remaining strategic risk is Identity Fidelity: players and alliance tags can match by power/rank but still be unsafe for historical tracking if their visible identity changed.
-
-The Ground Truth validator now reports exact identity metrics and emits an `identity_risks` sheet/JSON section. Use this before any future transfer/player-history work.
+- Added targeted character verification planning.
+- Ground Truth reports now include character verification candidates for player names and alliance tags.
+- `Joncollins21` vs `Joncollinszl` is now reported as specific `2/z` and `1/l` verification targets.
+- Alliance tag case drift such as `PbC` vs `PBC` is now a verification target.
 
 ## Next recommended sprint
 
-**v0.9.5.95 – Identity Regression / Screenshot Replay**
+`v0.9.5.96 – Screenshot Crop Re-OCR for Verification Targets`
 
-Purpose:
-
-- Run Server 551 and selected 549-555 screenshots against v0.9.5.94.
-- Inspect `identity_risks` line by line against screenshots.
-- Decide which OCR identity risks require code fixes versus human alias review.
-- Add regression fixtures for `Joncollins21`, case-sensitive tags and high-value top-rank players.
-
-## Operating rule
-
-The screenshot remains the truth. A fuzzy match is not a safe identity.
+Implement actual cropping/re-OCR for targets produced by v0.9.5.95. Use 551 screenshots as the primary benchmark.

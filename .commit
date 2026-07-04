@@ -1,3 +1,19 @@
+Sentinel v0.9.5.95
+
+feat(data-guard): identify targeted character verification candidates
+
+- Add parser/character_verification.py with OCR confusion groups.
+- Extend Ground Truth validator with character-level verification metrics.
+- Mark player-name and alliance-tag verification targets without auto-correction.
+- Preserve case-sensitive alliance tag semantics.
+- Update docs for Targeted Character Verification Planning.
+
+Validation:
+pytest -q tests/smoke/test_character_verification_95.py tests/smoke/test_identity_fidelity_validator.py tests/smoke/test_ground_truth_validator.py tests/smoke/test_data_quality_93.py
+python -m py_compile ground_truth_validator.py parser/character_verification.py
+zip -T Sentinel_v0.9.5.95.zip
+
+Commit:
 git add .
-git commit -m "feat(data-guard): report exact identity fidelity risks"
-git tag -a v0.9.5.94 -m "v0.9.5.94 Identity Fidelity Metrics and Risk Reporting"
+git commit -m "feat(data-guard): identify targeted character verification candidates"
+git tag -a v0.9.5.95 -m "v0.9.5.95 Targeted Character Verification Planning"

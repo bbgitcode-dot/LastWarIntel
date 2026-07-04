@@ -31,6 +31,7 @@ from parser.alliance_normalization import build_alliance_vocabulary, normalize_a
 from parser.name_normalization import normalize_player_name, normalized_name_similarity
 from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
+from parser.character_verification import analyze_player_name_characters, analyze_alliance_tag_characters, merge_verification_plans
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
 from parser.evidence_resolver import find_same_server_evidence_candidate
@@ -98,6 +99,10 @@ class ValidationSummary:
     alliance_tag_case_sensitive_mismatches: int
     player_name_drift_rows: int
     identity_fidelity_score: float
+    character_verification_candidate_rows: int
+    high_value_character_verification_rows: int
+    player_name_confusable_drift_rows: int
+    alliance_tag_character_verification_rows: int
     score: float
 
 
@@ -663,8 +668,15 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             identity_risk_reasons.append("alliance_tag_case_sensitive_mismatch")
         if usable_identity and not exact_identity:
             identity_risk_reasons.append("fuzzy_or_normalized_identity_not_exact")
+        player_char_plan = analyze_player_name_characters(expected_name, actual_name)
+        alliance_char_plan = analyze_alliance_tag_characters(expected_alliance_display, actual_alliance_display)
+        character_verification_plan = merge_verification_plans(player_char_plan, alliance_char_plan)
+        character_verification_candidate = bool(accepted_match and character_verification_plan.required)
+        if character_verification_candidate:
+            identity_risk_reasons.append("targeted_character_verification_required")
         identity_risk = bool(identity_risk_reasons)
         high_value_identity_risk = bool(identity_risk and (expected_rank is not None and expected_rank <= 10))
+        high_value_character_verification = bool(character_verification_candidate and (expected_rank is not None and expected_rank <= 10))
         if accepted_match and match_method not in ["missing", "blocked_rank_fallback"]:
             failure_class = "matched"
         elif quarantine_match is not None:
@@ -716,6 +728,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "identity_risk": identity_risk,
             "identity_risk_reasons": ";".join(identity_risk_reasons),
             "high_value_identity_risk": high_value_identity_risk,
+            "character_verification_candidate": character_verification_candidate,
+            "high_value_character_verification": high_value_character_verification,
+            "character_verification_reasons": character_verification_plan.reasons_text(),
+            "character_verification_targets": character_verification_plan.to_json(),
+            "player_name_character_verification_targets": player_char_plan.to_json(),
+            "alliance_tag_character_verification_targets": alliance_char_plan.to_json(),
             "name_category": gt_row["name_category"],
             "match_method": match_method,
             "bad_match": bad_match,
@@ -775,6 +793,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     alliance_tag_case_sensitive_mismatches = int(detail["alliance_tag_case_sensitive_mismatch"].sum())
     player_name_drift_rows = int((detail["valid_match"] & ~detail["name_display_exact_match"]).sum())
     identity_fidelity_score = round((exact_identity_matches / max(total, 1)) * 100, 2)
+    character_verification_candidate_rows = int(detail.get("character_verification_candidate", pd.Series(dtype=bool)).sum())
+    high_value_character_verification_rows = int(detail.get("high_value_character_verification", pd.Series(dtype=bool)).sum())
+    player_name_confusable_drift_rows = int((detail.get("character_verification_candidate", pd.Series(dtype=bool)) & detail.get("character_verification_reasons", pd.Series(dtype=str)).astype(str).str.contains("confusable|same_confusion", regex=True)).sum())
+    alliance_tag_character_verification_rows = int(detail.get("alliance_tag_character_verification_targets", pd.Series(dtype=str)).astype(str).ne("[]").sum())
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
     avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
 
@@ -836,6 +858,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         alliance_tag_case_sensitive_mismatches=alliance_tag_case_sensitive_mismatches,
         player_name_drift_rows=player_name_drift_rows,
         identity_fidelity_score=identity_fidelity_score,
+        character_verification_candidate_rows=character_verification_candidate_rows,
+        high_value_character_verification_rows=high_value_character_verification_rows,
+        player_name_confusable_drift_rows=player_name_confusable_drift_rows,
+        alliance_tag_character_verification_rows=alliance_tag_character_verification_rows,
         score=score,
     )
 
@@ -857,6 +883,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
+        character_verification_candidate_rows=("character_verification_candidate", "sum"),
+        high_value_character_verification_rows=("high_value_character_verification", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
 
@@ -894,6 +922,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
+        character_verification_candidate_rows=("character_verification_candidate", "sum"),
+        high_value_character_verification_rows=("high_value_character_verification", "sum"),
     ).reset_index()
 
     json_path = output_dir / "ground_truth_validation_report.json"
@@ -905,12 +935,21 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         exact_identity_matches=("exact_identity_match", "sum"),
     ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches"])
 
+    character_verification_detail = detail[detail["character_verification_candidate"]].copy()
+    character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
+        rows=("rank", "count"),
+        high_value_rows=("high_value_character_verification", "sum"),
+        exact_identity_matches=("exact_identity_match", "sum"),
+    ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches"])
+
     json_payload = {
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
         "failure_summary": failure_summary.to_dict(orient="records"),
         "identity_risk_summary": identity_risk_summary.to_dict(orient="records"),
         "identity_risks": identity_risk_detail.to_dict(orient="records"),
+        "character_verification_summary": character_verification_summary.to_dict(orient="records"),
+        "character_verification_candidates": character_verification_detail.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -933,6 +972,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(failure_summary).to_excel(writer, sheet_name="failure_summary", index=False)
         _sanitize_frame(identity_risk_summary).to_excel(writer, sheet_name="identity_risk_summary", index=False)
         _sanitize_frame(identity_risk_detail).to_excel(writer, sheet_name="identity_risks", index=False)
+        _sanitize_frame(character_verification_summary).to_excel(writer, sheet_name="char_verify_summary", index=False)
+        _sanitize_frame(character_verification_detail).to_excel(writer, sheet_name="char_verify_candidates", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
 
