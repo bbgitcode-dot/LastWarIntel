@@ -1,4 +1,4 @@
-# Modus Operandi – Sentinel v0.9.5.99
+# Modus Operandi – Sentinel v0.9.5.100
 
 - Proud Owner defines sprint objective and validates outputs.
 - Mimir delivers complete ZIP releases, not snippets.

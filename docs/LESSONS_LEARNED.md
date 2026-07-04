@@ -1,6 +1,6 @@
-## v0.9.5.99 Lesson – Evidence Pipelines Must Be Active by Default
+## v0.9.5.100 Lesson – Evidence Pipelines Must Be Active by Default
 
-A detector is not enough. v0.9.5.97 correctly identified Character Verification candidates, but the standard validator command left re-OCR target counts at zero. v0.9.5.99 closes that gap: if screenshots are present, target evidence must be emitted automatically, or the system must explicitly say why it cannot verify.
+A detector is not enough. v0.9.5.97 correctly identified Character Verification candidates, but the standard validator command left re-OCR target counts at zero. v0.9.5.100 closes that gap: if screenshots are present, target evidence must be emitted automatically, or the system must explicitly say why it cannot verify.
 
 ## v0.9.5.97 Lesson – Screenshot Evidence Beats Contextual Guessing
 

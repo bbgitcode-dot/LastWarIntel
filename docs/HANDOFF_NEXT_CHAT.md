@@ -1,6 +1,6 @@
-# Handoff Next Chat – Sentinel v0.9.5.99
+# Handoff Next Chat – Sentinel v0.9.5.100
 
-Use `Sentinel_v0.9.5.99.zip` as the next baseline.
+Use `Sentinel_v0.9.5.100.zip` as the next baseline.
 
 ## What changed
 
@@ -22,4 +22,4 @@ Gold-ready is still expected to be false until targeted crop OCR starts verifyin
 
 ## Next sprint recommendation
 
-v0.9.5.99 should focus on crop geometry and voting quality for high-value Character Verification targets, not cache or broad performance.
+v0.9.5.100 should focus on crop geometry and voting quality for high-value Character Verification targets, not cache or broad performance.

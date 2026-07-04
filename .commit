@@ -1,23 +1,20 @@
-Sentinel v0.9.5.99
+Sentinel v0.9.5.100
 
-Title:
-fix(data-guard): convert character re-ocr crops for EasyOCR
+Sprint: Ground Truth Alignment Guard
 
-Summary:
-- Auto-discovers screenshot directories and ZIP files for Ground Truth Character Re-OCR.
-- Supports `551.zip` directly through `--screenshots-dir`.
-- Adds explicit `--no-verify-characters` opt-out.
-- Emits unresolved target evidence even when the OCR provider is unavailable.
-- Adds regression tests for ZIP discovery and non-zero target emission.
+Purpose:
+- Prevent contextual inference rows from being treated as character-level OCR evidence.
+- Separate Alignment Context Gaps from true Character Fidelity drift.
+- Keep Character ReOCR focused on safe row-level matches only.
 
 Validation:
-- pytest -q tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py
-- ground_truth_validator.py smoke run with lastwar_export.xlsx + 551.zip produced non-zero character_reocr_target_count.
-- py_compile OK.
+- pytest -q tests/smoke/test_alignment_guard_100.py
+- python -m py_compile ground_truth_validator.py inference/context_engine.py parser/targeted_character_reocr.py
+- zip integrity check
 
 Commit command:
 git add .
-git commit -m "fix(data-guard): convert character re-ocr crops for EasyOCR"
+git commit -m "fix(data-guard): separate alignment gaps from character verification"
 
-Tag command:
-git tag -a v0.9.5.99 -m "v0.9.5.99 Character Re-OCR Provider Input Fix"
+tag command:
+git tag -a v0.9.5.100 -m "v0.9.5.100 Ground Truth Alignment Guard"

@@ -598,6 +598,48 @@ def _ground_truth_row_slots(ground_truth: pd.DataFrame) -> dict[tuple[str, int],
     return slots
 
 
+
+
+def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
+    """Separate contextual alignment gaps from true character fidelity work.
+
+    Contextual inferences are useful for recall/read-only gap explanation, but
+    they are not row-level OCR matches. Comparing their Ground Truth identity
+    against the rejected neighbouring OCR row creates false Character Re-OCR
+    targets such as K9 Thunder vs YUNS.
+    """
+    if detail.empty:
+        return detail
+    guarded = detail.copy()
+    inference_mask = guarded["match_method"].astype(str).str.startswith("inference_") | (guarded["failure_class"].astype(str) == "inferred_context_gap")
+    guarded["alignment_guard_status"] = "row_alignment_observed"
+    guarded.loc[inference_mask, "alignment_guard_status"] = "context_gap_no_character_verification"
+    guarded["alignment_safe_for_character_verification"] = ~inference_mask
+
+    if inference_mask.any():
+        guarded.loc[inference_mask, "character_verification_candidate"] = False
+        guarded.loc[inference_mask, "high_value_character_verification"] = False
+        guarded.loc[inference_mask, "character_verification_reasons"] = "alignment_context_gap_not_character_drift"
+        guarded.loc[inference_mask, "character_verification_targets"] = "[]"
+        guarded.loc[inference_mask, "player_name_character_verification_targets"] = "[]"
+        guarded.loc[inference_mask, "alliance_tag_character_verification_targets"] = "[]"
+        guarded.loc[inference_mask, "character_reocr_status"] = "not_requested_alignment_context_gap"
+        guarded.loc[inference_mask, "character_reocr_targets"] = 0
+        guarded.loc[inference_mask, "character_reocr_verified_expected"] = 0
+        guarded.loc[inference_mask, "character_reocr_verified_observed"] = 0
+        guarded.loc[inference_mask, "character_reocr_unresolved"] = 0
+        guarded.loc[inference_mask, "character_reocr_evidence"] = "[]"
+        guarded.loc[inference_mask, "gold_fidelity_blocker"] = False
+        guarded.loc[inference_mask, "identity_risk"] = False
+        guarded.loc[inference_mask, "identity_risk_reasons"] = "alignment_context_gap"
+        guarded.loc[inference_mask, "high_value_identity_risk"] = False
+        guarded.loc[inference_mask, "alignment_context_gap"] = True
+    if "alignment_context_gap" not in guarded.columns:
+        guarded["alignment_context_gap"] = False
+    guarded["alignment_context_gap"] = guarded["alignment_context_gap"].where(guarded["alignment_context_gap"].notna(), False).astype(bool)
+    return guarded
+
+
 def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataFrame | None = None, *, character_reocr_reader=None, screenshots_dir: Path | None = None) -> tuple[ValidationSummary, pd.DataFrame, pd.DataFrame]:
     rows: list[dict[str, Any]] = []
     scoped_ocr = _scope_ocr_to_ground_truth(ground_truth, ocr)
@@ -829,9 +871,11 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     detail, gap_metrics = annotate_gap_recovery(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     detail, context_inferences = apply_contextual_inference(detail)
+    detail = _apply_alignment_guard(detail)
     total = len(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     valid_detail = detail[detail["valid_match"]]
+    observed_detail = detail[detail["valid_match"] & ~detail["match_method"].astype(str).str.startswith("inference_")]
     matched = int(len(valid_detail))
     bad_matches = int(detail["bad_match"].sum())
     gap_resolved_rows = int(detail["match_method"].astype(str).str.startswith("gap_").sum())
@@ -861,17 +905,17 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     identity_risk_rows = int(detail["identity_risk"].sum())
     high_value_identity_risk_rows = int(detail["high_value_identity_risk"].sum())
     alliance_tag_case_sensitive_mismatches = int(detail["alliance_tag_case_sensitive_mismatch"].sum())
-    player_name_drift_rows = int((detail["valid_match"] & ~detail["name_display_exact_match"]).sum())
+    player_name_drift_rows = int((observed_detail.get("name_display_exact_match", pd.Series(dtype=bool)) == False).sum())
     identity_fidelity_score = round((exact_identity_matches / max(total, 1)) * 100, 2)
     character_verification_candidate_rows = int(detail.get("character_verification_candidate", pd.Series(dtype=bool)).sum())
     high_value_character_verification_rows = int(detail.get("high_value_character_verification", pd.Series(dtype=bool)).sum())
     player_name_confusable_drift_rows = int((detail.get("character_verification_candidate", pd.Series(dtype=bool)) & detail.get("character_verification_reasons", pd.Series(dtype=str)).astype(str).str.contains("confusable|same_confusion", regex=True)).sum())
     alliance_tag_character_verification_rows = int(detail.get("alliance_tag_character_verification_targets", pd.Series(dtype=str)).astype(str).ne("[]").sum())
     gold_fidelity_blocker_rows = int(detail.get("gold_fidelity_blocker", pd.Series(dtype=bool)).sum())
-    player_name_display_drift_rows = int((valid_detail.get("name_display_exact_match", pd.Series(dtype=bool)) == False).sum())
-    alliance_tag_display_drift_rows = int((valid_detail.get("alliance_display_exact_match", pd.Series(dtype=bool)) == False).sum())
-    power_display_drift_rows = int((valid_detail.get("power_exact_match", pd.Series(dtype=bool)) == False).sum())
-    rank_display_drift_rows = int((valid_detail.get("rank_match", pd.Series(dtype=bool)) == False).sum())
+    player_name_display_drift_rows = int((observed_detail.get("name_display_exact_match", pd.Series(dtype=bool)) == False).sum())
+    alliance_tag_display_drift_rows = int((observed_detail.get("alliance_display_exact_match", pd.Series(dtype=bool)) == False).sum())
+    power_display_drift_rows = int((observed_detail.get("power_exact_match", pd.Series(dtype=bool)) == False).sum())
+    rank_display_drift_rows = int((observed_detail.get("rank_match", pd.Series(dtype=bool)) == False).sum())
     character_reocr_target_count = int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum())
     character_reocr_verified_expected = int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum())
     character_reocr_verified_observed = int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum())
@@ -1037,6 +1081,13 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches"])
 
     gold_fidelity_blockers = detail[detail.get("gold_fidelity_blocker", pd.Series(dtype=bool))].copy()
+    alignment_context_gaps = detail[detail.get("alignment_context_gap", pd.Series(dtype=bool))].copy()
+    alignment_guard_summary = alignment_context_gaps.groupby("alignment_guard_status", dropna=False).agg(
+        rows=("rank", "count"),
+        inference_rows=("match_method", lambda values: int(values.astype(str).str.startswith("inference_").sum())),
+        character_reocr_targets=("character_reocr_targets", "sum"),
+        gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
+    ).reset_index() if not alignment_context_gaps.empty else pd.DataFrame(columns=["alignment_guard_status", "rows", "inference_rows", "character_reocr_targets", "gold_fidelity_blocker_rows"])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
         rows=("rank", "count"),
@@ -1053,6 +1104,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_verification_summary": character_verification_summary.to_dict(orient="records"),
         "character_verification_candidates": character_verification_detail.to_dict(orient="records"),
         "gold_fidelity_blockers": gold_fidelity_blockers.to_dict(orient="records"),
+        "alignment_guard_summary": alignment_guard_summary.to_dict(orient="records"),
+        "alignment_context_gaps": alignment_context_gaps.to_dict(orient="records"),
         "character_reocr": {
             "target_count": int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum()),
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
@@ -1084,6 +1137,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_verification_summary).to_excel(writer, sheet_name="char_verify_summary", index=False)
         _sanitize_frame(character_verification_detail).to_excel(writer, sheet_name="char_verify_candidates", index=False)
         _sanitize_frame(gold_fidelity_blockers).to_excel(writer, sheet_name="gold_fidelity_blockers", index=False)
+        _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
+        _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
 

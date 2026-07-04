@@ -1,4 +1,4 @@
-# Sentinel Data Guard – v0.9.5.99 Addendum
+# Sentinel Data Guard – v0.9.5.100 Addendum
 
 Data Guard now treats targeted character re-OCR as supporting evidence, not as a promotion mechanism.
 

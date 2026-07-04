@@ -1,3 +1,31 @@
+## v0.9.5.100 – Ground Truth Alignment Guard
+
+v0.9.5.100 separates contextual alignment gaps from true character-fidelity drift. The previous validator path could compare a Ground Truth row against a neighbouring OCR row accepted only as read-only contextual inference, producing false character differences such as `K9 Thunder` versus `YUNS` or `HUNI` versus `Zacharys`.
+
+### Changed
+
+- Added an Alignment Guard after contextual inference.
+- Contextual inference rows now receive `alignment_guard_status = context_gap_no_character_verification`.
+- Character Verification and Character ReOCR are suppressed for `inference_context_gap` rows.
+- Alignment context gaps no longer contribute to `gold_fidelity_blocker_rows` or `identity_risk_rows`.
+- Reports now include `alignment_guard_summary` and `alignment_context_gaps` sections/sheets.
+- Updated documentation and version metadata to v0.9.5.100.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_alignment_guard_100.py
+python -m py_compile ground_truth_validator.py inference/context_engine.py parser/targeted_character_reocr.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): separate alignment gaps from character verification"
+git tag -a v0.9.5.100 -m "v0.9.5.100 Ground Truth Alignment Guard"
+```
+
 ## v0.9.5.99 – Character Re-OCR Provider Input Fix
 
 v0.9.5.99 fixes the runtime blocker found in v0.9.5.98 where targeted character re-OCR passed PIL image crops directly into EasyOCR. EasyOCR expects a file path, bytes or numpy array, so the validator crashed with `ValueError: Invalid input type`.
