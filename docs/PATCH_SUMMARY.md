@@ -135,3 +135,10 @@ git add .
 git commit -m "fix(dev): initialize rebuild report telemetry"
 git tag -a v0.9.5.83 -m "v0.9.5.83 Rebuild Report Telemetry Hotfix"
 ```
+
+
+## v0.9.5.87 – Data Quality Stabilization
+
+Patch focus: Operational Truth before performance. The OCR cache is now opt-in during development, quarantine keeps pending rank slots, and pending review rows preserve raw observed identity.
+
+Validation: targeted smoke tests and compile checks.

@@ -113,7 +113,18 @@ def parse_args(argv=None):
     parser.add_argument(
         "--no-ocr-cache",
         action="store_true",
-        help="Disable the persistent OCR cache for this run. Cache is enabled by default and keyed by screenshot content hash.",
+        help="Disable the persistent OCR cache for this run. Kept for compatibility; development mode disables cache by default.",
+    )
+    parser.add_argument(
+        "--ocr-cache",
+        action="store_true",
+        help="Enable the persistent OCR cache explicitly. Use only for production/performance checks after data quality has been validated.",
+    )
+    parser.add_argument(
+        "--mode",
+        default=os.getenv("SENTINEL_MODE", "development"),
+        choices=("development", "production"),
+        help="Execution mode. Development is Truth First and disables caches by default; production may enable cache for speed.",
     )
     return parser.parse_args(argv)
 
@@ -181,11 +192,28 @@ def main(argv=None):
     print(f"OCR Provider: {reader.info.engine} ({reader.info.name})")
     print(f"OCR Metadata Languages: {list(reader.info.metadata_languages)}")
     print(f"OCR Row Languages: {list(reader.info.row_languages)}")
-    ocr_cache = OcrCache(enabled=not args.no_ocr_cache and os.getenv("SENTINEL_OCR_CACHE", "1") != "0")
+    mode = str(args.mode or "development").lower()
+    cache_env = os.getenv("SENTINEL_OCR_CACHE")
+    cache_enabled = False
+    cache_reason = "development mode truth-first default"
+    if args.no_ocr_cache:
+        cache_enabled = False
+        cache_reason = "disabled by --no-ocr-cache"
+    elif args.ocr_cache:
+        cache_enabled = True
+        cache_reason = "enabled by --ocr-cache"
+    elif cache_env is not None:
+        cache_enabled = cache_env == "1"
+        cache_reason = f"SENTINEL_OCR_CACHE={cache_env}"
+    elif mode == "production":
+        cache_enabled = True
+        cache_reason = "production mode default"
+
+    ocr_cache = OcrCache(enabled=cache_enabled)
     if ocr_cache.enabled:
-        print("OCR Cache: enabled (content-hash based)")
+        print(f"OCR Cache: enabled ({cache_reason})")
     else:
-        print("OCR Cache: disabled")
+        print(f"OCR Cache: disabled ({cache_reason})")
 
     screenshot_patterns = _parse_screenshot_patterns(args.screenshots or os.getenv("SENTINEL_SCREENSHOTS", ""))
     screenshots = _select_screenshots(

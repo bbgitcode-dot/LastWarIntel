@@ -198,6 +198,17 @@ def evaluate_ranking_row(row: dict[str, Any], assigned_ranking_type: str) -> Ran
     )
 
 
+def _pending_placeholder(row: dict[str, Any], *, reason: str) -> dict[str, Any]:
+    pending = dict(row)
+    pending["pending_review"] = True
+    pending["pending_review_reason"] = reason
+    pending["rank_slot_preserved"] = True
+    pending["name"] = f"PENDING REVIEW | {str(row.get('name') or row.get('player_name') or '').strip()}".strip()
+    pending.setdefault("observed_name", row.get("name") or row.get("player_name"))
+    pending.setdefault("observed_alliance", row.get("alliance_tag"))
+    return pending
+
+
 def _mark_quarantined(row: dict[str, Any], *, server: object, decision: RankingGuardDecision) -> dict[str, Any]:
     quarantined = dict(row)
     previous_warning = str(quarantined.get("ranking_guard_warning") or "").strip()
@@ -259,6 +270,10 @@ def apply_ranking_guard(
                     calibrated_row["ranking_guard_reason"] = ";".join(recovery.reasons)
                     guarded.setdefault(key, []).append(calibrated_row)
                     continue
+                reason = ";".join(decision.reasons) or "ranking_type_conflict"
+                placeholder = _pending_placeholder(row, reason=reason)
+                placeholder["ranking_guard_status"] = "pending_review"
+                guarded.setdefault(key, []).append(placeholder)
                 quarantined_rows.append(_mark_quarantined(row, server=server, decision=decision))
                 continue
 

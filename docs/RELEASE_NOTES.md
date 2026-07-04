@@ -1201,3 +1201,12 @@ git add .
 git commit -m "fix(dev): initialize rebuild report telemetry"
 git tag -a v0.9.5.83 -m "v0.9.5.83 Rebuild Report Telemetry Hotfix"
 ```
+
+
+## v0.9.5.87 – Data Quality Stabilization
+
+- Defaulted Sentinel to Development/Truth-First mode: OCR cache is disabled unless explicitly enabled with `--ocr-cache`, `SENTINEL_OCR_CACHE=1`, or production mode.
+- Added pending review placeholders so quarantined ranking rows keep their operational rank slot instead of silently collapsing following ranks upward.
+- Preserved observed identity fields for pending rows (`observed_name`, `observed_alliance`) so review display can distinguish raw screenshot evidence from normalized matching values.
+- Updated recognition-quality decision version to v0.9.5.87.
+- Added regression coverage for development-mode cache behavior and pending slot preservation.

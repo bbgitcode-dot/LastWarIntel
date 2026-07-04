@@ -46,3 +46,8 @@ Recognition optimization must be measured before it is tuned. Runtime, recovery 
 ## v0.9.5.83 Note
 
 The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.
+
+
+## v0.9.5.87 Lesson – Cache Is Not Truth
+
+OCR cache is a performance optimization, not an authority. During recognition and ranking-integrity work, cached OCR can preserve old defects and invalidate benchmark conclusions. Development mode must recompute evidence until data quality is stable.

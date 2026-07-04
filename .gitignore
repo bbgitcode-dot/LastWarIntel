@@ -103,3 +103,5 @@ ground_truth/reports/
 # ------------------------------------------------------------
 ~$*.xlsx
 ~$*.xlsm
+# Sentinel runtime caches
+data/ocr_cache/

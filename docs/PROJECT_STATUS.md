@@ -115,3 +115,8 @@ Review surfaces now separate human-visible rank from internal matching rank. Rev
 ## v0.9.5.83 Note
 
 The fast report-rebuild feedback loop is now considered mandatory before expensive screenshot benchmarks. `python main.py --rebuild-reports` must work without OCR and without changing snapshot state. This preserves development velocity while recognition quality is hardened.
+
+
+## Current Status – v0.9.5.87
+
+Sentinel is back in Truth-First development mode. Cache behavior no longer masks OCR/parser changes by default. Ranking integrity now preserves pending review slots so quarantine does not implicitly renumber downstream rows. The next benchmark should be run without cache unless explicitly testing production performance.

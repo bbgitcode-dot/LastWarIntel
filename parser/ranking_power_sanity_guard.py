@@ -454,7 +454,7 @@ def _recover_context_power(
                 f"margin={margin:.3f};digit={best.digit_preservation_score:.3f}"
             )
 
-        # v0.9.5.86: near-miss low-truncation promotion.  Some rows have a
+        # v0.9.5.87: near-miss low-truncation promotion.  Some rows have a
         # weaker digit-preservation score because OCR dropped separators or mixed
         # glyphs, but the local rank segment strongly supports one candidate and
         # the next candidate is far behind.  Promote only when the candidate is
@@ -611,7 +611,7 @@ def _apply_recovered_power(
         recovered["power_recovery_selected_reason"] = decision_reason or ";".join(selected.reasons)
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.86"
+        recovered["power_recovery_decision_version"] = "v0.9.5.87"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = len(candidates)
@@ -624,7 +624,7 @@ def _apply_recovered_power(
     else:
         recovered["power_recovery_status"] = "recovered"
         recovered["power_recovery_family"] = _power_recovery_family(ranking_type=str(method).split("_context", 1)[0], observed=original, recovered=recovered_power)
-        recovered["power_recovery_decision_version"] = "v0.9.5.86"
+        recovered["power_recovery_decision_version"] = "v0.9.5.87"
         recovered["power_recovery_decision_strategy"] = "context_candidate_margin"
         recovered["power_recovery_legacy_used"] = False
         recovered["power_candidate_count"] = 0
@@ -849,7 +849,7 @@ def _mark_quarantined(
         quarantined["power_recovery_selected_reason"] = "quarantined_ambiguous_candidates"
         quarantined["power_recovery_status"] = "ambiguous"
         quarantined["power_recovery_family"] = _power_recovery_family(ranking_type=ranking_type, observed=_power(quarantined))
-        quarantined["power_recovery_decision_version"] = "v0.9.5.86"
+        quarantined["power_recovery_decision_version"] = "v0.9.5.87"
         quarantined["power_recovery_decision_strategy"] = "context_candidate_margin"
         quarantined["power_recovery_legacy_used"] = False
         quarantined["power_candidate_count"] = len(candidates)
@@ -1075,6 +1075,42 @@ def evaluate_ranking_power_sanity(
     return RankingPowerSanityDecision(status="pass", confidence=1.0, reasons=["ranking_type_not_guarded"], local_median=local_median, local_ratio=ratio)
 
 
+
+def _pending_placeholder(row: dict[str, Any], *, ranking_type: str, reason: str, candidates: list[PowerRecoveryCandidate] | None = None) -> dict[str, Any]:
+    """Keep the visible rank slot in the operational ranking while the source row is reviewed.
+
+    Quarantine protects Operational Truth, but removing the row entirely makes all
+    following ranks collapse upward.  The placeholder is deliberately marked and
+    carries the observed identity so reviewers can see the gap without accepting
+    a corrected value as truth.
+    """
+    pending = dict(row)
+    pending["pending_review"] = True
+    pending["pending_review_reason"] = reason
+    pending["rank_slot_preserved"] = True
+    pending["power_sanity_status"] = "pending_review"
+    pending.setdefault("observed_name", row.get("name") or row.get("player_name"))
+    pending.setdefault("observed_alliance", row.get("alliance_tag"))
+    if candidates:
+        pending["power_recovery_candidates"] = [_candidate_dict(candidate) for candidate in candidates]
+        pending["power_candidate_best"] = candidates[0].value
+        pending["power_candidate_best_score"] = round(candidates[0].score, 4)
+        if len(candidates) > 1:
+            pending["power_candidate_second"] = candidates[1].value
+            pending["power_candidate_second_score"] = round(candidates[1].score, 4)
+            pending["power_candidate_margin"] = round(candidates[0].score - candidates[1].score, 4)
+        # Use the leading candidate only as a sort anchor so the slot stays near
+        # its visual position.  It remains visibly pending and is not promoted.
+        pending["power_sort_anchor"] = candidates[0].value
+        pending["power"] = candidates[0].value
+        if pending.get("hero_power") is not None:
+            pending["hero_power"] = candidates[0].value
+        if pending.get("alliance_power") is not None:
+            pending["alliance_power"] = candidates[0].value
+    label = str(row.get("name") or row.get("player_name") or "").strip()
+    pending["name"] = f"PENDING REVIEW | {label}".strip()
+    return pending
+
 def apply_ranking_power_sanity_guard(
     grouped: dict[tuple[object, str], list[dict[str, Any]]]
 ) -> dict[tuple[object, str], list[dict[str, Any]]]:
@@ -1149,6 +1185,14 @@ def apply_ranking_power_sanity_guard(
                         local_median=int(median(source_powers)) if source_powers else None,
                         local_ratio=_safe_ratio(_power(row) or 0, int(median(source_powers)) if source_powers else None),
                     )
+                    guarded.setdefault(key, []).append(
+                        _pending_placeholder(
+                            row,
+                            ranking_type=ranking_type,
+                            reason="power_recovery_candidates_ambiguous",
+                            candidates=recovery_candidates,
+                        )
+                    )
                     quarantined_rows.append(
                         _mark_quarantined(
                             row,
@@ -1172,6 +1216,13 @@ def apply_ranking_power_sanity_guard(
                     thp_source_digit_explosion_powers=thp_source_digit_explosion_powers,
                 )
                 if decision.should_quarantine:
+                    guarded.setdefault(key, []).append(
+                        _pending_placeholder(
+                            row,
+                            ranking_type=ranking_type,
+                            reason=";".join(decision.reasons) or "power_sanity_outlier",
+                        )
+                    )
                     quarantined_rows.append(
                         _mark_quarantined(row, server=server, ranking_type=ranking_type, decision=decision)
                     )

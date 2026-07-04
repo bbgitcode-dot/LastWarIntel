@@ -51,3 +51,8 @@ Do not run the full 99-screenshot benchmark yet unless a measurable scoring chan
 - near-miss ambiguous cases
 
 Next likely sprint: Candidate Scoring Pass focused on one family at a time.
+
+
+## After v0.9.5.87
+
+Run the next 549–554 benchmark in development mode without OCR cache. Confirm that cached OCR no longer masks source-row identity changes, and specifically verify Sven the vän / SWSq plus rank-slot preservation for quarantined rows.

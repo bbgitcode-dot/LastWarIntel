@@ -1,6 +1,6 @@
 {
   "schema": "sentinel.review_history.v1",
-  "updated_at": "2026-07-03T19:32:58+00:00",
+  "updated_at": "2026-07-03T23:15:22+00:00",
   "open_count": 30,
   "open_current_count": 12,
   "stale_open_count": 18,
@@ -4556,9 +4556,9 @@
       "review_identity": "554|alliance_power|1|[TOs] tigris rte@R09#B Of shadow|Screenshot_20260702-082010.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -4705,7 +4705,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -4847,9 +4847,9 @@
       "review_identity": "552|alliance_power|2|[PAN] 己九CIIHNEKOPANC|Screenshot_20260701-003252.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -4996,7 +4996,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -5142,9 +5142,9 @@
       "review_identity": "552|alliance_power|11|[uiz] Eureka [terHmo#33|Screenshot_20260701-003328.png|alliance_power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -5291,7 +5291,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -5434,9 +5434,9 @@
       "review_identity": "554|alliance_power|11|[ikm] 鲷力 Bteo26e#E 伊次夫索罹曼|Screenshot_20260702-082020.png|alliance_power_outlier|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -5583,7 +5583,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -5687,9 +5687,9 @@
       "review_identity": "549|alliance_power|18||2026-06-28 13_15_08-Window.png|rank_or_row_unclear|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -5836,7 +5836,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -5936,9 +5936,9 @@
       "review_identity": "553|total_hero_power|15|[EWY] umar712233|Screenshot_20260701-194413.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -6085,7 +6085,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -6223,9 +6223,9 @@
       "review_identity": "554|total_hero_power|34|[KOLT] 5oh9o3588|Screenshot_20260702-082140.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -6372,7 +6372,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -6515,9 +6515,9 @@
       "review_identity": "554|total_hero_power|8|[MBM] yochic Rfeoezome#A|Screenshot_20260702-082210.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -6664,7 +6664,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -6805,9 +6805,9 @@
       "review_identity": "551|total_hero_power|9|[IVE] Kg Thunder 升孕)|2026-06-29 14_45_40-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -6954,7 +6954,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -7097,9 +7097,9 @@
       "review_identity": "551|total_hero_power|10|[IVE] M0/X HUNI|2026-06-29 14_46_26-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -7246,7 +7246,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -7390,9 +7390,9 @@
       "review_identity": "551|total_hero_power|11|瓯 Kriegspiel|2026-06-29 14_47_24-Window.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -7539,7 +7539,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
@@ -7684,9 +7684,9 @@
       "review_identity": "553|total_hero_power|12|[SWSQ] Sven the Van|Screenshot_20260701-194413.png|power_ambiguous|ranking_guard_quarantine",
       "status": "OPEN",
       "created_at": "2026-07-03T19:32:58+00:00",
-      "last_seen_at": "2026-07-03T19:32:58+00:00",
-      "seen_count": 1,
-      "source_report_created_at": "2026-07-03T19:32:58.550505+00:00",
+      "last_seen_at": "2026-07-03T23:15:22+00:00",
+      "seen_count": 2,
+      "source_report_created_at": "2026-07-03T23:15:22.489282+00:00",
       "snapshot": {
         "id": "s6-pre-transfer-2b69ebc1",
         "name": "S6 pre Transfer",
@@ -7833,7 +7833,7 @@
           "end": 676,
           "servers": []
         },
-        "bound_at": "2026-07-03T19:32:58+00:00"
+        "bound_at": "2026-07-03T23:15:22+00:00"
       },
       "snapshot_id": "s6-pre-transfer-2b69ebc1",
       "snapshot_name": "S6 pre Transfer",
