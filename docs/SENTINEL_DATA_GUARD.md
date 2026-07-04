@@ -1,20 +1,17 @@
+# Sentinel Data Guard – v0.9.5.96 Addendum
 
-# Sentinel Data Guard – v0.9.5.95 Addendum
+## Gold Fidelity Gate
 
-## Targeted Character Verification
+Data Guard now distinguishes protected Operational Truth from Gold Fidelity. A row can be protected and matched while still blocking Gold status because its displayed identity is not exact.
 
-Data Guard now distinguishes three cases:
+## Rules
 
-1. **Exact identity** – safe for historical intelligence.
-2. **Usable/fuzzy identity** – useful for review context, not definitive truth.
-3. **Character verification candidate** – a specific visible character should be re-read from screenshot evidence.
+- Cache remains disabled during data-quality validation unless the Proud Owner explicitly enables it.
+- Screenshot truth overrides filename, upload order, fuzzy matching and historical assumptions.
+- Fuzzy identity may help review prioritization but never creates Operational Truth.
+- Alliance tags are case-sensitive.
+- Stable but confusable characters are not blockers by default; actual drift is.
 
-Examples:
+## Current Objective
 
-```text
-Joncollins21 vs Joncollinszl -> verify 2/z and 1/l
-PbC vs PBC                  -> verify case-sensitive alliance tag character b/B
-DAY vs daY                  -> verify case-sensitive alliance tag characters
-```
-
-No automatic correction is performed by this sprint.
+Produce one Server 551 run where player names, alliance tags, rank and power match the screenshots exactly.

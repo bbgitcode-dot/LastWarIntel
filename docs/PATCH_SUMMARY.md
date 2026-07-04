@@ -1,24 +1,29 @@
+# Patch Summary – v0.9.5.96
 
-# Patch Summary – v0.9.5.95
+## Sentinel v0.9.5.96 – 551 Gold Fidelity Gate
 
-## Sentinel v0.9.5.95 – Targeted Character Verification Planning
+This sprint tightens Sentinel around the immediate goal agreed with the Proud Owner: one server must become a trustworthy Gold Run before wider entity intelligence or full-scope acquisition matters. Runtime and cache remain secondary. OCR cache stays disabled for validation unless explicitly requested.
 
-This sprint follows the v0.9.5.94 Identity Fidelity report. It acknowledges that fuzzy identity resolution is not safe for Operational Truth: a real player named `Joncollinszl` could exist. The safe path is not canonicalization, but targeted re-reading of suspicious characters from the screenshot.
+## Implemented
 
-### Delivered
+- Added Gold Fidelity summary metrics to the Ground Truth Validator.
+- Added `gold_fidelity_ready` and `gold_fidelity_blocker_rows`.
+- Added explicit blocker counts for player-name display drift, alliance-tag display drift, power drift and rank drift.
+- Added a dedicated `gold_fidelity_blockers` sheet and JSON section.
+- Refined Character Verification planning so stable-but-confusable characters are not counted as blockers by default.
+- Kept alliance tags case-sensitive: `PbC` is not `PBC`; `DAY` is not `daY`.
 
-- New character-risk helper: `parser/character_verification.py`.
-- Validator-level targeted verification candidates for player names and alliance tags.
-- Case-sensitive alliance-tag verification planning.
-- New summary metrics and Excel/JSON report sections.
-- Regression tests for `Joncollins21` vs `Joncollinszl` and `PbC` vs `PBC`.
+## Validation
 
-### Non-goals
+- Character verification smoke tests: passed.
+- Validator discipline smoke tests: passed.
+- 551 Ground Truth Validator run against current export: completed.
+- py_compile: passed for touched files.
 
-- No automatic correction of player names.
-- No fuzzy canonicalization of alliance tags.
-- No joiner/leaver logic based on fuzzy identity.
+## Current 551 Gold Status
 
-### Version
+The current 551 benchmark still is **not Gold-ready**. It has 100% recall and 0 bad matches, but 44 Gold Fidelity blockers remain. The patch makes those blockers explicit instead of hiding them behind usable/fuzzy identity matches.
 
-`0.9.5.95`
+## Version
+
+`0.9.5.96`

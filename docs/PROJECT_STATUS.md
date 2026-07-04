@@ -1,21 +1,36 @@
+# Project Status – Sentinel v0.9.5.96
 
-# Project Status – Sentinel v0.9.5.95
+**Current sprint:** v0.9.5.96 551 Gold Fidelity Gate  
+**Primary benchmark:** Server 551 Total Hero Power and Alliance Power screenshots  
+**Operating priority:** Screenshot fidelity before runtime, cache, or intelligence.
 
-**Current sprint:** v0.9.5.95 Targeted Character Verification Planning  
-**Proud Owner:** Stefan  
-**Copilot:** Mimir
+## Current State
 
-## Current understanding
+Sentinel now preserves data integrity for the 551 benchmark: no Ground Truth rows are lost and there are no bad matches. The remaining blocker is exact screenshot fidelity. Several rows are still usable for fuzzy matching, but not safe as exact historical identities.
 
-The v0.9.5.94 Server 551 benchmark showed strong Data Quality but weak exact Identity Fidelity. Recall can remain 100% while exact identity remains unsafe for historical intelligence. The critical example is `Joncollins21` being read as `Joncollinszl`. Fuzzy matching cannot be allowed to silently repair this, because a real `Joncollinszl` could exist.
+The current 551 run is therefore **operationally protected but not Gold-ready**.
 
-## v0.9.5.95 direction
+## Gold Fidelity Definition
 
-Sentinel now marks targeted character verification candidates: specific characters that should be re-read from screenshot evidence. This includes player-name confusions such as `2/z` and `1/l`, and case-sensitive alliance-tag drift such as `PbC` vs `PBC`.
+A 551 Gold Run requires:
 
-## Remaining P0 before V1
+- Rank exact.
+- Power exact.
+- Player name display exact.
+- Alliance tag display exact, including case.
+- No hidden fuzzy/normalized identity substitutions.
+- No unresolved review items that affect the Gold truth set.
 
-- Convert verification candidates into actual screenshot crop/re-OCR attempts.
-- Ensure alliance tags preserve exact case.
-- Keep fuzzy/normalized identity out of definitive joiner/leaver logic.
-- Add report UX for character-level verification evidence.
+## v0.9.5.96 Result
+
+The validator now reports Gold blockers directly. This makes the next work concrete: target the rows and character regions that prevent exact screenshot fidelity instead of treating OCR success, usable identity, or normalized matching as sufficient.
+
+## Not In Scope
+
+- OCR cache activation.
+- Performance tuning.
+- Full 128-server acquisition.
+- Joiner/leaver intelligence.
+- Automatic canonical identity resolution.
+
+Those only become meaningful after at least one server can be read with trusted screenshot fidelity.

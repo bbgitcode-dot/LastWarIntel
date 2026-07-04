@@ -1,27 +1,27 @@
 {
   "schema": "sentinel.import_run.v3",
-  "created_at": "2026-07-04T17:50:26.762758+00:00",
-  "runtime_seconds": 834.47,
+  "created_at": "2026-07-04T18:55:21.073650+00:00",
+  "runtime_seconds": 1140.54,
   "runtime_breakdown": {
-    "adaptive_review_ocr": 54.6383,
-    "data_quality_loop": 430.9159,
-    "excel_export": 2.3736,
-    "image_load_normalize": 3.871,
-    "merge_rows": 0.0058,
-    "metadata_ocr": 144.1888,
+    "adaptive_review_ocr": 59.7768,
+    "data_quality_loop": 603.7182,
+    "excel_export": 3.4145,
+    "image_load_normalize": 1.5641,
+    "merge_rows": 0.0074,
+    "metadata_ocr": 187.4329,
     "ocr_cache_errors": 0.0,
     "ocr_cache_hits": 0.0,
     "ocr_cache_misses": 36.0,
     "ocr_cache_writes": 0.0,
-    "ocr_reader_init": 29.495,
-    "player_snapshot_build": 0.0182,
-    "power_sanity_recovery": 0.0329,
-    "ranking_guard": 0.0154,
-    "row_ocr": 167.2657,
-    "row_parse": 0.0495,
-    "server_reconciliation": 0.0,
-    "total_runtime": 834.4686,
-    "seconds_per_screenshot": 46.3594
+    "ocr_reader_init": 56.5538,
+    "player_snapshot_build": 0.0187,
+    "power_sanity_recovery": 0.0263,
+    "ranking_guard": 0.0077,
+    "row_ocr": 226.1094,
+    "row_parse": 0.0515,
+    "server_reconciliation": 0.0009,
+    "total_runtime": 1140.5447,
+    "seconds_per_screenshot": 63.3636
   },
   "screenshots": 18,
   "output_file": "output\\snapshots\\s6-pre-transfer-2b69ebc1\\lastwar_export.xlsx",
@@ -406,25 +406,25 @@
     "human_review_items": 3,
     "power_recovery_success_rate": 0.25,
     "runtime_breakdown": {
-      "adaptive_review_ocr": 54.6383,
-      "data_quality_loop": 430.9159,
-      "excel_export": 2.3736,
-      "image_load_normalize": 3.871,
-      "merge_rows": 0.0058,
-      "metadata_ocr": 144.1888,
+      "adaptive_review_ocr": 59.7768,
+      "data_quality_loop": 603.7182,
+      "excel_export": 3.4145,
+      "image_load_normalize": 1.5641,
+      "merge_rows": 0.0074,
+      "metadata_ocr": 187.4329,
       "ocr_cache_errors": 0.0,
       "ocr_cache_hits": 0.0,
       "ocr_cache_misses": 36.0,
       "ocr_cache_writes": 0.0,
-      "ocr_reader_init": 29.495,
-      "player_snapshot_build": 0.0182,
-      "power_sanity_recovery": 0.0329,
-      "ranking_guard": 0.0154,
-      "row_ocr": 167.2657,
-      "row_parse": 0.0495,
-      "server_reconciliation": 0.0,
-      "total_runtime": 834.4686,
-      "seconds_per_screenshot": 46.3594
+      "ocr_reader_init": 56.5538,
+      "player_snapshot_build": 0.0187,
+      "power_sanity_recovery": 0.0263,
+      "ranking_guard": 0.0077,
+      "row_ocr": 226.1094,
+      "row_parse": 0.0515,
+      "server_reconciliation": 0.0009,
+      "total_runtime": 1140.5447,
+      "seconds_per_screenshot": 63.3636
     },
     "source_rank_windows": 18,
     "source_rank_windows_detail": {
@@ -724,7 +724,7 @@
       "thp_low_truncation": 3
     },
     "explosive_power_traces": 0,
-    "seconds_per_screenshot": 46.3594
+    "seconds_per_screenshot": 63.3636
   },
   "imports": [
     {
@@ -935,7 +935,7 @@
     {
       "time": "latest",
       "title": "Import completed",
-      "detail": "18 screenshots · 1 servers · 125 rows · 834.47s",
+      "detail": "18 screenshots · 1 servers · 125 rows · 1140.54s",
       "severity": "warning"
     },
     {
@@ -1091,7 +1091,7 @@
       "end": 676,
       "servers": []
     },
-    "bound_at": "2026-07-04T17:50:26+00:00"
+    "bound_at": "2026-07-04T18:55:21+00:00"
   },
   "snapshot_id": "s6-pre-transfer-2b69ebc1",
   "snapshot_name": "S6 pre Transfer",

@@ -12,7 +12,7 @@
         "total_hero_power"
       ],
       "created_at": "2026-07-02T23:10:10+00:00",
-      "updated_at": "2026-07-04T17:36:32+00:00",
+      "updated_at": "2026-07-04T18:36:20+00:00",
       "source": "Import Center",
       "assigned_servers": [
         549,
@@ -287,6 +287,12 @@
         {
           "event": "status_collecting_to_collecting",
           "at": "2026-07-04T17:36:32+00:00",
+          "actor": "sentinel",
+          "detail": "Status changed from collecting to collecting"
+        },
+        {
+          "event": "status_collecting_to_collecting",
+          "at": "2026-07-04T18:36:20+00:00",
           "actor": "sentinel",
           "detail": "Status changed from collecting to collecting"
         }

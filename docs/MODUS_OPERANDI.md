@@ -1,14 +1,13 @@
+# Modus Operandi – Sentinel v0.9.5.96
 
-# Modus Operandi – Sentinel v0.9.5.95
+- Proud Owner defines sprint priority.
+- Mimir produces complete ZIP releases, not snippets.
+- `/docs` is the default documentation path.
+- Cache stays disabled during data-quality validation unless explicitly requested.
+- Screenshot evidence is truth. Filename and upload order are never truth.
+- Data Quality comes before Intelligence.
+- One validated Gold server comes before full-scope strategy.
 
-## Benchmark review rule
+## Current Mode
 
-The screenshot remains the only Ground Truth. Export, filename and upload order are not truth.
-
-## Identity rule
-
-Do not canonicalize player names or alliance tags from fuzzy context. If a name or tag differs by an OCR-confusable character, Sentinel must mark a targeted verification candidate and preserve the observed value until screenshot evidence proves otherwise.
-
-## Sprint artifact rule
-
-Every sprint ships a complete ZIP release with version update, `.commit`, release notes and validation summary.
+551 Gold Fidelity mode: accept slow runs if they improve exact screenshot fidelity.

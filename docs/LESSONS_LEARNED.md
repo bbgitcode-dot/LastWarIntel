@@ -1,8 +1,11 @@
+## v0.9.5.96 Lesson – Recall Is Not Gold Fidelity
 
-## v0.9.5.95 Lesson – Better OCR Evidence Beats Fuzzy Identity
+A run can have 100% recall and 0 bad matches while still being unfit for long-term identity intelligence. Gold readiness requires exact display fidelity for player names, alliance tags, power and ranks.
 
-Fuzzy matching cannot prove that `Joncollinszl` is really `Joncollins21`; a real `Joncollinszl` could exist. The safe approach is targeted character verification from the screenshot itself. Sentinel should identify suspicious characters, crop those positions, and re-read them with alternative OCR settings before changing Operational Truth.
+## v0.9.5.96 Lesson – Do Not Count Stable Confusables as Failures
 
-## v0.9.5.95 Lesson – Alliance Tags Are Character-Level Strategic Keys
+A stable exact string like `LOVE BIEN` should not become a verification blocker merely because it contains OCR-confusable glyphs such as `O`, `B`, or `I`. Targeted character verification should focus first on actual display drift.
 
-Alliance tags are short, case-sensitive identifiers. `DAY`, `daY`, `PbC`, and `PBC` must not collapse into the same Operational Truth. Case changes must be treated as verification targets, not normalization noise.
+## v0.9.5.96 Lesson – Alliance Tag Case Is Operationally Relevant
+
+Alliance tags are short strategic identifiers. Case must be preserved. `PbC`, `PBC`, `DAY`, and `daY` are distinct for Sentinel fidelity purposes.

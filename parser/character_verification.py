@@ -89,7 +89,7 @@ def _aligned_differences(expected: str, observed: str) -> list[tuple[int, str, s
     return diffs
 
 
-def analyze_player_name_characters(expected: str, observed: str) -> CharacterVerificationPlan:
+def analyze_player_name_characters(expected: str, observed: str, *, include_stable_confusables: bool = False) -> CharacterVerificationPlan:
     findings: list[CharacterVerificationFinding] = []
     reasons: list[str] = []
     for pos, exp, obs in _aligned_differences(expected or "", observed or ""):
@@ -113,9 +113,12 @@ def analyze_player_name_characters(expected: str, observed: str) -> CharacterVer
         if reason not in reasons:
             reasons.append(reason)
 
-    # Even without ground truth, observed confusable characters are useful
-    # targets for future screenshot re-OCR, especially in high-value ranks.
-    if expected == observed:
+    # v0.9.5.96: Gold-Fidelity mode treats targeted verification as a blocker
+    # tool, not a blanket scanner.  A stable but confusable character such as
+    # the O in LOVE BIEN is not itself a fidelity problem.  Callers can opt in
+    # for exploratory full glyph scanning, but validation defaults to actual
+    # display drift only.
+    if include_stable_confusables and expected == observed:
         for pos, char in enumerate(observed or ""):
             group = _group_for(char)
             if group:

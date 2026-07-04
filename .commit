@@ -1,19 +1,24 @@
-Sentinel v0.9.5.95
+Sentinel v0.9.5.96
 
-feat(data-guard): identify targeted character verification candidates
+Sprint: 551 Gold Fidelity Gate
 
-- Add parser/character_verification.py with OCR confusion groups.
-- Extend Ground Truth validator with character-level verification metrics.
-- Mark player-name and alliance-tag verification targets without auto-correction.
-- Preserve case-sensitive alliance tag semantics.
-- Update docs for Targeted Character Verification Planning.
+Changes:
+- Added Gold Fidelity blocker metrics to ground_truth_validator.py.
+- Added gold_fidelity_ready summary flag.
+- Added gold_fidelity_blockers JSON section and Excel sheet.
+- Refined character verification so stable exact confusable characters are not default blockers.
+- Preserved case-sensitive alliance tag verification.
+- Updated /docs for 551 Gold Fidelity mode.
 
 Validation:
-pytest -q tests/smoke/test_character_verification_95.py tests/smoke/test_identity_fidelity_validator.py tests/smoke/test_ground_truth_validator.py tests/smoke/test_data_quality_93.py
-python -m py_compile ground_truth_validator.py parser/character_verification.py
-zip -T Sentinel_v0.9.5.95.zip
+- 5 passed – character verification + validator smoke tests.
+- 551 GT validator OK against current lastwar_export.xlsx.
+- py_compile OK for touched files.
+- zip integrity OK.
 
-Commit:
+Commit command:
 git add .
-git commit -m "feat(data-guard): identify targeted character verification candidates"
-git tag -a v0.9.5.95 -m "v0.9.5.95 Targeted Character Verification Planning"
+git commit -m "feat(data-guard): add 551 gold fidelity blockers"
+
+Tag command:
+git tag -a v0.9.5.96 -m "v0.9.5.96 551 Gold Fidelity Gate"

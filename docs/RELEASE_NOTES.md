@@ -1,35 +1,40 @@
+## v0.9.5.96 – 551 Gold Fidelity Gate
 
-## v0.9.5.95 – Targeted Character Verification Planning
+v0.9.5.96 introduces a stricter Gold Fidelity validation layer for the Server 551 benchmark. The sprint does not improve performance and does not enable cache. It makes the remaining screenshot-fidelity blockers explicit so the next OCR work can target the exact rows and characters that prevent a 100% trusted run.
 
-**Purpose**
+### Added
 
-v0.9.5.95 adds the first deterministic layer for character-level identity fidelity. The sprint does not guess canonical identities. It identifies which visible characters in player names and alliance tags must be re-read from screenshot evidence because they are OCR-confusable or case-sensitive.
+- `gold_fidelity_ready` summary flag.
+- `gold_fidelity_blocker_rows` summary metric.
+- `player_name_display_drift_rows`, `alliance_tag_display_drift_rows`, `power_display_drift_rows`, and `rank_display_drift_rows`.
+- `gold_fidelity_blockers` JSON section and Excel sheet.
+- Smoke tests for case-sensitive alliance tags and exact player-name character drift.
 
-**Implemented**
+### Changed
 
-- Added `parser/character_verification.py` with OCR confusion groups for `1/l/I`, `2/z/Z`, `0/O`, `5/S`, `8/B`, `6/G`, and `9/g/q`.
-- Added case-sensitive alliance-tag verification targets; `PbC`, `PBC`, `DAY`, and `daY` are treated as different visible identities.
-- Extended `ground_truth_validator.py` with character verification candidate metrics and JSON/XLSX sheets:
-  - `character_verification_candidate_rows`
-  - `high_value_character_verification_rows`
-  - `player_name_confusable_drift_rows`
-  - `alliance_tag_character_verification_rows`
-  - `character_verification_summary`
-  - `character_verification_candidates`
-- Added tests proving that `Joncollins21` vs `Joncollinszl` creates targeted verification for `2 ↔ z` and `1 ↔ l`.
+- Character verification no longer treats a perfectly matching but OCR-confusable character as a default blocker. Example: `LOVE BIEN` is not flagged just because it contains `O`, `B`, or `I`.
+- Character verification now focuses on actual screenshot-fidelity drift by default. Exploratory stable-glyph scanning remains possible by opt-in argument.
 
-**Validation**
+### Data Guard Position
 
-```bash
-pytest -q tests/smoke/test_character_verification_95.py tests/smoke/test_identity_fidelity_validator.py tests/smoke/test_ground_truth_validator.py
-python -m py_compile ground_truth_validator.py parser/character_verification.py
-zip -T Sentinel_v0.9.5.95.zip
+- Cache remains disabled for validation.
+- Fuzzy/normalized identity remains intelligence support only, never Operational Truth.
+- Alliance tags remain case-sensitive identifiers.
+- Quarantine remains preferred over false Operational Truth.
+
+### Validation
+
+```text
+5 passed – character verification + validator smoke tests
+551 GT validator OK
+py_compile OK
+zip integrity OK
 ```
 
-**Commit**
+### Commit
 
 ```bash
 git add .
-git commit -m "feat(data-guard): identify targeted character verification candidates"
-git tag -a v0.9.5.95 -m "v0.9.5.95 Targeted Character Verification Planning"
+git commit -m "feat(data-guard): add 551 gold fidelity blockers"
+git tag -a v0.9.5.96 -m "v0.9.5.96 551 Gold Fidelity Gate"
 ```

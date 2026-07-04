@@ -103,6 +103,12 @@ class ValidationSummary:
     high_value_character_verification_rows: int
     player_name_confusable_drift_rows: int
     alliance_tag_character_verification_rows: int
+    gold_fidelity_blocker_rows: int
+    player_name_display_drift_rows: int
+    alliance_tag_display_drift_rows: int
+    power_display_drift_rows: int
+    rank_display_drift_rows: int
+    gold_fidelity_ready: bool
     score: float
 
 
@@ -674,6 +680,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         character_verification_candidate = bool(accepted_match and character_verification_plan.required)
         if character_verification_candidate:
             identity_risk_reasons.append("targeted_character_verification_required")
+        gold_fidelity_blocker = bool(accepted_match and not exact_identity)
+        if gold_fidelity_blocker:
+            identity_risk_reasons.append("gold_fidelity_blocker")
         identity_risk = bool(identity_risk_reasons)
         high_value_identity_risk = bool(identity_risk and (expected_rank is not None and expected_rank <= 10))
         high_value_character_verification = bool(character_verification_candidate and (expected_rank is not None and expected_rank <= 10))
@@ -726,8 +735,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "usable_identity_match": usable_identity,
             "exact_identity_match": exact_identity,
             "identity_risk": identity_risk,
-            "identity_risk_reasons": ";".join(identity_risk_reasons),
+            "identity_risk_reasons": ";".join(dict.fromkeys(identity_risk_reasons)),
             "high_value_identity_risk": high_value_identity_risk,
+            "gold_fidelity_blocker": gold_fidelity_blocker,
             "character_verification_candidate": character_verification_candidate,
             "high_value_character_verification": high_value_character_verification,
             "character_verification_reasons": character_verification_plan.reasons_text(),
@@ -797,6 +807,17 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     high_value_character_verification_rows = int(detail.get("high_value_character_verification", pd.Series(dtype=bool)).sum())
     player_name_confusable_drift_rows = int((detail.get("character_verification_candidate", pd.Series(dtype=bool)) & detail.get("character_verification_reasons", pd.Series(dtype=str)).astype(str).str.contains("confusable|same_confusion", regex=True)).sum())
     alliance_tag_character_verification_rows = int(detail.get("alliance_tag_character_verification_targets", pd.Series(dtype=str)).astype(str).ne("[]").sum())
+    gold_fidelity_blocker_rows = int(detail.get("gold_fidelity_blocker", pd.Series(dtype=bool)).sum())
+    player_name_display_drift_rows = int((valid_detail.get("name_display_exact_match", pd.Series(dtype=bool)) == False).sum())
+    alliance_tag_display_drift_rows = int((valid_detail.get("alliance_display_exact_match", pd.Series(dtype=bool)) == False).sum())
+    power_display_drift_rows = int((valid_detail.get("power_exact_match", pd.Series(dtype=bool)) == False).sum())
+    rank_display_drift_rows = int((valid_detail.get("rank_match", pd.Series(dtype=bool)) == False).sum())
+    gold_fidelity_ready = bool(
+        matched == total
+        and bad_matches == 0
+        and gold_fidelity_blocker_rows == 0
+        and exact_identity_matches == total
+    )
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
     avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
 
@@ -862,6 +883,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         high_value_character_verification_rows=high_value_character_verification_rows,
         player_name_confusable_drift_rows=player_name_confusable_drift_rows,
         alliance_tag_character_verification_rows=alliance_tag_character_verification_rows,
+        gold_fidelity_blocker_rows=gold_fidelity_blocker_rows,
+        player_name_display_drift_rows=player_name_display_drift_rows,
+        alliance_tag_display_drift_rows=alliance_tag_display_drift_rows,
+        power_display_drift_rows=power_display_drift_rows,
+        rank_display_drift_rows=rank_display_drift_rows,
+        gold_fidelity_ready=gold_fidelity_ready,
         score=score,
     )
 
@@ -885,6 +912,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
+        gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
 
@@ -924,6 +952,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
+        gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
     ).reset_index()
 
     json_path = output_dir / "ground_truth_validation_report.json"
@@ -935,6 +964,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         exact_identity_matches=("exact_identity_match", "sum"),
     ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches"])
 
+    gold_fidelity_blockers = detail[detail.get("gold_fidelity_blocker", pd.Series(dtype=bool))].copy()
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
         rows=("rank", "count"),
@@ -950,6 +980,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "identity_risks": identity_risk_detail.to_dict(orient="records"),
         "character_verification_summary": character_verification_summary.to_dict(orient="records"),
         "character_verification_candidates": character_verification_detail.to_dict(orient="records"),
+        "gold_fidelity_blockers": gold_fidelity_blockers.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -974,6 +1005,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(identity_risk_detail).to_excel(writer, sheet_name="identity_risks", index=False)
         _sanitize_frame(character_verification_summary).to_excel(writer, sheet_name="char_verify_summary", index=False)
         _sanitize_frame(character_verification_detail).to_excel(writer, sheet_name="char_verify_candidates", index=False)
+        _sanitize_frame(gold_fidelity_blockers).to_excel(writer, sheet_name="gold_fidelity_blockers", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
 
