@@ -110,3 +110,9 @@ This keeps the architecture aligned with the transfer-bucket requirement: Sentin
 
 The v0.9.5.109 run proved that local player-name glyph verification works and sharply reduces unnecessary ReOCR work, but alliance tags remained the dominant identity blocker. In particular, middle tag glyphs such as `b` in `PbC` were often read as `h`, `6`, or CJK-like noise when cropped alone. v0.9.5.110 adds a full-tag-block anchor path so Sentinel first attempts to read the complete short tag before selecting the target glyph. This keeps the first-contact/2000+ server requirement intact: no historical identity memory is required to prove a tag from the current screenshot.
 
+
+## v0.9.5.111 Update – Verified Display Resolution
+
+v0.9.5.110 produced the evidence needed to solve the Joncollins/PbC class: player-name tail glyphs and the case-sensitive alliance tag can now be verified from the screenshot. v0.9.5.111 promotes that evidence into explicit verified-display identity fields. Raw OCR remains visible, but fidelity decisions can now use the screenshot-proven display values when every local glyph drift is verified. Nonlocal/CJK drift remains blocked and visible; it is not silently promoted to gold.
+
+Current strategy after .111: run the 551 validation again and measure whether `verified_exact_identity_matches`, `verified_identity_resolution_rows`, and `gold_fidelity_blocker_rows` move as expected. If Joncollins is resolved but many blockers remain, the next sprint should target the remaining unresolved local glyph classes rather than reworking tag geometry again.

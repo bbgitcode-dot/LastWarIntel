@@ -1,3 +1,24 @@
+## v0.9.5.111 – Verified Display Resolution
+
+v0.9.5.110 proved the missing piece for `[PbC]`/`PBC`: the full-tag-block anchor can verify the expected case-sensitive tag from the current screenshot. v0.9.5.111 turns those ReOCR proofs into validator-visible resolved display identity instead of leaving them only in debug evidence.
+
+### Changed
+- Added verified-display fields for player name and alliance tag (`verified_name_display`, `verified_alliance_display`).
+- Added verified exact identity metrics that count rows where OCR display drift is fully resolved by Character ReOCR evidence.
+- Gold-Fidelity blockers now use verified display identity, not only raw OCR display identity.
+- Kept conservative behavior: skipped/nonlocal glyph drift cannot become gold automatically.
+- Added smoke coverage for the verified-display resolution gate.
+
+### Why it matters
+Joncollins-style first-contact rows no longer stop at “debug says the expected glyphs were seen.” If all local drift targets are verified, the validator can now treat `Joncollinszl / PBC` as screenshot-proven `Joncollins21 / PbC` for fidelity scoring without depending on historical player memory.
+
+### Commit / Tag
+```bash
+git add .
+git commit -m "feat(data-guard): apply verified display resolution to gold fidelity"
+git tag -a v0.9.5.111 -m "v0.9.5.111 Verified Display Resolution"
+```
+
 ## v0.9.5.110 – Alliance Tag Glyph Block Anchor
 
 v0.9.5.109 reduced unnecessary Character ReOCR from broad/nonlocal drift and proved that player-name glyphs such as `Joncollins21` can be verified screenshot-locally. The remaining blocker is alliance-tag fidelity, especially case-sensitive tags such as `PbC` being exported as `PBC`. v0.9.5.110 changes tag verification from single-glyph-first to full-tag-block-first. Sentinel now tries to read the complete short tag block (`[TAG]` / `TAG`) before falling back to individual glyph probes.

@@ -48,6 +48,33 @@ ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 ILLEGAL_EXCEL_CHARS_RE = re.compile(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]")
 TAG_RE = re.compile(r"^\s*\[\s*([A-Za-z0-9]{2,6})\s*\]\s*(.*)$")
 
+
+def _count_targets_by_field(targets: list[Any], field: str) -> int:
+    return sum(1 for target in targets if getattr(target, "field", "") == field)
+
+
+def _count_evidence_by_field(evidence_items: list[Any], field: str, status: str) -> int:
+    return sum(1 for item in evidence_items if getattr(getattr(item, "target", None), "field", "") == field and getattr(item, "status", "") == status)
+
+
+def _field_verified_by_reocr(
+    *,
+    already_exact: bool,
+    raw_target_count: int,
+    local_target_count: int,
+    skipped_target_count: int,
+    verified_expected_count: int,
+) -> bool:
+    if already_exact:
+        return True
+    if raw_target_count <= 0:
+        return False
+    if skipped_target_count > 0:
+        return False
+    if local_target_count <= 0:
+        return False
+    return verified_expected_count == local_target_count
+
 # Unicode ranges useful for high-level reporting. The validator does not need
 # to know the user's language; these tags help us measure where OCR struggles.
 HAN_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -119,6 +146,10 @@ class ValidationSummary:
     character_reocr_unresolved: int
     character_reocr_skipped_nonlocal: int
     score: float
+    verified_name_display_exact_matches: int = 0
+    verified_alliance_display_exact_matches: int = 0
+    verified_exact_identity_matches: int = 0
+    verified_identity_resolution_rows: int = 0
 
 
 COLUMN_ALIASES = {
@@ -731,28 +762,21 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         rank_match = bool(raw_rank_match and accepted_match)
         usable_identity = bool(match is not None and accepted_match and power_match and alliance_match and max(name_similarity, name_normalized_similarity) >= 0.80)
         exact_identity = bool(accepted_match and rank_match and power_match and alliance_display_exact_match and name_display_exact)
-        identity_risk_reasons = []
-        if accepted_match and not name_display_exact:
-            identity_risk_reasons.append("player_name_display_drift")
-        if accepted_match and not alliance_display_exact_match:
-            identity_risk_reasons.append("alliance_tag_display_drift")
-        if accepted_match and raw_alliance_case_sensitive_mismatch:
-            identity_risk_reasons.append("alliance_tag_case_sensitive_mismatch")
-        if usable_identity and not exact_identity:
-            identity_risk_reasons.append("fuzzy_or_normalized_identity_not_exact")
         player_char_plan = analyze_player_name_characters(expected_name, actual_name)
         alliance_char_plan = analyze_alliance_tag_characters(expected_alliance_display, actual_alliance_display)
         character_verification_plan = merge_verification_plans(player_char_plan, alliance_char_plan)
         character_verification_candidate = bool(accepted_match and character_verification_plan.required)
         reocr_evidence_json = "[]"
         reocr_status = "not_requested"
-        reocr_summary = {"targets": 0, "verified_expected": 0, "verified_observed": 0, "ambiguous": 0, "unresolved": 0}
+        reocr_summary = {"targets": 0, "verified_expected": 0, "verified_observed": 0, "ambiguous": 0, "unresolved": 0, "skipped_nonlocal": 0}
+        evidence_items = []
+        raw_targets = parse_reocr_targets(character_verification_plan.to_json())
+        local_targets = []
+        skipped_targets = 0
         gt_screenshot = normalize_text(gt_row.get("screenshot", ""))
         row_slot = row_slots.get((gt_screenshot, expected_rank)) if expected_rank is not None else None
         if character_verification_candidate and screenshots_dir is not None and gt_screenshot:
-            evidence_items = []
             screenshot_path = screenshots_dir / gt_screenshot
-            raw_targets = parse_reocr_targets(character_verification_plan.to_json())
             local_targets = filter_local_glyph_targets(
                 raw_targets,
                 expected_name=expected_name,
@@ -785,9 +809,47 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                 reocr_status = "unresolved"
             else:
                 reocr_status = "mixed"
-        if character_verification_candidate:
+
+        raw_player_targets = _count_targets_by_field(raw_targets, "player_name")
+        raw_alliance_targets = _count_targets_by_field(raw_targets, "alliance_tag")
+        local_player_targets = _count_targets_by_field(local_targets, "player_name")
+        local_alliance_targets = _count_targets_by_field(local_targets, "alliance_tag")
+        skipped_player_targets = max(0, raw_player_targets - local_player_targets)
+        skipped_alliance_targets = max(0, raw_alliance_targets - local_alliance_targets)
+        verified_player_expected = _count_evidence_by_field(evidence_items, "player_name", "verified_expected")
+        verified_alliance_expected = _count_evidence_by_field(evidence_items, "alliance_tag", "verified_expected")
+
+        verified_name_display_exact = bool(accepted_match and _field_verified_by_reocr(
+            already_exact=name_display_exact,
+            raw_target_count=raw_player_targets,
+            local_target_count=local_player_targets,
+            skipped_target_count=skipped_player_targets,
+            verified_expected_count=verified_player_expected,
+        ))
+        verified_alliance_display_exact = bool(accepted_match and _field_verified_by_reocr(
+            already_exact=alliance_display_exact_match,
+            raw_target_count=raw_alliance_targets,
+            local_target_count=local_alliance_targets,
+            skipped_target_count=skipped_alliance_targets,
+            verified_expected_count=verified_alliance_expected,
+        ))
+        verified_display_name = expected_name if verified_name_display_exact else actual_name
+        verified_display_alliance = expected_alliance_display if verified_alliance_display_exact else actual_alliance_display
+        verified_exact_identity = bool(accepted_match and rank_match and power_match and verified_name_display_exact and verified_alliance_display_exact)
+        verified_identity_resolution = bool(verified_exact_identity and not exact_identity)
+
+        identity_risk_reasons = []
+        if accepted_match and not verified_name_display_exact:
+            identity_risk_reasons.append("player_name_display_drift")
+        if accepted_match and not verified_alliance_display_exact:
+            identity_risk_reasons.append("alliance_tag_display_drift")
+        if accepted_match and raw_alliance_case_sensitive_mismatch and not verified_alliance_display_exact:
+            identity_risk_reasons.append("alliance_tag_case_sensitive_mismatch")
+        if usable_identity and not verified_exact_identity:
+            identity_risk_reasons.append("fuzzy_or_normalized_identity_not_exact")
+        if character_verification_candidate and not verified_exact_identity:
             identity_risk_reasons.append("targeted_character_verification_required")
-        gold_fidelity_blocker = bool(accepted_match and not exact_identity)
+        gold_fidelity_blocker = bool(accepted_match and not verified_exact_identity)
         if gold_fidelity_blocker:
             identity_risk_reasons.append("gold_fidelity_blocker")
         identity_risk = bool(identity_risk_reasons)
@@ -841,6 +903,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "name_normalized_similarity": round(name_normalized_similarity, 4),
             "usable_identity_match": usable_identity,
             "exact_identity_match": exact_identity,
+            "verified_name_display": verified_display_name,
+            "verified_alliance_display": verified_display_alliance,
+            "verified_name_display_exact_match": verified_name_display_exact,
+            "verified_alliance_display_exact_match": verified_alliance_display_exact,
+            "verified_exact_identity_match": verified_exact_identity,
+            "verified_identity_resolution": verified_identity_resolution,
             "identity_risk": identity_risk,
             "identity_risk_reasons": ";".join(dict.fromkeys(identity_risk_reasons)),
             "high_value_identity_risk": high_value_identity_risk,
@@ -915,11 +983,15 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     player_name_display_exact_matches = int(detail["name_display_exact_match"].sum())
     alliance_tag_display_exact_matches = int(detail["alliance_display_exact_match"].sum())
     exact_identity_matches = int(detail["exact_identity_match"].sum())
+    verified_name_display_exact_matches = int(detail.get("verified_name_display_exact_match", pd.Series(dtype=bool)).sum())
+    verified_alliance_display_exact_matches = int(detail.get("verified_alliance_display_exact_match", pd.Series(dtype=bool)).sum())
+    verified_exact_identity_matches = int(detail.get("verified_exact_identity_match", pd.Series(dtype=bool)).sum())
+    verified_identity_resolution_rows = int(detail.get("verified_identity_resolution", pd.Series(dtype=bool)).sum())
     identity_risk_rows = int(detail["identity_risk"].sum())
     high_value_identity_risk_rows = int(detail["high_value_identity_risk"].sum())
     alliance_tag_case_sensitive_mismatches = int(detail["alliance_tag_case_sensitive_mismatch"].sum())
     player_name_drift_rows = int((observed_detail.get("name_display_exact_match", pd.Series(dtype=bool)) == False).sum())
-    identity_fidelity_score = round((exact_identity_matches / max(total, 1)) * 100, 2)
+    identity_fidelity_score = round((verified_exact_identity_matches / max(total, 1)) * 100, 2)
     character_verification_candidate_rows = int(detail.get("character_verification_candidate", pd.Series(dtype=bool)).sum())
     high_value_character_verification_rows = int(detail.get("high_value_character_verification", pd.Series(dtype=bool)).sum())
     player_name_confusable_drift_rows = int((detail.get("character_verification_candidate", pd.Series(dtype=bool)) & detail.get("character_verification_reasons", pd.Series(dtype=str)).astype(str).str.contains("confusable|same_confusion", regex=True)).sum())
@@ -938,7 +1010,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         matched == total
         and bad_matches == 0
         and gold_fidelity_blocker_rows == 0
-        and exact_identity_matches == total
+        and verified_exact_identity_matches == total
     )
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
     avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
@@ -996,6 +1068,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         player_name_display_exact_matches=player_name_display_exact_matches,
         alliance_tag_display_exact_matches=alliance_tag_display_exact_matches,
         exact_identity_matches=exact_identity_matches,
+        verified_name_display_exact_matches=verified_name_display_exact_matches,
+        verified_alliance_display_exact_matches=verified_alliance_display_exact_matches,
+        verified_exact_identity_matches=verified_exact_identity_matches,
+        verified_identity_resolution_rows=verified_identity_resolution_rows,
         identity_risk_rows=identity_risk_rows,
         high_value_identity_risk_rows=high_value_identity_risk_rows,
         alliance_tag_case_sensitive_mismatches=alliance_tag_case_sensitive_mismatches,
@@ -1036,6 +1112,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         player_name_display_exact_matches=("name_display_exact_match", "sum"),
         alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
+        verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
+        verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
@@ -1247,6 +1325,19 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     report_write_start = time.perf_counter()
     runtime_metrics = dict(runtime_metrics or {})
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Backward-compatible report generation for older smoke tests and legacy
+    # report DataFrames that predate v0.9.5.111 verified-display columns.
+    default_columns = {
+        "verified_name_display_exact_match": detail.get("name_display_exact_match", pd.Series(False, index=detail.index)),
+        "verified_alliance_display_exact_match": detail.get("alliance_display_exact_match", pd.Series(False, index=detail.index)),
+        "verified_exact_identity_match": detail.get("exact_identity_match", pd.Series(False, index=detail.index)),
+        "verified_identity_resolution": pd.Series(False, index=detail.index),
+        "verified_name_display": detail.get("ocr_name", pd.Series("", index=detail.index)),
+        "verified_alliance_display": detail.get("ocr_alliance_display", pd.Series("", index=detail.index)),
+    }
+    for col, values in default_columns.items():
+        if col not in detail.columns:
+            detail[col] = values
     summary_rows = [asdict(summary)]
     failures = detail[
         (detail["match_method"] == "missing")
@@ -1265,6 +1356,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         player_name_display_exact_matches=("name_display_exact_match", "sum"),
         alliance_tag_display_exact_matches=("alliance_display_exact_match", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
+        verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
+        verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
@@ -1281,7 +1374,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         high_value_rows=("high_value_identity_risk", "sum"),
         usable_identity_matches=("usable_identity_match", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
-    ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches"])
+        verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
+        verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+    ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows"])
 
     gold_fidelity_blockers = detail[detail.get("gold_fidelity_blocker", pd.Series(dtype=bool))].copy()
     alignment_context_gaps = detail[detail.get("alignment_context_gap", pd.Series(dtype=bool))].copy()
@@ -1296,7 +1391,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         rows=("rank", "count"),
         high_value_rows=("high_value_character_verification", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
-    ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches"])
+        verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
+        verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+    ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows"])
     character_reocr_debug = _flatten_character_reocr_debug(detail)
     if not character_reocr_debug.empty:
         character_reocr_debug_summary = character_reocr_debug.groupby(["target_field", "target_status", "debug_read"], dropna=False).agg(
@@ -1322,6 +1419,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_reocr": {
             "target_count": int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum()),
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
+            "verified_display_resolutions": int(detail.get("verified_identity_resolution", pd.Series(dtype=bool)).sum()),
             "verified_observed": int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum()),
             "unresolved": int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum()),
             "skipped_nonlocal": int(detail.get("character_reocr_skipped_nonlocal", pd.Series(dtype=int)).sum()),

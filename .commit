@@ -1,20 +1,18 @@
-Sentinel v0.9.5.110
+Sentinel v0.9.5.111
 
-Focus: Alliance Tag Glyph Block Anchoring
+Commit: feat(data-guard): apply verified display resolution to gold fidelity
 
-Implemented:
-- Add full alliance-tag block anchor candidates before single-glyph tag probes.
-- Keep the approach screenshot-local: no historical identity lookup and no manual reference database.
-- Improve PbC/PBC case-sensitive verification by reading the complete short tag block first, then selecting the requested glyph position.
-- Preserve v0.9.5.109 local-glyph gate and nonlocal drift skipping.
-- Add regression coverage for [PbC] tag-block verification.
+Summary:
+- Promote Character ReOCR verified_expected evidence into verified display name/tag fields.
+- Add verified exact identity metrics and verified identity resolution counts.
+- Evaluate Gold-Fidelity blockers against verified display identity while keeping raw OCR columns visible.
+- Keep nonlocal/skipped glyph drift conservative: no automatic gold promotion.
+- Add smoke tests for verified-display resolution gating.
 
 Validation:
-pytest -q tests/smoke/test_alliance_tag_glyph_110.py tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_103.py
-python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
-zip integrity OK
+- 20 passed – Verified Display Resolution / Glyph Gate / Alliance Tag Block Anchor / Validator Smoke
+- py_compile OK
+- zip integrity OK
 
-Commit:
-git add .
-git commit -m "fix(data-guard): anchor alliance tag glyph verification on full tag blocks"
-git tag -a v0.9.5.110 -m "v0.9.5.110 Alliance Tag Glyph Block Anchor"
+Tag:
+git tag -a v0.9.5.111 -m "v0.9.5.111 Verified Display Resolution"

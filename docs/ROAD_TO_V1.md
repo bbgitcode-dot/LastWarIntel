@@ -62,3 +62,7 @@ V1 cannot depend on prior knowledge of every player across 2000+ servers. v0.9.5
 
 V1 requires exact alliance identity, including case-sensitive tag spelling. v0.9.5.110 moves tag verification toward screenshot-local proof by anchoring on the complete `[TAG]` block before individual glyph classification. The next evidence target is a run where `[PbC]`/`PBC` blockers fall without depending on historical alliance databases.
 
+
+## v0.9.5.111 – Verified display identity prerequisite
+
+V1 requires Sentinel to turn screenshot-local proof into usable identity, not merely report it as debug evidence. v0.9.5.111 adds verified-display resolution so that rows with fully verified local glyph drift can contribute to Gold Fidelity while rows with skipped/nonlocal drift remain blocked. This is a key bridge from OCR evidence to operational identity.
