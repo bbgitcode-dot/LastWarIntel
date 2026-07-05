@@ -1,19 +1,20 @@
-Sentinel v0.9.5.109
+Sentinel v0.9.5.110
 
-Summary:
-- Add local glyph target gating before Character ReOCR.
-- Keep Joncollins-style 2/z and 1/l targets and case-sensitive alliance tag targets.
-- Skip broad non-local Unicode/UNKNOWN drift so the validator does not waste OCR or imply solvable glyph proof where none exists.
-- Add character_reocr_skipped_nonlocal to reports.
-- Update docs and version metadata.
+Focus: Alliance Tag Glyph Block Anchoring
+
+Implemented:
+- Add full alliance-tag block anchor candidates before single-glyph tag probes.
+- Keep the approach screenshot-local: no historical identity lookup and no manual reference database.
+- Improve PbC/PBC case-sensitive verification by reading the complete short tag block first, then selecting the requested glyph position.
+- Preserve v0.9.5.109 local-glyph gate and nonlocal drift skipping.
+- Add regression coverage for [PbC] tag-block verification.
 
 Validation:
-pytest -q tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_debug_102.py
+pytest -q tests/smoke/test_alliance_tag_glyph_110.py tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_103.py
 python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+zip integrity OK
 
-Commit command:
+Commit:
 git add .
-git commit -m "feat(data-guard): gate reocr to local glyph verification"
-
-Tag command:
-git tag -a v0.9.5.109 -m "v0.9.5.109 Glyph Verification Engine Gate"
+git commit -m "fix(data-guard): anchor alliance tag glyph verification on full tag blocks"
+git tag -a v0.9.5.110 -m "v0.9.5.110 Alliance Tag Glyph Block Anchor"

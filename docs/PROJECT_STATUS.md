@@ -105,3 +105,8 @@ The runtime report separates loading, validation, report writing, OCR reader ini
 The v0.9.5.108 runtime report showed that long validator runs were dominated by Character ReOCR targets, many of which were not true local glyph problems. v0.9.5.109 adds a gate before ReOCR: only confusable/case-sensitive local glyph targets are reread. Broad display drift remains visible as a blocker but is no longer treated as something a single glyph crop can safely prove.
 
 This keeps the architecture aligned with the transfer-bucket requirement: Sentinel must read first-contact screenshots without relying on a historical player database. The current-screenshot proof path is now: row alignment → field alignment → local glyph verification. If a target is not local, DataGuard keeps it blocked instead of wasting OCR or guessing.
+
+## v0.9.5.110 Update – Alliance Tag Glyph Block Anchor
+
+The v0.9.5.109 run proved that local player-name glyph verification works and sharply reduces unnecessary ReOCR work, but alliance tags remained the dominant identity blocker. In particular, middle tag glyphs such as `b` in `PbC` were often read as `h`, `6`, or CJK-like noise when cropped alone. v0.9.5.110 adds a full-tag-block anchor path so Sentinel first attempts to read the complete short tag before selecting the target glyph. This keeps the first-contact/2000+ server requirement intact: no historical identity memory is required to prove a tag from the current screenshot.
+

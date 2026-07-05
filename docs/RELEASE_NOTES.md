@@ -1,3 +1,30 @@
+## v0.9.5.110 – Alliance Tag Glyph Block Anchor
+
+v0.9.5.109 reduced unnecessary Character ReOCR from broad/nonlocal drift and proved that player-name glyphs such as `Joncollins21` can be verified screenshot-locally. The remaining blocker is alliance-tag fidelity, especially case-sensitive tags such as `PbC` being exported as `PBC`. v0.9.5.110 changes tag verification from single-glyph-first to full-tag-block-first. Sentinel now tries to read the complete short tag block (`[TAG]` / `TAG`) before falling back to individual glyph probes.
+
+### Implemented
+
+- Added full alliance-tag block anchor candidates before noisy single-glyph tag crops.
+- Preserved screenshot-local verification: no historical player database and no manual identity lookup.
+- Improved `[PbC]`/`PBC` case-sensitive verification by selecting the target glyph from the complete tag block when available.
+- Kept the v0.9.5.109 local-glyph gate and `character_reocr_skipped_nonlocal` behavior unchanged.
+- Added regression tests for tag-block candidate ordering and `[PbC]` case verification.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_alliance_tag_glyph_110.py tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_103.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): anchor alliance tag glyph verification on full tag blocks"
+git tag -a v0.9.5.110 -m "v0.9.5.110 Alliance Tag Glyph Block Anchor"
+```
+
 ## v0.9.5.109 – Glyph Verification Engine Gate
 
 v0.9.5.108 proved that telemetry works and showed the next architectural issue: Character ReOCR was spending large CPU time on broad display drift that local glyph verification cannot safely solve. v0.9.5.109 changes the validator from “re-read every visible difference” to “re-read only true local glyph ambiguities”. This keeps the solution independent of historical player databases and focused on the current screenshot.

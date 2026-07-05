@@ -57,3 +57,8 @@ Before scaling Gold Fidelity beyond the 551 benchmark, Sentinel needs explainabl
 ## v0.9.5.109 – V1 identity prerequisite
 
 V1 cannot depend on prior knowledge of every player across 2000+ servers. v0.9.5.109 therefore reframes the path from historical identity lookup to screenshot-local glyph proof. The next V1 milestone is to prove that unknown first-contact names can be stabilized through targeted local glyph verification while non-local drift remains safely blocked.
+
+## v0.9.5.110 – Tag fidelity prerequisite
+
+V1 requires exact alliance identity, including case-sensitive tag spelling. v0.9.5.110 moves tag verification toward screenshot-local proof by anchoring on the complete `[TAG]` block before individual glyph classification. The next evidence target is a run where `[PbC]`/`PBC` blockers fall without depending on historical alliance databases.
+

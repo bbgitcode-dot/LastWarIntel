@@ -230,34 +230,102 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
     )
 
 
+def _clamped_box(
+    *,
+    width: int,
+    height: int,
+    cx: float,
+    cy: float,
+    bw: float,
+    bh: float,
+) -> tuple[int, int, int, int]:
+    return (
+        int(max(0, round(cx - bw / 2))),
+        int(max(0, round(cy - bh / 2))),
+        int(min(width, round(cx + bw / 2))),
+        int(min(height, round(cy + bh / 2))),
+    )
+
+
+def _alliance_tag_block_candidates(
+    base_box: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+    target: ReOcrTarget,
+) -> list[tuple[tuple[int, int, int, int], str]]:
+    """Build full-tag block crops from a target glyph crop.
+
+    v0.9.5.109 showed the remaining PbC/PBC blocker clearly: the middle `b`
+    often looked like h/6/CJK noise when cropped as a single glyph.  The safer
+    approach is to first let OCR see the complete short tag block (`[PbC]` or
+    `PbC`) and only then pick the requested glyph position from that block.
+
+    This function derives a block crop from the target glyph center instead of
+    hard-coding a specific server/alliance.  It remains screenshot-local and
+    does not use historical identity knowledge.
+    """
+    width, height = image_size
+    x0, y0, x1, y1 = base_box
+    bw = max(1, x1 - x0)
+    bh = max(1, y1 - y0)
+    glyph_cx = (x0 + x1) / 2.0
+    glyph_cy = (y0 + y1) / 2.0
+
+    tag_len = max(len(str(target.expected or target.observed or "")), 3)
+    visible_slots = tag_len + 2  # opening bracket + tag + closing bracket
+    target_slot = min(max(target.position + 1, 0), visible_slots - 1)
+
+    # A single-glyph crop is padded, so its width is larger than the real glyph
+    # pitch.  0.72 approximates the visual pitch in the 551 window screenshots.
+    glyph_step = max(8.0, bw * 0.72)
+    block_center = glyph_cx + (((visible_slots - 1) / 2.0) - target_slot) * glyph_step
+    block_width = max(visible_slots * glyph_step + 14.0, bw * 3.8)
+    block_height = min(max(bh * 1.04, bh + 2), bh * 1.28)
+
+    candidates = [
+        (_clamped_box(width=width, height=height, cx=block_center, cy=glyph_cy, bw=block_width, bh=block_height), "tag_block_anchor"),
+        (_clamped_box(width=width, height=height, cx=block_center, cy=glyph_cy - bh * 0.16, bw=block_width * 1.08, bh=block_height * 1.08), "tag_block_up_anchor"),
+        (_clamped_box(width=width, height=height, cx=block_center - glyph_step * 0.35, cy=glyph_cy, bw=block_width * 1.10, bh=block_height), "tag_block_left_anchor"),
+        (_clamped_box(width=width, height=height, cx=block_center + glyph_step * 0.35, cy=glyph_cy, bw=block_width * 1.10, bh=block_height), "tag_block_right_anchor"),
+    ]
+    return [(box, reason) for box, reason in candidates if box[2] > box[0] and box[3] > box[1]]
+
+
 def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[int, int], target: ReOcrTarget) -> list[tuple[tuple[int, int, int, int], str]]:
     """Return conservative calibration candidates around the primary crop.
 
-    v0.9.5.105 proved that a single fixed mini-crop is brittle: the Joncollins
-    tail digits landed on empty pixels and PbC's middle glyph read as CJK noise.
-    The validator may spend CPU here, so try a small deterministic offset grid
-    and let OCR votes select the best evidence.  This still does not correct
-    Operational Truth; it only improves whether a target character can be
-    verified from the screenshot.
+    v0.9.5.110 adds a tag-block anchor path before glyph probes.  It does not
+    guess a tag from history.  It simply gives OCR the full short tag first,
+    because case-sensitive tags such as `[PbC]` are easier to read as a block
+    than as a single middle glyph.
     """
     width, height = image_size
     x0, y0, x1, y1 = base_box
     bw = max(1, x1 - x0)
     bh = max(1, y1 - y0)
 
+    variants: list[tuple[tuple[int, int, int, int], str]] = []
+    seen: set[tuple[int, int, int, int]] = set()
+
+    def add(box: tuple[int, int, int, int], reason: str) -> None:
+        if box[2] <= box[0] or box[3] <= box[1] or box in seen:
+            return
+        seen.add(box)
+        variants.append((box, reason))
+
     if target.field == "alliance_tag":
+        # Try full tag anchors first so `[PbC]` can be read positionally before
+        # the verifier falls back to noisy single-glyph crops.
+        for box, reason in _alliance_tag_block_candidates(base_box, image_size, target):
+            add(box, reason)
         specs = [
             (0.0, 0.0, 1.0, "base"),
-            (-0.45, 0.0, 1.45, "left_wide"),
-            (0.45, 0.0, 1.45, "right_wide"),
+            (-0.65, 0.0, 1.30, "left_probe"),
+            (0.65, 0.0, 1.30, "right_probe"),
+            (-0.35, -0.18, 1.45, "left_up_probe"),
+            (0.35, -0.18, 1.45, "right_up_probe"),
             (0.0, -0.18, 1.25, "up_wide"),
-            (-0.25, -0.18, 1.60, "left_up_wide"),
-            # v0.9.5.107: case-sensitive tags such as PbC need the full tag
-            # as an anchor.  Single-glyph crops often vote as h/6/CJK noise;
-            # this wider candidate lets _choose_character read position 1 from
-            # the whole [TAG] text when EasyOCR can see it.
-            (-1.00, 0.0, 3.25, "full_tag_wide"),
-            (-1.00, -0.18, 3.45, "full_tag_up_wide"),
+            (-1.00, 0.0, 3.25, "legacy_full_tag_wide"),
+            (-1.00, -0.18, 3.45, "legacy_full_tag_up_wide"),
         ]
     else:
         specs = [
@@ -269,8 +337,6 @@ def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[in
             (0.35, -0.18, 1.90, "right_up_wide"),
         ]
 
-    variants: list[tuple[tuple[int, int, int, int], str]] = []
-    seen: set[tuple[int, int, int, int]] = set()
     cx = (x0 + x1) / 2.0
     cy = (y0 + y1) / 2.0
     for dx_factor, dy_factor, scale, reason in specs:
@@ -278,16 +344,7 @@ def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[in
         nh = max(bh * min(scale, 1.25), bh)
         ncx = cx + dx_factor * bw
         ncy = cy + dy_factor * bh
-        box = (
-            int(max(0, round(ncx - nw / 2))),
-            int(max(0, round(ncy - nh / 2))),
-            int(min(width, round(ncx + nw / 2))),
-            int(min(height, round(ncy + nh / 2))),
-        )
-        if box[2] <= box[0] or box[3] <= box[1] or box in seen:
-            continue
-        seen.add(box)
-        variants.append((box, reason))
+        add(_clamped_box(width=width, height=height, cx=ncx, cy=ncy, bw=nw, bh=nh), reason)
     return variants
 
 
