@@ -1,23 +1,28 @@
-# Road to V1 – Sentinel v0.9.5.101
+# Road to V1 – Sentinel v0.9.5.102
 
-## Strategic sequence
+## V1 principle
 
-1. Stabilize 551 as a Gold Fidelity benchmark.
-2. Expand screenshot-fidelity validation to more servers only after 551 is trusted.
-3. Build reliable full-scope acquisition across 549–676.
-4. Only then build player/entity intelligence for joiners, leavers, growth and decline.
+Sentinel must not become an intelligence platform until its Operational Truth is stable. Player and alliance tracking over time requires screenshot-faithful identities, including case-sensitive alliance tags and exact player display names.
 
-## Current milestone
+## Current phase: 551 Gold Fidelity
 
-v0.9.5.101 continues the Gold Fidelity phase. v0.9.5.100 fixed false character-drift caused by alignment gaps. v0.9.5.101 improves the next bottleneck: crop precision and conservative vote selection for true character targets.
+The current goal is not full 128-server intelligence. The current goal is to prove one benchmark server can be validated with full data-quality visibility.
 
-## Not yet V1-ready
+## Recent milestones
 
-Sentinel is not ready for reliable long-term joiner/leaver intelligence until names and alliance tags can be read screenshot-faithfully or explicitly marked unresolved.
+- v0.9.5.100 separated alignment context gaps from character drift.
+- v0.9.5.101 attempted crop/vote precision improvements.
+- v0.9.5.102 adds Character ReOCR debug instrumentation because the previous crop changes did not materially improve the result.
 
-## Next milestone candidate
+## Required path to V1
 
-After validating v0.9.5.101, choose between:
+1. 551 Gold Fidelity diagnostics.
+2. 551 Character ReOCR correction based on debug evidence.
+3. 551 Gold Fidelity pass criteria.
+4. Multi-server acquisition stability.
+5. Full snapshot completeness reporting.
+6. Entity Intelligence only after stable acquisition and identity fidelity.
 
-- Field-level name/tag segmentation if crops still include neighbouring UI; or
-- Language/profile-specific ReOCR retries if crops are clean but OCR cannot read the glyphs.
+## Current blocker
+
+Character ReOCR currently generates many targets but leaves too many unresolved. The next patch must be selected based on `character_reocr_debug_report`, not guesswork.

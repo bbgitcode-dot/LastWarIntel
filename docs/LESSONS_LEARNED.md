@@ -1,3 +1,9 @@
+# Lessons Learned – Sentinel v0.9.5.102
+
+## Do not tune Character ReOCR blindly
+
+If a crop/vote patch does not move the validation numbers, the next sprint must instrument the pipeline before attempting another fix. v0.9.5.102 adds per-target debug reports for exactly this reason.
+
 ## v0.9.5.100 Lesson – Evidence Pipelines Must Be Active by Default
 
 A detector is not enough. v0.9.5.97 correctly identified Character Verification candidates, but the standard validator command left re-OCR target counts at zero. v0.9.5.100 closes that gap: if screenshots are present, target evidence must be emitted automatically, or the system must explicitly say why it cannot verify.

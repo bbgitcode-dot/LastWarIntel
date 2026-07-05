@@ -1,3 +1,36 @@
+## v0.9.5.102 – Character ReOCR Debug Instrumentation
+
+v0.9.5.102 adds diagnostic instrumentation for the 551 Gold Fidelity sprint. After v0.9.5.101 failed to materially improve Character ReOCR validation, this patch stops guessing at crop fixes and makes the ReOCR path inspectable target by target.
+
+### Added
+
+- `character_reocr_debug_report.json` and `character_reocr_debug_report.xlsx` from the Ground Truth Validator.
+- Flattened Character ReOCR debug rows with screenshot, row slot, crop box, crop strategy, vote variants, raw vote texts, selected glyph, confidence and final status.
+- Diagnostic metadata in `CharacterVerificationEvidence`: `crop_strategy`, `text_length`, `expected_text`, `observed_text` and `allowed_chars`.
+- Smoke tests for the new debug report generation.
+
+### Guardrails
+
+- Operational Truth is not changed.
+- Character ReOCR still remains evidence-only.
+- Alignment context gaps remain excluded from Character Verification.
+- Cache behavior is untouched.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(data-guard): instrument character re-ocr debug evidence"
+git tag -a v0.9.5.102 -m "v0.9.5.102 Character ReOCR Debug Instrumentation"
+```
+
 ## v0.9.5.101 – Character Crop Precision Guard
 
 v0.9.5.101 tightens targeted Character Re-OCR after v0.9.5.100 proved the Alignment Guard was working but only 2 of 8 expected glyph confirmations were observed. The main cause was crop and vote pollution: player-name crops still included alliance tags, and alliance-tag votes could select bracket/neighbor characters instead of the requested tag glyph.

@@ -1033,6 +1033,91 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     return summary, detail, category
 
 
+def _parse_json_list(value: Any) -> list[dict[str, Any]]:
+    if value is None:
+        return []
+    text = str(value)
+    if not text or text == "[]" or text.lower() == "nan":
+        return []
+    try:
+        raw = json.loads(text)
+    except Exception:
+        return []
+    return raw if isinstance(raw, list) else []
+
+
+def _flatten_character_reocr_debug(detail: pd.DataFrame) -> pd.DataFrame:
+    """Build a row-per-target debug report for Character ReOCR.
+
+    This report is intentionally diagnostic. It does not alter validation
+    metrics or Operational Truth. Its job is to expose whether the current
+    failure is row-slot selection, crop geometry, OCR output, or vote selection.
+    """
+    rows: list[dict[str, Any]] = []
+    for _, row in detail.iterrows():
+        evidence_items = _parse_json_list(row.get("character_reocr_evidence", "[]"))
+        for index, item in enumerate(evidence_items):
+            votes = item.get("votes") if isinstance(item, dict) else []
+            votes = votes if isinstance(votes, list) else []
+            vote_texts = [str(v.get("text", "")) for v in votes if isinstance(v, dict)]
+            vote_chars = [str(v.get("char", "")) for v in votes if isinstance(v, dict) and str(v.get("char", ""))]
+            vote_variants = [str(v.get("variant", "")) for v in votes if isinstance(v, dict)]
+            crop_box = item.get("crop_box") if isinstance(item, dict) else None
+            crop_width = crop_height = None
+            if isinstance(crop_box, list | tuple) and len(crop_box) == 4:
+                try:
+                    crop_width = int(crop_box[2]) - int(crop_box[0])
+                    crop_height = int(crop_box[3]) - int(crop_box[1])
+                except Exception:
+                    crop_width = crop_height = None
+            rows.append({
+                "server": row.get("server"),
+                "rank": row.get("rank"),
+                "ocr_rank": row.get("ocr_rank"),
+                "expected_name": row.get("expected_name"),
+                "ocr_name": row.get("ocr_name"),
+                "expected_alliance_display": row.get("expected_alliance_display"),
+                "ocr_alliance_display": row.get("ocr_alliance_display"),
+                "expected_power": row.get("expected_power"),
+                "ocr_power": row.get("ocr_power"),
+                "match_method": row.get("match_method"),
+                "failure_class": row.get("failure_class"),
+                "alignment_guard_status": row.get("alignment_guard_status"),
+                "alignment_safe_for_character_verification": row.get("alignment_safe_for_character_verification"),
+                "character_verification_reasons": row.get("character_verification_reasons"),
+                "target_index": index,
+                "target_field": item.get("field") if isinstance(item, dict) else "",
+                "target_position": item.get("position") if isinstance(item, dict) else None,
+                "target_expected": item.get("expected") if isinstance(item, dict) else "",
+                "target_observed": item.get("observed") if isinstance(item, dict) else "",
+                "target_status": item.get("status") if isinstance(item, dict) else "",
+                "selected": item.get("selected") if isinstance(item, dict) else "",
+                "confidence": item.get("confidence") if isinstance(item, dict) else 0.0,
+                "screenshot": item.get("screenshot") if isinstance(item, dict) else "",
+                "row_slot": item.get("row_slot") if isinstance(item, dict) else None,
+                "crop_box": json.dumps(crop_box, ensure_ascii=False) if crop_box is not None else "",
+                "crop_width": crop_width,
+                "crop_height": crop_height,
+                "crop_strategy": item.get("crop_strategy") if isinstance(item, dict) else "",
+                "text_length": item.get("text_length") if isinstance(item, dict) else None,
+                "expected_text": item.get("expected_text") if isinstance(item, dict) else "",
+                "observed_text": item.get("observed_text") if isinstance(item, dict) else "",
+                "allowed_chars": item.get("allowed_chars") if isinstance(item, dict) else "",
+                "vote_count": len(votes),
+                "nonempty_vote_chars": ";".join(vote_chars),
+                "vote_variants": ";".join(vote_variants),
+                "vote_texts": " | ".join(vote_texts),
+                "debug_read": (
+                    "no_votes" if len(votes) == 0 else
+                    "no_selected_char" if not item.get("selected") else
+                    "verified_expected" if item.get("status") == "verified_expected" else
+                    "verified_observed" if item.get("status") == "verified_observed" else
+                    "ambiguous_or_unresolved"
+                ),
+            })
+    return pd.DataFrame(rows)
+
+
 def _sanitize_cell(value: Any) -> Any:
     if isinstance(value, str):
         return ILLEGAL_EXCEL_CHARS_RE.sub("", ANSI_ESCAPE_RE.sub("", value))
@@ -1094,6 +1179,16 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         high_value_rows=("high_value_character_verification", "sum"),
         exact_identity_matches=("exact_identity_match", "sum"),
     ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches"])
+    character_reocr_debug = _flatten_character_reocr_debug(detail)
+    if not character_reocr_debug.empty:
+        character_reocr_debug_summary = character_reocr_debug.groupby(["target_field", "target_status", "debug_read"], dropna=False).agg(
+            rows=("rank", "count"),
+            high_value_rows=("rank", lambda values: int(pd.to_numeric(values, errors="coerce").le(10).sum())),
+            avg_vote_count=("vote_count", "mean"),
+        ).reset_index()
+        character_reocr_debug_summary["avg_vote_count"] = character_reocr_debug_summary["avg_vote_count"].round(2)
+    else:
+        character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
     json_payload = {
         "summary": summary_rows[0],
@@ -1111,10 +1206,15 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
             "verified_observed": int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum()),
             "unresolved": int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum()),
+            "debug_rows": int(len(character_reocr_debug)),
         },
+        "character_reocr_debug_summary": character_reocr_debug_summary.to_dict(orient="records"),
+        "character_reocr_debug": character_reocr_debug.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    reocr_debug_json_path = output_dir / "character_reocr_debug_report.json"
+    reocr_debug_json_path.write_text(json.dumps({"summary": character_reocr_debug_summary.to_dict(orient="records"), "details": character_reocr_debug.to_dict(orient="records")}, ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -1139,8 +1239,15 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(gold_fidelity_blockers).to_excel(writer, sheet_name="gold_fidelity_blockers", index=False)
         _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
+        _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
+        _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
+
+    reocr_debug_xlsx_path = output_dir / "character_reocr_debug_report.xlsx"
+    with pd.ExcelWriter(reocr_debug_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="details", index=False)
 
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
@@ -1157,6 +1264,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Report Excel: {xlsx_path}")
     print(f"Inference JSON:  {inference_json_path}")
     print(f"Inference Excel: {inference_xlsx_path}")
+    print(f"Character ReOCR Debug JSON:  {reocr_debug_json_path}")
+    print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
 
 
 

@@ -1,19 +1,19 @@
-Sentinel v0.9.5.101
+Sentinel v0.9.5.102
 
 Summary:
-- Tighten targeted Character ReOCR crop geometry for player names.
-- Add position-aware alliance-tag vote extraction inside bracketed tags.
-- Reject off-target OCR noise as unresolved instead of ambiguous evidence.
-- Add smoke tests for `[PbC]`/`[PBC]` vote selection and noise rejection.
+- Add Character ReOCR debug instrumentation instead of changing OCR behavior blindly.
+- Emit a dedicated character_reocr_debug_report.json and .xlsx with row, screenshot, crop box, crop strategy, votes, selected character and status per target.
+- Add debug metadata to CharacterVerificationEvidence: crop_strategy, text_length, expected_text, observed_text and allowed_chars.
+- Keep Operational Truth unchanged; instrumentation is diagnostic only.
 - Update docs and version metadata.
 
 Validation:
-pytest -q tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+pytest -q tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
 python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
 
 Commit command:
 git add .
-git commit -m "fix(data-guard): tighten character re-ocr crop and vote precision"
+git commit -m "feat(data-guard): instrument character re-ocr debug evidence"
 
 Tag command:
-git tag -a v0.9.5.101 -m "v0.9.5.101 Character Crop Precision Guard"
+git tag -a v0.9.5.102 -m "v0.9.5.102 Character ReOCR Debug Instrumentation"

@@ -1,15 +1,27 @@
-# Sentinel Data Guard – v0.9.5.101 Addendum
+# Sentinel Data Guard – v0.9.5.102 Addendum
 
-Data Guard continues to treat targeted character re-OCR as supporting evidence, not as automatic identity correction.
+## DataGuard rule
 
-Rules:
+DataGuard protects Operational Truth. It may collect evidence, mark uncertainty and require review, but it must not silently rewrite player or alliance identities.
 
-1. No fuzzy identity correction.
-2. No normalized identity promotion.
-3. No cache-driven validation.
-4. Character re-OCR evidence may reduce uncertainty only when it is based on the screenshot crop.
-5. If the crop vote is ambiguous or off-target, the row remains unresolved.
-6. Alliance tag case is Operational Truth.
-7. A vote outside the expected/observed/confusion-family set is noise, not evidence.
+## Character ReOCR status
 
-v0.9.5.101 specifically tightens crop and vote precision so Character ReOCR does not accidentally verify neighbouring brackets, tags or UI glyphs.
+Character ReOCR remains evidence-only. It can support validation, but it does not currently overwrite Operational Truth.
+
+v0.9.5.102 adds per-target debug evidence so the team can determine why a target did or did not verify:
+
+- row slot;
+- crop box;
+- crop strategy;
+- target glyph;
+- vote outputs;
+- selected glyph;
+- final status.
+
+## Alignment guard remains mandatory
+
+Rows marked as alignment context gaps must not enter Character Verification. A mismatch such as `K9 Thunder` vs `YUNS` is an alignment/context problem, not a glyph problem.
+
+## Current next step
+
+Use the debug report to choose the next fix. Do not promote Character ReOCR output to Operational Truth until the evidence path is proven on 551.

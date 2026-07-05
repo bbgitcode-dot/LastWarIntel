@@ -1,28 +1,56 @@
-# Project Status – Sentinel v0.9.5.101
+# Project Status – Sentinel v0.9.5.102
 
-**Current sprint:** v0.9.5.101 Character Crop Precision Guard  
-**Primary objective:** Improve the precision of targeted Character ReOCR evidence for the 551 Gold Fidelity benchmark.
+**Current sprint:** v0.9.5.102 Character ReOCR Debug Instrumentation  
+**Owner:** Proud Owner  
+**Copilot:** Mimir
 
-## Current state
+## Current strategic position
 
-The 551 pipeline remains structurally stable: recall is 100%, missing rows are 0, and bad matches are 0. v0.9.5.100 correctly separated alignment context gaps from true character drift. The remaining blocker is screenshot-faithful identity display: player names and alliance tags are still not exact enough for Gold Fidelity.
+Sentinel has moved from broad OCR acquisition into 551 Gold Fidelity validation. The core DataGuard direction remains correct:
 
-## v0.9.5.101 result
+- Quarantine over false Operational Truth.
+- Screenshot truth over filename/upload-order assumptions.
+- Alignment gaps must not be treated as character drift.
+- Cache remains a performance tool only and is not part of data-quality validation.
 
-v0.9.5.101 tightens the evidence layer. It does not guess or canonicalize names. It improves crop placement and vote interpretation so Character ReOCR is less likely to read alliance tags, brackets, or neighbouring glyphs when it should verify a specific player-name or alliance-tag character.
+## Latest known 551 validation state
 
-## Still not Gold-ready
+The latest validator run before this patch showed:
 
-This patch does not claim that Server 551 is Gold-ready. It should reduce false/dirty evidence and make the next validator output more trustworthy. Gold remains blocked until expected glyph confirmations rise and unresolved/noisy crops shrink.
+```text
+ground_truth_rows = 50
+ocr_rows = 101
+matched_rows = 50
+missing_rows = 0
+bad_matches = 0
+character_reocr_target_count = 183
+character_reocr_verified_expected = 18
+character_reocr_verified_observed = 11
+character_reocr_unresolved = 150
+gold_fidelity_ready = False
+```
 
-## Next focus
+v0.9.5.101 did not materially improve the result. That means the next productive step is not another blind crop-size adjustment, but visibility into the ReOCR path.
 
-Run the 551 Ground Truth validator and compare:
+## v0.9.5.102 result
 
-- `character_reocr_verified_expected`
-- `character_reocr_verified_observed`
-- `character_reocr_unresolved`
-- `player_name_display_drift_rows`
-- `alliance_tag_display_drift_rows`
+v0.9.5.102 adds Character ReOCR instrumentation:
 
-Priority examples remain `Joncollins21`/`Joncollinszl`, `[PbC]`/`[PBC]`, `PBC`/`PC`, `Mizzenmast`/`Mzzenmast`, and `Pumpkin G`/`Pumpkin 6`.
+- a dedicated debug JSON report;
+- a dedicated debug Excel report;
+- crop and vote metadata per target;
+- explicit status categories per target.
+
+This sprint is intentionally diagnostic. It does not claim 551 Gold readiness.
+
+## Next decision point
+
+After running the validator, inspect `benchmarks/character_reocr_debug_report.xlsx` and determine which failure class dominates:
+
+1. Wrong row slot.
+2. Wrong crop geometry.
+3. Correct crop but weak OCR votes.
+4. Correct OCR votes but wrong vote selection.
+5. CJK/Hangul glyph limitation in EasyOCR.
+
+Only then should v0.9.5.103 apply the next targeted fix.

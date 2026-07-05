@@ -89,3 +89,8 @@ New report fields include:
 - `failure_summary` in JSON and Excel output
 
 This turns Ground Truth validation from a historical benchmark into a transfer-phase quality gate.
+
+
+## v0.9.5.102 Character ReOCR debug outputs
+
+The validator now writes `character_reocr_debug_report.json` and `character_reocr_debug_report.xlsx`. These files flatten every Character ReOCR target so the team can inspect screenshot, row slot, crop box, crop strategy, raw OCR vote text, selected glyph and final target status. They are diagnostic only and do not modify Operational Truth.

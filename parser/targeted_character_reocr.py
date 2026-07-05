@@ -64,6 +64,11 @@ class CharacterVerificationEvidence:
     confidence: float = 0.0
     votes: tuple[CharacterVote, ...] = field(default_factory=tuple)
     reason: str = ""
+    crop_strategy: str = ""
+    text_length: int = 0
+    expected_text: str = ""
+    observed_text: str = ""
+    allowed_chars: str = ""
 
     @property
     def supports_expected(self) -> bool:
@@ -281,15 +286,16 @@ def verify_target_from_screenshot(
     identity context.
     """
     if Image is None:
-        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="pillow_unavailable")
+        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="pillow_unavailable", expected_text=expected_text, observed_text=observed_text)
     if row_slot is None:
-        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="missing_row_slot")
+        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="missing_row_slot", expected_text=expected_text, observed_text=observed_text)
     if not screenshot_path.exists():
-        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="screenshot_missing")
+        return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="screenshot_missing", expected_text=expected_text, observed_text=observed_text)
 
     image = Image.open(screenshot_path)
     text_for_field = expected_text if target.expected else observed_text
-    box = _field_box(image.size, row_slot, target.field, text_length=len(text_for_field or observed_text or target.observed or ""), position=target.position)
+    text_length = len(text_for_field or observed_text or target.observed or "")
+    box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position)
     crop = image.crop(box)
     votes: list[CharacterVote] = []
     for variant_name, variant_image in _image_variants(crop):
@@ -327,6 +333,11 @@ def verify_target_from_screenshot(
         confidence=confidence,
         votes=tuple(votes),
         reason="targeted_crop_reocr",
+        crop_strategy="alliance_tag_position" if target.field == "alliance_tag" else "player_name_after_tag",
+        text_length=text_length,
+        expected_text=expected_text,
+        observed_text=observed_text,
+        allowed_chars="".join(sorted(allowed)),
     )
 
 
