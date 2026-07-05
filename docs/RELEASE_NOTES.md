@@ -1,3 +1,31 @@
+## v0.9.5.109 – Glyph Verification Engine Gate
+
+v0.9.5.108 proved that telemetry works and showed the next architectural issue: Character ReOCR was spending large CPU time on broad display drift that local glyph verification cannot safely solve. v0.9.5.109 changes the validator from “re-read every visible difference” to “re-read only true local glyph ambiguities”. This keeps the solution independent of historical player databases and focused on the current screenshot.
+
+### Changed
+- Added a local glyph target filter before Character ReOCR.
+- Keeps high-value confusable cases such as `Joncollinszl` → `Joncollins21` (`z/2`, `l/1`) and case-sensitive alliance tags such as `PbC` → `PBC`.
+- Skips non-local broad drift such as Hangul/CJK replacement spans, UNKNOWN-expanded names, and insertion/deletion tails that cannot be proven by a single glyph crop.
+- Adds `character_reocr_skipped_nonlocal` to validation summary, category summary, failure summary, and JSON reports.
+- Keeps DataGuard conservative: skipped non-local drift remains a Gold Fidelity blocker; it is not auto-corrected and not silently accepted as exact identity.
+
+### Intent
+Sentinel must not depend on historical identity memory to read first-contact screenshots from the 549–676 transfer bucket or the broader 2000+ server universe. The path to V1 is therefore local proof: correct row, correct field, correct glyph. v0.9.5.109 narrows the expensive glyph verifier to the subset where that local proof is realistic.
+
+### Validation
+```text
+pytest -q tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_debug_102.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+zip integrity OK
+```
+
+### Commit
+```bash
+git add .
+git commit -m "feat(data-guard): gate reocr to local glyph verification"
+git tag -a v0.9.5.109 -m "v0.9.5.109 Glyph Verification Engine Gate"
+```
+
 ## v0.9.5.108 – Runtime JSON Serialization Hotfix
 
 v0.9.5.107 correctly added runtime telemetry, but the first long CPU-only validator run exposed a report-writing bug: pandas/numpy scalar values such as `int64` could enter `runtime_debug_report.json` through fields like `slowest_target_rank`. The validation itself could complete, but the process crashed while serializing the runtime report.

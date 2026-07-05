@@ -52,3 +52,8 @@ v0.9.5.108 keeps the v0.9.5.107 telemetry design but hardens report output so lo
 ## v0.9.5.107 – Telemetry checkpoint
 
 Before scaling Gold Fidelity beyond the 551 benchmark, Sentinel needs explainable runtime behavior. v0.9.5.107 adds timing telemetry at validator and Character ReOCR target level. The next milestone is to use this report to reduce repeated OCR calls without re-enabling cache prematurely, while continuing to harden alliance-tag case fidelity.
+
+
+## v0.9.5.109 – V1 identity prerequisite
+
+V1 cannot depend on prior knowledge of every player across 2000+ servers. v0.9.5.109 therefore reframes the path from historical identity lookup to screenshot-local glyph proof. The next V1 milestone is to prove that unknown first-contact names can be stabilized through targeted local glyph verification while non-local drift remains safely blocked.

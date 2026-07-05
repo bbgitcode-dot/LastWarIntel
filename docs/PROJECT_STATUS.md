@@ -98,3 +98,10 @@ New runtime outputs:
 - `benchmarks/runtime_debug_report.xlsx`
 
 The runtime report separates loading, validation, report writing, OCR reader initialization, and Character ReOCR target timing. This should make the next slow run actionable instead of opaque.
+
+
+## v0.9.5.109 Update – Glyph Verification Engine Gate
+
+The v0.9.5.108 runtime report showed that long validator runs were dominated by Character ReOCR targets, many of which were not true local glyph problems. v0.9.5.109 adds a gate before ReOCR: only confusable/case-sensitive local glyph targets are reread. Broad display drift remains visible as a blocker but is no longer treated as something a single glyph crop can safely prove.
+
+This keeps the architecture aligned with the transfer-bucket requirement: Sentinel must read first-contact screenshots without relying on a historical player database. The current-screenshot proof path is now: row alignment → field alignment → local glyph verification. If a target is not local, DataGuard keeps it blocked instead of wasting OCR or guessing.

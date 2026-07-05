@@ -35,7 +35,7 @@ from parser.name_normalization import normalize_player_name, normalized_name_sim
 from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
 from parser.character_verification import analyze_player_name_characters, analyze_alliance_tag_characters, merge_verification_plans
-from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, summarize_evidence
+from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, summarize_evidence, filter_local_glyph_targets
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
 from parser.evidence_resolver import find_same_server_evidence_candidate
@@ -117,6 +117,7 @@ class ValidationSummary:
     character_reocr_verified_expected: int
     character_reocr_verified_observed: int
     character_reocr_unresolved: int
+    character_reocr_skipped_nonlocal: int
     score: float
 
 
@@ -751,7 +752,16 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         if character_verification_candidate and screenshots_dir is not None and gt_screenshot:
             evidence_items = []
             screenshot_path = screenshots_dir / gt_screenshot
-            for target in parse_reocr_targets(character_verification_plan.to_json()):
+            raw_targets = parse_reocr_targets(character_verification_plan.to_json())
+            local_targets = filter_local_glyph_targets(
+                raw_targets,
+                expected_name=expected_name,
+                observed_name=actual_name,
+                expected_alliance=expected_alliance_display,
+                observed_alliance=actual_alliance_display,
+            )
+            skipped_targets = max(0, len(raw_targets) - len(local_targets))
+            for target in local_targets:
                 expected_text = expected_name if target.field == "player_name" else expected_alliance_display
                 observed_text = actual_name if target.field == "player_name" else actual_alliance_display
                 evidence_items.append(verify_target_from_screenshot(
@@ -763,6 +773,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                     reader=character_reocr_reader,
                 ))
             reocr_summary = summarize_evidence(evidence_items)
+            reocr_summary["skipped_nonlocal"] = skipped_targets
             reocr_evidence_json = json.dumps([item.to_dict() for item in evidence_items], ensure_ascii=False)
             if reocr_summary["targets"] == 0:
                 reocr_status = "no_targets"
@@ -845,6 +856,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "character_reocr_verified_expected": reocr_summary.get("verified_expected", 0),
             "character_reocr_verified_observed": reocr_summary.get("verified_observed", 0),
             "character_reocr_unresolved": reocr_summary.get("unresolved", 0),
+            "character_reocr_skipped_nonlocal": reocr_summary.get("skipped_nonlocal", 0),
             "character_reocr_evidence": reocr_evidence_json,
             "ground_truth_row_slot": row_slot,
             "name_category": gt_row["name_category"],
@@ -921,6 +933,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     character_reocr_verified_expected = int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum())
     character_reocr_verified_observed = int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum())
     character_reocr_unresolved = int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum())
+    character_reocr_skipped_nonlocal = int(detail.get("character_reocr_skipped_nonlocal", pd.Series(dtype=int)).sum())
     gold_fidelity_ready = bool(
         matched == total
         and bad_matches == 0
@@ -1002,6 +1015,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         character_reocr_verified_expected=character_reocr_verified_expected,
         character_reocr_verified_observed=character_reocr_verified_observed,
         character_reocr_unresolved=character_reocr_unresolved,
+        character_reocr_skipped_nonlocal=character_reocr_skipped_nonlocal,
         score=score,
     )
 
@@ -1028,6 +1042,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
         character_reocr_targets=("character_reocr_targets", "sum"),
         character_reocr_verified_expected=("character_reocr_verified_expected", "sum"),
+        character_reocr_skipped_nonlocal=("character_reocr_skipped_nonlocal", "sum"),
     ).reset_index()
     category["avg_name_similarity"] = category["avg_name_similarity"].round(4)
 
@@ -1256,6 +1271,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
         character_reocr_targets=("character_reocr_targets", "sum"),
         character_reocr_verified_expected=("character_reocr_verified_expected", "sum"),
+        character_reocr_skipped_nonlocal=("character_reocr_skipped_nonlocal", "sum"),
     ).reset_index()
 
     json_path = output_dir / "ground_truth_validation_report.json"
@@ -1308,6 +1324,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
             "verified_observed": int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum()),
             "unresolved": int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum()),
+            "skipped_nonlocal": int(detail.get("character_reocr_skipped_nonlocal", pd.Series(dtype=int)).sum()),
             "debug_rows": int(len(character_reocr_debug)),
         },
         "character_reocr_debug_summary": character_reocr_debug_summary.to_dict(orient="records"),

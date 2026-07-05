@@ -1,20 +1,19 @@
-Sentinel v0.9.5.103
+Sentinel v0.9.5.109
 
 Summary:
-- Correct targeted Character ReOCR row geometry for 551-style window screenshots around 627x915.
-- Prevent the 600x1064 normalized row pitch from shifting ReOCR crops upward into neighbouring rows.
-- Add crop-anchor diagnostics to CharacterVerificationEvidence: crop_anchor_status, crop_anchor_text and crop_diagnostic.
-- Extend character_reocr_debug_report with field-anchor diagnostics such as crop_field_mismatch, crop_no_text_detected and vote_outside_allowed_set.
-- Keep Operational Truth unchanged; ReOCR remains evidence-only.
+- Add local glyph target gating before Character ReOCR.
+- Keep Joncollins-style 2/z and 1/l targets and case-sensitive alliance tag targets.
+- Skip broad non-local Unicode/UNKNOWN drift so the validator does not waste OCR or imply solvable glyph proof where none exists.
+- Add character_reocr_skipped_nonlocal to reports.
 - Update docs and version metadata.
 
 Validation:
-pytest -q tests/smoke/test_character_reocr_103.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+pytest -q tests/smoke/test_glyph_verification_109.py tests/smoke/test_targeted_character_reocr_geometry_106.py tests/smoke/test_character_reocr_debug_102.py
 python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
 
 Commit command:
 git add .
-git commit -m "fix(data-guard): correct reocr row geometry and crop diagnostics"
+git commit -m "feat(data-guard): gate reocr to local glyph verification"
 
 Tag command:
-git tag -a v0.9.5.103 -m "v0.9.5.103 ReOCR Row Slot and Field Anchor Correction"
+git tag -a v0.9.5.109 -m "v0.9.5.109 Glyph Verification Engine Gate"

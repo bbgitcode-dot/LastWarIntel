@@ -291,6 +291,71 @@ def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[in
     return variants
 
 
+
+def is_local_glyph_target(target: ReOcrTarget, *, expected_text: str = "", observed_text: str = "") -> bool:
+    """Return True when a target is safe and useful for local glyph re-OCR.
+
+    v0.9.5.109 narrows Character ReOCR to the problem it can actually solve:
+    a small ambiguous glyph in an otherwise aligned identity.  It must not run
+    expensive OCR for broad display drift such as a Hangul name being read as
+    CJK, or an UNKNOWN row expanding into many synthetic target positions.  Those
+    cases remain DataGuard blockers / context gaps, not local glyph fixes.
+    """
+    field = str(target.field or "")
+    expected = str(target.expected or "")
+    observed = str(target.observed or "")
+    group = str(target.group or "")
+    reason = str(target.reason or "")
+
+    if field == "alliance_tag":
+        # Tags are short and strategically important.  Re-read case, missing,
+        # and confusable differences, but only while we still have a plausible
+        # tag field rather than an entire missing row.
+        if not expected and not observed:
+            return False
+        if len(str(expected_text or "")) > 5 or len(str(observed_text or "")) > 5:
+            return False
+        return True
+
+    if field != "player_name":
+        return False
+
+    # A local glyph verifier needs at least one visible target glyph.  Empty-vs-
+    # long insertion/deletion spans usually indicate segmentation/string drift,
+    # not a single character ambiguity.
+    if not expected or not observed:
+        return False
+
+    # Primary target: classical OCR confusion families such as 2/z or 1/l.
+    if group:
+        return True
+
+    # Secondary target: same ASCII letter with different case.  This matters for
+    # player names too, but we keep it limited to one glyph and avoid general
+    # Unicode replacement attempts.
+    if len(expected) == len(observed) == 1 and expected.isascii() and observed.isascii():
+        if expected.lower() == observed.lower() and expected != observed:
+            return True
+
+    return False
+
+
+def filter_local_glyph_targets(targets: Iterable[ReOcrTarget], *, expected_name: str = "", observed_name: str = "", expected_alliance: str = "", observed_alliance: str = "") -> list[ReOcrTarget]:
+    """Filter a target plan to local glyph-verification work only."""
+    filtered: list[ReOcrTarget] = []
+    seen: set[tuple[str, int, str, str, str]] = set()
+    for target in targets:
+        expected_text = expected_name if target.field == "player_name" else expected_alliance
+        observed_text = observed_name if target.field == "player_name" else observed_alliance
+        if not is_local_glyph_target(target, expected_text=expected_text, observed_text=observed_text):
+            continue
+        key = (target.field, target.position, target.expected, target.observed, target.group)
+        if key in seen:
+            continue
+        seen.add(key)
+        filtered.append(target)
+    return filtered
+
 def _status_rank(status: str) -> int:
     return {"verified_expected": 400, "verified_observed": 300, "ambiguous_vote": 200, "unresolved": 0}.get(status, 0)
 

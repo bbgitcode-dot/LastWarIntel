@@ -77,6 +77,7 @@ def test_write_report_emits_character_reocr_debug_files(tmp_path: Path):
         "character_reocr_verified_expected": 0,
         "character_reocr_verified_observed": 0,
         "character_reocr_unresolved": 1,
+        "character_reocr_skipped_nonlocal": 0,
         "character_verification_reasons": "same_confusion_family_difference",
         "identity_risk_reasons": "targeted_character_verification_required",
         "alignment_context_gap": False,
@@ -105,7 +106,7 @@ def test_write_report_emits_character_reocr_debug_files(tmp_path: Path):
         alliance_tag_display_drift_rows=0, power_display_drift_rows=0, rank_display_drift_rows=0,
         gold_fidelity_ready=False, character_reocr_target_count=1,
         character_reocr_verified_expected=0, character_reocr_verified_observed=0,
-        character_reocr_unresolved=1, score=0.0,
+        character_reocr_unresolved=1, character_reocr_skipped_nonlocal=0, score=0.0,
     )
 
     write_report(summary, detail, category, tmp_path)
