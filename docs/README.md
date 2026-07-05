@@ -1,6 +1,6 @@
 # Sentinel Documentation
 
-Current documentation release: v0.9.5.107.
+Current documentation release: v0.9.5.108.
 
 Start with:
 

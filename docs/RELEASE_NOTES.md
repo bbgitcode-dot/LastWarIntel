@@ -1,3 +1,27 @@
+## v0.9.5.108 – Runtime JSON Serialization Hotfix
+
+v0.9.5.107 correctly added runtime telemetry, but the first long CPU-only validator run exposed a report-writing bug: pandas/numpy scalar values such as `int64` could enter `runtime_debug_report.json` through fields like `slowest_target_rank`. The validation itself could complete, but the process crashed while serializing the runtime report.
+
+Changes:
+- Adds a JSON-safe conversion layer for runtime telemetry payloads.
+- Converts pandas/numpy scalars, tuples, lists, dictionaries, and NaN-like values before writing `runtime_debug_report.json`.
+- Keeps runtime telemetry observational only; it does not change matching, inference, ReOCR voting, or Operational Truth.
+- Preserves the `.107` alliance-tag and timing instrumentation behavior.
+
+Validation:
+```text
+py_compile OK
+runtime payload JSON serialization smoke OK
+zip integrity OK
+```
+
+Commit:
+```bash
+git add .
+git commit -m "fix(data-guard): serialize runtime telemetry safely"
+git tag -a v0.9.5.108 -m "v0.9.5.108 Runtime Telemetry Serialization Hotfix"
+```
+
 ## v0.9.5.107 – Alliance Tag Fidelity + Runtime Telemetry
 
 v0.9.5.106 finally proved that calibrated Character ReOCR can recover the Joncollins tail digits (`2` and `1`) from screenshot evidence, but alliance-tag case fidelity remains a blocker (`PbC` still often appears as `PBC`). v0.9.5.107 keeps the conservative DataGuard posture and adds two focused improvements.

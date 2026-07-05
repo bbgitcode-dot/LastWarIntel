@@ -83,6 +83,11 @@ The v0.9.5.105 validation run showed a regression: matching and DataGuard remain
 This sprint is still proof-first: no identity is corrected unless the screenshot crop verifies the expected glyph. Gold Fidelity remains blocked until exact player names and case-sensitive alliance tags can be proven from pixels.
 
 
+
+## v0.9.5.108 Update – Runtime Telemetry Serialization Hotfix
+
+The first v0.9.5.107 validator run proved that runtime telemetry is now active, but it also exposed a late report-writing crash: pandas/numpy scalar values from the runtime summary were not JSON-serializable. v0.9.5.108 is a narrow hotfix that makes runtime telemetry JSON-safe without changing matching, inference, ReOCR decisions, or Operational Truth.
+
 ## v0.9.5.107 Update – Runtime Telemetry and Tag Fidelity
 
 The latest validation showed strong progress in targeted ReOCR: the Joncollins21 player-name tail digits can now be verified as expected-character evidence. The remaining high-value blocker is alliance-tag display fidelity, especially case-sensitive tags such as `PbC` versus `PBC`. v0.9.5.107 therefore adds full-tag crop candidates and introduces runtime telemetry so long CPU-only runs can be explained by phase and by Character ReOCR target.

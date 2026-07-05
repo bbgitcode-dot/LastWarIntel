@@ -1138,6 +1138,29 @@ def _sanitize_frame(df: pd.DataFrame) -> pd.DataFrame:
     return df.map(_sanitize_cell)
 
 
+
+def _json_safe(value: Any) -> Any:
+    """Convert pandas/numpy scalar values into JSON-serializable Python types."""
+    if isinstance(value, dict):
+        return {str(_json_safe(k)): _json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, tuple):
+        return [_json_safe(v) for v in value]
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except (TypeError, ValueError):
+            pass
+    return value
+
 def _build_runtime_debug_report(base_metrics: dict[str, float], character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame]:
     """Build runtime diagnostics for slow validator/ReOCR runs.
 
@@ -1178,9 +1201,9 @@ def _build_runtime_debug_report(base_metrics: dict[str, float], character_reocr_
             slow_idx = work["target_total_ms"].idxmax()
             slow_row = work.loc[slow_idx]
             reocr_summary["slowest_target_ms"] = round(float(slow_row.get("target_total_ms", 0.0)), 3)
-            reocr_summary["slowest_target_rank"] = slow_row.get("rank")
+            reocr_summary["slowest_target_rank"] = _json_safe(slow_row.get("rank"))
             reocr_summary["slowest_target_field"] = slow_row.get("target_field", "")
-            reocr_summary["slowest_target_position"] = slow_row.get("target_position")
+            reocr_summary["slowest_target_position"] = _json_safe(slow_row.get("target_position"))
         group_cols = ["target_field", "target_status", "debug_read"]
         grouped = work.groupby(group_cols, dropna=False).agg(
             rows=("rank", "count"),
@@ -1337,7 +1360,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     runtime_json_path = output_dir / "runtime_debug_report.json"
     runtime_xlsx_path = output_dir / "runtime_debug_report.xlsx"
     runtime_payload, runtime_phase_df = _build_runtime_debug_report(runtime_metrics, character_reocr_debug)
-    runtime_json_path.write_text(json.dumps(runtime_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    runtime_json_path.write_text(json.dumps(_json_safe(runtime_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     with pd.ExcelWriter(runtime_xlsx_path, engine="openpyxl") as writer:
         pd.DataFrame([runtime_payload.get("summary", {})]).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(runtime_phase_df).to_excel(writer, sheet_name="phases", index=False)
