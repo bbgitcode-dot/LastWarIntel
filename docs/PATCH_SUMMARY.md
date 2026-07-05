@@ -46,3 +46,8 @@ python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.p
 ## Version
 
 `0.9.5.102`
+
+## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
+
+The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
+

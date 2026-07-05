@@ -1,19 +1,20 @@
-Sentinel v0.9.5.102
+Sentinel v0.9.5.103
 
 Summary:
-- Add Character ReOCR debug instrumentation instead of changing OCR behavior blindly.
-- Emit a dedicated character_reocr_debug_report.json and .xlsx with row, screenshot, crop box, crop strategy, votes, selected character and status per target.
-- Add debug metadata to CharacterVerificationEvidence: crop_strategy, text_length, expected_text, observed_text and allowed_chars.
-- Keep Operational Truth unchanged; instrumentation is diagnostic only.
+- Correct targeted Character ReOCR row geometry for 551-style window screenshots around 627x915.
+- Prevent the 600x1064 normalized row pitch from shifting ReOCR crops upward into neighbouring rows.
+- Add crop-anchor diagnostics to CharacterVerificationEvidence: crop_anchor_status, crop_anchor_text and crop_diagnostic.
+- Extend character_reocr_debug_report with field-anchor diagnostics such as crop_field_mismatch, crop_no_text_detected and vote_outside_allowed_set.
+- Keep Operational Truth unchanged; ReOCR remains evidence-only.
 - Update docs and version metadata.
 
 Validation:
-pytest -q tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+pytest -q tests/smoke/test_character_reocr_103.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
 python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
 
 Commit command:
 git add .
-git commit -m "feat(data-guard): instrument character re-ocr debug evidence"
+git commit -m "fix(data-guard): correct reocr row geometry and crop diagnostics"
 
 Tag command:
-git tag -a v0.9.5.102 -m "v0.9.5.102 Character ReOCR Debug Instrumentation"
+git tag -a v0.9.5.103 -m "v0.9.5.103 ReOCR Row Slot and Field Anchor Correction"

@@ -1,3 +1,35 @@
+## v0.9.5.103 – ReOCR Row Slot & Field Anchor Correction
+
+v0.9.5.103 addresses the main finding from the v0.9.5.102 debug reports: Character ReOCR was often looking at the wrong vertical row or at a crop without the expected field anchor. This was visible when `[PbC]` targets sometimes read `[IVE]`, proving that the blocker was crop localization rather than raw OCR strength.
+
+### Changed
+
+- Added window-screenshot row geometry for 551-style screenshots around 627x915 instead of forcing the older 600x1064 normalized row pitch.
+- Character ReOCR now records crop-anchor diagnostics: `crop_anchor_status`, `crop_anchor_text` and `crop_diagnostic`.
+- The debug report can now distinguish `crop_field_mismatch`, `crop_no_text_detected` and `vote_outside_allowed_set` instead of only `no_votes` / `no_selected_char`.
+- Alliance-tag and player-name crops remain evidence-only. No automatic identity correction is performed.
+
+### Guardrails
+
+- Operational Truth is unchanged.
+- Alignment context gaps remain excluded from Character Verification.
+- Cache behavior is untouched and remains unsuitable for data-quality validation unless explicitly requested.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_character_reocr_103.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_debug_102.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): correct reocr row geometry and crop diagnostics"
+git tag -a v0.9.5.103 -m "v0.9.5.103 ReOCR Row Slot and Field Anchor Correction"
+```
+
 ## v0.9.5.102 – Character ReOCR Debug Instrumentation
 
 v0.9.5.102 adds diagnostic instrumentation for the 551 Gold Fidelity sprint. After v0.9.5.101 failed to materially improve Character ReOCR validation, this patch stops guessing at crop fixes and makes the ReOCR path inspectable target by target.

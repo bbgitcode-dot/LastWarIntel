@@ -26,3 +26,8 @@ The current goal is not full 128-server intelligence. The current goal is to pro
 ## Current blocker
 
 Character ReOCR currently generates many targets but leaves too many unresolved. The next patch must be selected based on `character_reocr_debug_report`, not guesswork.
+
+## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
+
+The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
+

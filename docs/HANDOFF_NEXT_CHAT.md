@@ -52,3 +52,8 @@ v0.9.5.103 should be chosen after reviewing the debug report. Likely options:
 4. OCR-provider strategy if crops are correct but EasyOCR cannot read the target glyphs.
 
 Do not start Entity Intelligence yet. Data Quality comes first.
+
+## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
+
+The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
+

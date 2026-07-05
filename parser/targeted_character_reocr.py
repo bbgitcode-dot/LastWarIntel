@@ -65,6 +65,9 @@ class CharacterVerificationEvidence:
     votes: tuple[CharacterVote, ...] = field(default_factory=tuple)
     reason: str = ""
     crop_strategy: str = ""
+    crop_anchor_status: str = ""
+    crop_anchor_text: str = ""
+    crop_diagnostic: str = ""
     text_length: int = 0
     expected_text: str = ""
     observed_text: str = ""
@@ -104,59 +107,94 @@ def parse_reocr_targets(value: Any) -> list[ReOcrTarget]:
 
 
 def _ranking_row_box(image_size: tuple[int, int], row_slot: int) -> tuple[int, int, int, int]:
-    """Approximate one visible Last War row in the normalized screenshot.
+    """Approximate one visible Last War row in a screenshot.
 
-    Sentinel normalizes screenshots to 600x1064 by default.  The row geometry is
-    intentionally approximate and padded; the character crop is refined inside
-    the field box.
+    The 551 Gold Fidelity debug run exposed an important geometry bug: some
+    supplied screenshots are not normalized to Sentinel's 600x1064 baseline.
+    They are visible-window captures around 627x915.  Applying the 1064-based
+    row pitch to those images shifts crops upward by roughly one row; this is
+    why a `[PbC]` target could read `[IVE]` from the neighbouring row.
+
+    Keep the old normalized geometry for tall images, but use a window-capture
+    geometry for short/wide screenshots.  This is still conservative evidence;
+    it only changes where the validation crop looks, not Operational Truth.
     """
     width, height = image_size
-    scale_x = width / 600.0
+    if width <= 0 or height <= 0:
+        return 0, 0, width, height
+
+    aspect = height / max(width, 1)
+    if aspect < 1.60:
+        # Observed 551 screenshots: 627x915, first row center near y=176 and
+        # row pitch near 113px.  Scale both dimensions from that baseline.
+        scale_y = height / 915.0
+        center_y = (176.0 + max(row_slot, 0) * 113.0) * scale_y
+        top = int(max(0, center_y - 48 * scale_y))
+        bottom = int(min(height, center_y + 50 * scale_y))
+        return 0, top, width, bottom
+
+    # Normalized/importer geometry used by the original targeted ReOCR path.
     scale_y = height / 1064.0
     center_y = (170.0 + max(row_slot, 0) * 83.0) * scale_y
     top = int(max(105 * scale_y, center_y - 36 * scale_y))
     bottom = int(min(height, center_y + 42 * scale_y))
     return 0, top, width, bottom
 
-
 def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_length: int, position: int) -> tuple[int, int, int, int]:
     width, height = image_size
     scale_x = width / 600.0
     _x0, y0, _x1, y1 = _ranking_row_box(image_size, row_slot)
-    # Based on normalized Last War ranking layout: rank at ~55px, identity
-    # column starts around 190px, power column around 455px.
-    if field == "alliance_tag":
-        # Tags are short and sit at the beginning of the identity column.
-        # Keep the crop on the visible bracketed tag, but let vote extraction
-        # pick the requested tag character from inside brackets.
-        left = 188 * scale_x
-        right = 260 * scale_x
-        total_chars = max(text_length, 3)
-        char_width = max((right - left) / max(total_chars + 2, 1), 7 * scale_x)
-        cx = left + (min(max(position + 1, 0), max(total_chars + 1, 0)) + 0.5) * char_width
-        pad_x = max(14 * scale_x, char_width * 1.8)
+    aspect = height / max(width, 1)
+
+    if aspect < 1.60:
+        # Visible-window screenshots have a slightly wider layout than the
+        # 600x1064 normalized baseline.  Use coordinates measured from the 551
+        # screen pack: identity text begins after the avatar around x=210.
+        if field == "alliance_tag":
+            left = 206 * scale_x
+            right = 275 * scale_x
+            total_chars = max(text_length, 3)
+            char_width = max((right - left) / max(total_chars + 2, 1), 7 * scale_x)
+            cx = left + (min(max(position + 1, 0), max(total_chars + 1, 0)) + 0.5) * char_width
+            pad_x = max(12 * scale_x, char_width * 1.7)
+        else:
+            # Player text starts immediately after the bracketed tag.  Keep a
+            # wider crop for single glyphs such as Joncollins[2/1], but cap it
+            # before the power column.
+            left = 278 * scale_x
+            right = 470 * scale_x
+            total_chars = max(text_length, 1)
+            char_width = max((right - left) / max(total_chars, 1), 7 * scale_x)
+            cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+            pad_x = max(16 * scale_x, char_width * 1.8)
+        top = max(0, int(y0 + 8 * (height / 915.0)))
+        bottom = min(height, int(y1 - 12 * (height / 915.0)))
     else:
-        # Player names begin after the alliance tag.  Older .100 geometry used
-        # the full identity column from ~190px, so position-0 player crops often
-        # captured [TAG] instead of the name.  Start after the tag and keep a
-        # moderately wide crop for fragile glyphs without drifting into the
-        # power column.
-        left = 258 * scale_x
-        right = 448 * scale_x
-        total_chars = max(text_length, 1)
-        char_width = max((right - left) / max(total_chars, 1), 6 * scale_x)
-        cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
-        pad_x = max(12 * scale_x, char_width * 1.5)
-    # Text baseline is usually in the upper half of the row; keep generous y pad.
-    top = max(0, int(y0 + 4 * (height / 1064.0)))
-    bottom = min(height, int(y1 - 10 * (height / 1064.0)))
+        # Based on normalized Last War ranking layout: rank at ~55px, identity
+        # column starts around 190px, power column around 455px.
+        if field == "alliance_tag":
+            left = 188 * scale_x
+            right = 260 * scale_x
+            total_chars = max(text_length, 3)
+            char_width = max((right - left) / max(total_chars + 2, 1), 7 * scale_x)
+            cx = left + (min(max(position + 1, 0), max(total_chars + 1, 0)) + 0.5) * char_width
+            pad_x = max(14 * scale_x, char_width * 1.8)
+        else:
+            left = 258 * scale_x
+            right = 448 * scale_x
+            total_chars = max(text_length, 1)
+            char_width = max((right - left) / max(total_chars, 1), 6 * scale_x)
+            cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+            pad_x = max(12 * scale_x, char_width * 1.5)
+        top = max(0, int(y0 + 4 * (height / 1064.0)))
+        bottom = min(height, int(y1 - 10 * (height / 1064.0)))
+
     return (
         int(max(0, cx - pad_x)),
         int(top),
         int(min(width, cx + pad_x)),
         int(bottom),
     )
-
 
 def _image_variants(image):
     if ImageOps is None or ImageEnhance is None or ImageFilter is None:
@@ -270,6 +308,43 @@ def _select_vote(votes: Iterable[CharacterVote]) -> tuple[str, float]:
     return selected, round(confidence, 4)
 
 
+def _text_contains_anchor(text: str, expected_text: str, observed_text: str, field: str) -> bool:
+    clean = str(text or "")
+    if not clean:
+        return False
+    if field == "alliance_tag":
+        anchors = [_tag_content(expected_text), _tag_content(observed_text), expected_text, observed_text]
+    else:
+        anchors = [expected_text, observed_text]
+        # A short Latin core is enough for diagnostics without accepting it as a
+        # verified character vote.
+        for value in (expected_text, observed_text):
+            latin = "".join(ch for ch in str(value) if ch.isascii() and (ch.isalnum() or ch.isspace())).strip()
+            if len(latin) >= 4:
+                anchors.append(latin)
+    return any(anchor and str(anchor) in clean for anchor in anchors)
+
+
+def _classify_crop_anchor(votes: list[CharacterVote], target: ReOcrTarget, expected_text: str, observed_text: str) -> tuple[str, str, str]:
+    """Classify whether OCR text appears to come from the intended row/field.
+
+    This is diagnostic only. It does not turn an OCR vote into Operational Truth.
+    It helps distinguish a genuine `no_votes` character miss from a row-slot or
+    field-anchor error such as `[PbC]` crops reading `[IVE]`.
+    """
+    texts = [vote.text for vote in votes if vote.text]
+    if not texts:
+        return "no_text", "", "crop_no_text_detected"
+    joined = " | ".join(texts)
+    if any(_text_contains_anchor(text, expected_text, observed_text, target.field) for text in texts):
+        return "anchor_seen", joined, "crop_anchor_ok"
+    if target.field == "alliance_tag":
+        bracketed = [_tag_content(text) for text in texts if "[" in text or "]" in text]
+        if bracketed:
+            return "field_mismatch", joined, "crop_field_mismatch"
+    return "text_without_anchor", joined, "vote_outside_allowed_set"
+
+
 def verify_target_from_screenshot(
     *,
     screenshot_path: Path,
@@ -304,6 +379,7 @@ def verify_target_from_screenshot(
             votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=char))
 
     selected, confidence = _select_vote(votes)
+    crop_anchor_status, crop_anchor_text, crop_diagnostic = _classify_crop_anchor(votes, target, expected_text, observed_text)
     # Only accept a vote that is either the expected glyph, the observed glyph,
     # or an explicitly configured confusion-family member.  Everything else is
     # unresolved noise, not evidence.
@@ -334,6 +410,9 @@ def verify_target_from_screenshot(
         votes=tuple(votes),
         reason="targeted_crop_reocr",
         crop_strategy="alliance_tag_position" if target.field == "alliance_tag" else "player_name_after_tag",
+        crop_anchor_status=crop_anchor_status,
+        crop_anchor_text=crop_anchor_text,
+        crop_diagnostic=crop_diagnostic,
         text_length=text_length,
         expected_text=expected_text,
         observed_text=observed_text,

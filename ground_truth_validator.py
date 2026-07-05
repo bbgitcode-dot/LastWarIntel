@@ -1099,6 +1099,9 @@ def _flatten_character_reocr_debug(detail: pd.DataFrame) -> pd.DataFrame:
                 "crop_width": crop_width,
                 "crop_height": crop_height,
                 "crop_strategy": item.get("crop_strategy") if isinstance(item, dict) else "",
+                "crop_anchor_status": item.get("crop_anchor_status") if isinstance(item, dict) else "",
+                "crop_anchor_text": item.get("crop_anchor_text") if isinstance(item, dict) else "",
+                "crop_diagnostic": item.get("crop_diagnostic") if isinstance(item, dict) else "",
                 "text_length": item.get("text_length") if isinstance(item, dict) else None,
                 "expected_text": item.get("expected_text") if isinstance(item, dict) else "",
                 "observed_text": item.get("observed_text") if isinstance(item, dict) else "",
@@ -1108,6 +1111,7 @@ def _flatten_character_reocr_debug(detail: pd.DataFrame) -> pd.DataFrame:
                 "vote_variants": ";".join(vote_variants),
                 "vote_texts": " | ".join(vote_texts),
                 "debug_read": (
+                    str(item.get("crop_diagnostic")) if item.get("crop_diagnostic") in {"crop_field_mismatch", "crop_no_text_detected", "vote_outside_allowed_set"} else
                     "no_votes" if len(votes) == 0 else
                     "no_selected_char" if not item.get("selected") else
                     "verified_expected" if item.get("status") == "verified_expected" else
