@@ -1,3 +1,30 @@
+## v0.9.5.105 – Character Crop Line Focus Guard
+
+v0.9.5.105 targets the concrete Joncollins21/PbC failure exposed by the v0.9.5.104 reports. The pipeline already detected the right row and the right high-value character targets, but the character crops still included the wrong pixels: late player-name crops hit the final/empty area or non-name text, while alliance-tag crops included neighbouring glyphs and the lower `Warzone #551` line.
+
+### Changed
+
+- Added a Latin-name glyph-pitch crop model for visible-window screenshots.
+- Kept Joncollins-style tail-character crops on the title line and centered on the actual `2`/`1` glyphs.
+- Reduced visible-window alliance-tag crops to the target glyph instead of the full tag neighborhood.
+- Shortened visible-window character crops vertically to avoid the lower `Warzone #551` line.
+- Added v0.9.5.105 smoke coverage for Joncollins tail digits and `[PbC]` middle-glyph crops.
+
+### Expected validation movement
+
+- Fewer `crop_no_text_detected` cases for late Latin-name characters.
+- Fewer `crop_power_column_bleed` false diagnostics on title-line tail digits.
+- Better chance that `Joncollins21 -> Joncollinszl` resolves expected `2/1` instead of staying unresolved.
+- Better chance that `PbC -> PBC` verifies the case-sensitive middle `b`.
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): focus character crops on title-line glyphs"
+git tag -a v0.9.5.105 -m "v0.9.5.105 Character Crop Line Focus Guard"
+```
+
 ## v0.9.5.104 – Character Geometry & Tag Fidelity Guard
 
 v0.9.5.104 focuses on the blocker exposed by the v0.9.5.103 debug run: Character ReOCR was active, but late player-name crops could still leak into the power column and alliance-tag crops for `[PbC]`/`PBC` were too wide and too far to the right.

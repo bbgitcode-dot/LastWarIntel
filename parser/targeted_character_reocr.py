@@ -151,36 +151,47 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
         # 600x1064 normalized baseline.  Use coordinates measured from the 551
         # screen pack: identity text begins after the avatar around x=210.
         if field == "alliance_tag":
-            # v0.9.5.104: the .103 tag crop was too far to the right and too
-            # wide.  `[PbC]` position 1 frequently produced `OC]`/`IC]`
-            # instead of the middle glyph because the crop straddled the C and
-            # the right bracket.  Use a tighter, bracket-aware tag model.
+            # v0.9.5.105: keep the tag crop on the target glyph only.  The
+            # .104 crop still included neighbouring tag characters and the
+            # second line ("Warzone #551"), which made `[PbC]` position 1 vote
+            # as CJK/noise instead of the middle `b`.  Use the measured 551
+            # visible-window tag glyph centers and a narrow horizontal pad.
             tag_left = 198 * scale_x
             tag_right = 256 * scale_x
             visible_slots = max(text_length + 2, 5)  # [ + TAG + ]
             char_width = max((tag_right - tag_left) / visible_slots, 8 * scale_x)
             tag_pos = min(max(position + 1, 0), visible_slots - 1)
             cx = tag_left + (tag_pos + 0.5) * char_width
-            pad_x = max(8 * scale_x, char_width * 0.85)
+            pad_x = max(5 * scale_x, char_width * 0.45)
         else:
-            # v0.9.5.104: player-name target positions must stay inside the
-            # identity column.  The .103 right edge (470 baseline px) pushed
-            # late-name targets such as Joncollins[2/1] into the power column,
-            # producing votes like `286`/`320`/`264`.  Keep Latin-only names
-            # tighter, allow a little more room for mixed CJK/Hangul names, and
-            # never let a single-glyph crop cross the power-column guardrail.
-            left = 258 * scale_x
+            # v0.9.5.105: late Latin-name targets such as Joncollins[2/1] were
+            # mapped across the entire identity column, so position 10 landed
+            # on the final `1` and position 11 landed on empty space.  For
+            # Latin-only names use a glyph-pitch model anchored at the observed
+            # start of the commander name; keep the wider field model for
+            # mixed CJK/Hangul names where glyph widths vary heavily.
             raw_text = str(field_text or "")
             has_wide_script = any(ord(ch) > 127 for ch in raw_text)
-            right = (438 if has_wide_script else 410) * scale_x
             total_chars = max(text_length, 1)
-            char_width = max((right - left) / max(total_chars, 1), 7 * scale_x)
-            cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+            if not has_wide_script:
+                left = 263 * scale_x
+                char_width = max(10.8 * scale_x, 7 * scale_x)
+                cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+                pad_x = max(7 * scale_x, char_width * 0.65)
+            else:
+                left = 258 * scale_x
+                right = 438 * scale_x
+                char_width = max((right - left) / max(total_chars, 1), 7 * scale_x)
+                cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+                pad_x = max(12 * scale_x, char_width * 1.05)
             power_guard = 430 * scale_x
             cx = min(cx, power_guard - max(9 * scale_x, char_width * 0.55))
-            pad_x = max(12 * scale_x, char_width * 1.05)
-        top = max(0, int(y0 + 12 * (height / 915.0)))
-        bottom = min(height, int(y1 - 16 * (height / 915.0)))
+        # Focus on the commander/title line only.  Including the lower
+        # "Warzone #551" line confused single-character OCR and caused false
+        # power/anchor diagnostics.
+        row_scale_y = height / 915.0
+        top = max(0, int(y0 + 12 * row_scale_y))
+        bottom = min(height, int(y0 + 55 * row_scale_y))
     else:
         # Based on normalized Last War ranking layout: rank at ~55px, identity
         # column starts around 190px, power column around 455px.

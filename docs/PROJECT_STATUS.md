@@ -69,3 +69,9 @@ Expected next validation signal:
 - more useful Character ReOCR evidence without changing Operational Truth.
 
 Gold Fidelity remains intentionally blocked until player name, alliance tag, rank, and power are exact or character-verified from the screenshot.
+
+## v0.9.5.105 Update – Character Crop Line Focus Guard
+
+The latest Joncollins21 investigation proved that Row Alignment was no longer the blocker: the validator matched the correct row, identified `2/z`, `1/l`, and `PbC/PBC` as exact character targets, and correctly refused to guess. The blocker was the pixel crop. The `2` target was landing on title-line tail/noise, the `1` target was landing on an empty region, and the `b` tag target still included neighbouring tag glyphs plus the lower `Warzone #551` line.
+
+v0.9.5.105 narrows this failure mode by using a visible-window Latin glyph-pitch model, shortening crops to the commander title line, and reducing alliance-tag crops to the target glyph. The sprint keeps DataGuard conservative: unresolved crops remain unresolved and no Operational Truth is modified by ReOCR.

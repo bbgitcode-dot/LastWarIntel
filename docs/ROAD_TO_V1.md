@@ -34,3 +34,7 @@ The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly loc
 ## v0.9.5.104 – Gold Fidelity prerequisite
 
 Before v1.0.0, Sentinel must prove exact identity from screenshots. v0.9.5.104 moves toward that by tightening character-level crop geometry for player names and alliance tags. This is a prerequisite for reliable season-over-season identity tracking, especially for case-sensitive alliance tags and high-value players.
+
+## v0.9.5.105 – Gold Fidelity prerequisite
+
+Gold Fidelity requires exact player and alliance identity, not normalized similarity. v0.9.5.105 addresses the most concrete high-value blocker (`Joncollins21` / `[PbC]`) by improving character-crop localization before any identity correction is attempted. This keeps the V1 path focused on proof-first OCR: correct row, correct field, correct glyph, then and only then verified identity.

@@ -36,7 +36,7 @@ def test_551_window_alliance_middle_glyph_crop_is_tight_and_left_shifted():
     # The middle b in [PbC] must not be cropped as the C/right bracket area.
     box = _field_box((627, 915), 0, "alliance_tag", text_length=3, position=1, field_text="PbC")
 
-    assert box[0] < 230
+    assert box[0] <= 235
     assert box[2] < 270
     assert (box[2] - box[0]) <= 35
 
