@@ -31,3 +31,6 @@ Character ReOCR currently generates many targets but leaves too many unresolved.
 
 The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
 
+## v0.9.5.104 – Gold Fidelity prerequisite
+
+Before v1.0.0, Sentinel must prove exact identity from screenshots. v0.9.5.104 moves toward that by tightening character-level crop geometry for player names and alliance tags. This is a prerequisite for reliable season-over-season identity tracking, especially for case-sensitive alliance tags and high-value players.

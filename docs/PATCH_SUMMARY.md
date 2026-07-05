@@ -1,53 +1,20 @@
-# Patch Summary – v0.9.5.102
+# Patch Summary – v0.9.5.104
 
-## Sentinel v0.9.5.102 – Character ReOCR Debug Instrumentation
+## Sentinel v0.9.5.104 – Character Geometry & Tag Fidelity Guard
 
-v0.9.5.102 is a diagnostic Gold Fidelity sprint. v0.9.5.101 did not improve the 551 validation result enough, which means continuing to tune crop geometry blindly would risk wasting time. This sprint makes the Character ReOCR path inspectable.
+This sprint responds to the v0.9.5.103 validation finding: the remaining blocker is not row matching, but pixel geometry inside the identity field.
 
-## What changed
+### What changed
 
-- Added `character_reocr_debug_report.json`.
-- Added `character_reocr_debug_report.xlsx`.
-- Added flattened per-target ReOCR diagnostics:
-  - server / rank / OCR rank;
-  - expected vs OCR name and alliance tag;
-  - screenshot and row slot;
-  - crop box, crop width, crop height and crop strategy;
-  - target field, position, expected glyph and observed glyph;
-  - vote variants, vote texts, selected glyph, confidence and status.
-- Extended `CharacterVerificationEvidence` with diagnostic metadata:
-  - `crop_strategy`;
-  - `text_length`;
-  - `expected_text`;
-  - `observed_text`;
-  - `allowed_chars`.
-- Kept Operational Truth immutable. The new data is evidence only.
+- Player-name ReOCR crops for visible-window screenshots now stay left of the power column.
+- Alliance-tag ReOCR crops are tighter and more centered on the requested tag glyph.
+- Power-like OCR votes from player-name crops are classified as `crop_power_column_bleed`.
+- Character ReOCR remains conservative and evidence-only.
 
-## Why this matters
+### Why this matters
 
-The previous run showed:
+`Joncollins21` must not become `Joncollinszl`, and `PbC` must not silently normalize to `PBC`. Sentinel needs exact identity, not approximate identity, before long-term joiner/leaver/growth tracking can be trusted.
 
-```text
-character_reocr_target_count = 183
-character_reocr_verified_expected = 18
-character_reocr_verified_observed = 11
-character_reocr_unresolved = 150
-```
+### Version
 
-The critical question is no longer whether ReOCR is invoked. It is why expected-verifiable targets remain unresolved. v0.9.5.102 answers that by exposing whether the problem is row-slot alignment, crop geometry, OCR provider output, or vote selection.
-
-## Validation
-
-```bash
-pytest -q tests/smoke/test_character_reocr_debug_102.py tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
-python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
-```
-
-## Version
-
-`0.9.5.102`
-
-## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
-
-The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
-
+`0.9.5.104`

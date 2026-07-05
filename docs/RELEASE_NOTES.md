@@ -1,3 +1,27 @@
+## v0.9.5.104 – Character Geometry & Tag Fidelity Guard
+
+v0.9.5.104 focuses on the blocker exposed by the v0.9.5.103 debug run: Character ReOCR was active, but late player-name crops could still leak into the power column and alliance-tag crops for `[PbC]`/`PBC` were too wide and too far to the right.
+
+### Changed
+- Tightened visible-window player-name crop geometry so late-name targets such as `Joncollins21` positions `2/1` stay inside the identity column instead of reading power digits.
+- Tightened visible-window alliance-tag glyph crops so middle-tag case checks such as `PbC` vs `PBC` inspect the target glyph instead of the `C]`/right-bracket area.
+- Added `crop_power_column_bleed` diagnostics when player-name ReOCR votes are dominated by power-like digits.
+- Kept Character ReOCR evidence-only; no Operational Truth is changed from ReOCR.
+
+### Validation
+```text
+9 passed – Ground Truth Validator + Character Geometry smoke tests
+py_compile OK
+zip integrity OK
+```
+
+### Commit
+```bash
+git add .
+git commit -m "fix(data-guard): tighten character geometry and tag fidelity diagnostics"
+git tag -a v0.9.5.104 -m "v0.9.5.104 Character Geometry and Tag Fidelity Guard"
+```
+
 ## v0.9.5.103 – ReOCR Row Slot & Field Anchor Correction
 
 v0.9.5.103 addresses the main finding from the v0.9.5.102 debug reports: Character ReOCR was often looking at the wrong vertical row or at a crop without the expected field anchor. This was visible when `[PbC]` targets sometimes read `[IVE]`, proving that the blocker was crop localization rather than raw OCR strength.

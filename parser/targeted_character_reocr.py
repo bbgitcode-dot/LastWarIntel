@@ -140,7 +140,7 @@ def _ranking_row_box(image_size: tuple[int, int], row_slot: int) -> tuple[int, i
     bottom = int(min(height, center_y + 42 * scale_y))
     return 0, top, width, bottom
 
-def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_length: int, position: int) -> tuple[int, int, int, int]:
+def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_length: int, position: int, field_text: str = "") -> tuple[int, int, int, int]:
     width, height = image_size
     scale_x = width / 600.0
     _x0, y0, _x1, y1 = _ranking_row_box(image_size, row_slot)
@@ -151,24 +151,36 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
         # 600x1064 normalized baseline.  Use coordinates measured from the 551
         # screen pack: identity text begins after the avatar around x=210.
         if field == "alliance_tag":
-            left = 206 * scale_x
-            right = 275 * scale_x
-            total_chars = max(text_length, 3)
-            char_width = max((right - left) / max(total_chars + 2, 1), 7 * scale_x)
-            cx = left + (min(max(position + 1, 0), max(total_chars + 1, 0)) + 0.5) * char_width
-            pad_x = max(12 * scale_x, char_width * 1.7)
+            # v0.9.5.104: the .103 tag crop was too far to the right and too
+            # wide.  `[PbC]` position 1 frequently produced `OC]`/`IC]`
+            # instead of the middle glyph because the crop straddled the C and
+            # the right bracket.  Use a tighter, bracket-aware tag model.
+            tag_left = 198 * scale_x
+            tag_right = 256 * scale_x
+            visible_slots = max(text_length + 2, 5)  # [ + TAG + ]
+            char_width = max((tag_right - tag_left) / visible_slots, 8 * scale_x)
+            tag_pos = min(max(position + 1, 0), visible_slots - 1)
+            cx = tag_left + (tag_pos + 0.5) * char_width
+            pad_x = max(8 * scale_x, char_width * 0.85)
         else:
-            # Player text starts immediately after the bracketed tag.  Keep a
-            # wider crop for single glyphs such as Joncollins[2/1], but cap it
-            # before the power column.
-            left = 278 * scale_x
-            right = 470 * scale_x
+            # v0.9.5.104: player-name target positions must stay inside the
+            # identity column.  The .103 right edge (470 baseline px) pushed
+            # late-name targets such as Joncollins[2/1] into the power column,
+            # producing votes like `286`/`320`/`264`.  Keep Latin-only names
+            # tighter, allow a little more room for mixed CJK/Hangul names, and
+            # never let a single-glyph crop cross the power-column guardrail.
+            left = 258 * scale_x
+            raw_text = str(field_text or "")
+            has_wide_script = any(ord(ch) > 127 for ch in raw_text)
+            right = (438 if has_wide_script else 410) * scale_x
             total_chars = max(text_length, 1)
             char_width = max((right - left) / max(total_chars, 1), 7 * scale_x)
             cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
-            pad_x = max(16 * scale_x, char_width * 1.8)
-        top = max(0, int(y0 + 8 * (height / 915.0)))
-        bottom = min(height, int(y1 - 12 * (height / 915.0)))
+            power_guard = 430 * scale_x
+            cx = min(cx, power_guard - max(9 * scale_x, char_width * 0.55))
+            pad_x = max(12 * scale_x, char_width * 1.05)
+        top = max(0, int(y0 + 12 * (height / 915.0)))
+        bottom = min(height, int(y1 - 16 * (height / 915.0)))
     else:
         # Based on normalized Last War ranking layout: rank at ~55px, identity
         # column starts around 190px, power column around 455px.
@@ -342,6 +354,15 @@ def _classify_crop_anchor(votes: list[CharacterVote], target: ReOcrTarget, expec
         bracketed = [_tag_content(text) for text in texts if "[" in text or "]" in text]
         if bracketed:
             return "field_mismatch", joined, "crop_field_mismatch"
+    else:
+        # When a player-name crop returns mostly power-like digits (e.g.
+        # 286/320/264) the problem is not character classification; the crop
+        # leaked into the power column.  Keep this as diagnostics so the next
+        # sprint can quantify geometry rather than blaming OCR.
+        compact = "".join(ch for ch in joined if ch.isalnum() or ch in ",.")
+        digit_count = sum(ch.isdigit() for ch in compact)
+        if compact and digit_count >= max(2, int(len(compact) * 0.65)):
+            return "field_mismatch", joined, "crop_power_column_bleed"
     return "text_without_anchor", joined, "vote_outside_allowed_set"
 
 
@@ -370,7 +391,7 @@ def verify_target_from_screenshot(
     image = Image.open(screenshot_path)
     text_for_field = expected_text if target.expected else observed_text
     text_length = len(text_for_field or observed_text or target.observed or "")
-    box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position)
+    box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position, field_text=(text_for_field or observed_text or ""))
     crop = image.crop(box)
     votes: list[CharacterVote] = []
     for variant_name, variant_image in _image_variants(crop):

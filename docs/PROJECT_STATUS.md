@@ -59,3 +59,13 @@ Only then should v0.9.5.103 apply the next targeted fix.
 
 The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
 
+## v0.9.5.104 Update – Character Geometry & Tag Fidelity Guard
+
+The latest 551 validation reports confirmed that matching/recall is stable, but exact identity is still blocked by Character Fidelity: player-name crops can drift into the power column and alliance-tag crops can miss case-sensitive middle glyphs. v0.9.5.104 tightens the visible-window geometry for both fields and adds `crop_power_column_bleed` as an explicit diagnostic.
+
+Expected next validation signal:
+- fewer player-name `vote_outside_allowed_set` cases caused by power digits such as `286`, `320`, or `264`;
+- fewer alliance-tag `crop_field_mismatch` cases for `PbC` vs `PBC`;
+- more useful Character ReOCR evidence without changing Operational Truth.
+
+Gold Fidelity remains intentionally blocked until player name, alliance tag, rank, and power are exact or character-verified from the screenshot.
