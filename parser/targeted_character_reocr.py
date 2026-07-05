@@ -65,6 +65,9 @@ class CharacterVerificationEvidence:
     votes: tuple[CharacterVote, ...] = field(default_factory=tuple)
     reason: str = ""
     crop_strategy: str = ""
+    crop_candidate_index: int = 0
+    crop_candidate_count: int = 1
+    crop_candidate_reason: str = ""
     crop_anchor_status: str = ""
     crop_anchor_text: str = ""
     crop_diagnostic: str = ""
@@ -186,12 +189,13 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
                 pad_x = max(12 * scale_x, char_width * 1.05)
             power_guard = 430 * scale_x
             cx = min(cx, power_guard - max(9 * scale_x, char_width * 0.55))
-        # Focus on the commander/title line only.  Including the lower
-        # "Warzone #551" line confused single-character OCR and caused false
-        # power/anchor diagnostics.
+        # Focus on the commander/title line only.  v0.9.5.105 cropped too
+        # low (y0+12), leaving only the lower half of orange glyphs such as
+        # Joncollins21 and [PbC].  Start slightly above the title baseline
+        # while still excluding the lower Warzone line.
         row_scale_y = height / 915.0
-        top = max(0, int(y0 + 12 * row_scale_y))
-        bottom = min(height, int(y0 + 55 * row_scale_y))
+        top = max(0, int(y0 - 4 * row_scale_y))
+        bottom = min(height, int(y0 + 45 * row_scale_y))
     else:
         # Based on normalized Last War ranking layout: rank at ~55px, identity
         # column starts around 190px, power column around 455px.
@@ -218,6 +222,76 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
         int(min(width, cx + pad_x)),
         int(bottom),
     )
+
+
+def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[int, int], target: ReOcrTarget) -> list[tuple[tuple[int, int, int, int], str]]:
+    """Return conservative calibration candidates around the primary crop.
+
+    v0.9.5.105 proved that a single fixed mini-crop is brittle: the Joncollins
+    tail digits landed on empty pixels and PbC's middle glyph read as CJK noise.
+    The validator may spend CPU here, so try a small deterministic offset grid
+    and let OCR votes select the best evidence.  This still does not correct
+    Operational Truth; it only improves whether a target character can be
+    verified from the screenshot.
+    """
+    width, height = image_size
+    x0, y0, x1, y1 = base_box
+    bw = max(1, x1 - x0)
+    bh = max(1, y1 - y0)
+
+    if target.field == "alliance_tag":
+        specs = [
+            (0.0, 0.0, 1.0, "base"),
+            (-0.45, 0.0, 1.45, "left_wide"),
+            (0.45, 0.0, 1.45, "right_wide"),
+            (0.0, -0.18, 1.25, "up_wide"),
+            (-0.25, -0.18, 1.60, "left_up_wide"),
+        ]
+    else:
+        specs = [
+            (0.0, 0.0, 1.0, "base"),
+            (-0.50, 0.0, 1.65, "left_wide"),
+            (0.50, 0.0, 1.65, "right_wide"),
+            (0.0, -0.18, 1.45, "up_wide"),
+            (-0.35, -0.18, 1.90, "left_up_wide"),
+            (0.35, -0.18, 1.90, "right_up_wide"),
+        ]
+
+    variants: list[tuple[tuple[int, int, int, int], str]] = []
+    seen: set[tuple[int, int, int, int]] = set()
+    cx = (x0 + x1) / 2.0
+    cy = (y0 + y1) / 2.0
+    for dx_factor, dy_factor, scale, reason in specs:
+        nw = max(bw * scale, bw + 2)
+        nh = max(bh * min(scale, 1.25), bh)
+        ncx = cx + dx_factor * bw
+        ncy = cy + dy_factor * bh
+        box = (
+            int(max(0, round(ncx - nw / 2))),
+            int(max(0, round(ncy - nh / 2))),
+            int(min(width, round(ncx + nw / 2))),
+            int(min(height, round(ncy + nh / 2))),
+        )
+        if box[2] <= box[0] or box[3] <= box[1] or box in seen:
+            continue
+        seen.add(box)
+        variants.append((box, reason))
+    return variants
+
+
+def _status_rank(status: str) -> int:
+    return {"verified_expected": 400, "verified_observed": 300, "ambiguous_vote": 200, "unresolved": 0}.get(status, 0)
+
+
+def _diagnostic_rank(diagnostic: str) -> int:
+    return {"crop_anchor_ok": 60, "vote_outside_allowed_set": 30, "crop_field_mismatch": 10, "crop_power_column_bleed": 8, "crop_no_text_detected": 0}.get(diagnostic, 0)
+
+
+def _evidence_rank(evidence: CharacterVerificationEvidence) -> tuple[int, int, int, float]:
+    nonempty = sum(1 for vote in evidence.votes if vote.text)
+    chars = sum(1 for vote in evidence.votes if vote.char)
+    return (_status_rank(evidence.status), _diagnostic_rank(evidence.crop_diagnostic), chars + nonempty, evidence.confidence)
+
 
 def _image_variants(image):
     if ImageOps is None or ImageEnhance is None or ImageFilter is None:
@@ -402,52 +476,78 @@ def verify_target_from_screenshot(
     image = Image.open(screenshot_path)
     text_for_field = expected_text if target.expected else observed_text
     text_length = len(text_for_field or observed_text or target.observed or "")
-    box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position, field_text=(text_for_field or observed_text or ""))
-    crop = image.crop(box)
-    votes: list[CharacterVote] = []
-    for variant_name, variant_image in _image_variants(crop):
-        for text, confidence in _read_variant(reader, variant_image):
-            char = _choose_character(text, target)
-            votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=char))
-
-    selected, confidence = _select_vote(votes)
-    crop_anchor_status, crop_anchor_text, crop_diagnostic = _classify_crop_anchor(votes, target, expected_text, observed_text)
-    # Only accept a vote that is either the expected glyph, the observed glyph,
-    # or an explicitly configured confusion-family member.  Everything else is
-    # unresolved noise, not evidence.
+    base_box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position, field_text=(text_for_field or observed_text or ""))
+    candidate_boxes = _crop_box_variants(base_box, image.size, target)
     allowed = _allowed_target_chars(target)
-    if selected and allowed and selected not in allowed:
-        selected = ""
-        confidence = 0.0
 
-    if selected and target.expected and selected == target.expected and confidence >= 0.55:
-        status = "verified_expected"
-    elif selected and target.observed and selected == target.observed and confidence >= 0.55:
-        status = "verified_observed"
-    elif selected:
-        status = "ambiguous_vote"
-    else:
-        status = "unresolved"
+    best: CharacterVerificationEvidence | None = None
+    candidate_count = len(candidate_boxes)
+    for candidate_index, (box, candidate_reason) in enumerate(candidate_boxes):
+        crop = image.crop(box)
+        votes: list[CharacterVote] = []
+        for variant_name, variant_image in _image_variants(crop):
+            for text, confidence in _read_variant(reader, variant_image):
+                char = _choose_character(text, target)
+                votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=char))
+
+        selected, confidence = _select_vote(votes)
+        crop_anchor_status, crop_anchor_text, crop_diagnostic = _classify_crop_anchor(votes, target, expected_text, observed_text)
+        # Only accept a vote that is either the expected glyph, the observed glyph,
+        # or an explicitly configured confusion-family member. Everything else is
+        # unresolved noise, not evidence.
+        if selected and allowed and selected not in allowed:
+            selected = ""
+            confidence = 0.0
+
+        if selected and target.expected and selected == target.expected and confidence >= 0.55:
+            status = "verified_expected"
+        elif selected and target.observed and selected == target.observed and confidence >= 0.55:
+            status = "verified_observed"
+        elif selected:
+            status = "ambiguous_vote"
+        else:
+            status = "unresolved"
+
+        evidence = CharacterVerificationEvidence(
+            field=target.field,
+            position=target.position,
+            expected=target.expected,
+            observed=target.observed,
+            screenshot=screenshot_path.name,
+            row_slot=row_slot,
+            crop_box=box,
+            status=status,
+            selected=selected,
+            confidence=confidence,
+            votes=tuple(votes),
+            reason="targeted_crop_reocr",
+            crop_strategy="alliance_tag_position" if target.field == "alliance_tag" else "player_name_after_tag",
+            crop_candidate_index=candidate_index,
+            crop_candidate_count=candidate_count,
+            crop_candidate_reason=candidate_reason,
+            crop_anchor_status=crop_anchor_status,
+            crop_anchor_text=crop_anchor_text,
+            crop_diagnostic=crop_diagnostic,
+            text_length=text_length,
+            expected_text=expected_text,
+            observed_text=observed_text,
+            allowed_chars="".join(sorted(allowed)),
+        )
+        if best is None or _evidence_rank(evidence) > _evidence_rank(best):
+            best = evidence
+        # Expected-character evidence is the best possible outcome. Avoid extra
+        # OCR calls once we have it.
+        if evidence.status == "verified_expected" and evidence.confidence >= 0.55:
+            break
+
+    if best is not None:
+        return best
     return CharacterVerificationEvidence(
-        field=target.field,
-        position=target.position,
-        expected=target.expected,
-        observed=target.observed,
-        screenshot=screenshot_path.name,
-        row_slot=row_slot,
-        crop_box=box,
-        status=status,
-        selected=selected,
-        confidence=confidence,
-        votes=tuple(votes),
-        reason="targeted_crop_reocr",
-        crop_strategy="alliance_tag_position" if target.field == "alliance_tag" else "player_name_after_tag",
-        crop_anchor_status=crop_anchor_status,
-        crop_anchor_text=crop_anchor_text,
-        crop_diagnostic=crop_diagnostic,
-        text_length=text_length,
+        target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, base_box, "unresolved",
+        reason="no_crop_candidates",
         expected_text=expected_text,
         observed_text=observed_text,
+        text_length=text_length,
         allowed_chars="".join(sorted(allowed)),
     )
 

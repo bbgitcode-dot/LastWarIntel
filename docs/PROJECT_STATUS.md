@@ -75,3 +75,9 @@ Gold Fidelity remains intentionally blocked until player name, alliance tag, ran
 The latest Joncollins21 investigation proved that Row Alignment was no longer the blocker: the validator matched the correct row, identified `2/z`, `1/l`, and `PbC/PBC` as exact character targets, and correctly refused to guess. The blocker was the pixel crop. The `2` target was landing on title-line tail/noise, the `1` target was landing on an empty region, and the `b` tag target still included neighbouring tag glyphs plus the lower `Warzone #551` line.
 
 v0.9.5.105 narrows this failure mode by using a visible-window Latin glyph-pitch model, shortening crops to the commander title line, and reducing alliance-tag crops to the target glyph. The sprint keeps DataGuard conservative: unresolved crops remain unresolved and no Operational Truth is modified by ReOCR.
+
+## v0.9.5.106 Update – Character Crop Calibration Harness
+
+The v0.9.5.105 validation run showed a regression: matching and DataGuard remained stable, but targeted Character ReOCR became too narrow. The Joncollins21/PbC case was correctly selected for verification, yet the actual crops returned `crop_no_text_detected` or off-target CJK noise. v0.9.5.106 responds by replacing single fixed mini-crops with a deterministic crop-calibration harness. Each target now tries nearby crop candidates and records which candidate produced the selected evidence.
+
+This sprint is still proof-first: no identity is corrected unless the screenshot crop verifies the expected glyph. Gold Fidelity remains blocked until exact player names and case-sensitive alliance tags can be proven from pixels.

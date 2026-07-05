@@ -1,3 +1,26 @@
+## v0.9.5.106 – Character Crop Calibration Harness
+
+v0.9.5.105 proved that fixed mini-crops were too brittle: Joncollins21/PbC targets were detected correctly, but the title-line crops often produced `crop_no_text_detected` or non-target CJK noise. v0.9.5.106 keeps the DataGuard rules conservative and adds a deterministic crop-calibration harness around every targeted Character ReOCR crop.
+
+### Changed
+- Added calibrated crop candidates around the primary character crop (`base`, `left_wide`, `right_wide`, `up_wide`, and combined variants).
+- Moved visible-window title-line crops slightly upward so orange commander-name glyphs are not clipped at the top.
+- ReOCR now ranks candidate crops by verified expected/observed status, crop diagnostics, non-empty votes, and confidence.
+- Added debug fields: `crop_candidate_index`, `crop_candidate_count`, and `crop_candidate_reason`.
+- Added smoke coverage proving an empty base crop can be recovered by a calibrated fallback candidate.
+
+### Guardrails
+- ReOCR still does not modify Operational Truth.
+- Expected-character verification remains required for Gold Fidelity; observed/noise votes do not auto-correct identity.
+- Alignment context gaps still bypass Character ReOCR.
+
+### Commit
+```bash
+git add .
+git commit -m "fix(data-guard): add calibrated character crop fallback"
+git tag -a v0.9.5.106 -m "v0.9.5.106 Character Crop Calibration Harness"
+```
+
 ## v0.9.5.105 – Character Crop Line Focus Guard
 
 v0.9.5.105 targets the concrete Joncollins21/PbC failure exposed by the v0.9.5.104 reports. The pipeline already detected the right row and the right high-value character targets, but the character crops still included the wrong pixels: late player-name crops hit the final/empty area or non-name text, while alliance-tag crops included neighbouring glyphs and the lower `Warzone #551` line.

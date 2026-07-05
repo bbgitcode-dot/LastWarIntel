@@ -38,3 +38,7 @@ Before v1.0.0, Sentinel must prove exact identity from screenshots. v0.9.5.104 m
 ## v0.9.5.105 – Gold Fidelity prerequisite
 
 Gold Fidelity requires exact player and alliance identity, not normalized similarity. v0.9.5.105 addresses the most concrete high-value blocker (`Joncollins21` / `[PbC]`) by improving character-crop localization before any identity correction is attempted. This keeps the V1 path focused on proof-first OCR: correct row, correct field, correct glyph, then and only then verified identity.
+
+## v0.9.5.106 – Gold Fidelity prerequisite
+
+The path to v1.0.0 now requires calibrated character evidence rather than fixed character crops. v0.9.5.106 adds candidate-crop search and records candidate reasons so high-value blockers such as `Joncollins21` and `[PbC]` can be diagnosed as pixel-localization problems instead of being treated as OCR model failures. The next milestone is to validate that the calibration raises expected-character verification without increasing observed/noise confirmations.
