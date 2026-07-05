@@ -1,3 +1,29 @@
+## v0.9.5.112 – Verified Display Evidence Apply Hotfix
+
+v0.9.5.111 introduced verified-display fields, but the validator counted evidence through a legacy `item.target.field` lookup. The active `CharacterVerificationEvidence` stores the field directly as `item.field`, so rows such as `Joncollinszl`/`PBC` still showed raw OCR values in `verified_name_display` and `verified_alliance_display` even though all local glyphs were `verified_expected`.
+
+### Fixed
+
+- Count Character ReOCR evidence from the direct `field` attribute.
+- Apply fully verified local glyph evidence into `verified_name_display` and `verified_alliance_display`.
+- Preserve the conservative block for skipped/nonlocal glyph drift; CJK/Hangul display drift is still not silently promoted.
+
+### Validation
+
+```text
+pytest tests/smoke/test_verified_display_112.py tests/smoke/test_glyph_verification_109.py tests/smoke/test_alliance_tag_glyph_110.py
+py_compile OK for changed validator module
+zip integrity OK
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): count verified display evidence from direct fields"
+git tag -a v0.9.5.112 -m "v0.9.5.112 Verified Display Evidence Apply Hotfix"
+```
+
 ## v0.9.5.111 – Verified Display Resolution
 
 v0.9.5.110 proved the missing piece for `[PbC]`/`PBC`: the full-tag-block anchor can verify the expected case-sensitive tag from the current screenshot. v0.9.5.111 turns those ReOCR proofs into validator-visible resolved display identity instead of leaving them only in debug evidence.

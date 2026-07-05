@@ -116,3 +116,7 @@ The v0.9.5.109 run proved that local player-name glyph verification works and sh
 v0.9.5.110 produced the evidence needed to solve the Joncollins/PbC class: player-name tail glyphs and the case-sensitive alliance tag can now be verified from the screenshot. v0.9.5.111 promotes that evidence into explicit verified-display identity fields. Raw OCR remains visible, but fidelity decisions can now use the screenshot-proven display values when every local glyph drift is verified. Nonlocal/CJK drift remains blocked and visible; it is not silently promoted to gold.
 
 Current strategy after .111: run the 551 validation again and measure whether `verified_exact_identity_matches`, `verified_identity_resolution_rows`, and `gold_fidelity_blocker_rows` move as expected. If Joncollins is resolved but many blockers remain, the next sprint should target the remaining unresolved local glyph classes rather than reworking tag geometry again.
+
+## v0.9.5.112 Update – Verified Display Evidence Apply Hotfix
+
+The v0.9.5.111 run proved that the ReOCR evidence existed but was not applied to the final verified-display metrics. v0.9.5.112 fixes the evidence counter so `CharacterVerificationEvidence.field` is counted directly. Rows whose local glyph drift is fully `verified_expected` can now resolve their verified display identity; rows with skipped/nonlocal drift remain blocked.

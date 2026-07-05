@@ -1,18 +1,8 @@
-Sentinel v0.9.5.111
+Sentinel v0.9.5.112
 
-Commit: feat(data-guard): apply verified display resolution to gold fidelity
+Commit: fix(data-guard): count verified display evidence from direct fields
 
-Summary:
-- Promote Character ReOCR verified_expected evidence into verified display name/tag fields.
-- Add verified exact identity metrics and verified identity resolution counts.
-- Evaluate Gold-Fidelity blockers against verified display identity while keeping raw OCR columns visible.
-- Keep nonlocal/skipped glyph drift conservative: no automatic gold promotion.
-- Add smoke tests for verified-display resolution gating.
-
-Validation:
-- 20 passed – Verified Display Resolution / Glyph Gate / Alliance Tag Block Anchor / Validator Smoke
-- py_compile OK
-- zip integrity OK
-
-Tag:
-git tag -a v0.9.5.111 -m "v0.9.5.111 Verified Display Resolution"
+Changes:
+- Fix verified-display evidence counting for CharacterVerificationEvidence.field.
+- Apply verified_expected glyph evidence to verified_name_display and verified_alliance_display metrics.
+- Keep nonlocal/skipped glyph drift conservative and blocked.

@@ -53,8 +53,20 @@ def _count_targets_by_field(targets: list[Any], field: str) -> int:
     return sum(1 for target in targets if getattr(target, "field", "") == field)
 
 
+def _evidence_field(item: Any) -> str:
+    # v0.9.5.112 hotfix: CharacterVerificationEvidence stores the field
+    # directly (item.field).  Older draft code looked for item.target.field,
+    # which meant verified_expected evidence was recorded in debug JSON but was
+    # never counted when building verified_display_name/tag.  Keep the legacy
+    # fallback for any future wrapper objects while preferring the direct field.
+    direct = getattr(item, "field", "")
+    if direct:
+        return str(direct)
+    return str(getattr(getattr(item, "target", None), "field", ""))
+
+
 def _count_evidence_by_field(evidence_items: list[Any], field: str, status: str) -> int:
-    return sum(1 for item in evidence_items if getattr(getattr(item, "target", None), "field", "") == field and getattr(item, "status", "") == status)
+    return sum(1 for item in evidence_items if _evidence_field(item) == field and getattr(item, "status", "") == status)
 
 
 def _field_verified_by_reocr(
