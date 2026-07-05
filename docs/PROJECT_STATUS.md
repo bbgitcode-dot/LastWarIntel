@@ -81,3 +81,15 @@ v0.9.5.105 narrows this failure mode by using a visible-window Latin glyph-pitch
 The v0.9.5.105 validation run showed a regression: matching and DataGuard remained stable, but targeted Character ReOCR became too narrow. The Joncollins21/PbC case was correctly selected for verification, yet the actual crops returned `crop_no_text_detected` or off-target CJK noise. v0.9.5.106 responds by replacing single fixed mini-crops with a deterministic crop-calibration harness. Each target now tries nearby crop candidates and records which candidate produced the selected evidence.
 
 This sprint is still proof-first: no identity is corrected unless the screenshot crop verifies the expected glyph. Gold Fidelity remains blocked until exact player names and case-sensitive alliance tags can be proven from pixels.
+
+
+## v0.9.5.107 Update – Runtime Telemetry and Tag Fidelity
+
+The latest validation showed strong progress in targeted ReOCR: the Joncollins21 player-name tail digits can now be verified as expected-character evidence. The remaining high-value blocker is alliance-tag display fidelity, especially case-sensitive tags such as `PbC` versus `PBC`. v0.9.5.107 therefore adds full-tag crop candidates and introduces runtime telemetry so long CPU-only runs can be explained by phase and by Character ReOCR target.
+
+New runtime outputs:
+
+- `benchmarks/runtime_debug_report.json`
+- `benchmarks/runtime_debug_report.xlsx`
+
+The runtime report separates loading, validation, report writing, OCR reader initialization, and Character ReOCR target timing. This should make the next slow run actionable instead of opaque.

@@ -22,6 +22,7 @@ import re
 import unicodedata
 import tempfile
 import zipfile
+import time
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -1106,6 +1107,11 @@ def _flatten_character_reocr_debug(detail: pd.DataFrame) -> pd.DataFrame:
                 "expected_text": item.get("expected_text") if isinstance(item, dict) else "",
                 "observed_text": item.get("observed_text") if isinstance(item, dict) else "",
                 "allowed_chars": item.get("allowed_chars") if isinstance(item, dict) else "",
+                "target_total_ms": item.get("target_total_ms", 0.0) if isinstance(item, dict) else 0.0,
+                "crop_generation_ms": item.get("crop_generation_ms", 0.0) if isinstance(item, dict) else 0.0,
+                "variant_build_ms": item.get("variant_build_ms", 0.0) if isinstance(item, dict) else 0.0,
+                "ocr_read_ms": item.get("ocr_read_ms", 0.0) if isinstance(item, dict) else 0.0,
+                "vote_selection_ms": item.get("vote_selection_ms", 0.0) if isinstance(item, dict) else 0.0,
                 "vote_count": len(votes),
                 "nonempty_vote_chars": ";".join(vote_chars),
                 "vote_variants": ";".join(vote_variants),
@@ -1132,7 +1138,76 @@ def _sanitize_frame(df: pd.DataFrame) -> pd.DataFrame:
     return df.map(_sanitize_cell)
 
 
-def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.DataFrame, output_dir: Path) -> None:
+def _build_runtime_debug_report(base_metrics: dict[str, float], character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame]:
+    """Build runtime diagnostics for slow validator/ReOCR runs.
+
+    The report is intentionally observational. It does not influence matching,
+    inference, ReOCR voting, or Operational Truth.  It simply exposes where the
+    wall-clock time is spent so long CPU-only runs can be attacked with data.
+    """
+    phase_rows: list[dict[str, Any]] = []
+    for phase, value in sorted(base_metrics.items()):
+        if phase.endswith("_ms"):
+            phase_rows.append({"scope": "validator", "phase": phase[:-3], "duration_ms": round(float(value), 3)})
+
+    reocr_summary: dict[str, Any] = {
+        "target_rows": int(len(character_reocr_debug)),
+        "target_total_ms": 0.0,
+        "crop_generation_ms": 0.0,
+        "variant_build_ms": 0.0,
+        "ocr_read_ms": 0.0,
+        "vote_selection_ms": 0.0,
+        "avg_target_total_ms": 0.0,
+        "slowest_target_ms": 0.0,
+        "slowest_target_rank": None,
+        "slowest_target_field": "",
+        "slowest_target_position": None,
+    }
+    detail_rows: list[dict[str, Any]] = []
+    if not character_reocr_debug.empty:
+        timing_cols = ["target_total_ms", "crop_generation_ms", "variant_build_ms", "ocr_read_ms", "vote_selection_ms"]
+        work = character_reocr_debug.copy()
+        for col in timing_cols:
+            if col not in work.columns:
+                work[col] = 0.0
+            work[col] = pd.to_numeric(work[col], errors="coerce").fillna(0.0)
+            reocr_summary[col] = round(float(work[col].sum()), 3)
+            phase_rows.append({"scope": "character_reocr", "phase": col[:-3], "duration_ms": reocr_summary[col]})
+        reocr_summary["avg_target_total_ms"] = round(float(work["target_total_ms"].mean()), 3)
+        if len(work):
+            slow_idx = work["target_total_ms"].idxmax()
+            slow_row = work.loc[slow_idx]
+            reocr_summary["slowest_target_ms"] = round(float(slow_row.get("target_total_ms", 0.0)), 3)
+            reocr_summary["slowest_target_rank"] = slow_row.get("rank")
+            reocr_summary["slowest_target_field"] = slow_row.get("target_field", "")
+            reocr_summary["slowest_target_position"] = slow_row.get("target_position")
+        group_cols = ["target_field", "target_status", "debug_read"]
+        grouped = work.groupby(group_cols, dropna=False).agg(
+            rows=("rank", "count"),
+            target_total_ms=("target_total_ms", "sum"),
+            ocr_read_ms=("ocr_read_ms", "sum"),
+            avg_target_total_ms=("target_total_ms", "mean"),
+            avg_vote_count=("vote_count", "mean"),
+        ).reset_index()
+        for col in ["target_total_ms", "ocr_read_ms", "avg_target_total_ms", "avg_vote_count"]:
+            grouped[col] = pd.to_numeric(grouped[col], errors="coerce").round(3)
+        detail_rows = grouped.to_dict(orient="records")
+
+    payload = {
+        "summary": {
+            **{key: round(float(value), 3) for key, value in base_metrics.items() if key.endswith("_ms")},
+            "character_reocr": reocr_summary,
+        },
+        "phases": phase_rows,
+        "character_reocr_groups": detail_rows,
+    }
+    runtime_df = pd.DataFrame(phase_rows)
+    return payload, runtime_df
+
+
+def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.DataFrame, output_dir: Path, runtime_metrics: dict[str, float] | None = None) -> None:
+    report_write_start = time.perf_counter()
+    runtime_metrics = dict(runtime_metrics or {})
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_rows = [asdict(summary)]
     failures = detail[
@@ -1258,6 +1333,16 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         pd.DataFrame([inference_summary]).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(inference_detail).to_excel(writer, sheet_name="details", index=False)
 
+    runtime_metrics["report_write_ms"] = (time.perf_counter() - report_write_start) * 1000.0
+    runtime_json_path = output_dir / "runtime_debug_report.json"
+    runtime_xlsx_path = output_dir / "runtime_debug_report.xlsx"
+    runtime_payload, runtime_phase_df = _build_runtime_debug_report(runtime_metrics, character_reocr_debug)
+    runtime_json_path.write_text(json.dumps(runtime_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    with pd.ExcelWriter(runtime_xlsx_path, engine="openpyxl") as writer:
+        pd.DataFrame([runtime_payload.get("summary", {})]).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(runtime_phase_df).to_excel(writer, sheet_name="phases", index=False)
+        _sanitize_frame(pd.DataFrame(runtime_payload.get("character_reocr_groups", []))).to_excel(writer, sheet_name="reocr_groups", index=False)
+
     print("\n===== GROUND TRUTH VALIDATION SUMMARY =====")
     print(pd.DataFrame(summary_rows).to_string(index=False))
     print("\nCategory summary:")
@@ -1270,6 +1355,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Inference Excel: {inference_xlsx_path}")
     print(f"Character ReOCR Debug JSON:  {reocr_debug_json_path}")
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
+    print(f"Runtime Debug JSON:  {runtime_json_path}")
+    print(f"Runtime Debug Excel: {runtime_xlsx_path}")
 
 
 
@@ -1324,9 +1411,17 @@ def main() -> None:
     ocr_output_path = Path(args.ocr_output)
     output_dir = Path(args.output_dir)
 
+    runtime_metrics: dict[str, float] = {}
+    total_start = time.perf_counter()
+    phase_start = time.perf_counter()
     gt = load_ground_truth(ground_truth_path)
+    runtime_metrics["load_ground_truth_ms"] = (time.perf_counter() - phase_start) * 1000.0
+    phase_start = time.perf_counter()
     ocr = load_ocr_output(ocr_output_path)
+    runtime_metrics["load_ocr_export_ms"] = (time.perf_counter() - phase_start) * 1000.0
+    phase_start = time.perf_counter()
     quarantine = load_ranking_guard_quarantine(ocr_output_path)
+    runtime_metrics["load_quarantine_ms"] = (time.perf_counter() - phase_start) * 1000.0
     character_reader = None
     screenshots_path = None
     screenshots_temp = None
@@ -1336,7 +1431,9 @@ def main() -> None:
         if screenshots_path is not None:
             try:
                 from parser.ocr import create_reader
+                reader_start = time.perf_counter()
                 character_reader = create_reader()
+                runtime_metrics["ocr_reader_init_ms"] = (time.perf_counter() - reader_start) * 1000.0
                 print(f"Character re-OCR enabled using {screenshot_source_kind}: {screenshots_path}")
             except Exception as exc:
                 character_reader = None
@@ -1345,8 +1442,11 @@ def main() -> None:
             raise FileNotFoundError("--verify-characters requested, but no screenshots directory or ZIP was found. Use --screenshots-dir <path>.")
         else:
             print("Character re-OCR skipped: no screenshots directory/ZIP found. Use --screenshots-dir <path> or --no-verify-characters.")
+    phase_start = time.perf_counter()
     summary, detail, category = validate(gt, ocr, quarantine, character_reocr_reader=character_reader, screenshots_dir=screenshots_path)
-    write_report(summary, detail, category, output_dir)
+    runtime_metrics["validation_ms"] = (time.perf_counter() - phase_start) * 1000.0
+    runtime_metrics["total_runtime_ms"] = (time.perf_counter() - total_start) * 1000.0
+    write_report(summary, detail, category, output_dir, runtime_metrics=runtime_metrics)
     if screenshots_temp is not None:
         screenshots_temp.cleanup()
 

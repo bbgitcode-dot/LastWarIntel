@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 import json
+import time
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -75,6 +76,11 @@ class CharacterVerificationEvidence:
     expected_text: str = ""
     observed_text: str = ""
     allowed_chars: str = ""
+    target_total_ms: float = 0.0
+    crop_generation_ms: float = 0.0
+    variant_build_ms: float = 0.0
+    ocr_read_ms: float = 0.0
+    vote_selection_ms: float = 0.0
 
     @property
     def supports_expected(self) -> bool:
@@ -246,6 +252,12 @@ def _crop_box_variants(base_box: tuple[int, int, int, int], image_size: tuple[in
             (0.45, 0.0, 1.45, "right_wide"),
             (0.0, -0.18, 1.25, "up_wide"),
             (-0.25, -0.18, 1.60, "left_up_wide"),
+            # v0.9.5.107: case-sensitive tags such as PbC need the full tag
+            # as an anchor.  Single-glyph crops often vote as h/6/CJK noise;
+            # this wider candidate lets _choose_character read position 1 from
+            # the whole [TAG] text when EasyOCR can see it.
+            (-1.00, 0.0, 3.25, "full_tag_wide"),
+            (-1.00, -0.18, 3.45, "full_tag_up_wide"),
         ]
     else:
         specs = [
@@ -466,6 +478,7 @@ def verify_target_from_screenshot(
     returns deterministic unresolved evidence.  It never guesses from historical
     identity context.
     """
+    total_start = time.perf_counter()
     if Image is None:
         return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="pillow_unavailable", expected_text=expected_text, observed_text=observed_text)
     if row_slot is None:
@@ -476,22 +489,35 @@ def verify_target_from_screenshot(
     image = Image.open(screenshot_path)
     text_for_field = expected_text if target.expected else observed_text
     text_length = len(text_for_field or observed_text or target.observed or "")
+    crop_start = time.perf_counter()
     base_box = _field_box(image.size, row_slot, target.field, text_length=text_length, position=target.position, field_text=(text_for_field or observed_text or ""))
     candidate_boxes = _crop_box_variants(base_box, image.size, target)
+    crop_generation_ms = (time.perf_counter() - crop_start) * 1000.0
     allowed = _allowed_target_chars(target)
 
     best: CharacterVerificationEvidence | None = None
     candidate_count = len(candidate_boxes)
     for candidate_index, (box, candidate_reason) in enumerate(candidate_boxes):
+        candidate_start = time.perf_counter()
         crop = image.crop(box)
         votes: list[CharacterVote] = []
-        for variant_name, variant_image in _image_variants(crop):
-            for text, confidence in _read_variant(reader, variant_image):
+        variant_build_ms = 0.0
+        ocr_read_ms = 0.0
+        variants_start = time.perf_counter()
+        variants = list(_image_variants(crop))
+        variant_build_ms += (time.perf_counter() - variants_start) * 1000.0
+        for variant_name, variant_image in variants:
+            read_start = time.perf_counter()
+            read_values = _read_variant(reader, variant_image)
+            ocr_read_ms += (time.perf_counter() - read_start) * 1000.0
+            for text, confidence in read_values:
                 char = _choose_character(text, target)
                 votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=char))
 
+        vote_start = time.perf_counter()
         selected, confidence = _select_vote(votes)
         crop_anchor_status, crop_anchor_text, crop_diagnostic = _classify_crop_anchor(votes, target, expected_text, observed_text)
+        vote_selection_ms = (time.perf_counter() - vote_start) * 1000.0
         # Only accept a vote that is either the expected glyph, the observed glyph,
         # or an explicitly configured confusion-family member. Everything else is
         # unresolved noise, not evidence.
@@ -532,6 +558,11 @@ def verify_target_from_screenshot(
             expected_text=expected_text,
             observed_text=observed_text,
             allowed_chars="".join(sorted(allowed)),
+            target_total_ms=round((time.perf_counter() - total_start) * 1000.0, 3),
+            crop_generation_ms=round(crop_generation_ms, 3),
+            variant_build_ms=round(variant_build_ms, 3),
+            ocr_read_ms=round(ocr_read_ms, 3),
+            vote_selection_ms=round(vote_selection_ms, 3),
         )
         if best is None or _evidence_rank(evidence) > _evidence_rank(best):
             best = evidence
@@ -549,6 +580,8 @@ def verify_target_from_screenshot(
         observed_text=observed_text,
         text_length=text_length,
         allowed_chars="".join(sorted(allowed)),
+        target_total_ms=round((time.perf_counter() - total_start) * 1000.0, 3),
+        crop_generation_ms=round(crop_generation_ms, 3),
     )
 
 

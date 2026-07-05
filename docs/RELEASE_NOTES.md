@@ -1,3 +1,24 @@
+## v0.9.5.107 – Alliance Tag Fidelity + Runtime Telemetry
+
+v0.9.5.106 finally proved that calibrated Character ReOCR can recover the Joncollins tail digits (`2` and `1`) from screenshot evidence, but alliance-tag case fidelity remains a blocker (`PbC` still often appears as `PBC`). v0.9.5.107 keeps the conservative DataGuard posture and adds two focused improvements.
+
+### Changed
+- Added wider full-tag ReOCR candidates for alliance tags so short tags such as `[PbC]` can be read as a field before selecting the target character.
+- Added per-target timing fields to Character ReOCR evidence: `target_total_ms`, `crop_generation_ms`, `variant_build_ms`, `ocr_read_ms`, and `vote_selection_ms`.
+- Added `benchmarks/runtime_debug_report.json` and `benchmarks/runtime_debug_report.xlsx` to show where long Validator/ReOCR runs spend their time.
+- Extended Character ReOCR debug output with the new timing columns.
+
+### DataGuard posture
+- Runtime telemetry is observational only. It does not change matching, inference, ReOCR votes, or Operational Truth.
+- Gold Fidelity remains blocked unless player name, alliance tag, rank, and power are exact or character-verified.
+
+### Commit
+```bash
+git add .
+git commit -m "feat(data-guard): add runtime telemetry and tag crop calibration"
+git tag -a v0.9.5.107 -m "v0.9.5.107 Alliance Tag Fidelity and Runtime Telemetry"
+```
+
 ## v0.9.5.106 – Character Crop Calibration Harness
 
 v0.9.5.105 proved that fixed mini-crops were too brittle: Joncollins21/PbC targets were detected correctly, but the title-line crops often produced `crop_no_text_detected` or non-target CJK noise. v0.9.5.106 keeps the DataGuard rules conservative and adds a deterministic crop-calibration harness around every targeted Character ReOCR crop.

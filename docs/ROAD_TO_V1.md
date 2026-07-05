@@ -42,3 +42,8 @@ Gold Fidelity requires exact player and alliance identity, not normalized simila
 ## v0.9.5.106 – Gold Fidelity prerequisite
 
 The path to v1.0.0 now requires calibrated character evidence rather than fixed character crops. v0.9.5.106 adds candidate-crop search and records candidate reasons so high-value blockers such as `Joncollins21` and `[PbC]` can be diagnosed as pixel-localization problems instead of being treated as OCR model failures. The next milestone is to validate that the calibration raises expected-character verification without increasing observed/noise confirmations.
+
+
+## v0.9.5.107 – Telemetry checkpoint
+
+Before scaling Gold Fidelity beyond the 551 benchmark, Sentinel needs explainable runtime behavior. v0.9.5.107 adds timing telemetry at validator and Character ReOCR target level. The next milestone is to use this report to reduce repeated OCR calls without re-enabling cache prematurely, while continuing to harden alliance-tag case fidelity.
