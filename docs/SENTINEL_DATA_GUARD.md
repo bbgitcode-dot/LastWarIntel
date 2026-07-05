@@ -1,6 +1,6 @@
-# Sentinel Data Guard – v0.9.5.100 Addendum
+# Sentinel Data Guard – v0.9.5.101 Addendum
 
-Data Guard now treats targeted character re-OCR as supporting evidence, not as a promotion mechanism.
+Data Guard continues to treat targeted character re-OCR as supporting evidence, not as automatic identity correction.
 
 Rules:
 
@@ -8,7 +8,8 @@ Rules:
 2. No normalized identity promotion.
 3. No cache-driven validation.
 4. Character re-OCR evidence may reduce uncertainty only when it is based on the screenshot crop.
-5. If the crop vote is ambiguous, the row remains unresolved.
+5. If the crop vote is ambiguous or off-target, the row remains unresolved.
 6. Alliance tag case is Operational Truth.
+7. A vote outside the expected/observed/confusion-family set is noise, not evidence.
 
-The purpose is to move toward a 551 Gold Run without compromising the principle that the screenshot is the source of truth.
+v0.9.5.101 specifically tightens crop and vote precision so Character ReOCR does not accidentally verify neighbouring brackets, tags or UI glyphs.

@@ -1,20 +1,19 @@
-Sentinel v0.9.5.100
+Sentinel v0.9.5.101
 
-Sprint: Ground Truth Alignment Guard
-
-Purpose:
-- Prevent contextual inference rows from being treated as character-level OCR evidence.
-- Separate Alignment Context Gaps from true Character Fidelity drift.
-- Keep Character ReOCR focused on safe row-level matches only.
+Summary:
+- Tighten targeted Character ReOCR crop geometry for player names.
+- Add position-aware alliance-tag vote extraction inside bracketed tags.
+- Reject off-target OCR noise as unresolved instead of ambiguous evidence.
+- Add smoke tests for `[PbC]`/`[PBC]` vote selection and noise rejection.
+- Update docs and version metadata.
 
 Validation:
-- pytest -q tests/smoke/test_alignment_guard_100.py
-- python -m py_compile ground_truth_validator.py inference/context_engine.py parser/targeted_character_reocr.py
-- zip integrity check
+pytest -q tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
 
 Commit command:
 git add .
-git commit -m "fix(data-guard): separate alignment gaps from character verification"
+git commit -m "fix(data-guard): tighten character re-ocr crop and vote precision"
 
-tag command:
-git tag -a v0.9.5.100 -m "v0.9.5.100 Ground Truth Alignment Guard"
+Tag command:
+git tag -a v0.9.5.101 -m "v0.9.5.101 Character Crop Precision Guard"

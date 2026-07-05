@@ -1,25 +1,28 @@
-# Project Status – Sentinel v0.9.5.100
+# Project Status – Sentinel v0.9.5.101
 
-**Current sprint:** v0.9.5.100 Character Re-OCR Provider Input Fix  
-**Primary objective:** Make targeted Character Verification evidence actually run in the normal 551 Gold Fidelity validation path.
+**Current sprint:** v0.9.5.101 Character Crop Precision Guard  
+**Primary objective:** Improve the precision of targeted Character ReOCR evidence for the 551 Gold Fidelity benchmark.
 
 ## Current state
 
-The import pipeline remains stable for Server 551: recall is 100%, missing rows are 0, bad matches are 0. The remaining blocker is Gold Fidelity: player display names and alliance tags are not yet screenshot-exact.
+The 551 pipeline remains structurally stable: recall is 100%, missing rows are 0, and bad matches are 0. v0.9.5.100 correctly separated alignment context gaps from true character drift. The remaining blocker is screenshot-faithful identity display: player names and alliance tags are still not exact enough for Gold Fidelity.
 
-## v0.9.5.100 result
+## v0.9.5.101 result
 
-v0.9.5.100 fixes the activation gap from v0.9.5.97. Character Verification candidates no longer stay dormant when screenshots are available. The validator can auto-discover screenshots, including `551.zip`, and emits target evidence even when the OCR provider is not available in the validation environment.
+v0.9.5.101 tightens the evidence layer. It does not guess or canonicalize names. It improves crop placement and vote interpretation so Character ReOCR is less likely to read alliance tags, brackets, or neighbouring glyphs when it should verify a specific player-name or alliance-tag character.
 
 ## Still not Gold-ready
 
-This patch does not claim that Server 551 is now Gold-ready. It makes the next bottleneck measurable: targets are emitted and can be verified/unresolved rather than silently counted as zero.
+This patch does not claim that Server 551 is Gold-ready. It should reduce false/dirty evidence and make the next validator output more trustworthy. Gold remains blocked until expected glyph confirmations rise and unresolved/noisy crops shrink.
 
 ## Next focus
 
-Use real OCR-provider output on the targeted crops to increase `character_reocr_verified_expected` for high-value rows, starting with:
+Run the 551 Ground Truth validator and compare:
 
-- `Joncollins21` vs `Joncollinszl`
-- `PbC` vs `PBC`
-- `Pumpkin G` vs `Pumpkin 6`
-- short tags with missing or case-drifted glyphs
+- `character_reocr_verified_expected`
+- `character_reocr_verified_observed`
+- `character_reocr_unresolved`
+- `player_name_display_drift_rows`
+- `alliance_tag_display_drift_rows`
+
+Priority examples remain `Joncollins21`/`Joncollinszl`, `[PbC]`/`[PBC]`, `PBC`/`PC`, `Mizzenmast`/`Mzzenmast`, and `Pumpkin G`/`Pumpkin 6`.

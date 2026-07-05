@@ -1,4 +1,4 @@
-# Road to V1 – Sentinel v0.9.5.100
+# Road to V1 – Sentinel v0.9.5.101
 
 ## Strategic sequence
 
@@ -9,7 +9,7 @@
 
 ## Current milestone
 
-v0.9.5.100 introduces targeted character re-OCR evidence. This is the missing bridge between OCR output and Gold Fidelity validation.
+v0.9.5.101 continues the Gold Fidelity phase. v0.9.5.100 fixed false character-drift caused by alignment gaps. v0.9.5.101 improves the next bottleneck: crop precision and conservative vote selection for true character targets.
 
 ## Not yet V1-ready
 
@@ -17,11 +17,7 @@ Sentinel is not ready for reliable long-term joiner/leaver intelligence until na
 
 ## Next milestone candidate
 
-v0.9.5.100 should focus on improving crop localization and real OCR vote quality on the Server 551 screenshot set, especially:
+After validating v0.9.5.101, choose between:
 
-- `Joncollins21` vs `Joncollinszl`
-- `[PbC]` vs `[PBC]`
-- `PBC` vs `PC`
-- `Mizzenmast` vs `Mzzenmast`
-- `Drpeek` vs `Ieek`
-- multilingual display-name fragments
+- Field-level name/tag segmentation if crops still include neighbouring UI; or
+- Language/profile-specific ReOCR retries if crops are clean but OCR cannot read the glyphs.

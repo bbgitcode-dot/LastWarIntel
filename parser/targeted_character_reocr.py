@@ -122,17 +122,26 @@ def _field_box(image_size: tuple[int, int], row_slot: int, field: str, *, text_l
     # column starts around 190px, power column around 455px.
     if field == "alliance_tag":
         # Tags are short and sit at the beginning of the identity column.
+        # Keep the crop on the visible bracketed tag, but let vote extraction
+        # pick the requested tag character from inside brackets.
         left = 188 * scale_x
-        right = 255 * scale_x
-        total_chars = max(text_length, 2)
+        right = 260 * scale_x
+        total_chars = max(text_length, 3)
+        char_width = max((right - left) / max(total_chars + 2, 1), 7 * scale_x)
+        cx = left + (min(max(position + 1, 0), max(total_chars + 1, 0)) + 0.5) * char_width
+        pad_x = max(14 * scale_x, char_width * 1.8)
     else:
-        left = 190 * scale_x
-        right = 445 * scale_x
+        # Player names begin after the alliance tag.  Older .100 geometry used
+        # the full identity column from ~190px, so position-0 player crops often
+        # captured [TAG] instead of the name.  Start after the tag and keep a
+        # moderately wide crop for fragile glyphs without drifting into the
+        # power column.
+        left = 258 * scale_x
+        right = 448 * scale_x
         total_chars = max(text_length, 1)
-
-    char_width = max((right - left) / max(total_chars, 1), 5 * scale_x)
-    cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
-    pad_x = max(10 * scale_x, char_width * 1.25)
+        char_width = max((right - left) / max(total_chars, 1), 6 * scale_x)
+        cx = left + (min(max(position, 0), max(total_chars - 1, 0)) + 0.5) * char_width
+        pad_x = max(12 * scale_x, char_width * 1.5)
     # Text baseline is usually in the upper half of the row; keep generous y pad.
     top = max(0, int(y0 + 4 * (height / 1064.0)))
     bottom = min(height, int(y1 - 10 * (height / 1064.0)))
@@ -189,15 +198,53 @@ def _read_variant(reader: Any, image) -> list[tuple[str, float]]:
     return values
 
 
+def _allowed_target_chars(target: ReOcrTarget) -> set[str]:
+    allowed = {ch for ch in (target.expected, target.observed) if ch}
+    allowed.update(ch for ch in str(target.group or "") if ch)
+    return allowed
+
+
+def _tag_content(text: str) -> str:
+    clean = str(text or "").strip()
+    if "[" in clean and "]" in clean and clean.index("[") < clean.rindex("]"):
+        return clean[clean.index("[") + 1:clean.rindex("]")]
+    if clean.startswith("["):
+        return clean[1:]
+    return clean
+
+
 def _choose_character(text: str, target: ReOcrTarget) -> str:
     clean = str(text or "").strip()
     if not clean:
         return ""
-    # Prefer explicit expected/observed occurrences in the OCR crop because the
-    # crop is small but may still include brackets or nearby glyphs.
+
+    allowed = _allowed_target_chars(target)
+
+    # Alliance tags are position-sensitive and short.  For text like [PbC], the
+    # target at position 1 is b, not the first visible character P.  This fixes
+    # the .100 false vote pattern where [PbC]/[PC] repeatedly selected P.
+    if target.field == "alliance_tag":
+        tag = _tag_content(clean)
+        if 0 <= target.position < len(tag):
+            ch = tag[target.position]
+            if not allowed or ch in allowed:
+                return ch
+        for ch in tag:
+            if ch in allowed:
+                return ch
+        return ""
+
+    # For player names, prefer exact target/confusion glyphs when the crop sees
+    # them.  If no allowed glyph appears, return an empty vote instead of a
+    # random neighbouring bracket/CJK glyph; that keeps ReOCR conservative.
     for candidate in (target.expected, target.observed):
         if candidate and candidate in clean:
             return candidate
+    for ch in clean:
+        if ch in allowed:
+            return ch
+    if allowed:
+        return ""
     if target.position < len(clean):
         return clean[target.position]
     return clean[0]
@@ -251,6 +298,14 @@ def verify_target_from_screenshot(
             votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=char))
 
     selected, confidence = _select_vote(votes)
+    # Only accept a vote that is either the expected glyph, the observed glyph,
+    # or an explicitly configured confusion-family member.  Everything else is
+    # unresolved noise, not evidence.
+    allowed = _allowed_target_chars(target)
+    if selected and allowed and selected not in allowed:
+        selected = ""
+        confidence = 0.0
+
     if selected and target.expected and selected == target.expected and confidence >= 0.55:
         status = "verified_expected"
     elif selected and target.observed and selected == target.observed and confidence >= 0.55:

@@ -57,3 +57,35 @@ def test_targeted_reocr_without_reader_is_unresolved(tmp_path: Path):
     )
     assert evidence.status == "unresolved"
     assert summarize_evidence([evidence])["unresolved"] == 1
+
+
+def test_alliance_tag_vote_uses_requested_tag_position(tmp_path: Path):
+    image_path = tmp_path / "screen.png"
+    Image.new("RGB", (600, 1064), "white").save(image_path)
+    reader = FakeReader(["[PbC]", "[PC]", "[PBC]", "[PbC]"])
+    evidence = verify_target_from_screenshot(
+        screenshot_path=image_path,
+        target=ReOcrTarget(field="alliance_tag", position=1, expected="b", observed="B", group="8Bb"),
+        expected_text="PbC",
+        observed_text="PBC",
+        row_slot=0,
+        reader=reader,
+    )
+    assert evidence.selected == "b"
+    assert evidence.status == "verified_expected"
+
+
+def test_non_target_noise_is_unresolved_not_ambiguous(tmp_path: Path):
+    image_path = tmp_path / "screen.png"
+    Image.new("RGB", (600, 1064), "white").save(image_path)
+    reader = FakeReader(["[IVE]", "[PC]", "???", ""])
+    evidence = verify_target_from_screenshot(
+        screenshot_path=image_path,
+        target=ReOcrTarget(field="player_name", position=10, expected="2", observed="z", group="2zZ"),
+        expected_text="Joncollins21",
+        observed_text="Joncollinszl",
+        row_slot=0,
+        reader=reader,
+    )
+    assert evidence.status == "unresolved"
+    assert evidence.selected == ""

@@ -1,3 +1,30 @@
+## v0.9.5.101 – Character Crop Precision Guard
+
+v0.9.5.101 tightens targeted Character Re-OCR after v0.9.5.100 proved the Alignment Guard was working but only 2 of 8 expected glyph confirmations were observed. The main cause was crop and vote pollution: player-name crops still included alliance tags, and alliance-tag votes could select bracket/neighbor characters instead of the requested tag glyph.
+
+### Changed
+
+- Player-name character crops now start after the bracketed alliance tag instead of at the beginning of the identity column.
+- Alliance-tag vote extraction is position-aware inside bracketed tags such as `[PbC]`.
+- ReOCR votes are now conservative: only expected, observed, or explicit confusion-family characters can be selected as evidence. Off-target OCR noise becomes `unresolved`, not `ambiguous_vote`.
+- Added regression tests for `[PbC]`/`[PBC]` tag position voting and off-target noise suppression.
+- Updated documentation and version metadata to v0.9.5.101.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "fix(data-guard): tighten character re-ocr crop and vote precision"
+git tag -a v0.9.5.101 -m "v0.9.5.101 Character Crop Precision Guard"
+```
+
 ## v0.9.5.100 – Ground Truth Alignment Guard
 
 v0.9.5.100 separates contextual alignment gaps from true character-fidelity drift. The previous validator path could compare a Ground Truth row against a neighbouring OCR row accepted only as read-only contextual inference, producing false character differences such as `K9 Thunder` versus `YUNS` or `HUNI` versus `Zacharys`.

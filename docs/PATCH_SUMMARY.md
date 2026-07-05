@@ -1,24 +1,24 @@
-# Patch Summary – v0.9.5.100
+# Patch Summary – v0.9.5.101
 
-## Sentinel v0.9.5.100 – Ground Truth Alignment Guard
+## Sentinel v0.9.5.101 – Character Crop Precision Guard
 
-This sprint fixes the validator-level false comparison pattern found after v0.9.5.99. Contextual inference rows are useful for explaining bounded gaps, but they are not safe row-level OCR matches and must not generate character-level diffs.
+This sprint addresses the post-v0.9.5.100 finding that Character ReOCR activated correctly but confirmed too few expected glyphs. The issue was not only OCR quality; the crop/vote layer was polluted by neighbouring UI text.
 
 ## Key changes
 
-- Added `_apply_alignment_guard()` in `ground_truth_validator.py`.
-- Suppressed Character Verification / ReOCR for `inference_context_gap` rows.
-- Added `alignment_context_gap`, `alignment_guard_status`, and `alignment_safe_for_character_verification` detail fields.
-- Added report sections/sheets for Alignment Guard diagnostics.
-- Added regression test `tests/smoke/test_alignment_guard_100.py`.
+- Refined player-name crop geometry to begin after the alliance tag.
+- Added position-aware alliance-tag vote extraction for bracketed tags.
+- Restricted accepted vote characters to expected/observed/confusion-family glyphs.
+- Off-target OCR output now resolves to `unresolved` instead of becoming misleading evidence.
+- Added smoke regressions for tag-position voting and noise rejection.
 
 ## Validation
 
 ```bash
-pytest -q tests/smoke/test_alignment_guard_100.py
-python -m py_compile ground_truth_validator.py inference/context_engine.py parser/targeted_character_reocr.py
+pytest -q tests/smoke/test_targeted_character_reocr_97.py tests/smoke/test_character_reocr_98.py tests/smoke/test_alignment_guard_100.py
+python -m py_compile ground_truth_validator.py parser/targeted_character_reocr.py
 ```
 
 ## Version
 
-`0.9.5.100`
+`0.9.5.101`
