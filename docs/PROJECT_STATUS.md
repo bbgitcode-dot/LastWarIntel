@@ -120,3 +120,11 @@ Current strategy after .111: run the 551 validation again and measure whether `v
 ## v0.9.5.112 Update – Verified Display Evidence Apply Hotfix
 
 The v0.9.5.111 run proved that the ReOCR evidence existed but was not applied to the final verified-display metrics. v0.9.5.112 fixes the evidence counter so `CharacterVerificationEvidence.field` is counted directly. Rows whose local glyph drift is fully `verified_expected` can now resolve their verified display identity; rows with skipped/nonlocal drift remain blocked.
+
+## v0.9.5.113 - Gold Blocker Triage
+
+- Adds a diagnostic Gold Blocker Triage report to the Ground Truth Validator.
+- Classifies remaining Gold Fidelity blockers by domain: player name, alliance tag, combined identity, rank/power, alignment, and nonlocal/multilingual drift.
+- Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
+- Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
+

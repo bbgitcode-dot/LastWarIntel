@@ -66,3 +66,11 @@ V1 requires exact alliance identity, including case-sensitive tag spelling. v0.9
 ## v0.9.5.111 – Verified display identity prerequisite
 
 V1 requires Sentinel to turn screenshot-local proof into usable identity, not merely report it as debug evidence. v0.9.5.111 adds verified-display resolution so that rows with fully verified local glyph drift can contribute to Gold Fidelity while rows with skipped/nonlocal drift remain blocked. This is a key bridge from OCR evidence to operational identity.
+
+## v0.9.5.113 - Gold Blocker Triage
+
+- Adds a diagnostic Gold Blocker Triage report to the Ground Truth Validator.
+- Classifies remaining Gold Fidelity blockers by domain: player name, alliance tag, combined identity, rank/power, alignment, and nonlocal/multilingual drift.
+- Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
+- Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
+

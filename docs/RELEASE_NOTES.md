@@ -450,3 +450,11 @@ git add .
 git commit -m "feat(data-guard): add targeted character re-ocr evidence"
 git tag -a v0.9.5.97 -m "v0.9.5.97 Targeted Character Re-OCR Evidence"
 ```
+
+## v0.9.5.113 - Gold Blocker Triage
+
+- Adds a diagnostic Gold Blocker Triage report to the Ground Truth Validator.
+- Classifies remaining Gold Fidelity blockers by domain: player name, alliance tag, combined identity, rank/power, alignment, and nonlocal/multilingual drift.
+- Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
+- Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
+

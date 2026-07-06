@@ -1333,6 +1333,172 @@ def _build_runtime_debug_report(base_metrics: dict[str, float], character_reocr_
     return payload, runtime_df
 
 
+
+def _bool_cell(value: Any) -> bool:
+    """Return a stable bool for report cells that may be bool/int/NaN/string."""
+    if value is None:
+        return False
+    try:
+        if pd.isna(value):
+            return False
+    except (TypeError, ValueError):
+        pass
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def _int_cell(value: Any) -> int:
+    try:
+        if value is None or pd.isna(value):
+            return 0
+    except (TypeError, ValueError):
+        pass
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _triage_gold_blocker_row(row: pd.Series) -> dict[str, Any]:
+    """Classify a gold-fidelity blocker without changing validation outcome.
+
+    v0.9.5.113 is intentionally diagnostic: this triage explains why a row is
+    still blocking Gold Fidelity after verified-display resolution.  It must not
+    influence matching, DataGuard, inference, ReOCR voting, or Operational Truth.
+    """
+    name_ok = _bool_cell(row.get("verified_name_display_exact_match"))
+    alliance_ok = _bool_cell(row.get("verified_alliance_display_exact_match"))
+    rank_ok = _bool_cell(row.get("rank_match"))
+    power_ok = _bool_cell(row.get("power_match"))
+    power_exact = _bool_cell(row.get("power_exact_match"))
+    alignment_gap = _bool_cell(row.get("alignment_context_gap"))
+    skipped_nonlocal = _int_cell(row.get("character_reocr_skipped_nonlocal"))
+    reocr_unresolved = _int_cell(row.get("character_reocr_unresolved"))
+    reocr_targets = _int_cell(row.get("character_reocr_targets"))
+    high_value = _bool_cell(row.get("high_value_identity_risk")) or (_int_cell(row.get("rank")) > 0 and _int_cell(row.get("rank")) <= 10)
+    category = str(row.get("name_category", "") or "")
+    reasons = str(row.get("identity_risk_reasons", "") or "")
+    verification_reasons = str(row.get("character_verification_reasons", "") or "")
+    player_targets = str(row.get("player_name_character_verification_targets", "") or "")
+    alliance_targets = str(row.get("alliance_tag_character_verification_targets", "") or "")
+
+    if alignment_gap:
+        blocker_class = "alignment_context_gap_read_only"
+        blocker_domain = "row_alignment"
+        automation_path = "keep_read_only_context_inference"
+        next_action = "Keep conservative: row context is unsafe for character verification. Improve row localization only if this becomes operationally relevant."
+    elif name_ok and alliance_ok and (not rank_ok or not power_ok or not power_exact):
+        blocker_class = "rank_or_power_display_blocker"
+        blocker_domain = "rank_power"
+        automation_path = "row_rank_power_reconciliation"
+        next_action = "Investigate rank/power display drift after verified identity; do not spend OCR glyph budget on names or tags."
+    elif not name_ok and alliance_ok:
+        blocker_domain = "player_name"
+        if reocr_unresolved > 0:
+            blocker_class = "local_player_glyph_unresolved"
+            automation_path = "glyph_crop_refinement"
+            next_action = "Refine local player-name glyph crop/voting for remaining Latin confusables."
+        elif skipped_nonlocal > 0 or category in {"mixed_latin_cjk", "hangul_only"}:
+            blocker_class = "nonlocal_or_multilingual_player_display_drift"
+            automation_path = "multilingual_name_ocr_or_conservative_block"
+            next_action = "Do not force local glyph correction. Needs stronger multilingual OCR/segmentation or remains conservative."
+        elif reocr_targets == 0:
+            blocker_class = "player_name_no_local_targets"
+            automation_path = "target_generation_review"
+            next_action = "Review target generation: blocker has name drift but no safe local glyph targets."
+        else:
+            blocker_class = "player_name_verified_display_not_exact"
+            automation_path = "verified_display_apply_review"
+            next_action = "Inspect verified-display apply conditions for this player-name drift."
+    elif name_ok and not alliance_ok:
+        blocker_domain = "alliance_tag"
+        if reocr_unresolved > 0:
+            blocker_class = "alliance_tag_reocr_unresolved"
+            automation_path = "tag_block_anchor_refinement"
+            next_action = "Refine full-tag block anchor/case-sensitive tag glyph voting."
+        elif skipped_nonlocal > 0:
+            blocker_class = "alliance_tag_nonlocal_or_missing"
+            automation_path = "tag_segmentation_review"
+            next_action = "Review tag segmentation; do not infer a case-sensitive tag from missing/unsafe evidence."
+        else:
+            blocker_class = "alliance_tag_verified_display_not_exact"
+            automation_path = "verified_tag_apply_review"
+            next_action = "Inspect alliance verified-display apply conditions."
+    elif not name_ok and not alliance_ok:
+        blocker_domain = "player_name_and_alliance_tag"
+        if skipped_nonlocal > 0 or category in {"mixed_latin_cjk", "hangul_only"}:
+            blocker_class = "combined_nonlocal_multilingual_drift"
+            automation_path = "multilingual_row_segmentation"
+            next_action = "Treat as complex OCR/segmentation case; avoid automatic identity correction from local glyphs alone."
+        elif reocr_unresolved > 0:
+            blocker_class = "combined_local_glyph_unresolved"
+            automation_path = "glyph_and_tag_crop_refinement"
+            next_action = "Refine player glyph and tag block crop; both identity fields still block Gold."
+        else:
+            blocker_class = "combined_display_apply_or_target_gap"
+            automation_path = "target_and_apply_review"
+            next_action = "Review target generation and verified-display application for both fields."
+    else:
+        blocker_class = "unknown_gold_blocker"
+        blocker_domain = "unknown"
+        automation_path = "manual_diagnostic_review"
+        next_action = "Unexpected blocker signature; inspect full detail row."
+
+    return {
+        "gold_blocker_class": blocker_class,
+        "gold_blocker_domain": blocker_domain,
+        "gold_blocker_automation_path": automation_path,
+        "gold_blocker_next_action": next_action,
+        "gold_blocker_priority": "P1" if high_value else "P2",
+        "gold_blocker_is_local_glyph_candidate": blocker_class in {
+            "local_player_glyph_unresolved",
+            "alliance_tag_reocr_unresolved",
+            "combined_local_glyph_unresolved",
+        },
+        "gold_blocker_is_multilingual_or_nonlocal": "nonlocal" in blocker_class or "multilingual" in blocker_class,
+        "gold_blocker_is_structural": blocker_domain in {"row_alignment", "rank_power"},
+        "gold_blocker_evidence_hint": ";".join(part for part in [reasons, verification_reasons] if part),
+        "gold_blocker_player_targets": player_targets,
+        "gold_blocker_alliance_targets": alliance_targets,
+    }
+
+
+def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if gold_fidelity_blockers.empty:
+        empty_cols = [
+            "gold_blocker_class", "gold_blocker_domain", "gold_blocker_automation_path",
+            "gold_blocker_next_action", "gold_blocker_priority", "gold_blocker_is_local_glyph_candidate",
+            "gold_blocker_is_multilingual_or_nonlocal", "gold_blocker_is_structural",
+            "gold_blocker_evidence_hint", "gold_blocker_player_targets", "gold_blocker_alliance_targets",
+        ]
+        return pd.DataFrame(columns=list(gold_fidelity_blockers.columns) + empty_cols), pd.DataFrame(columns=[
+            "gold_blocker_class", "gold_blocker_domain", "gold_blocker_automation_path", "rows",
+            "high_value_rows", "local_glyph_candidate_rows", "multilingual_or_nonlocal_rows", "structural_rows",
+            "verified_identity_resolution_rows", "avg_name_similarity", "avg_power_similarity",
+        ])
+
+    triage_rows = [_triage_gold_blocker_row(row) for _, row in gold_fidelity_blockers.iterrows()]
+    triage = pd.concat([gold_fidelity_blockers.reset_index(drop=True), pd.DataFrame(triage_rows)], axis=1)
+    for col in ["name_similarity", "power_similarity"]:
+        if col not in triage.columns:
+            triage[col] = 0.0
+        triage[col] = pd.to_numeric(triage[col], errors="coerce").fillna(0.0)
+    triage_summary = triage.groupby(["gold_blocker_class", "gold_blocker_domain", "gold_blocker_automation_path"], dropna=False).agg(
+        rows=("rank", "count"),
+        high_value_rows=("gold_blocker_priority", lambda values: int((values == "P1").sum())),
+        local_glyph_candidate_rows=("gold_blocker_is_local_glyph_candidate", "sum"),
+        multilingual_or_nonlocal_rows=("gold_blocker_is_multilingual_or_nonlocal", "sum"),
+        structural_rows=("gold_blocker_is_structural", "sum"),
+        verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+        avg_name_similarity=("name_similarity", "mean"),
+        avg_power_similarity=("power_similarity", "mean"),
+    ).reset_index()
+    for col in ["avg_name_similarity", "avg_power_similarity"]:
+        triage_summary[col] = pd.to_numeric(triage_summary[col], errors="coerce").round(4)
+    triage_summary = triage_summary.sort_values(["high_value_rows", "rows"], ascending=[False, False]).reset_index(drop=True)
+    return triage, triage_summary
+
 def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.DataFrame, output_dir: Path, runtime_metrics: dict[str, float] | None = None) -> None:
     report_write_start = time.perf_counter()
     runtime_metrics = dict(runtime_metrics or {})
@@ -1391,6 +1557,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows"])
 
     gold_fidelity_blockers = detail[detail.get("gold_fidelity_blocker", pd.Series(dtype=bool))].copy()
+    gold_blocker_triage, gold_blocker_triage_summary = _build_gold_blocker_triage(gold_fidelity_blockers)
     alignment_context_gaps = detail[detail.get("alignment_context_gap", pd.Series(dtype=bool))].copy()
     alignment_guard_summary = alignment_context_gaps.groupby("alignment_guard_status", dropna=False).agg(
         rows=("rank", "count"),
@@ -1426,6 +1593,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_verification_summary": character_verification_summary.to_dict(orient="records"),
         "character_verification_candidates": character_verification_detail.to_dict(orient="records"),
         "gold_fidelity_blockers": gold_fidelity_blockers.to_dict(orient="records"),
+        "gold_blocker_triage_summary": gold_blocker_triage_summary.to_dict(orient="records"),
+        "gold_blocker_triage": gold_blocker_triage.to_dict(orient="records"),
         "alignment_guard_summary": alignment_guard_summary.to_dict(orient="records"),
         "alignment_context_gaps": alignment_context_gaps.to_dict(orient="records"),
         "character_reocr": {
@@ -1466,6 +1635,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_verification_summary).to_excel(writer, sheet_name="char_verify_summary", index=False)
         _sanitize_frame(character_verification_detail).to_excel(writer, sheet_name="char_verify_candidates", index=False)
         _sanitize_frame(gold_fidelity_blockers).to_excel(writer, sheet_name="gold_fidelity_blockers", index=False)
+        _sanitize_frame(gold_blocker_triage_summary).to_excel(writer, sheet_name="gold_blocker_triage", index=False)
+        _sanitize_frame(gold_blocker_triage).to_excel(writer, sheet_name="gold_blocker_details", index=False)
         _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
