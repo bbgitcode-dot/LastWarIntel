@@ -74,3 +74,11 @@ V1 requires Sentinel to turn screenshot-local proof into usable identity, not me
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+## v0.9.5.114 - V1 Gate Clarification
+
+V1 now tracks two related but distinct gates:
+
+1. **Core Identity Gold**: server, power, verified player display, and verified alliance display are proven. This is the operational gate for transfer intelligence.
+2. **Full Row Gold**: Core Identity plus rank/display fidelity. This remains the stricter audit gate.
+
+This distinction is important for scaling beyond the 549-676 transfer bucket. Sentinel must not depend on a historical name database to solve first-contact player identities; it must read and verify identity fields from the current screenshot. v0.9.5.114 makes the reporting layer reflect that strategy.

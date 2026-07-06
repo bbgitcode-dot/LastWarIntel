@@ -162,6 +162,10 @@ class ValidationSummary:
     verified_alliance_display_exact_matches: int = 0
     verified_exact_identity_matches: int = 0
     verified_identity_resolution_rows: int = 0
+    verified_core_identity_matches: int = 0
+    verified_core_identity_resolution_rows: int = 0
+    gold_core_blocker_rows: int = 0
+    gold_core_ready: bool = False
 
 
 COLUMN_ALIASES = {
@@ -847,8 +851,15 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         ))
         verified_display_name = expected_name if verified_name_display_exact else actual_name
         verified_display_alliance = expected_alliance_display if verified_alliance_display_exact else actual_alliance_display
+        # v0.9.5.114 separates full row fidelity from transfer-critical
+        # identity fidelity. Rank display drift is still reported, but it no
+        # longer hides that Player + Alliance + Power have been verified.
         verified_exact_identity = bool(accepted_match and rank_match and power_match and verified_name_display_exact and verified_alliance_display_exact)
+        verified_core_identity = bool(accepted_match and power_match and verified_name_display_exact and verified_alliance_display_exact)
         verified_identity_resolution = bool(verified_exact_identity and not exact_identity)
+        raw_core_identity = bool(accepted_match and power_match and name_display_exact and alliance_display_exact_match)
+        verified_core_identity_resolution = bool(verified_core_identity and not raw_core_identity)
+        gold_core_blocker = bool(accepted_match and not verified_core_identity)
 
         identity_risk_reasons = []
         if accepted_match and not verified_name_display_exact:
@@ -864,6 +875,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         gold_fidelity_blocker = bool(accepted_match and not verified_exact_identity)
         if gold_fidelity_blocker:
             identity_risk_reasons.append("gold_fidelity_blocker")
+        if accepted_match and verified_core_identity and not verified_exact_identity:
+            identity_risk_reasons.append("rank_display_only_full_fidelity_blocker")
         identity_risk = bool(identity_risk_reasons)
         high_value_identity_risk = bool(identity_risk and (expected_rank is not None and expected_rank <= 10))
         high_value_character_verification = bool(character_verification_candidate and (expected_rank is not None and expected_rank <= 10))
@@ -921,6 +934,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "verified_alliance_display_exact_match": verified_alliance_display_exact,
             "verified_exact_identity_match": verified_exact_identity,
             "verified_identity_resolution": verified_identity_resolution,
+            "verified_core_identity_match": verified_core_identity,
+            "verified_core_identity_resolution": verified_core_identity_resolution,
+            "gold_core_blocker": gold_core_blocker,
             "identity_risk": identity_risk,
             "identity_risk_reasons": ";".join(dict.fromkeys(identity_risk_reasons)),
             "high_value_identity_risk": high_value_identity_risk,
@@ -999,6 +1015,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     verified_alliance_display_exact_matches = int(detail.get("verified_alliance_display_exact_match", pd.Series(dtype=bool)).sum())
     verified_exact_identity_matches = int(detail.get("verified_exact_identity_match", pd.Series(dtype=bool)).sum())
     verified_identity_resolution_rows = int(detail.get("verified_identity_resolution", pd.Series(dtype=bool)).sum())
+    verified_core_identity_matches = int(detail.get("verified_core_identity_match", pd.Series(dtype=bool)).sum())
+    verified_core_identity_resolution_rows = int(detail.get("verified_core_identity_resolution", pd.Series(dtype=bool)).sum())
+    gold_core_blocker_rows = int(detail.get("gold_core_blocker", pd.Series(dtype=bool)).sum())
     identity_risk_rows = int(detail["identity_risk"].sum())
     high_value_identity_risk_rows = int(detail["high_value_identity_risk"].sum())
     alliance_tag_case_sensitive_mismatches = int(detail["alliance_tag_case_sensitive_mismatch"].sum())
@@ -1023,6 +1042,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         and bad_matches == 0
         and gold_fidelity_blocker_rows == 0
         and verified_exact_identity_matches == total
+    )
+    gold_core_ready = bool(
+        matched == total
+        and bad_matches == 0
+        and gold_core_blocker_rows == 0
+        and verified_core_identity_matches == total
     )
     avg_similarity = round(float(detail["name_similarity"].mean()) if total else 0.0, 4)
     avg_normalized_similarity = round(float(detail["name_normalized_similarity"].mean()) if total else 0.0, 4)
@@ -1084,6 +1109,10 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         verified_alliance_display_exact_matches=verified_alliance_display_exact_matches,
         verified_exact_identity_matches=verified_exact_identity_matches,
         verified_identity_resolution_rows=verified_identity_resolution_rows,
+        verified_core_identity_matches=verified_core_identity_matches,
+        verified_core_identity_resolution_rows=verified_core_identity_resolution_rows,
+        gold_core_blocker_rows=gold_core_blocker_rows,
+        gold_core_ready=gold_core_ready,
         identity_risk_rows=identity_risk_rows,
         high_value_identity_risk_rows=high_value_identity_risk_rows,
         alliance_tag_case_sensitive_mismatches=alliance_tag_case_sensitive_mismatches,
@@ -1126,6 +1155,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         exact_identity_matches=("exact_identity_match", "sum"),
         verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
         verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
@@ -1363,7 +1395,7 @@ def _int_cell(value: Any) -> int:
 def _triage_gold_blocker_row(row: pd.Series) -> dict[str, Any]:
     """Classify a gold-fidelity blocker without changing validation outcome.
 
-    v0.9.5.113 is intentionally diagnostic: this triage explains why a row is
+    v0.9.5.114 is diagnostic and gate-aware: this triage explains why a row is
     still blocking Gold Fidelity after verified-display resolution.  It must not
     influence matching, DataGuard, inference, ReOCR voting, or Operational Truth.
     """
@@ -1372,6 +1404,7 @@ def _triage_gold_blocker_row(row: pd.Series) -> dict[str, Any]:
     rank_ok = _bool_cell(row.get("rank_match"))
     power_ok = _bool_cell(row.get("power_match"))
     power_exact = _bool_cell(row.get("power_exact_match"))
+    core_identity_ok = _bool_cell(row.get("verified_core_identity_match")) or (name_ok and alliance_ok and power_ok)
     alignment_gap = _bool_cell(row.get("alignment_context_gap"))
     skipped_nonlocal = _int_cell(row.get("character_reocr_skipped_nonlocal"))
     reocr_unresolved = _int_cell(row.get("character_reocr_unresolved"))
@@ -1388,11 +1421,21 @@ def _triage_gold_blocker_row(row: pd.Series) -> dict[str, Any]:
         blocker_domain = "row_alignment"
         automation_path = "keep_read_only_context_inference"
         next_action = "Keep conservative: row context is unsafe for character verification. Improve row localization only if this becomes operationally relevant."
-    elif name_ok and alliance_ok and (not rank_ok or not power_ok or not power_exact):
+    elif core_identity_ok and not rank_ok:
+        blocker_class = "identity_core_verified_rank_only_blocker"
+        blocker_domain = "rank_display"
+        automation_path = "rank_display_gate_cleanup"
+        next_action = "Treat as transfer-identity verified. Keep full Gold blocked only for row-fidelity reporting; do not spend OCR glyph budget on this row."
+    elif name_ok and alliance_ok and power_ok and not power_exact:
+        blocker_class = "identity_core_verified_power_display_blocker"
+        blocker_domain = "power_display"
+        automation_path = "power_display_reconciliation"
+        next_action = "Transfer identity is verified, but power is near/recovered rather than exact. Inspect power display/recovery policy, not names or tags."
+    elif name_ok and alliance_ok and (not power_ok):
         blocker_class = "rank_or_power_display_blocker"
         blocker_domain = "rank_power"
         automation_path = "row_rank_power_reconciliation"
-        next_action = "Investigate rank/power display drift after verified identity; do not spend OCR glyph budget on names or tags."
+        next_action = "Investigate power display drift after verified name/tag; do not spend OCR glyph budget on names or tags."
     elif not name_ok and alliance_ok:
         blocker_domain = "player_name"
         if reocr_unresolved > 0:
@@ -1457,7 +1500,7 @@ def _triage_gold_blocker_row(row: pd.Series) -> dict[str, Any]:
             "combined_local_glyph_unresolved",
         },
         "gold_blocker_is_multilingual_or_nonlocal": "nonlocal" in blocker_class or "multilingual" in blocker_class,
-        "gold_blocker_is_structural": blocker_domain in {"row_alignment", "rank_power"},
+        "gold_blocker_is_structural": blocker_domain in {"row_alignment", "rank_power", "rank_display", "power_display"},
         "gold_blocker_evidence_hint": ";".join(part for part in [reasons, verification_reasons] if part),
         "gold_blocker_player_targets": player_targets,
         "gold_blocker_alliance_targets": alliance_targets,
@@ -1480,6 +1523,10 @@ def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd
 
     triage_rows = [_triage_gold_blocker_row(row) for _, row in gold_fidelity_blockers.iterrows()]
     triage = pd.concat([gold_fidelity_blockers.reset_index(drop=True), pd.DataFrame(triage_rows)], axis=1)
+    for col in ["verified_core_identity_match", "verified_core_identity_resolution", "gold_core_blocker"]:
+        if col not in triage.columns:
+            triage[col] = False
+        triage[col] = triage[col].fillna(False).astype(bool)
     for col in ["name_similarity", "power_similarity"]:
         if col not in triage.columns:
             triage[col] = 0.0
@@ -1491,6 +1538,9 @@ def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd
         multilingual_or_nonlocal_rows=("gold_blocker_is_multilingual_or_nonlocal", "sum"),
         structural_rows=("gold_blocker_is_structural", "sum"),
         verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
         avg_name_similarity=("name_similarity", "mean"),
         avg_power_similarity=("power_similarity", "mean"),
     ).reset_index()
@@ -1510,6 +1560,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "verified_alliance_display_exact_match": detail.get("alliance_display_exact_match", pd.Series(False, index=detail.index)),
         "verified_exact_identity_match": detail.get("exact_identity_match", pd.Series(False, index=detail.index)),
         "verified_identity_resolution": pd.Series(False, index=detail.index),
+        "verified_core_identity_match": detail.get("verified_exact_identity_match", detail.get("exact_identity_match", pd.Series(False, index=detail.index))),
+        "verified_core_identity_resolution": pd.Series(False, index=detail.index),
+        "gold_core_blocker": detail.get("gold_fidelity_blocker", pd.Series(False, index=detail.index)),
         "verified_name_display": detail.get("ocr_name", pd.Series("", index=detail.index)),
         "verified_alliance_display": detail.get("ocr_alliance_display", pd.Series("", index=detail.index)),
     }
@@ -1536,6 +1589,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         exact_identity_matches=("exact_identity_match", "sum"),
         verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
         verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
         high_value_character_verification_rows=("high_value_character_verification", "sum"),
@@ -1554,10 +1610,21 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         exact_identity_matches=("exact_identity_match", "sum"),
         verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
         verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
-    ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows"])
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
+    ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows", "verified_core_identity_matches", "verified_core_identity_resolution_rows", "gold_core_blocker_rows"])
 
     gold_fidelity_blockers = detail[detail.get("gold_fidelity_blocker", pd.Series(dtype=bool))].copy()
     gold_blocker_triage, gold_blocker_triage_summary = _build_gold_blocker_triage(gold_fidelity_blockers)
+    core_identity_detail = detail[detail.get("verified_core_identity_match", pd.Series(False, index=detail.index))].copy()
+    core_identity_summary = pd.DataFrame([{
+        "rows": int(len(detail)),
+        "verified_core_identity_matches": int(detail.get("verified_core_identity_match", pd.Series(dtype=bool)).sum()),
+        "verified_core_identity_resolution_rows": int(detail.get("verified_core_identity_resolution", pd.Series(dtype=bool)).sum()),
+        "gold_core_blocker_rows": int(detail.get("gold_core_blocker", pd.Series(dtype=bool)).sum()),
+        "rank_only_full_gold_blockers": int((detail.get("verified_core_identity_match", pd.Series(False, index=detail.index)) & ~detail.get("verified_exact_identity_match", pd.Series(False, index=detail.index))).sum()),
+    }])
     alignment_context_gaps = detail[detail.get("alignment_context_gap", pd.Series(dtype=bool))].copy()
     alignment_guard_summary = alignment_context_gaps.groupby("alignment_guard_status", dropna=False).agg(
         rows=("rank", "count"),
@@ -1572,7 +1639,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         exact_identity_matches=("exact_identity_match", "sum"),
         verified_exact_identity_matches=("verified_exact_identity_match", "sum"),
         verified_identity_resolution_rows=("verified_identity_resolution", "sum"),
-    ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows"])
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
+    ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows", "verified_core_identity_matches", "verified_core_identity_resolution_rows", "gold_core_blocker_rows"])
     character_reocr_debug = _flatten_character_reocr_debug(detail)
     if not character_reocr_debug.empty:
         character_reocr_debug_summary = character_reocr_debug.groupby(["target_field", "target_status", "debug_read"], dropna=False).agg(
@@ -1595,12 +1665,15 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "gold_fidelity_blockers": gold_fidelity_blockers.to_dict(orient="records"),
         "gold_blocker_triage_summary": gold_blocker_triage_summary.to_dict(orient="records"),
         "gold_blocker_triage": gold_blocker_triage.to_dict(orient="records"),
+        "core_identity_summary": core_identity_summary.to_dict(orient="records"),
+        "core_identity_verified_rows": core_identity_detail.to_dict(orient="records"),
         "alignment_guard_summary": alignment_guard_summary.to_dict(orient="records"),
         "alignment_context_gaps": alignment_context_gaps.to_dict(orient="records"),
         "character_reocr": {
             "target_count": int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum()),
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
             "verified_display_resolutions": int(detail.get("verified_identity_resolution", pd.Series(dtype=bool)).sum()),
+            "verified_core_identity_resolutions": int(detail.get("verified_core_identity_resolution", pd.Series(dtype=bool)).sum()),
             "verified_observed": int(detail.get("character_reocr_verified_observed", pd.Series(dtype=int)).sum()),
             "unresolved": int(detail.get("character_reocr_unresolved", pd.Series(dtype=int)).sum()),
             "skipped_nonlocal": int(detail.get("character_reocr_skipped_nonlocal", pd.Series(dtype=int)).sum()),
@@ -1637,6 +1710,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(gold_fidelity_blockers).to_excel(writer, sheet_name="gold_fidelity_blockers", index=False)
         _sanitize_frame(gold_blocker_triage_summary).to_excel(writer, sheet_name="gold_blocker_triage", index=False)
         _sanitize_frame(gold_blocker_triage).to_excel(writer, sheet_name="gold_blocker_details", index=False)
+        _sanitize_frame(core_identity_summary).to_excel(writer, sheet_name="core_identity", index=False)
+        _sanitize_frame(core_identity_detail).to_excel(writer, sheet_name="core_identity_rows", index=False)
         _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)

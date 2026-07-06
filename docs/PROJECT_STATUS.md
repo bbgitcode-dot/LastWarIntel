@@ -128,3 +128,10 @@ The v0.9.5.111 run proved that the ReOCR evidence existed but was not applied to
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+## v0.9.5.114 - Current Sprint Status
+
+The previous run showed that alliance-tag verification is no longer the main blocker: verified alliance display exactness is high, while player-name display drift remains the primary source of full Gold Fidelity blockers. v0.9.5.114 therefore introduces a second, explicit gate: Core Identity.
+
+Core Identity is intentionally transfer-focused: server + power + verified player display + verified alliance display. Full Gold Fidelity remains stricter and still includes rank/display fidelity. This separation prevents rank-only drift from being treated as equivalent to a wrong player name.
+
+Next focus remains player-name drift triage: latin-only glyph/separator fixes first, then conservative handling for mixed CJK/Hangul names where local glyph verification is not enough.

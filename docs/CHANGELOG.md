@@ -60,3 +60,12 @@ See `docs/RELEASE_NOTES.md` and `docs/PATCH_SUMMARY.md` for consolidated sprint 
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+## v0.9.5.114 - Player Name Drift Triage and Core Identity Gold Gate
+
+- Added a transfer-critical Core Identity gate alongside the stricter full row Gold Fidelity gate. Core Identity means verified player display + verified alliance display + matched power/server; rank display drift is now visible as a separate full-fidelity blocker instead of being mixed with name/tag identity failures.
+- Added `verified_core_identity_match`, `verified_core_identity_resolution`, `gold_core_blocker`, `verified_core_identity_matches`, `gold_core_blocker_rows`, and `gold_core_ready` to validator/detail summaries.
+- Added `core_identity_summary` and `core_identity_verified_rows` to the JSON report, plus `core_identity` and `core_identity_rows` sheets in the Excel report.
+- Improved Gold Blocker Triage classes to separate `identity_core_verified_rank_only_blocker`, `identity_core_verified_power_display_blocker`, multilingual/nonlocal player-name drift, and true local glyph failures.
+- No Operational Truth write path changed. DataGuard, row-alignment guard, inference read-only handling, and ReOCR voting remain conservative.
+
+Expected effect: `.114` will not magically solve CJK/Hangul player-name drift, but it will stop rank-only/full-row fidelity noise from hiding rows where transfer-critical identity is already proven.
