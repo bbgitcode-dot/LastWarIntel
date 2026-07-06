@@ -128,6 +128,13 @@ The v0.9.5.111 run proved that the ReOCR evidence existed but was not applied to
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+
+## v0.9.5.115 - Current Sprint Status
+
+The previous run showed a clean split: alliance-tag verification is largely stable, while player-name display drift remains the main Core Identity blocker. v0.9.5.115 therefore targets Latin-only player names where OCR dropped or compressed a local glyph, such as `Mizzenmast -> Mzzenmast`, without opening the door to broad CJK/Hangul substitutions.
+
+The sprint keeps DATAGUARD conservative: mixed-script display drift is not auto-resolved and still requires future OCR strategy improvements. Core Identity progress must come from screenshot-local evidence, not historical name databases.
+
 ## v0.9.5.114 - Current Sprint Status
 
 The previous run showed that alliance-tag verification is no longer the main blocker: verified alliance display exactness is high, while player-name display drift remains the primary source of full Gold Fidelity blockers. v0.9.5.114 therefore introduces a second, explicit gate: Core Identity.

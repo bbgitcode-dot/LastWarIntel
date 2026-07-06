@@ -1,14 +1,16 @@
-# Sentinel v0.9.5.114 Patch Summary
+# Sentinel v0.9.5.115 Patch Summary
 
 ## Focus
-Player Name Drift Triage + Core Identity Gold Gate Cleanup.
+Latin Player Name Core Resolution.
 
-## Key Changes
-- Adds Core Identity metrics separate from strict full-row Gold Fidelity.
-- Adds report sections/sheets for core identity matches and remaining core blockers.
-- Reclassifies rank-only blockers so they no longer hide true player-name/tag problems.
-- Keeps DataGuard conservative: no Operational Truth mutation, no new OCR correction path, no historical identity dependency.
+## What changed
+- Local Glyph Gate now accepts narrow Latin-only missing-glyph targets, e.g. `Mizzenmast -> Mzzenmast`.
+- Pure Latin spacing gaps can be treated as verified formatting evidence instead of blocking Core Identity.
+- Mixed CJK/Hangul/Kana display drift remains conservative and is still skipped/nonlocal.
+
+## Why
+The v0.9.5.114 run showed that alliance tags are mostly solved and remaining Core blockers are primarily player-name display drift. v0.9.5.115 focuses on Latin names where the current screenshot can still prove the missing glyph without historical identity data.
 
 ## Validation
-- Targeted smoke tests for v0.9.5.112 verified display, v0.9.5.113 triage, and v0.9.5.114 core gate passed.
-- py_compile passed.
+- 12 targeted smoke tests passed.
+- `py_compile` passed for validator and targeted ReOCR modules.

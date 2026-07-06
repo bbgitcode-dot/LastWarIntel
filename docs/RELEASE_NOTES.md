@@ -458,6 +458,14 @@ git tag -a v0.9.5.97 -m "v0.9.5.97 Targeted Character Re-OCR Evidence"
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+
+## v0.9.5.115 - Latin Player Name Core Resolution
+
+- Extends the local glyph gate to handle Latin-only missing glyphs in otherwise aligned names.
+- Adds safe handling for Latin spacing gaps so formatting does not block Core Identity when the compact Latin name is still locally aligned.
+- Keeps mixed CJK/Hangul/Kana display drift conservative; no historical identity database or manual mapping is introduced.
+- Adds smoke tests for `Mizzenmast -> Mzzenmast`, Latin spacing gaps, and mixed Unicode rejection.
+
 ## v0.9.5.114 - Player Name Drift Triage and Core Identity Gold Gate
 
 - Added a transfer-critical Core Identity gate alongside the stricter full row Gold Fidelity gate. Core Identity means verified player display + verified alliance display + matched power/server; rank display drift is now visible as a separate full-fidelity blocker instead of being mixed with name/tag identity failures.

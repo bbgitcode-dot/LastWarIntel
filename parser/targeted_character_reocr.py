@@ -377,10 +377,14 @@ def is_local_glyph_target(target: ReOcrTarget, *, expected_text: str = "", obser
     if field != "player_name":
         return False
 
-    # A local glyph verifier needs at least one visible target glyph.  Empty-vs-
-    # long insertion/deletion spans usually indicate segmentation/string drift,
-    # not a single character ambiguity.
+    # A local glyph verifier normally needs at least one visible target glyph.
+    # v0.9.5.115 adds one narrow exception: Latin-only names with one/few
+    # missing expected glyphs, e.g. Mizzenmast -> Mzzenmast or Drpeek -> Ieek.
+    # This remains screenshot-local and explicitly excludes mixed CJK/Hangul
+    # display drift.
     if not expected or not observed:
+        if expected and not observed and _safe_latin_gap_pair(expected_text, observed_text):
+            return expected.isascii() and (expected.isalnum() or expected.isspace())
         return False
 
     # Primary target: classical OCR confusion families such as 2/z or 1/l.
@@ -412,6 +416,39 @@ def filter_local_glyph_targets(targets: Iterable[ReOcrTarget], *, expected_name:
         seen.add(key)
         filtered.append(target)
     return filtered
+
+
+def _is_ascii_latinish(text: str) -> bool:
+    text = str(text or "")
+    if not text:
+        return False
+    # Permit player-name punctuation/spacing that occurs in Latin Last War names,
+    # but reject CJK/Hangul/Kana drift.  This keeps the first-contact OCR path
+    # screenshot-local while allowing missing Latin glyphs such as Mizzenmast ->
+    # Mzzenmast to be verified instead of being skipped as nonlocal.
+    return all(ord(ch) < 128 for ch in text)
+
+
+def _compact_latin_identity(text: str) -> str:
+    return "".join(ch.lower() for ch in str(text or "") if ch.isalnum())
+
+
+def _safe_latin_gap_pair(expected_text: str, observed_text: str) -> bool:
+    if not (_is_ascii_latinish(expected_text) and _is_ascii_latinish(observed_text)):
+        return False
+    expected_key = _compact_latin_identity(expected_text)
+    observed_key = _compact_latin_identity(observed_text)
+    if not expected_key or not observed_key:
+        return False
+    # A local gap verifier is intended for one/few missing glyphs in an otherwise
+    # aligned Latin name, not for broad substitutions or OCR garbage suffixes.
+    if abs(len(expected_key) - len(observed_key)) > 3:
+        return False
+    # Deletion-style cases: Mizzenmast/Mzzenmast, Drpeek/Ieek, N E R D/NER0.
+    # Do not require containment only; a trailing confusable may still need its
+    # own glyph vote.
+    from difflib import SequenceMatcher
+    return SequenceMatcher(a=expected_key, b=observed_key).ratio() >= 0.72
 
 def _status_rank(status: str) -> int:
     return {"verified_expected": 400, "verified_observed": 300, "ambiguous_vote": 200, "unresolved": 0}.get(status, 0)
@@ -601,6 +638,18 @@ def verify_target_from_screenshot(
     identity context.
     """
     total_start = time.perf_counter()
+    # Pure spacing gaps in otherwise Latin names are not OCR-readable glyphs.
+    # Treat them as verified formatting gaps only after the local-glyph gate has
+    # proven the pair is safe Latin text.  This prevents spaces from blocking
+    # Core Identity while still leaving non-Latin drift conservative.
+    if target.field == "player_name" and target.expected == " " and not target.observed and _safe_latin_gap_pair(expected_text, observed_text):
+        elapsed = (time.perf_counter() - total_start) * 1000.0
+        return CharacterVerificationEvidence(
+            target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None,
+            "verified_expected", selected=" ", confidence=1.0, reason="latin_spacing_gap",
+            text_length=len(expected_text or observed_text or ""), expected_text=expected_text, observed_text=observed_text,
+            allowed_chars=" ", target_total_ms=elapsed,
+        )
     if Image is None:
         return CharacterVerificationEvidence(target.field, target.position, target.expected, target.observed, screenshot_path.name, row_slot, None, "unresolved", reason="pillow_unavailable", expected_text=expected_text, observed_text=observed_text)
     if row_slot is None:

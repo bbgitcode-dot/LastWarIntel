@@ -74,6 +74,11 @@ V1 requires Sentinel to turn screenshot-local proof into usable identity, not me
 - Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
 - Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
 
+
+## v0.9.5.115 - Latin Core Identity Step
+
+v0.9.5.115 narrows the V1 path around first-contact identity extraction. The system must solve Latin glyph loss from the current screenshot itself, not from historical player databases. Missing Latin letters and spacing-only differences are now treated as local verification work; broad mixed-script drift remains blocked until a stronger OCR strategy exists.
+
 ## v0.9.5.114 - V1 Gate Clarification
 
 V1 now tracks two related but distinct gates:
