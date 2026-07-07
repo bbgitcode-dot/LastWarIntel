@@ -35,7 +35,7 @@ from parser.name_normalization import normalize_player_name, normalized_name_sim
 from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
 from parser.character_verification import analyze_player_name_characters, analyze_alliance_tag_characters, merge_verification_plans
-from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, summarize_evidence, filter_local_glyph_targets
+from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, verify_latin_name_block_from_screenshot, summarize_evidence, filter_local_glyph_targets
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
 from parser.evidence_resolver import find_same_server_evidence_candidate
@@ -812,6 +812,30 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                     row_slot=row_slot,
                     reader=character_reocr_reader,
                 ))
+
+            # v0.9.5.116: single-glyph probing is weak when the OCR string has
+            # shifted or omitted characters (Mizzenmast -> Mzzenmast, Drpeek ->
+            # Ieek, N E R D -> NER0).  For Latin-only aligned rows, run one
+            # screenshot-local whole-name block reconstruction pass.  This does
+            # not use history and remains gated by DATAGUARD row alignment.
+            if (
+                accepted_match
+                and str(gt_row.get("name_category", "")) == "latin_only"
+                and not raw_name_display_exact
+                and expected_name
+                and actual_name
+                and row_slot is not None
+            ):
+                block_evidence = verify_latin_name_block_from_screenshot(
+                    screenshot_path=screenshot_path,
+                    expected_text=expected_name,
+                    observed_text=actual_name,
+                    row_slot=row_slot,
+                    reader=character_reocr_reader,
+                )
+                if getattr(block_evidence, "status", "") == "verified_expected":
+                    evidence_items.append(block_evidence)
+
             reocr_summary = summarize_evidence(evidence_items)
             reocr_summary["skipped_nonlocal"] = skipped_targets
             reocr_evidence_json = json.dumps([item.to_dict() for item in evidence_items], ensure_ascii=False)
@@ -835,12 +859,21 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         verified_player_expected = _count_evidence_by_field(evidence_items, "player_name", "verified_expected")
         verified_alliance_expected = _count_evidence_by_field(evidence_items, "alliance_tag", "verified_expected")
 
-        verified_name_display_exact = bool(accepted_match and _field_verified_by_reocr(
-            already_exact=name_display_exact,
-            raw_target_count=raw_player_targets,
-            local_target_count=local_player_targets,
-            skipped_target_count=skipped_player_targets,
-            verified_expected_count=verified_player_expected,
+        name_block_verified = any(
+            _evidence_field(item) == "player_name"
+            and getattr(item, "status", "") == "verified_expected"
+            and getattr(item, "reason", "") == "latin_name_block_reconstruction"
+            for item in evidence_items
+        )
+        verified_name_display_exact = bool(accepted_match and (
+            name_block_verified
+            or _field_verified_by_reocr(
+                already_exact=name_display_exact,
+                raw_target_count=raw_player_targets,
+                local_target_count=local_player_targets,
+                skipped_target_count=skipped_player_targets,
+                verified_expected_count=verified_player_expected,
+            )
         ))
         verified_alliance_display_exact = bool(accepted_match and _field_verified_by_reocr(
             already_exact=alliance_display_exact_match,

@@ -475,3 +475,10 @@ git tag -a v0.9.5.97 -m "v0.9.5.97 Targeted Character Re-OCR Evidence"
 - No Operational Truth write path changed. DataGuard, row-alignment guard, inference read-only handling, and ReOCR voting remain conservative.
 
 Expected effect: `.114` will not magically solve CJK/Hangul player-name drift, but it will stop rank-only/full-row fidelity noise from hiding rows where transfer-critical identity is already proven.
+
+## v0.9.5.116 – Latin Name Block Reconstruction
+
+- Added screenshot-local Latin Name Block Reconstruction for aligned Latin-only player names where single-glyph ReOCR is too weak, e.g. missing/shifted characters such as `Mizzenmast -> Mzzenmast`, `Drpeek -> Ieek`, and spacing/digit drifts like `N E R D -> NER0`.
+- Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
+- Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
+- Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.

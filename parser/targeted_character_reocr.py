@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -85,6 +86,47 @@ class CharacterVerificationEvidence:
     @property
     def supports_expected(self) -> bool:
         return bool(self.expected) and self.status == "verified_expected"
+
+    def to_dict(self) -> dict[str, Any]:
+        payload = asdict(self)
+        payload["votes"] = [asdict(vote) for vote in self.votes]
+        return payload
+
+
+@dataclass(frozen=True)
+class NameBlockReconstructionEvidence:
+    field: str
+    position: int
+    expected: str
+    observed: str
+    screenshot: str
+    row_slot: int | None
+    crop_box: tuple[int, int, int, int] | None
+    status: str
+    selected: str = ""
+    confidence: float = 0.0
+    votes: tuple[CharacterVote, ...] = field(default_factory=tuple)
+    reason: str = ""
+    crop_strategy: str = "latin_name_block"
+    crop_candidate_index: int = 0
+    crop_candidate_count: int = 1
+    crop_candidate_reason: str = ""
+    crop_anchor_status: str = ""
+    crop_anchor_text: str = ""
+    crop_diagnostic: str = ""
+    text_length: int = 0
+    expected_text: str = ""
+    observed_text: str = ""
+    allowed_chars: str = ""
+    target_total_ms: float = 0.0
+    crop_generation_ms: float = 0.0
+    variant_build_ms: float = 0.0
+    ocr_read_ms: float = 0.0
+    vote_selection_ms: float = 0.0
+
+    @property
+    def supports_expected(self) -> bool:
+        return self.status == "verified_expected"
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -754,6 +796,205 @@ def verify_target_from_screenshot(
         target_total_ms=round((time.perf_counter() - total_start) * 1000.0, 3),
         crop_generation_ms=round(crop_generation_ms, 3),
     )
+
+
+_LATIN_NAME_ALLOWED_RE = re.compile(r"[^A-Za-z0-9 _.'\-]")
+
+
+def _latin_name_display_key(text: str) -> str:
+    return "".join(ch.lower() for ch in str(text or "") if ch.isascii() and ch.isalnum())
+
+
+def _clean_latin_name_candidate(text: str) -> str:
+    clean = str(text or "").replace("|", " ").strip()
+    # Drop bracketed tag fragments and obvious power digits after the name block.
+    clean = re.sub(r"\[[^\]]{0,8}\]", " ", clean)
+    clean = clean.replace("#", " ")
+    clean = _LATIN_NAME_ALLOWED_RE.sub(" ", clean)
+    clean = re.sub(r"\s+", " ", clean).strip()
+    # Keep the longest mostly-latin phrase.  This avoids a full-row crop turning
+    # `[PbC] Drpeek 271156279` into a candidate dominated by tag/power noise.
+    parts = [part.strip(" _.-'") for part in re.split(r"\s{2,}|\t", clean) if part.strip(" _.-'")]
+    if parts:
+        clean = max(parts, key=lambda part: (sum(ch.isalpha() for ch in part), len(part)))
+    clean = re.sub(r"\b\d{6,}\b", " ", clean).strip()
+    return re.sub(r"\s+", " ", clean)
+
+
+def _latin_name_block_candidates(image_size: tuple[int, int], row_slot: int) -> list[tuple[tuple[int, int, int, int], str]]:
+    width, height = image_size
+    _rx0, y0, _rx1, y1 = _ranking_row_box(image_size, row_slot)
+    scale_x = width / 600.0
+    aspect = height / max(width, 1)
+    if aspect < 1.60:
+        top = max(0, int(y0 - 8 * (height / 915.0)))
+        bottom = min(height, int(y0 + 50 * (height / 915.0)))
+        specs = [
+            (250, 430, top, bottom, "latin_name_block_base"),
+            (240, 435, max(0, top - 8), bottom, "latin_name_block_left_up"),
+            (260, 445, top, min(height, bottom + 6), "latin_name_block_right"),
+            (228, 450, max(0, top - 10), min(height, bottom + 8), "latin_name_block_wide"),
+        ]
+    else:
+        scale_y = height / 1064.0
+        top = max(0, int(y0 + 2 * scale_y))
+        bottom = min(height, int(y1 - 8 * scale_y))
+        specs = [
+            (250, 448, top, bottom, "latin_name_block_base"),
+            (235, 455, max(0, top - 6), bottom, "latin_name_block_left_up"),
+            (258, 462, top, min(height, bottom + 6), "latin_name_block_right"),
+            (222, 468, max(0, top - 8), min(height, bottom + 8), "latin_name_block_wide"),
+        ]
+    out: list[tuple[tuple[int, int, int, int], str]] = []
+    seen: set[tuple[int, int, int, int]] = set()
+    for left, right, top_i, bottom_i, reason in specs:
+        box = (int(max(0, left * scale_x)), int(max(0, top_i)), int(min(width, right * scale_x)), int(min(height, bottom_i)))
+        if box[2] > box[0] and box[3] > box[1] and box not in seen:
+            seen.add(box)
+            out.append((box, reason))
+    return out
+
+
+def _score_latin_reconstruction_candidate(candidate: str, expected_text: str, observed_text: str) -> tuple[float, str]:
+    from difflib import SequenceMatcher
+    clean = _clean_latin_name_candidate(candidate)
+    expected_clean = _clean_latin_name_candidate(expected_text)
+    observed_clean = _clean_latin_name_candidate(observed_text)
+    ckey = _latin_name_display_key(clean)
+    ekey = _latin_name_display_key(expected_clean)
+    okey = _latin_name_display_key(observed_clean)
+    if not clean or not ekey:
+        return 0.0, clean
+    sim_expected = SequenceMatcher(a=ckey, b=ekey).ratio() if ckey else 0.0
+    sim_observed = SequenceMatcher(a=ckey, b=okey).ratio() if ckey and okey else 0.0
+    exact_key_bonus = 0.18 if ckey == ekey else 0.0
+    expected_text_bonus = 0.12 if expected_clean and expected_clean.lower() in clean.lower() else 0.0
+    observed_penalty = 0.12 if okey and ckey == okey and ckey != ekey else 0.0
+    score = sim_expected + exact_key_bonus + expected_text_bonus - observed_penalty
+    # A candidate must be closer to expected than to the already observed OCR;
+    # otherwise this is not reconstruction, just re-reading the original error.
+    if okey and sim_expected <= sim_observed and ckey != ekey:
+        score -= 0.25
+    return max(0.0, min(1.0, score)), clean
+
+
+def _select_latin_name_block_vote(votes: Iterable[CharacterVote], expected_text: str, observed_text: str) -> tuple[str, float, list[CharacterVote]]:
+    scored: list[tuple[float, CharacterVote, str]] = []
+    for vote in votes:
+        score, clean = _score_latin_reconstruction_candidate(vote.text, expected_text, observed_text)
+        if score <= 0:
+            continue
+        scored.append((score * max(float(vote.confidence or 0.0), 0.05), vote, clean))
+    if not scored:
+        return "", 0.0, []
+    scored.sort(key=lambda item: item[0], reverse=True)
+    best_score, best_vote, clean = scored[0]
+    total = sum(item[0] for item in scored) or best_score
+    confidence = min(1.0, best_score / max(total, 1e-9))
+    # Prefer the ground-truth display only when the OCR block actually emitted a
+    # candidate whose latin key matches or strongly supports it.
+    expected_key = _latin_name_display_key(expected_text)
+    clean_key = _latin_name_display_key(clean)
+    from difflib import SequenceMatcher
+    sim = SequenceMatcher(a=clean_key, b=expected_key).ratio() if clean_key and expected_key else 0.0
+    selected = expected_text if clean_key == expected_key or sim >= 0.965 else clean
+    return selected, round(max(confidence, min(1.0, sim)), 4), [item[1] for item in scored[:8]]
+
+
+def verify_latin_name_block_from_screenshot(
+    *,
+    screenshot_path: Path,
+    expected_text: str,
+    observed_text: str,
+    row_slot: int | None,
+    reader: Any = None,
+) -> NameBlockReconstructionEvidence:
+    """Try to reconstruct an aligned Latin-only player-name block.
+
+    This is a first-contact OCR tool, not a history lookup.  It only uses the
+    current screenshot crop and is gated to safe ASCII/Latin pairs.  It is aimed
+    at cases where single-glyph probing cannot see a missing/shifted character
+    (`Mizzenmast -> Mzzenmast`, `Drpeek -> Ieek`, `N E R D -> NER0`).
+    """
+    total_start = time.perf_counter()
+    if not _safe_latin_gap_pair(expected_text, observed_text):
+        elapsed = (time.perf_counter() - total_start) * 1000.0
+        return NameBlockReconstructionEvidence(
+            "player_name", -1, expected_text, observed_text, screenshot_path.name, row_slot, None,
+            "unresolved", reason="latin_name_block_not_safe", expected_text=expected_text, observed_text=observed_text,
+            text_length=len(expected_text or observed_text or ""), target_total_ms=round(elapsed, 3),
+        )
+    if Image is None:
+        return NameBlockReconstructionEvidence("player_name", -1, expected_text, observed_text, screenshot_path.name, row_slot, None, "unresolved", reason="pillow_unavailable", expected_text=expected_text, observed_text=observed_text)
+    if row_slot is None:
+        return NameBlockReconstructionEvidence("player_name", -1, expected_text, observed_text, screenshot_path.name, row_slot, None, "unresolved", reason="missing_row_slot", expected_text=expected_text, observed_text=observed_text)
+    if not screenshot_path.exists():
+        return NameBlockReconstructionEvidence("player_name", -1, expected_text, observed_text, screenshot_path.name, row_slot, None, "unresolved", reason="screenshot_missing", expected_text=expected_text, observed_text=observed_text)
+
+    image = Image.open(screenshot_path)
+    crop_start = time.perf_counter()
+    candidate_boxes = _latin_name_block_candidates(image.size, row_slot)
+    crop_generation_ms = (time.perf_counter() - crop_start) * 1000.0
+    best: NameBlockReconstructionEvidence | None = None
+    candidate_count = len(candidate_boxes)
+    for idx, (box, reason) in enumerate(candidate_boxes):
+        crop = image.crop(box)
+        votes: list[CharacterVote] = []
+        variants_start = time.perf_counter()
+        variants = list(_image_variants(crop))
+        variant_build_ms = (time.perf_counter() - variants_start) * 1000.0
+        ocr_read_ms = 0.0
+        for variant_name, variant_image in variants:
+            read_start = time.perf_counter()
+            read_values = _read_variant(reader, variant_image)
+            ocr_read_ms += (time.perf_counter() - read_start) * 1000.0
+            for text, confidence in read_values:
+                clean = _clean_latin_name_candidate(text)
+                votes.append(CharacterVote(variant=variant_name, text=text, confidence=confidence, char=clean))
+        vote_start = time.perf_counter()
+        selected, confidence, top_votes = _select_latin_name_block_vote(votes, expected_text, observed_text)
+        joined = " | ".join(vote.text for vote in votes if vote.text)
+        expected_key = _latin_name_display_key(expected_text)
+        selected_key = _latin_name_display_key(selected)
+        status = "verified_expected" if selected_key and selected_key == expected_key and confidence >= 0.82 else "unresolved"
+        vote_selection_ms = (time.perf_counter() - vote_start) * 1000.0
+        evidence = NameBlockReconstructionEvidence(
+            field="player_name",
+            position=-1,
+            expected=expected_text,
+            observed=observed_text,
+            screenshot=screenshot_path.name,
+            row_slot=row_slot,
+            crop_box=box,
+            status=status,
+            selected=selected,
+            confidence=confidence,
+            votes=tuple(top_votes),
+            reason="latin_name_block_reconstruction",
+            crop_strategy="latin_name_block",
+            crop_candidate_index=idx,
+            crop_candidate_count=candidate_count,
+            crop_candidate_reason=reason,
+            crop_anchor_status="anchor_seen" if status == "verified_expected" else "text_without_anchor",
+            crop_anchor_text=joined,
+            crop_diagnostic="name_block_reconstructed" if status == "verified_expected" else "name_block_unresolved",
+            text_length=len(expected_text or observed_text or ""),
+            expected_text=expected_text,
+            observed_text=observed_text,
+            allowed_chars=expected_text,
+            target_total_ms=round((time.perf_counter() - total_start) * 1000.0, 3),
+            crop_generation_ms=round(crop_generation_ms, 3),
+            variant_build_ms=round(variant_build_ms, 3),
+            ocr_read_ms=round(ocr_read_ms, 3),
+            vote_selection_ms=round(vote_selection_ms, 3),
+        )
+        if best is None or _evidence_rank(evidence) > _evidence_rank(best):
+            best = evidence
+        if evidence.status == "verified_expected":
+            break
+    if best is not None:
+        return best
+    return NameBlockReconstructionEvidence("player_name", -1, expected_text, observed_text, screenshot_path.name, row_slot, None, "unresolved", reason="no_name_block_candidates", expected_text=expected_text, observed_text=observed_text, target_total_ms=round((time.perf_counter() - total_start) * 1000.0, 3))
 
 
 def summarize_evidence(evidence: Iterable[CharacterVerificationEvidence]) -> dict[str, int]:
