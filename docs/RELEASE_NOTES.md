@@ -489,3 +489,12 @@ Expected effect: `.114` will not magically solve CJK/Hangul player-name drift, b
 - Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
 - Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
 - Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
+## v0.9.5.118 – Non-Latin Identity Policy Gate
+
+- Added a script-limited Core Identity policy for mixed Latin/CJK/Hangul names.
+- Keeps Full Display Fidelity strict while allowing transfer-relevant Core Identity where Latin core, alliance, and power are stable.
+- Adds JSON/Excel diagnostics for script-limited identity rows.
+- Preserves DataGuard discipline: no Operational Truth mutation and no database/history dependency.
+
+Validation: 24 focused smoke tests passed.
+

@@ -67,3 +67,8 @@ The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly loc
 - Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
 - Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
 - Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
+
+## Handoff v0.9.5.118
+
+Use `Sentinel_v0.9.5.118.zip` as the next baseline. The patch introduces script-limited core identity metrics for mixed Latin/CJK/Hangul names. After the next run, compare `script_limited_core_identity_matches`, `verified_core_identity_matches`, and `gold_core_blocker_rows` against `.117`. Full Display Gold should remain conservative.
+

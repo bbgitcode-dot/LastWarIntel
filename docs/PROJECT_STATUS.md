@@ -155,3 +155,8 @@ Next focus remains player-name drift triage: latin-only glyph/separator fixes fi
 - Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
 - Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
 - Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
+
+## Current Sprint – v0.9.5.118
+
+The current focus is the Non-Latin Identity Policy Gate. `.117` kept `.116` quality while reducing unnecessary reconstruction. `.118` now separates strict display fidelity from transfer-relevant core identity for mixed Latin/CJK/Hangul names: stable Latin core + verified alliance + matched power can satisfy Core Identity, but Full Gold remains blocked until the complete display name is exact.
+
