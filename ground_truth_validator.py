@@ -899,6 +899,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         name_normalized_similarity = _normalized_similarity(expected_name, actual_name)
         expected_name_normalized = normalize_player_name(expected_name)
         actual_name_normalized = normalize_player_name(actual_name)
+        expected_name_key = expected_name_normalized.comparison_key
+        actual_name_key = actual_name_normalized.comparison_key
         raw_name_exact = normalize_name(expected_name).casefold() == normalize_name(actual_name).casefold()
         raw_name_display_exact = exact_display_match(expected_name, actual_name)
         raw_name_normalized_match = bool(name_normalized_similarity >= 0.88)

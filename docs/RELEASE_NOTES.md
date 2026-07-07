@@ -499,6 +499,13 @@ Expected effect: `.114` will not magically solve CJK/Hangul player-name drift, b
 Validation: 24 focused smoke tests passed.
 
 
+
+## v0.9.5.120 – Latin Residual Validator Crashfix
+
+- Fixes a validator crash introduced in v0.9.5.119 where `expected_name_key` / `actual_name_key` were referenced before initialization.
+- Keeps Latin Residual Core behavior unchanged.
+- No OCR, policy, or Operational Truth behavior changes.
+
 ## v0.9.5.119 – Latin Residual Core Blocker Cleanup
 
 - Added a conservative Latin-only residual Core Identity policy for remaining rows where the stable expected Latin core is visibly contained in the OCR result despite OCR prefix/suffix garbage or display spacing noise.
