@@ -175,6 +175,74 @@ def _is_script_limited_core_identity(
         return False, "normalized_similarity_below_policy"
     return True, "script_limited_latin_core_policy"
 
+
+
+def _is_latin_residual_core_identity(
+    *,
+    accepted_match: bool,
+    name_category: str,
+    power_match: bool,
+    verified_alliance_display_exact: bool,
+    verified_name_display_exact: bool,
+    raw_name_normalized_match: bool,
+    name_normalized_similarity: float,
+    expected_name_latin_core: str,
+    actual_name_latin_core: str,
+    expected_name_key: str,
+    actual_name_key: str,
+    skipped_player_targets: int,
+    unresolved_player_evidence: int,
+) -> tuple[bool, str]:
+    """Classify safe Latin-only residuals after glyph/block OCR.
+
+    v0.9.5.119: by this point DataGuard has already established the row via
+    server/power and alliance evidence.  Some Latin-only names remain blocked
+    only because OCR injected harmless prefix/suffix noise or missed display
+    spacing/case while the stable Latin core is still present (for example
+    ``x Zed`` being read as ``XZed 00...``).  This policy clears Core Identity
+    only for containment/high-similarity residuals.  It does not mark full
+    display fidelity as exact and it does not fix broad missing-glyph cases
+    such as ``Drpeek -> Ieek`` or ``N E R D -> NER0``.
+    """
+    if not accepted_match:
+        return False, "not_accepted_match"
+    if name_category != "latin_only":
+        return False, "not_latin_only"
+    if not power_match:
+        return False, "power_not_matched"
+    if not verified_alliance_display_exact:
+        return False, "alliance_not_verified"
+    if verified_name_display_exact:
+        return False, "name_already_verified"
+
+    expected_core = re.sub(r"[^A-Za-z0-9]", "", str(expected_name_latin_core or "")).upper()
+    actual_core = re.sub(r"[^A-Za-z0-9]", "", str(actual_name_latin_core or "")).upper()
+    expected_key_clean = re.sub(r"[^A-Za-z0-9]", "", str(expected_name_key or expected_core or "")).upper()
+    actual_key_clean = re.sub(r"[^A-Za-z0-9]", "", str(actual_name_key or actual_core or "")).upper()
+
+    if not expected_core or not actual_core:
+        return False, "missing_latin_core"
+    if len(expected_core) < 3:
+        return False, "latin_core_too_short"
+    if str(actual_core).upper() == "UNKNOWN":
+        return False, "observed_unknown"
+
+    # Exact normalized match is already handled elsewhere.  Here we only clear
+    # residuals where the expected player core is visibly contained in the OCR
+    # text with extra OCR junk around it, or where the normalized similarity is
+    # very high and there are no unresolved local glyph failures.
+    containment = expected_core in actual_core or expected_key_clean in actual_key_clean
+    reverse_containment = len(actual_core) >= 4 and actual_core in expected_core
+    high_similarity_clean = raw_name_normalized_match or name_normalized_similarity >= 0.94
+
+    if containment:
+        return True, "latin_residual_core_contained_in_observed"
+    if reverse_containment and name_normalized_similarity >= 0.90:
+        return True, "latin_residual_observed_contained_in_core"
+    if high_similarity_clean and skipped_player_targets == 0 and unresolved_player_evidence == 0:
+        return True, "latin_residual_high_similarity_clean"
+    return False, "latin_residual_not_stable"
+
 # Unicode ranges useful for high-level reporting. The validator does not need
 # to know the user's language; these tags help us measure where OCR struggles.
 HAN_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -256,6 +324,8 @@ class ValidationSummary:
     gold_core_ready: bool = False
     script_limited_core_identity_matches: int = 0
     script_limited_core_identity_resolution_rows: int = 0
+    latin_residual_core_identity_matches: int = 0
+    latin_residual_core_identity_resolution_rows: int = 0
 
 
 COLUMN_ALIASES = {
@@ -993,7 +1063,27 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             expected_name_latin_core=expected_name_normalized,
             actual_name_latin_core=actual_name_normalized,
         )
-        identity_policy_class = "script_limited_latin_core" if script_limited_core_identity else "full_display_required"
+        latin_residual_core_identity, latin_residual_policy_reason = _is_latin_residual_core_identity(
+            accepted_match=accepted_match,
+            name_category=str(gt_row.get("name_category", "")),
+            power_match=power_match,
+            verified_alliance_display_exact=verified_alliance_display_exact,
+            verified_name_display_exact=verified_name_display_exact,
+            raw_name_normalized_match=raw_name_normalized_match,
+            name_normalized_similarity=name_normalized_similarity,
+            expected_name_latin_core=expected_name_normalized,
+            actual_name_latin_core=actual_name_normalized,
+            expected_name_key=expected_name_key,
+            actual_name_key=actual_name_key,
+            skipped_player_targets=skipped_player_targets,
+            unresolved_player_evidence=_count_evidence_by_field(evidence_items, "player_name", "unresolved"),
+        )
+        if script_limited_core_identity:
+            identity_policy_class = "script_limited_latin_core"
+        elif latin_residual_core_identity:
+            identity_policy_class = "latin_residual_core"
+        else:
+            identity_policy_class = "full_display_required"
         # v0.9.5.114 separates full row fidelity from transfer-critical
         # identity fidelity. Rank display drift is still reported, but it no
         # longer hides that Player + Alliance + Power have been verified.
@@ -1001,12 +1091,16 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         # names: stable Latin core + verified alliance + exact/near power can
         # satisfy Core Identity, while Full Gold remains blocked until display
         # fidelity is exact.
+        # v0.9.5.119 adds the analogous *Latin residual* gate for safe
+        # containment/high-similarity leftovers such as extra OCR junk around a
+        # stable Latin player core.
         verified_exact_identity = bool(accepted_match and rank_match and power_match and verified_name_display_exact and verified_alliance_display_exact)
-        verified_core_identity = bool((accepted_match and power_match and verified_name_display_exact and verified_alliance_display_exact) or script_limited_core_identity)
+        verified_core_identity = bool((accepted_match and power_match and verified_name_display_exact and verified_alliance_display_exact) or script_limited_core_identity or latin_residual_core_identity)
         verified_identity_resolution = bool(verified_exact_identity and not exact_identity)
         raw_core_identity = bool(accepted_match and power_match and name_display_exact and alliance_display_exact_match)
         verified_core_identity_resolution = bool(verified_core_identity and not raw_core_identity)
         script_limited_core_identity_resolution = bool(script_limited_core_identity and not raw_core_identity)
+        latin_residual_core_identity_resolution = bool(latin_residual_core_identity and not raw_core_identity)
         gold_core_blocker = bool(accepted_match and not verified_core_identity)
 
         identity_risk_reasons = []
@@ -1014,6 +1108,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             identity_risk_reasons.append("player_name_display_drift")
         if script_limited_core_identity:
             identity_risk_reasons.append("script_limited_core_identity")
+        if latin_residual_core_identity:
+            identity_risk_reasons.append("latin_residual_core_identity")
         if accepted_match and not verified_alliance_display_exact:
             identity_risk_reasons.append("alliance_tag_display_drift")
         if accepted_match and raw_alliance_case_sensitive_mismatch and not verified_alliance_display_exact:
@@ -1089,6 +1185,9 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "script_limited_core_identity_match": script_limited_core_identity,
             "script_limited_core_identity_resolution": script_limited_core_identity_resolution,
             "script_limited_policy_reason": script_limited_policy_reason,
+            "latin_residual_core_identity_match": latin_residual_core_identity,
+            "latin_residual_core_identity_resolution": latin_residual_core_identity_resolution,
+            "latin_residual_policy_reason": latin_residual_policy_reason,
             "identity_policy_class": identity_policy_class,
             "gold_core_blocker": gold_core_blocker,
             "identity_risk": identity_risk,
@@ -1173,6 +1272,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     verified_core_identity_resolution_rows = int(detail.get("verified_core_identity_resolution", pd.Series(dtype=bool)).sum())
     script_limited_core_identity_matches = int(detail.get("script_limited_core_identity_match", pd.Series(dtype=bool)).sum())
     script_limited_core_identity_resolution_rows = int(detail.get("script_limited_core_identity_resolution", pd.Series(dtype=bool)).sum())
+    latin_residual_core_identity_matches = int(detail.get("latin_residual_core_identity_match", pd.Series(dtype=bool)).sum())
+    latin_residual_core_identity_resolution_rows = int(detail.get("latin_residual_core_identity_resolution", pd.Series(dtype=bool)).sum())
     gold_core_blocker_rows = int(detail.get("gold_core_blocker", pd.Series(dtype=bool)).sum())
     identity_risk_rows = int(detail["identity_risk"].sum())
     high_value_identity_risk_rows = int(detail["high_value_identity_risk"].sum())
@@ -1269,6 +1370,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         verified_core_identity_resolution_rows=verified_core_identity_resolution_rows,
         script_limited_core_identity_matches=script_limited_core_identity_matches,
         script_limited_core_identity_resolution_rows=script_limited_core_identity_resolution_rows,
+        latin_residual_core_identity_matches=latin_residual_core_identity_matches,
+        latin_residual_core_identity_resolution_rows=latin_residual_core_identity_resolution_rows,
         gold_core_blocker_rows=gold_core_blocker_rows,
         gold_core_ready=gold_core_ready,
         identity_risk_rows=identity_risk_rows,
@@ -1317,6 +1420,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
         script_limited_core_identity_matches=("script_limited_core_identity_match", "sum"),
         script_limited_core_identity_resolution_rows=("script_limited_core_identity_resolution", "sum"),
+        latin_residual_core_identity_matches=("latin_residual_core_identity_match", "sum"),
+        latin_residual_core_identity_resolution_rows=("latin_residual_core_identity_resolution", "sum"),
         gold_core_blocker_rows=("gold_core_blocker", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
@@ -1683,7 +1788,7 @@ def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd
 
     triage_rows = [_triage_gold_blocker_row(row) for _, row in gold_fidelity_blockers.iterrows()]
     triage = pd.concat([gold_fidelity_blockers.reset_index(drop=True), pd.DataFrame(triage_rows)], axis=1)
-    for col in ["verified_core_identity_match", "verified_core_identity_resolution", "script_limited_core_identity_match", "script_limited_core_identity_resolution", "gold_core_blocker"]:
+    for col in ["verified_core_identity_match", "verified_core_identity_resolution", "script_limited_core_identity_match", "script_limited_core_identity_resolution", "latin_residual_core_identity_match", "latin_residual_core_identity_resolution", "gold_core_blocker"]:
         if col not in triage.columns:
             triage[col] = False
         triage[col] = triage[col].fillna(False).astype(bool)
@@ -1702,6 +1807,8 @@ def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd
         verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
         script_limited_core_identity_matches=("script_limited_core_identity_match", "sum"),
         script_limited_core_identity_resolution_rows=("script_limited_core_identity_resolution", "sum"),
+        latin_residual_core_identity_matches=("latin_residual_core_identity_match", "sum"),
+        latin_residual_core_identity_resolution_rows=("latin_residual_core_identity_resolution", "sum"),
         gold_core_blocker_rows=("gold_core_blocker", "sum"),
         avg_name_similarity=("name_similarity", "mean"),
         avg_power_similarity=("power_similarity", "mean"),
@@ -1728,6 +1835,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "script_limited_core_identity_match": pd.Series(False, index=detail.index),
         "script_limited_core_identity_resolution": pd.Series(False, index=detail.index),
         "script_limited_policy_reason": pd.Series("", index=detail.index),
+        "latin_residual_core_identity_match": pd.Series(False, index=detail.index),
+        "latin_residual_core_identity_resolution": pd.Series(False, index=detail.index),
+        "latin_residual_policy_reason": pd.Series("", index=detail.index),
         "identity_policy_class": pd.Series("full_display_required", index=detail.index),
         "verified_name_display": detail.get("ocr_name", pd.Series("", index=detail.index)),
         "verified_alliance_display": detail.get("ocr_alliance_display", pd.Series("", index=detail.index)),
@@ -1759,6 +1869,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
         script_limited_core_identity_matches=("script_limited_core_identity_match", "sum"),
         script_limited_core_identity_resolution_rows=("script_limited_core_identity_resolution", "sum"),
+        latin_residual_core_identity_matches=("latin_residual_core_identity_match", "sum"),
+        latin_residual_core_identity_resolution_rows=("latin_residual_core_identity_resolution", "sum"),
         gold_core_blocker_rows=("gold_core_blocker", "sum"),
         identity_risk_rows=("identity_risk", "sum"),
         character_verification_candidate_rows=("character_verification_candidate", "sum"),
@@ -1782,6 +1894,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
         script_limited_core_identity_matches=("script_limited_core_identity_match", "sum"),
         script_limited_core_identity_resolution_rows=("script_limited_core_identity_resolution", "sum"),
+        latin_residual_core_identity_matches=("latin_residual_core_identity_match", "sum"),
+        latin_residual_core_identity_resolution_rows=("latin_residual_core_identity_resolution", "sum"),
         gold_core_blocker_rows=("gold_core_blocker", "sum"),
     ).reset_index() if not identity_risk_detail.empty else pd.DataFrame(columns=["identity_risk_reasons", "rows", "high_value_rows", "usable_identity_matches", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows", "verified_core_identity_matches", "verified_core_identity_resolution_rows", "gold_core_blocker_rows"])
 
@@ -1794,6 +1908,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "verified_core_identity_resolution_rows": int(detail.get("verified_core_identity_resolution", pd.Series(dtype=bool)).sum()),
         "script_limited_core_identity_matches": int(detail.get("script_limited_core_identity_match", pd.Series(dtype=bool)).sum()),
         "script_limited_core_identity_resolution_rows": int(detail.get("script_limited_core_identity_resolution", pd.Series(dtype=bool)).sum()),
+        "latin_residual_core_identity_matches": int(detail.get("latin_residual_core_identity_match", pd.Series(dtype=bool)).sum()),
+        "latin_residual_core_identity_resolution_rows": int(detail.get("latin_residual_core_identity_resolution", pd.Series(dtype=bool)).sum()),
         "gold_core_blocker_rows": int(detail.get("gold_core_blocker", pd.Series(dtype=bool)).sum()),
         "rank_only_full_gold_blockers": int((detail.get("verified_core_identity_match", pd.Series(False, index=detail.index)) & ~detail.get("verified_exact_identity_match", pd.Series(False, index=detail.index))).sum()),
     }])
@@ -1807,6 +1923,17 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     ).reset_index() if not script_limited_policy_detail.empty else pd.DataFrame(columns=["script_limited_policy_reason", "rows", "high_value_rows", "verified_core_identity_matches", "gold_core_blocker_rows", "avg_name_normalized_similarity"])
     if not script_limited_policy_summary.empty and "avg_name_normalized_similarity" in script_limited_policy_summary.columns:
         script_limited_policy_summary["avg_name_normalized_similarity"] = pd.to_numeric(script_limited_policy_summary["avg_name_normalized_similarity"], errors="coerce").round(4)
+    latin_residual_policy_detail = detail[detail.get("latin_residual_core_identity_match", pd.Series(False, index=detail.index))].copy()
+    latin_residual_policy_summary = latin_residual_policy_detail.groupby("latin_residual_policy_reason", dropna=False).agg(
+        rows=("rank", "count"),
+        high_value_rows=("high_value_identity_risk", "sum"),
+        verified_core_identity_matches=("verified_core_identity_match", "sum"),
+        gold_core_blocker_rows=("gold_core_blocker", "sum"),
+        avg_name_normalized_similarity=("name_normalized_similarity", "mean"),
+    ).reset_index() if not latin_residual_policy_detail.empty else pd.DataFrame(columns=["latin_residual_policy_reason", "rows", "high_value_rows", "verified_core_identity_matches", "gold_core_blocker_rows", "avg_name_normalized_similarity"])
+    if not latin_residual_policy_summary.empty and "avg_name_normalized_similarity" in latin_residual_policy_summary.columns:
+        latin_residual_policy_summary["avg_name_normalized_similarity"] = pd.to_numeric(latin_residual_policy_summary["avg_name_normalized_similarity"], errors="coerce").round(4)
+
     alignment_context_gaps = detail[detail.get("alignment_context_gap", pd.Series(dtype=bool))].copy()
     alignment_guard_summary = alignment_context_gaps.groupby("alignment_guard_status", dropna=False).agg(
         rows=("rank", "count"),
@@ -1825,6 +1952,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         verified_core_identity_resolution_rows=("verified_core_identity_resolution", "sum"),
         script_limited_core_identity_matches=("script_limited_core_identity_match", "sum"),
         script_limited_core_identity_resolution_rows=("script_limited_core_identity_resolution", "sum"),
+        latin_residual_core_identity_matches=("latin_residual_core_identity_match", "sum"),
+        latin_residual_core_identity_resolution_rows=("latin_residual_core_identity_resolution", "sum"),
         gold_core_blocker_rows=("gold_core_blocker", "sum"),
     ).reset_index() if not character_verification_detail.empty else pd.DataFrame(columns=["character_verification_reasons", "rows", "high_value_rows", "exact_identity_matches", "verified_exact_identity_matches", "verified_identity_resolution_rows", "verified_core_identity_matches", "verified_core_identity_resolution_rows", "gold_core_blocker_rows"])
     character_reocr_debug = _flatten_character_reocr_debug(detail)
@@ -1852,6 +1981,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "core_identity_summary": core_identity_summary.to_dict(orient="records"),
         "script_limited_policy_summary": script_limited_policy_summary.to_dict(orient="records"),
         "script_limited_policy_rows": script_limited_policy_detail.to_dict(orient="records"),
+        "latin_residual_policy_summary": latin_residual_policy_summary.to_dict(orient="records"),
+        "latin_residual_policy_rows": latin_residual_policy_detail.to_dict(orient="records"),
         "core_identity_verified_rows": core_identity_detail.to_dict(orient="records"),
         "alignment_guard_summary": alignment_guard_summary.to_dict(orient="records"),
         "alignment_context_gaps": alignment_context_gaps.to_dict(orient="records"),
@@ -1900,6 +2031,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(core_identity_detail).to_excel(writer, sheet_name="core_identity_rows", index=False)
         _sanitize_frame(script_limited_policy_summary).to_excel(writer, sheet_name="script_policy", index=False)
         _sanitize_frame(script_limited_policy_detail).to_excel(writer, sheet_name="script_policy_rows", index=False)
+        _sanitize_frame(latin_residual_policy_summary).to_excel(writer, sheet_name="latin_residual_policy", index=False)
+        _sanitize_frame(latin_residual_policy_detail).to_excel(writer, sheet_name="latin_residual_rows", index=False)
         _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)

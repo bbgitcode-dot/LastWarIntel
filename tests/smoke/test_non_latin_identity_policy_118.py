@@ -134,6 +134,8 @@ def test_write_report_exports_script_limited_policy_rows(tmp_path):
         gold_core_blocker_rows=0, gold_core_ready=True,
         script_limited_core_identity_matches=1,
         script_limited_core_identity_resolution_rows=1,
+        latin_residual_core_identity_matches=0,
+        latin_residual_core_identity_resolution_rows=0,
     )
 
     write_report(summary, detail, category, tmp_path)

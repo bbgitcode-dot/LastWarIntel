@@ -498,3 +498,14 @@ Expected effect: `.114` will not magically solve CJK/Hangul player-name drift, b
 
 Validation: 24 focused smoke tests passed.
 
+
+## v0.9.5.119 – Latin Residual Core Blocker Cleanup
+
+- Added a conservative Latin-only residual Core Identity policy for remaining rows where the stable expected Latin core is visibly contained in the OCR result despite OCR prefix/suffix garbage or display spacing noise.
+- New fields: `latin_residual_core_identity_match`, `latin_residual_core_identity_resolution`, and `latin_residual_policy_reason`.
+- New report sections and Excel sheets: `latin_residual_policy_summary`, `latin_residual_policy_rows`, `latin_residual_policy`, and `latin_residual_rows`.
+- Keeps Full Display Fidelity strict: Latin residual policy can clear Core Identity but does not mark the player display as exact.
+- Explicitly rejects broad missing-glyph cases such as `Drpeek -> Ieek` and `N E R D -> NER0`; those remain true OCR/reconstruction blockers.
+- Preserves DataGuard: no Operational Truth mutation, no historical identity database, no manual mapping.
+
+Validation: 21 focused smoke tests passed.
