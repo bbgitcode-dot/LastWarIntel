@@ -1,3 +1,9 @@
+## v0.9.5.117 – Reconstruction Candidate Gate
+
+This patch sharpens the v0.9.5.116 Latin Name Block Reconstruction path. Whole-name block OCR now runs only when a Latin-only row is aligned, power/alliance-safe, and still has unresolved player-name glyph evidence after the cheaper local-glyph pass.
+
+Expected impact: keep the +Core Identity gains from block reconstruction while cutting avoidable long OCR passes for names already solved by glyph verification.
+
 # Sentinel v0.9.5.115 Patch Summary
 
 ## Focus

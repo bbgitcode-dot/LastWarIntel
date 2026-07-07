@@ -1,3 +1,10 @@
+## v0.9.5.117 – Reconstruction Candidate Gate
+
+- Gates expensive Latin Name Block Reconstruction to residual high-confidence Latin-only player-name blockers.
+- Skips block reconstruction when cheaper glyph ReOCR already verified all local player-name targets.
+- Keeps DATAGUARD conservative: no UNKNOWN, mixed CJK/Hangul/Kana, nonlocal target, weak alignment, power-mismatch, or alliance-mismatch expansion.
+- Preserves v0.9.5.116 quality path while reducing unnecessary OCR work on already-solved names such as Joncollins21 and Tragedy122280.
+
 ## v0.9.5.112 – Verified Display Evidence Apply Hotfix
 
 v0.9.5.111 introduced verified-display fields, but the validator counted evidence through a legacy `item.target.field` lookup. The active `CharacterVerificationEvidence` stores the field directly as `item.field`, so rows such as `Joncollinszl`/`PBC` still showed raw OCR values in `verified_name_display` and `verified_alliance_display` even though all local glyphs were `verified_expected`.

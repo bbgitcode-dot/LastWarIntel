@@ -87,6 +87,56 @@ def _field_verified_by_reocr(
         return False
     return verified_expected_count == local_target_count
 
+
+def _should_run_latin_name_block_reconstruction(
+    *,
+    accepted_match: bool,
+    name_category: str,
+    raw_name_display_exact: bool,
+    expected_name: str,
+    actual_name: str,
+    row_slot: int | None,
+    raw_power_match: bool,
+    raw_alliance_match: bool,
+    raw_player_targets: int,
+    local_player_targets: int,
+    skipped_player_targets: int,
+    verified_player_expected: int,
+    unresolved_player_evidence: int,
+) -> tuple[bool, str]:
+    """Gate expensive whole-name reconstruction to high-yield cases only.
+
+    v0.9.5.116 proved that block reconstruction can solve first-contact Latin
+    names, but it also ran after successful glyph verification and inflated
+    runtime.  v0.9.5.117 only runs the block pass when a Latin-only, aligned row
+    still has a real player-name blocker after cheaper glyph evidence.
+    """
+    if not accepted_match:
+        return False, "not_accepted_match"
+    if name_category != "latin_only":
+        return False, "not_latin_only"
+    if raw_name_display_exact:
+        return False, "name_already_exact"
+    if not expected_name or not actual_name:
+        return False, "missing_name_text"
+    if str(actual_name).strip().upper() == "UNKNOWN":
+        return False, "observed_unknown"
+    if row_slot is None:
+        return False, "missing_row_slot"
+    if not raw_power_match:
+        return False, "power_not_matched"
+    if not raw_alliance_match:
+        return False, "alliance_not_matched"
+    if raw_player_targets <= 0:
+        return False, "no_player_targets"
+    if skipped_player_targets > 0:
+        return False, "nonlocal_player_targets_present"
+    if local_player_targets <= 0:
+        return False, "no_local_player_targets"
+    if verified_player_expected >= local_player_targets and unresolved_player_evidence <= 0:
+        return False, "glyphs_already_resolved"
+    return True, "eligible_player_name_block_residual"
+
 # Unicode ranges useful for high-level reporting. The validator does not need
 # to know the user's language; these tags help us measure where OCR struggles.
 HAN_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -813,19 +863,28 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                     reader=character_reocr_reader,
                 ))
 
-            # v0.9.5.116: single-glyph probing is weak when the OCR string has
-            # shifted or omitted characters (Mizzenmast -> Mzzenmast, Drpeek ->
-            # Ieek, N E R D -> NER0).  For Latin-only aligned rows, run one
-            # screenshot-local whole-name block reconstruction pass.  This does
-            # not use history and remains gated by DATAGUARD row alignment.
-            if (
-                accepted_match
-                and str(gt_row.get("name_category", "")) == "latin_only"
-                and not raw_name_display_exact
-                and expected_name
-                and actual_name
-                and row_slot is not None
-            ):
+            # v0.9.5.117: v0.9.5.116 proved whole-name reconstruction works,
+            # but it also ran after cheaper glyph verification had already
+            # solved the player name.  Gate the expensive block pass to residual
+            # Latin-only player-name blockers only.
+            player_verified_so_far = _count_evidence_by_field(evidence_items, "player_name", "verified_expected")
+            player_unresolved_so_far = _count_evidence_by_field(evidence_items, "player_name", "unresolved")
+            run_block_reconstruction, block_reconstruction_gate = _should_run_latin_name_block_reconstruction(
+                accepted_match=accepted_match,
+                name_category=str(gt_row.get("name_category", "")),
+                raw_name_display_exact=raw_name_display_exact,
+                expected_name=expected_name,
+                actual_name=actual_name,
+                row_slot=row_slot,
+                raw_power_match=raw_power_match,
+                raw_alliance_match=raw_alliance_match,
+                raw_player_targets=_count_targets_by_field(raw_targets, "player_name"),
+                local_player_targets=_count_targets_by_field(local_targets, "player_name"),
+                skipped_player_targets=max(0, _count_targets_by_field(raw_targets, "player_name") - _count_targets_by_field(local_targets, "player_name")),
+                verified_player_expected=player_verified_so_far,
+                unresolved_player_evidence=player_unresolved_so_far,
+            )
+            if run_block_reconstruction:
                 block_evidence = verify_latin_name_block_from_screenshot(
                     screenshot_path=screenshot_path,
                     expected_text=expected_name,

@@ -1,3 +1,9 @@
+## v0.9.5.117 – Reconstruction Candidate Gate
+
+Current focus: reduce validator runtime without weakening DATAGUARD. v0.9.5.116 proved block reconstruction can resolve additional Latin identities, but it ran too broadly. v0.9.5.117 introduces a candidate gate so the expensive block pass is reserved for residual Latin blockers rather than already-resolved glyph cases.
+
+Next validation target: compare character_reocr target_total_ms and verified_core_identity_matches against v0.9.5.116. Desired result is stable core identity count with lower runtime.
+
 # Project Status – Sentinel v0.9.5.102
 
 **Current sprint:** v0.9.5.102 Character ReOCR Debug Instrumentation  

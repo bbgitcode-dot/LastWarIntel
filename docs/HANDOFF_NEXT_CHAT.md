@@ -1,3 +1,7 @@
+## v0.9.5.117 – Reconstruction Candidate Gate
+
+Built from v0.9.5.116. The key change is a conservative gate around Latin Name Block Reconstruction. Do not broaden this path unless the run evidence shows it preserves DATAGUARD and improves core identity. For the next sprint, inspect runtime_debug_report.json and character_reocr_debug_report.json to confirm how many block reconstructions were avoided and whether core identity stayed stable.
+
 # Handoff Next Chat – Sentinel v0.9.5.102
 
 Use `Sentinel_v0.9.5.102.zip` as the next baseline.

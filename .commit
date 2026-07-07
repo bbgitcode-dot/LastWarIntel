@@ -1,4 +1,1 @@
-version: v0.9.5.114
-commit: feat(data-guard): separate core identity gold gate from full row fidelity
-summary: Adds Core Identity validation/reporting so rank-only full-fidelity blockers no longer hide player-name/tag identity blockers. Keeps DataGuard and OCR correction conservative.
-validation: 12 targeted smoke tests passed; py_compile OK; zip integrity OK
+v0.9.5.117 Reconstruction Candidate Gate
