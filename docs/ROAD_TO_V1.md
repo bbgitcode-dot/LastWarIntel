@@ -1,98 +1,104 @@
-# Road to V1 – Sentinel v0.9.5.102
+# Road to V1 – Sentinel
+
+**Current release:** v0.9.5.125  
+**Functional baseline:** v0.9.5.124 Gold Fidelity Engine Phase 1
 
 ## V1 principle
 
-Sentinel must not become an intelligence platform until its Operational Truth is stable. Player and alliance tracking over time requires screenshot-faithful identities, including case-sensitive alliance tags and exact player display names.
+Sentinel v1.0.0 must be a trustworthy strategic intelligence platform, not merely an OCR exporter. It must protect Operational Truth, explain uncertainty, and support alliance leadership decisions without silently inventing identities.
 
-## Current phase: 551 Gold Fidelity
+The core rule remains:
 
-The current goal is not full 128-server intelligence. The current goal is to prove one benchmark server can be validated with full data-quality visibility.
+> Evidence before inference. Inference remains read-only until a safe promotion workflow exists.
 
-## Recent milestones
+## Current position
 
-- v0.9.5.100 separated alignment context gaps from character drift.
-- v0.9.5.101 attempted crop/vote precision improvements.
-- v0.9.5.102 adds Character ReOCR debug instrumentation because the previous crop changes did not materially improve the result.
+The acquisition pipeline can now match the 551 benchmark with 50/50 rows, 0 missing rows, 0 bad matches, and 100% recall. The remaining challenge is exact display fidelity and reducing the final Gold Core blockers without weakening DataGuard.
 
-## Required path to V1
+## Milestones to v1.0.0
 
-1. 551 Gold Fidelity diagnostics.
-2. 551 Character ReOCR correction based on debug evidence.
-3. 551 Gold Fidelity pass criteria.
-4. Multi-server acquisition stability.
-5. Full snapshot completeness reporting.
-6. Entity Intelligence only after stable acquisition and identity fidelity.
+### v0.9.5.126 – Gold Core Blocker Triage
 
-## Current blocker
+- Produce a dedicated blocker report for the remaining 15 Gold Core blockers.
+- Classify each blocker as local glyph, crop geometry, nonlocal script display, observed-text-confirmed, or manual review.
+- Turn noisy but successful `vote_outside_allowed_set` cases into warnings only when the selected glyph equals expected and all core evidence is safe.
+- Keep Operational Truth unchanged.
 
-Character ReOCR currently generates many targets but leaves too many unresolved. The next patch must be selected based on `character_reocr_debug_report`, not guesswork.
+Exit criteria:
 
-## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
+```text
+50/50 matched
+0 bad matches
+Gold Core blocker list is explicit and actionable
+No context gap enters Character ReOCR
+```
 
-The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
+### v0.9.5.127 – Local Glyph Resolution Hardening
 
-## v0.9.5.104 – Gold Fidelity prerequisite
+- Improve local glyph proof for rows such as `Mizzenmast`, `Drpeek`, `S I G I`, and similar Latin-only blockers.
+- Add stronger per-target confidence semantics: selected expected glyph vs noisy vote environment.
+- Avoid broad identity inference from rank/power/alliance alone.
 
-Before v1.0.0, Sentinel must prove exact identity from screenshots. v0.9.5.104 moves toward that by tightening character-level crop geometry for player names and alliance tags. This is a prerequisite for reliable season-over-season identity tracking, especially for case-sensitive alliance tags and high-value players.
+Exit criteria:
 
-## v0.9.5.105 – Gold Fidelity prerequisite
+```text
+Gold Core blockers reduced without new bad matches
+Runtime remains under control on CPU-only validation
+```
 
-Gold Fidelity requires exact player and alliance identity, not normalized similarity. v0.9.5.105 addresses the most concrete high-value blocker (`Joncollins21` / `[PbC]`) by improving character-crop localization before any identity correction is attempted. This keeps the V1 path focused on proof-first OCR: correct row, correct field, correct glyph, then and only then verified identity.
+### v0.9.5.128 – Multilingual Display Policy
 
-## v0.9.5.106 – Gold Fidelity prerequisite
+- Define what Sentinel can and cannot prove for Hangul, Kana, and CJK display spans.
+- Separate Core Identity readiness from Full Display Gold readiness.
+- Introduce a clear `script_display_unresolved` class for nonlocal script drift.
 
-The path to v1.0.0 now requires calibrated character evidence rather than fixed character crops. v0.9.5.106 adds candidate-crop search and records candidate reasons so high-value blockers such as `Joncollins21` and `[PbC]` can be diagnosed as pixel-localization problems instead of being treated as OCR model failures. The next milestone is to validate that the calibration raises expected-character verification without increasing observed/noise confirmations.
+Exit criteria:
 
+```text
+Mixed-script rows no longer look like generic OCR failures
+Core-safe rows are operationally usable while full display remains flagged
+```
 
+### v0.9.6 – Data Stability Freeze
 
-## v0.9.5.108 – Telemetry stability hotfix
+- Freeze DataGuard, Ranking Guard, Context Gap, and Operational Truth rules.
+- Add regression tests that protect against historical failure modes: N+1 rank inference, row shifts, wrong server, wrong ranking type, and unsafe context matches.
 
-v0.9.5.108 keeps the v0.9.5.107 telemetry design but hardens report output so long CPU-only validation runs do not fail at the final JSON write step. This is required before using runtime telemetry as the basis for performance optimization.
+### v0.9.7 – Snapshot and Batch Stability
 
-## v0.9.5.107 – Telemetry checkpoint
+- Validate dynamic server ranges, especially S6 549–676 transfer bucket.
+- Confirm snapshot completeness metrics and active snapshot behavior.
+- Ensure exports are snapshot-bound and auditable.
 
-Before scaling Gold Fidelity beyond the 551 benchmark, Sentinel needs explainable runtime behavior. v0.9.5.107 adds timing telemetry at validator and Character ReOCR target level. The next milestone is to use this report to reduce repeated OCR calls without re-enabling cache prematurely, while continuing to harden alliance-tag case fidelity.
+### v0.9.8 – Multi-Server Benchmark
 
+- Expand beyond server 551 to a representative transfer-bucket sample.
+- Capture runtime, completeness, review burden, and blocker categories per server.
+- Establish acceptance thresholds for production usage.
 
-## v0.9.5.109 – V1 identity prerequisite
+### v0.9.9 – Release Candidate
 
-V1 cannot depend on prior knowledge of every player across 2000+ servers. v0.9.5.109 therefore reframes the path from historical identity lookup to screenshot-local glyph proof. The next V1 milestone is to prove that unknown first-contact names can be stabilized through targeted local glyph verification while non-local drift remains safely blocked.
+- Stabilize UI/reporting output.
+- Freeze documentation and operating procedures.
+- Run final smoke/regression suite.
+- Confirm that new users can run acquisition and validation from docs alone.
 
-## v0.9.5.110 – Tag fidelity prerequisite
+### v1.0.0 – Production Ready
 
-V1 requires exact alliance identity, including case-sensitive tag spelling. v0.9.5.110 moves tag verification toward screenshot-local proof by anchoring on the complete `[TAG]` block before individual glyph classification. The next evidence target is a run where `[PbC]`/`PBC` blockers fall without depending on historical alliance databases.
+Sentinel reaches v1.0.0 when:
 
+- screenshot import is snapshot-bound and auditable;
+- DataGuard prevents unsafe truth promotion;
+- Ranking Guard prevents row/rank contamination;
+- ground truth validation produces explainable reports;
+- core identity is stable enough for strategic analysis;
+- unresolved display fidelity is explicitly labeled rather than hidden;
+- documentation is sufficient for handover to a new chat or developer;
+- releases are full ZIP packages with `.commit`, versioning, release notes, and patch summary.
 
-## v0.9.5.111 – Verified display identity prerequisite
+## Non-goals before V1
 
-V1 requires Sentinel to turn screenshot-local proof into usable identity, not merely report it as debug evidence. v0.9.5.111 adds verified-display resolution so that rows with fully verified local glyph drift can contribute to Gold Fidelity while rows with skipped/nonlocal drift remain blocked. This is a key bridge from OCR evidence to operational identity.
-
-## v0.9.5.113 - Gold Blocker Triage
-
-- Adds a diagnostic Gold Blocker Triage report to the Ground Truth Validator.
-- Classifies remaining Gold Fidelity blockers by domain: player name, alliance tag, combined identity, rank/power, alignment, and nonlocal/multilingual drift.
-- Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
-- Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
-
-
-## v0.9.5.115 - Latin Core Identity Step
-
-v0.9.5.115 narrows the V1 path around first-contact identity extraction. The system must solve Latin glyph loss from the current screenshot itself, not from historical player databases. Missing Latin letters and spacing-only differences are now treated as local verification work; broad mixed-script drift remains blocked until a stronger OCR strategy exists.
-
-## v0.9.5.114 - V1 Gate Clarification
-
-V1 now tracks two related but distinct gates:
-
-1. **Core Identity Gold**: server, power, verified player display, and verified alliance display are proven. This is the operational gate for transfer intelligence.
-2. **Full Row Gold**: Core Identity plus rank/display fidelity. This remains the stricter audit gate.
-
-This distinction is important for scaling beyond the 549-676 transfer bucket. Sentinel must not depend on a historical name database to solve first-contact player identities; it must read and verify identity fields from the current screenshot. v0.9.5.114 makes the reporting layer reflect that strategy.
-
-
-## v0.9.5.123 Evidence Triage Update
-
-Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.
-
-## v0.9.5.124 V1 Evidence Reuse Step
-
-V1 requires Sentinel to scale beyond one manually curated bucket without depending on prior knowledge of every player. v0.9.5.124 keeps that rule intact while reducing repeated proof work: screenshot-local evidence may be reused only when the exact glyph target and field text match inside the current validation run. This is the first phase of the Gold Fidelity Engine: less repeated OCR, more auditable confidence reuse.
+- No historical player database as a shortcut for OCR identity.
+- No blind pre/post transfer identity linking by rank/power/alliance alone.
+- No automatic Operational Truth mutation from read-only inference.
+- No snippets as release deliverables.

@@ -1,170 +1,133 @@
-## v0.9.5.117 – Reconstruction Candidate Gate
+# Project Status – Sentinel v0.9.5.125
 
-Current focus: reduce validator runtime without weakening DATAGUARD. v0.9.5.116 proved block reconstruction can resolve additional Latin identities, but it ran too broadly. v0.9.5.117 introduces a candidate gate so the expensive block pass is reserved for residual Latin blockers rather than already-resolved glyph cases.
-
-Next validation target: compare character_reocr target_total_ms and verified_core_identity_matches against v0.9.5.116. Desired result is stable core identity count with lower runtime.
-
-# Project Status – Sentinel v0.9.5.102
-
-**Current sprint:** v0.9.5.102 Character ReOCR Debug Instrumentation  
+**Current release:** v0.9.5.125 Documentation Consolidation & Handover  
+**Functional baseline:** v0.9.5.124 Gold Fidelity Engine Phase 1  
 **Owner:** Proud Owner  
-**Copilot:** Mimir
+**Copilot:** Mimir  
+**Standard documentation path:** `/docs`
 
-## Current strategic position
+## Executive state
 
-Sentinel has moved from broad OCR acquisition into 551 Gold Fidelity validation. The core DataGuard direction remains correct:
+Sentinel has moved from broad OCR tuning to evidence-first data stability. The current system can find and align all 50 rows in the server 551 benchmark without missing rows or bad matches. The remaining problem is no longer basic acquisition; it is exact display fidelity for a small set of difficult identities.
 
-- Quarantine over false Operational Truth.
-- Screenshot truth over filename/upload-order assumptions.
-- Alignment gaps must not be treated as character drift.
-- Cache remains a performance tool only and is not part of data-quality validation.
+The platform is now structured around guarded truth:
 
-## Latest known 551 validation state
+1. collect screenshot/Excel evidence;
+2. parse and normalize;
+3. guard rank/server/snapshot context;
+4. verify local glyph evidence where feasible;
+5. quarantine or mark review when proof is insufficient;
+6. keep Operational Truth immutable unless deliberately promoted by a safe workflow.
 
-The latest validator run before this patch showed:
+## Latest observed benchmark state after v0.9.5.124
+
+Server 551 `total_hero_power` ground truth validation:
 
 ```text
-ground_truth_rows = 50
-ocr_rows = 101
-matched_rows = 50
-missing_rows = 0
-bad_matches = 0
-character_reocr_target_count = 183
-character_reocr_verified_expected = 18
-character_reocr_verified_observed = 11
-character_reocr_unresolved = 150
-gold_fidelity_ready = False
+ground_truth_rows: 50
+ocr_rows: 101
+matched_rows: 50
+missing_rows: 0
+bad_matches: 0
+recall: 1.0
+precision: 0.495
+verified_core_identity_matches: 32
+gold_core_blocker_rows: 15
+gold_core_ready: false
+row_integrity_score: 66%
+row_integrity_ok_rows: 33
+row_integrity_review_rows: 17
+character_reocr_target_count: 67
+character_reocr_verified_expected: 52
+character_reocr_verified_observed: 3
+character_reocr_unresolved: 10
+reocr_evidence_cache_hits: 11
+reocr_evidence_cache_misses: 53
+reocr_evidence_cache_writes: 41
+reocr_evidence_cache_saved_reocr: 11
+total_runtime_ms: ~480,137
 ```
 
-v0.9.5.101 did not materially improve the result. That means the next productive step is not another blind crop-size adjustment, but visibility into the ReOCR path.
+Interpretation: the acquisition and matching layer is stable; the remaining risk sits in Gold Core display blockers and multilingual/local glyph proof.
 
-## v0.9.5.102 result
+## What the last sprint chain achieved
 
-v0.9.5.102 adds Character ReOCR instrumentation:
+### DataGuard and Ranking Guard
 
-- a dedicated debug JSON report;
-- a dedicated debug Excel report;
-- crop and vote metadata per target;
-- explicit status categories per target.
+The project hardened the rule that unsafe rows are not silently accepted. Ranking Guard blocks fallback when rank/power/name context is ambiguous. DataGuard prefers quarantine and review over false Operational Truth.
 
-This sprint is intentionally diagnostic. It does not claim 551 Gold readiness.
+### Context Gap Handling
 
-## Next decision point
+Rows such as `K9 Thunder`, `HUNI`, and hangul-only cases can land in context gaps where the surrounding rank/power trend supports read-only inference but the actual OCR row is unsafe. Sentinel now treats these as contextual inference, not character drift.
 
-After running the validator, inspect `benchmarks/character_reocr_debug_report.xlsx` and determine which failure class dominates:
+Current rule: context gaps must not enter Character ReOCR. A mismatch like `K9 Thunder` vs `YUNS` is not a glyph typo; it is an alignment/context problem until proven otherwise.
 
-1. Wrong row slot.
-2. Wrong crop geometry.
-3. Correct crop but weak OCR votes.
-4. Correct OCR votes but wrong vote selection.
-5. CJK/Hangul glyph limitation in EasyOCR.
+### Character ReOCR
 
-Only then should v0.9.5.103 apply the next targeted fix.
+Character ReOCR evolved from broad expensive rereads into targeted screenshot-local glyph evidence. It is useful for local confusions such as:
 
-## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
+- `Joncollinszl` -> `Joncollins21`;
+- `PBC` -> `PbC` when the tag block proves the case-sensitive glyph;
+- `Pumpkin 6` -> `Pumpkin G`;
+- `Oisneys Mushu` -> `Disneys Mushu`.
 
-The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
+It remains intentionally limited. It does not solve broad multilingual replacement spans, unknown names, or row-context gaps.
 
-## v0.9.5.104 Update – Character Geometry & Tag Fidelity Guard
+### Evidence Inspector and Row Integrity
 
-The latest 551 validation reports confirmed that matching/recall is stable, but exact identity is still blocked by Character Fidelity: player-name crops can drift into the power column and alliance-tag crops can miss case-sensitive middle glyphs. v0.9.5.104 tightens the visible-window geometry for both fields and adds `crop_power_column_bleed` as an explicit diagnostic.
+The Evidence Inspector introduced row-level statuses such as:
 
-Expected next validation signal:
-- fewer player-name `vote_outside_allowed_set` cases caused by power digits such as `286`, `320`, or `264`;
-- fewer alliance-tag `crop_field_mismatch` cases for `PbC` vs `PBC`;
-- more useful Character ReOCR evidence without changing Operational Truth.
+- `ROW_OK_NO_REOCR`;
+- `ROW_OK_POLICY_BUDGET`;
+- `ROW_OK_POLICY_NONLOCAL`;
+- `ROW_OK_WITH_CROP_WARNING`;
+- `ROW_OK_WITH_VOTE_WARNING`;
+- `ROW_CONTEXT_GAP`;
+- `ROW_REOCR_UNRESOLVED`;
+- `ROW_VOTE_OUTSIDE_ALLOWED_SET`;
+- `ROW_FIELD_MISMATCH_DIAGNOSTIC`.
 
-Gold Fidelity remains intentionally blocked until player name, alliance tag, rank, and power are exact or character-verified from the screenshot.
+This shifted the project from “OCR was wrong” to “which evidence class failed?”
 
-## v0.9.5.105 Update – Character Crop Line Focus Guard
+### Gold Fidelity Engine Phase 1
 
-The latest Joncollins21 investigation proved that Row Alignment was no longer the blocker: the validator matched the correct row, identified `2/z`, `1/l`, and `PbC/PBC` as exact character targets, and correctly refused to guess. The blocker was the pixel crop. The `2` target was landing on title-line tail/noise, the `1` target was landing on an empty region, and the `b` tag target still included neighbouring tag glyphs plus the lower `Warzone #551` line.
+v0.9.5.124 introduced a conservative snapshot-local ReOCR Evidence Cache. It reuses only decisive `verified_expected` / `verified_observed` outcomes for exact target/text pairs inside the same validation run. It does not use a historical player database and does not change Operational Truth.
 
-v0.9.5.105 narrows this failure mode by using a visible-window Latin glyph-pitch model, shortening crops to the commander title line, and reducing alliance-tag crops to the target glyph. The sprint keeps DataGuard conservative: unresolved crops remain unresolved and no Operational Truth is modified by ReOCR.
+The latest observed runtime dropped to roughly 8 minutes while preserving 50/50 matched rows and 0 bad matches.
 
-## v0.9.5.106 Update – Character Crop Calibration Harness
+## Current blockers
 
-The v0.9.5.105 validation run showed a regression: matching and DataGuard remained stable, but targeted Character ReOCR became too narrow. The Joncollins21/PbC case was correctly selected for verification, yet the actual crops returned `crop_no_text_detected` or off-target CJK noise. v0.9.5.106 responds by replacing single fixed mini-crops with a deterministic crop-calibration harness. Each target now tries nearby crop candidates and records which candidate produced the selected evidence.
+The next functional sprint should focus on the remaining 15 Gold Core blockers. Current blocker classes include:
 
-This sprint is still proof-first: no identity is corrected unless the screenshot crop verifies the expected glyph. Gold Fidelity remains blocked until exact player names and case-sensitive alliance tags can be proven from pixels.
+- `ROW_VOTE_OUTSIDE_ALLOWED_SET` where selected evidence may already prove the expected glyph but noisy votes keep the row blocked;
+- `ROW_REOCR_UNRESOLVED` where local targets remain unreadable;
+- `ROW_OBSERVED_TEXT_CONFIRMED` where ReOCR confirmed the OCR text instead of ground truth;
+- `ROW_POLICY_NONLOCAL_REVIEW` for multilingual/nonlocal display drift;
+- `ROW_FIELD_MISMATCH_DIAGNOSTIC` where crop geometry remains suspect.
 
+## Recommended next sprint
 
+**v0.9.5.126 – Gold Core Blocker Triage**
 
-## v0.9.5.108 Update – Runtime Telemetry Serialization Hotfix
+Primary goals:
 
-The first v0.9.5.107 validator run proved that runtime telemetry is now active, but it also exposed a late report-writing crash: pandas/numpy scalar values from the runtime summary were not JSON-serializable. v0.9.5.108 is a narrow hotfix that makes runtime telemetry JSON-safe without changing matching, inference, ReOCR decisions, or Operational Truth.
+1. Produce a dedicated list of the 15 Gold Core blockers with rank, expected/observed/verified display, status, reason, and next action.
+2. Split blockers into solvable local glyph issues, nonlocal script-display issues, crop geometry issues, and true manual review cases.
+3. Downgrade `vote_outside_allowed_set` to warning when selected glyph equals expected, confidence is high, and Core Identity is otherwise verified.
+4. Keep `ROW_OBSERVED_TEXT_CONFIRMED` strict because it is evidence against the expected display.
+5. Improve cache summary visibility in top-level reports.
 
-## v0.9.5.107 Update – Runtime Telemetry and Tag Fidelity
+## Information needed for complete handover
 
-The latest validation showed strong progress in targeted ReOCR: the Joncollins21 player-name tail digits can now be verified as expected-character evidence. The remaining high-value blocker is alliance-tag display fidelity, especially case-sensitive tags such as `PbC` versus `PBC`. v0.9.5.107 therefore adds full-tag crop candidates and introduces runtime telemetry so long CPU-only runs can be explained by phase and by Character ReOCR target.
+A complete future handover should include:
 
-New runtime outputs:
-
-- `benchmarks/runtime_debug_report.json`
-- `benchmarks/runtime_debug_report.xlsx`
-
-The runtime report separates loading, validation, report writing, OCR reader initialization, and Character ReOCR target timing. This should make the next slow run actionable instead of opaque.
-
-
-## v0.9.5.109 Update – Glyph Verification Engine Gate
-
-The v0.9.5.108 runtime report showed that long validator runs were dominated by Character ReOCR targets, many of which were not true local glyph problems. v0.9.5.109 adds a gate before ReOCR: only confusable/case-sensitive local glyph targets are reread. Broad display drift remains visible as a blocker but is no longer treated as something a single glyph crop can safely prove.
-
-This keeps the architecture aligned with the transfer-bucket requirement: Sentinel must read first-contact screenshots without relying on a historical player database. The current-screenshot proof path is now: row alignment → field alignment → local glyph verification. If a target is not local, DataGuard keeps it blocked instead of wasting OCR or guessing.
-
-## v0.9.5.110 Update – Alliance Tag Glyph Block Anchor
-
-The v0.9.5.109 run proved that local player-name glyph verification works and sharply reduces unnecessary ReOCR work, but alliance tags remained the dominant identity blocker. In particular, middle tag glyphs such as `b` in `PbC` were often read as `h`, `6`, or CJK-like noise when cropped alone. v0.9.5.110 adds a full-tag-block anchor path so Sentinel first attempts to read the complete short tag before selecting the target glyph. This keeps the first-contact/2000+ server requirement intact: no historical identity memory is required to prove a tag from the current screenshot.
-
-
-## v0.9.5.111 Update – Verified Display Resolution
-
-v0.9.5.110 produced the evidence needed to solve the Joncollins/PbC class: player-name tail glyphs and the case-sensitive alliance tag can now be verified from the screenshot. v0.9.5.111 promotes that evidence into explicit verified-display identity fields. Raw OCR remains visible, but fidelity decisions can now use the screenshot-proven display values when every local glyph drift is verified. Nonlocal/CJK drift remains blocked and visible; it is not silently promoted to gold.
-
-Current strategy after .111: run the 551 validation again and measure whether `verified_exact_identity_matches`, `verified_identity_resolution_rows`, and `gold_fidelity_blocker_rows` move as expected. If Joncollins is resolved but many blockers remain, the next sprint should target the remaining unresolved local glyph classes rather than reworking tag geometry again.
-
-## v0.9.5.112 Update – Verified Display Evidence Apply Hotfix
-
-The v0.9.5.111 run proved that the ReOCR evidence existed but was not applied to the final verified-display metrics. v0.9.5.112 fixes the evidence counter so `CharacterVerificationEvidence.field` is counted directly. Rows whose local glyph drift is fully `verified_expected` can now resolve their verified display identity; rows with skipped/nonlocal drift remain blocked.
-
-## v0.9.5.113 - Gold Blocker Triage
-
-- Adds a diagnostic Gold Blocker Triage report to the Ground Truth Validator.
-- Classifies remaining Gold Fidelity blockers by domain: player name, alliance tag, combined identity, rank/power, alignment, and nonlocal/multilingual drift.
-- Adds `gold_blocker_triage_summary` and `gold_blocker_triage` to JSON output plus Excel sheets `gold_blocker_triage` and `gold_blocker_details`.
-- Keeps matching, inference, Character ReOCR voting, DataGuard, and Operational Truth unchanged. This sprint is diagnostic, not corrective.
-
-
-## v0.9.5.115 - Current Sprint Status
-
-The previous run showed a clean split: alliance-tag verification is largely stable, while player-name display drift remains the main Core Identity blocker. v0.9.5.115 therefore targets Latin-only player names where OCR dropped or compressed a local glyph, such as `Mizzenmast -> Mzzenmast`, without opening the door to broad CJK/Hangul substitutions.
-
-The sprint keeps DATAGUARD conservative: mixed-script display drift is not auto-resolved and still requires future OCR strategy improvements. Core Identity progress must come from screenshot-local evidence, not historical name databases.
-
-## v0.9.5.114 - Current Sprint Status
-
-The previous run showed that alliance-tag verification is no longer the main blocker: verified alliance display exactness is high, while player-name display drift remains the primary source of full Gold Fidelity blockers. v0.9.5.114 therefore introduces a second, explicit gate: Core Identity.
-
-Core Identity is intentionally transfer-focused: server + power + verified player display + verified alliance display. Full Gold Fidelity remains stricter and still includes rank/display fidelity. This separation prevents rank-only drift from being treated as equivalent to a wrong player name.
-
-Next focus remains player-name drift triage: latin-only glyph/separator fixes first, then conservative handling for mixed CJK/Hangul names where local glyph verification is not enough.
-
-## v0.9.5.116 – Latin Name Block Reconstruction
-
-- Added screenshot-local Latin Name Block Reconstruction for aligned Latin-only player names where single-glyph ReOCR is too weak, e.g. missing/shifted characters such as `Mizzenmast -> Mzzenmast`, `Drpeek -> Ieek`, and spacing/digit drifts like `N E R D -> NER0`.
-- Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
-- Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
-- Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
-
-## Current Sprint – v0.9.5.121
-
-The current focus is Latin Residual Core Blocker Cleanup. `.118` successfully reduced mixed Latin/CJK/Hangul blockers through a script-limited policy. `.119` now handles the analogous Latin-only residual class: stable Latin core + verified alliance + matched power can satisfy Core Identity when OCR only added prefix/suffix garbage or formatting noise. Broad missing-glyph cases remain blocked and require future OCR/reconstruction work.
-
-
-## v0.9.5.123 Evidence Triage Update
-
-Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.
-
-## v0.9.5.124 Gold Fidelity Engine Phase 1
-
-The validator now begins reusing decisive Character ReOCR evidence within a single snapshot run. This is a performance and confidence-management step, not a historical identity lookup. Cache hits are exact target/text matches and remain fully auditable through explicit `evidence_cache_hit` provenance. The next sprint should measure cache-hit impact on the 551 benchmark and then decide whether broader display-confidence propagation is safe.
+- latest Sentinel ZIP;
+- latest 551 screenshot pack or equivalent benchmark pack;
+- latest `ground_truth_validation_report.json/xlsx`;
+- latest `character_reocr_debug_report.json/xlsx`;
+- latest `runtime_debug_report.json/xlsx`;
+- latest `ocr_evidence_report.json/xlsx`;
+- current active snapshot name/id;
+- exact command used for validation;
+- whether `main.py` was rerun or only `ground_truth_validator.py` was run;
+- Python version and whether CPU-only EasyOCR was used.

@@ -1,74 +1,76 @@
-## v0.9.5.117 – Reconstruction Candidate Gate
+# NEXT_CHAT – Sentinel Handover
 
-Built from v0.9.5.116. The key change is a conservative gate around Latin Name Block Reconstruction. Do not broaden this path unless the run evidence shows it preserves DATAGUARD and improves core identity. For the next sprint, inspect runtime_debug_report.json and character_reocr_debug_report.json to confirm how many block reconstructions were avoided and whether core identity stayed stable.
+## Start prompt for the next chat
 
-# Handoff Next Chat – Sentinel v0.9.5.102
-
-Use `Sentinel_v0.9.5.102.zip` as the next baseline.
-
-## Current focus
-
-Sentinel is in the 551 Gold Fidelity phase. DataGuard and Alignment Guard are working: unsafe context gaps are not treated as character drift and Operational Truth remains protected.
-
-The current blocker is Character ReOCR effectiveness. v0.9.5.101 produced the same practical result as the prior run, so v0.9.5.102 adds instrumentation instead of guessing another crop change.
-
-## What v0.9.5.102 adds
-
-The Ground Truth Validator now emits:
+Copy/paste this into the next chat:
 
 ```text
-benchmarks/character_reocr_debug_report.json
-benchmarks/character_reocr_debug_report.xlsx
+Du bist Mimir, mein strategischer Copilot für SENTINEL. Ich bin der Proud Owner.
+
+Arbeite nach unserem Modus Operandi:
+- keine Snippets als Sprint-Deliverable;
+- nur vollständige ZIP-Releases;
+- Standard-Dokumentationspfad ist /docs;
+- jede Release enthält .commit, Versionierung, Release Notes und Patch Summary;
+- Operational Truth wird nicht still verändert;
+- Evidence before Inference;
+- Read-only Inference bleibt read-only;
+- DataGuard und Ranking Guard haben Vorrang vor OCR-Optimismus.
+
+Aktuelle Basis ist Sentinel_v0.9.5.125.zip.
+Bitte lies zuerst /docs/PROJECT_STATUS.md, /docs/ROAD_TO_V1.md, /docs/MODUS_OPERANDI.md, /docs/SENTINEL_DATA_GUARD.md, /docs/LESSONS_LEARNED.md und /docs/PATCH_SUMMARY.md.
+
+Nächster empfohlener Sprint ist v0.9.5.126 – Gold Core Blocker Triage.
+Ziel: die verbleibenden 15 Gold Core Blocker aus dem v0.9.5.124-Run einzeln klassifizieren und den nächsten sicheren Fix ableiten, ohne DataGuard zu schwächen.
 ```
 
-These reports flatten every Character ReOCR target and show:
+## Current release
 
-- rank and OCR rank;
-- expected and OCR identity;
-- screenshot name and row slot;
-- crop box and crop strategy;
-- target field / position / expected / observed;
-- OCR vote variants and raw vote text;
-- selected glyph, confidence and final target status.
+- Current documentation release: `v0.9.5.125`
+- Functional baseline: `v0.9.5.124 Gold Fidelity Engine Phase 1`
+- Next recommended functional sprint: `v0.9.5.126 Gold Core Blocker Triage`
 
-## Next validation request
+## Required files for best continuation
 
-Run the validator again on the existing 551 export:
+Attach:
 
-```bash
-python ground_truth_validator.py --ocr-output output\snapshots\s6-pre-transfer-2b69ebc1\lastwar_export.xlsx
-```
+1. `Sentinel_v0.9.5.125.zip`
+2. latest 551 screenshot pack if further validation/debugging is needed
+3. latest reports if available:
+   - `ground_truth_validation_report.json/xlsx`
+   - `character_reocr_debug_report.json/xlsx`
+   - `runtime_debug_report.json/xlsx`
+   - `ocr_evidence_report.json/xlsx`
+   - `inference_report.json/xlsx`
 
-Then inspect/post:
+## Known latest metrics
 
 ```text
-benchmarks/character_reocr_debug_report.xlsx
-benchmarks/character_reocr_debug_report.json
+551 total_hero_power benchmark:
+matched_rows: 50/50
+missing_rows: 0
+bad_matches: 0
+recall: 100%
+verified_core_identity_matches: 32
+gold_core_blocker_rows: 15
+row_integrity_score: 66%
+runtime: ~480s CPU-only observed
 ```
 
-## Next likely sprint
+## Highest priority next work
 
-v0.9.5.103 should be chosen after reviewing the debug report. Likely options:
+Do not start with more generic OCR tuning. Start with blocker triage:
 
-1. Row-slot correction if crops are pointed at the wrong row.
-2. Field geometry correction if crops are systematically shifted left/right.
-3. Vote extraction correction if OCR sees the right text but Sentinel selects the wrong glyph.
-4. OCR-provider strategy if crops are correct but EasyOCR cannot read the target glyphs.
+1. list the 15 Gold Core blockers;
+2. classify each blocker by failure class;
+3. identify which are local glyph solvable;
+4. identify which are policy/nonlocal script display;
+5. identify which are crop geometry problems;
+6. propose a safe v0.9.5.126 patch.
 
-Do not start Entity Intelligence yet. Data Quality comes first.
+## Warnings
 
-## v0.9.5.103 Update – ReOCR Row Slot & Field Anchor Correction
-
-The v0.9.5.102 debug reports proved that Character ReOCR failures are mostly localization failures, not raw OCR failures. v0.9.5.103 therefore adds 551-window screenshot row geometry and explicit crop-anchor diagnostics so future runs can separate wrong-row/wrong-field crops from true character-recognition misses. Operational Truth remains unchanged; ReOCR remains evidence-only.
-
-## v0.9.5.116 – Latin Name Block Reconstruction
-
-- Added screenshot-local Latin Name Block Reconstruction for aligned Latin-only player names where single-glyph ReOCR is too weak, e.g. missing/shifted characters such as `Mizzenmast -> Mzzenmast`, `Drpeek -> Ieek`, and spacing/digit drifts like `N E R D -> NER0`.
-- Reconstruction is DATAGUARD-gated: it only runs on accepted/aligned rows, does not use historical identity data, and refuses mixed CJK/Hangul/Kana display drift.
-- Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
-- Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
-
-## Handoff v0.9.5.118
-
-Use `Sentinel_v0.9.5.118.zip` as the next baseline. The patch introduces script-limited core identity metrics for mixed Latin/CJK/Hangul names. After the next run, compare `script_limited_core_identity_matches`, `verified_core_identity_matches`, and `gold_core_blocker_rows` against `.117`. Full Display Gold should remain conservative.
-
+- Do not infer player continuity across pre/post transfer snapshots only from rank/power/alliance.
+- Do not use historical player memory as the primary identity solution.
+- Do not run Character ReOCR on context gaps.
+- Do not silently convert read-only inference into Operational Truth.

@@ -1,147 +1,73 @@
 # Sentinel Architecture
 
-**Current version:** v0.9.5.75
+**Current version:** v0.9.5.125  
+**Functional baseline:** v0.9.5.124 Gold Fidelity Engine Phase 1
 
-## Snapshot Lifecycle Architecture
-
-A managed snapshot is the central container for screenshot import context. It is separate from Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth. In v0.9.5.75 the snapshot layer owns four responsibilities:
-
-- lifecycle state: `open`, `collecting`, `reviewing`, `verified`, `locked`, `archived`;
-- server-scope based expected evidence;
-- operational readiness calculation;
-- completion report and audit trail.
-
-Screenshot imports require an active `screenshot_upload` snapshot in an import-allowed state. Verified and locked snapshots become read-only references. A completion report under `reports/snapshots/<snapshot_id>/completion_report.json` captures the snapshot, coverage and readiness evidence at verification/lock time.
-
-Snapshot readiness is an evidence gate, not a truth engine. Operational Truth remains downstream and must continue to respect Data Guard, Ranking Guard, review decisions and quarantine.
-
----
-
-# Sentinel Architecture
-
-**Current version:** v0.9.5.74
-
-Sentinel is an explainable strategic intelligence platform for Last War. Its current architecture is built around guarded data ingestion before strategic intelligence.
+Sentinel is an explainable strategic intelligence platform for Last War. The current architecture is evidence-first: it prioritizes stable acquisition, protected Operational Truth, and auditable validation before strategic assessment.
 
 ## High-level flow
 
 ```text
 Screenshot / Excel / Manual Source
         ↓
-Import Context / Snapshot
+Import Context / Managed Snapshot
         ↓
 OCR or Structured Import
         ↓
 Parsing and Normalization
         ↓
-Data Guard + Ranking Guard
+Ranking Guard + Data Guard
         ↓
-Recovery or Quarantine
+Recovery / Quarantine / Review Evidence
         ↓
-Human Review
+Ground Truth Validation and Evidence Inspector
         ↓
 Operational Truth / Export / Historical Reference
         ↓
-Command Center / Intelligence Layer
+Command Center / Strategic Intelligence Layer
 ```
 
+## Core layers
 
-## Snapshot binding enforcement
+### 1. Snapshot layer
 
-v0.9.5.73 makes managed snapshots part of the screenshot import boundary:
+A managed snapshot binds screenshot imports to a collection context. It is not truth by itself. It provides scope, expected servers/rankings, lifecycle state, and audit metadata.
 
-- `main.py` requires an active `screenshot_upload` snapshot before processing screenshots.
-- Closed, complete or non-screenshot snapshots block screenshot imports.
-- `data/latest_import_report.json` includes `snapshot`, `snapshot_id`, `snapshot_name`, expected rankings and expected servers.
-- Generated screenshot exports default to `output/snapshots/<snapshot_id>/lastwar_export.xlsx`.
-- Review evidence and persistent Review History carry the snapshot binding so review work is phase-aware.
-- Import Center displays active snapshot coverage and warns when the latest report is not bound to the active snapshot.
+### 2. OCR and parser layer
 
-Historical Dataset, Current Run, Benchmark/Ground Truth and Operational Truth remain separate. Snapshot binding is context and audit metadata, not truth promotion.
+The parser converts screenshot evidence into candidate rows. OCR output is evidence, not automatically truth.
 
-## Runtime components
+### 3. Ranking Guard
 
-- `main.py` – screenshot import orchestration.
-- `parser/*` – OCR parsing, normalization, guards and recovery.
-- `importer/historical_excel_import.py` – historical Excel import.
-- `database/*` – SQLite schema and repositories.
-- `application/command_center/*` – Command Center view model services.
-- `application/historical_import/*` – historical import/report view services.
-- `application/snapshots/*` – managed snapshot foundation.
-- `web/routes/*` and `web/templates/*` – web UI for Command Center, Imports, Quality, Reviews and related pages.
-- `docs/*` – project knowledge base.
+Ranking Guard protects against row contamination, N+1 assumptions, unsafe fallback, and ambiguous rank/power recovery. It can quarantine rows instead of accepting unsafe matches.
 
-## Source contexts
+### 4. DataGuard
 
-### Current Run
-Latest screenshot OCR/import output. It is evidence, not automatically truth.
+DataGuard protects Operational Truth. It marks uncertainty, blocks unsafe promotion, and preserves reviewability.
 
-### Historical Dataset
-Excel-imported reference data and coverage baseline. Used for coverage and future trend context.
+### 5. Contextual inference
 
-### Benchmark/Ground Truth
-Validation-only data for regression and quality scoring.
+Inference can accept bounded gaps as read-only context when neighboring ranks and power trends support the expected row. It must not mutate Operational Truth.
 
-### Review History
-Persistent human-in-the-loop workflow state.
+### 6. Character ReOCR
 
-### Operational Truth
-The guarded dataset suitable for decision support. It must pass Data Guard and review/override rules.
+Character ReOCR provides screenshot-local glyph evidence for specific targets. It is useful for local confusions and case-sensitive tags. It is not used for broad context gaps or nonlocal multilingual replacement spans.
 
-## Web information architecture
+### 7. Evidence Inspector
 
-```text
-Command Center
- ├── Imports
- │    ├── Current Import
- │    ├── Snapshot Management
- │    └── Historical Imports
- ├── Quality
- │    ├── Missing Data
- │    ├── Guard Findings
- │    └── Coverage Context
- ├── Reviews
- │    ├── Open Reviews
- │    ├── Resolved Reviews
- │    └── Review Detail + Screenshot Evidence
- ├── Servers
- └── Exports / Reports
-```
+The Evidence Inspector explains row integrity and ReOCR provenance. It classifies rows into OK, warning, review, unresolved, and context-gap categories.
 
-## Snapshot target architecture
+### 8. Gold Fidelity Engine Phase 1
 
-Snapshots should become the default import container. A future import should not be “just the latest run”; it should belong to a named snapshot.
+The Gold Fidelity Engine begins with snapshot-local ReOCR evidence caching. It reuses decisive glyph evidence only for exact target/text pairs within the same validation run. It is not a historical identity database.
 
-```text
-Snapshot: S6 pre Transfer
- ├── screenshots
- ├── OCR report
- ├── ranking feeds
- ├── review queue
- ├── coverage status
- └── exports
-```
+## Current architecture boundary
 
-## Guardrail
+Sentinel currently separates:
 
-The UI may explain, link and collect review decisions, but it must not silently change Operational Truth.
+- **Core Identity:** enough evidence for operational row identity.
+- **Display Fidelity:** exact player/tag spelling.
+- **Gold Fidelity:** exact/screenshot-proven display, rank, power, and identity.
+- **Operational Truth:** downstream truth store protected by DataGuard.
 
-
----
-
-## v0.9.5.76 Recognition Quality Note
-
-Review Rank Trace is now part of the data-quality boundary. Review surfaces must not treat technical review IDs or quarantine-row ordinals as Operational Truth ranks. Sentinel carries `visible_rank`, `raw_review_rank`, `screenshot_rank_window`, and `rank_trace_source` so human reviewers see the same rank range that appears in the linked screenshot.
-
-## v0.9.5.77 Note – Review Context
-
-Review surfaces now separate human-visible rank from internal matching rank. Reviewers should see the screenshot-visible rank, screenshot window and target identity instead of quarantine ordinals. This protects human review quality and prevents misleading validation prompts.
-## v0.9.5.80 – Continuous Collection Decision
-
-Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
-
-
-
-## v0.9.5.81 – Review Evidence Model
-
-Reviews now distinguish OCR Source, Operational Mapping, and Operational Truth. Source-row overlays remain useful, but must be labelled as OCR evidence rather than proven ranking facts when global rank mapping is unresolved.
+This separation is essential for safe pre/post transfer analysis.

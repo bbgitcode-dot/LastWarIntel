@@ -1,7 +1,8 @@
-perf(gold-fidelity): cache reusable reocr evidence
+docs(project): consolidate handover documentation for v0.9.5.125
 
-- add conservative snapshot-local ReOCR evidence cache
-- cache only decisive verified_expected / verified_observed outcomes
-- clone cache hits with explicit evidence_cache_hit provenance
-- expose cache hit/miss/write/saved counters in validator detail
-- add focused smoke tests for cache keying and cached evidence provenance
+- consolidate scattered release notes into docs/RELEASE_NOTES.md
+- consolidate scattered patch summaries into docs/PATCH_SUMMARY.md
+- update PROJECT_STATUS, ROAD_TO_V1, LESSONS_LEARNED, MODUS_OPERANDI and DataGuard docs
+- add ARCHITECTURE_HISTORY and VERSIONING_POLICY for handover continuity
+- update NEXT_CHAT / HANDOFF_NEXT_CHAT with the next sprint startup prompt
+- archive legacy loose release and patch docs under docs/archive

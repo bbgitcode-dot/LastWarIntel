@@ -1,10 +1,68 @@
-# Modus Operandi – Sentinel v0.9.5.100
+# Modus Operandi – Sentinel
 
-- Proud Owner defines sprint objective and validates outputs.
-- Mimir delivers complete ZIP releases, not snippets.
-- Default documentation path is `/docs`.
-- Each sprint includes version bump, release notes, validation summary and `.commit`.
-- Cache remains off for data-quality and Gold Fidelity validation unless explicitly requested.
-- Screenshot filename/order/upload order must never become truth.
-- Quarantine is preferred over false Operational Truth.
-- For 551 Gold work, runtime is irrelevant until screenshot fidelity is proven.
+## Roles
+
+- **Proud Owner:** project owner, final decision maker, operational tester.
+- **Mimir:** strategic copilot, implementation partner, documentation steward.
+
+## Delivery rule
+
+No snippets as final sprint deliverables.
+
+Each sprint release must be a complete ZIP package that can be deployed or tested as a whole.
+
+## Standard paths
+
+- Documentation: `/docs`
+- Release notes: `/docs/RELEASE_NOTES.md`
+- Patch summary: `/docs/PATCH_SUMMARY.md`
+- Next-chat handover: `/docs/NEXT_CHAT.md`
+- Commit message: `/.commit`
+- Version: `/version.py`
+
+## Release package requirements
+
+Every release should include:
+
+1. full source tree;
+2. version bump;
+3. updated `.commit`;
+4. release notes;
+5. patch summary;
+6. updated project status when behavior or strategy changes;
+7. validation statement;
+8. commit and tag commands.
+
+## Commit / tag convention
+
+Example:
+
+```bash
+git add .
+git commit -m "docs(project): consolidate handover documentation for v0.9.5.125"
+git tag -a v0.9.5.125 -m "v0.9.5.125 Documentation Consolidation and Handover"
+```
+
+## Engineering principles
+
+- Evidence before inference.
+- Quarantine over false truth.
+- Operational Truth is protected.
+- Read-only inference stays read-only.
+- Current screenshot proof is preferred over historical memory.
+- Matching, identity, display fidelity, and strategic intelligence are separate layers.
+- Performance optimizations must not weaken DataGuard.
+
+## Sprint rhythm
+
+1. Proud Owner provides latest ZIP and relevant reports/screenshots.
+2. Mimir reads the package and identifies the narrow sprint goal.
+3. Mimir implements or documents the sprint.
+4. Mimir validates with smoke tests/compile/zip integrity where possible.
+5. Mimir returns a complete ZIP and commit/tag commands.
+6. Proud Owner runs local validation and returns reports.
+7. Next sprint is selected from evidence, not guessing.
+
+## Language and style
+
+Documentation should be direct, explicit, and audit-friendly. Avoid vague claims such as “improved OCR” unless the metrics prove it.

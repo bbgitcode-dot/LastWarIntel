@@ -1,113 +1,41 @@
-# Architectural Decisions
+# Architectural Decisions – Sentinel
 
-## ADR – v0.9.5.75 Snapshot lifecycle controls Operational Truth readiness
+This document summarizes active architectural decisions. Detailed ADR files remain under `docs/ADR/`.
 
-Decision: Managed snapshots now use a formal lifecycle: `open`, `collecting`, `reviewing`, `verified`, `locked`, `archived`. Import and edit operations are only allowed in safe early states. Verified, locked and archived snapshots are protected from accidental mutation.
+## Current active decisions
 
-Rationale: Sentinel must not allow a completed phase such as `S6 pre Transfer` to receive new screenshots or scope edits after leadership has begun treating it as evidence. Lifecycle control reduces accidental mixing and makes Operational Truth reproducible.
+### AD-001: Evidence-first pipeline
 
-Consequences: Screenshot import is blocked outside import-capable states. Snapshot edits are blocked once review/verification begins. Completion reports and audit events provide traceability.
+Sentinel treats OCR as evidence, not truth. Every later step must preserve provenance and uncertainty.
 
----
+### AD-002: Operational Truth protection
 
-# Sentinel Architectural Decisions
+Operational Truth may not be silently mutated by OCR, validation, or inference. Unsafe rows are quarantined or marked for review.
 
-**Current version:** v0.9.5.72
+### AD-003: Ranking Guard before identity confidence
 
-This file is the current canonical architectural-decision summary. The `/docs/ADR` directory contains historical ADRs and currently has duplicate numbering from earlier sprints; those files should be renumbered or superseded in a future documentation cleanup.
+Rank and row safety come before identity repair. A plausible name on the wrong row is dangerous.
 
-## ADR-001 – Screenshot order is not truth
+### AD-004: Read-only contextual inference
 
-Screenshot filename, order, upload order and timestamp order must never be treated as authoritative. Runtime reconstruction must rely on intrinsic evidence: server evidence, ranking type, row shape, rank, power continuity and source-local context.
+Inference can explain bounded gaps and accept them for validation context, but it remains read-only.
 
-## ADR-002 – Ground Truth validates Sentinel but does not power runtime
+### AD-005: Character ReOCR is local glyph proof
 
-Ground Truth and benchmarks are development tools. They must not drive runtime Command Center, Quality, Operational Readiness or exports.
+Character ReOCR is for local character ambiguities and case-sensitive tags. It is not a general solution for broad name reconstruction or multilingual replacement spans.
 
-## ADR-003 – Data Guard protects Operational Truth
+### AD-006: No historical identity shortcut before V1
 
-Data Guard may validate, warn, quarantine or block. It may not guess. Uncertain evidence must be recovered with strong evidence or moved to review/quarantine.
+Sentinel must support first-contact screenshots across the 549–676 transfer bucket and eventually 2000+ servers. It must not depend on a historical player database to identify names.
 
-## ADR-004 – Ranking Guard validates semantic fit
+### AD-007: Evidence cache scope is snapshot-local
 
-`alliance_power` and `total_hero_power` have different scales, fields and row shapes. Ranking-type contamination is a data-integrity issue.
+The v0.9.5.124 cache reuses exact glyph evidence only inside one validation run. It is not cross-snapshot identity memory.
 
-## ADR-005 – Recovery must preserve original evidence
+### AD-008: Core Identity and Display Fidelity are separate
 
-Context-aware power recovery may suggest or promote candidates only under explicit confidence rules. Original OCR values, candidate list, scores and reasons must remain reportable.
+A row can be operationally safe while not full-display Gold-ready. Reports must show this distinction.
 
-## ADR-006 – Human Review is an audit workflow
+## ADR maintenance note
 
-Resolving a review does not automatically rewrite Operational Truth. It records a human decision, comment and selected candidate/manual value. A future Manual Override Engine may consume those decisions under Data Guard control.
-
-## ADR-007 – UI is an observability and workflow layer, not a truth source
-
-Command Center, Imports, Quality and Reviews read report/history/database artifacts. They must not silently re-score, re-rank or promote data.
-
-## ADR-008 – Current, Historical and Benchmark contexts are separate
-
-Sentinel must keep current run, review history, historical dataset and benchmark/ground-truth outputs separate. Cross-contamination produces misleading operational status.
-
-## ADR-009 – Historical data is reference coverage
-
-Historical Excel imports provide baseline coverage and temporal context. They do not overwrite runtime Operational Truth and should be clearly labelled as historical/reference data.
-
-## ADR-010 – Snapshot is the future import container
-
-A Snapshot is a human-named container for one event/phase of data collection. Future screenshot uploads, reviews, exports and coverage should be bound to an active snapshot.
-
-Example snapshots:
-
-- S5 pre Transfer
-- S5 post Transfer
-- S5 Gold Vein
-- S6 pre Season
-- S6 pre Transfer
-
-## ADR-011 – Data Quality before Intelligence
-
-The Intelligence layer should not be expanded until import, review, snapshot and quality gates are reliable. Strategy built on unstable data creates false confidence.
-
-## Open architectural decisions
-
-- How resolved reviews become guarded export corrections.
-- Whether snapshots are JSON-backed, SQLite-backed or hybrid long term.
-- How screenshot upload UI enforces active snapshot selection.
-- How historical server/alliance/player timelines are normalized across name changes and alliance transfers.
-- How ADR numbering in `/docs/ADR` should be cleaned without losing history.
-
-
-## ADR – v0.9.5.73 Snapshot import binding is mandatory
-
-Screenshot imports must have an active managed `screenshot_upload` snapshot. A missing, closed, complete or wrong-type snapshot blocks import instead of allowing evidence to enter the Current Run without phase context. This prevents accidental mixing of events such as `S6 pre Transfer` with another phase. Snapshot metadata is audit context only and never overrides Data Guard, Ranking Guard or Human Review.
-
-## ADR – v0.9.5.74 Snapshot completeness derives from explicit server scope
-
-Sentinel must not assume a fixed number of participating servers. S4, S5, S6 and future events can have different server counts, and event-specific uploads may only cover a small set of servers.
-
-Decision:
-
-- Managed snapshots store a `server_scope` instead of relying on ambiguous free text.
-- Supported scope modes are `all`, `range` and `selected`.
-- `range` expands inclusively, for example `549-676` becomes 128 expected servers.
-- Completeness is calculated as imported valid feeds divided by expected feeds derived from `server_scope × expected_rankings`.
-- Active snapshots may be edited only while they are `open`, `importing` or `review`.
-- Completed, closed, locked or archived snapshots are protected against scope edits.
-
-Rationale: the snapshot defines what complete means. Sentinel must never treat filename order, upload order or a hard-coded season size as truth.
-
-
----
-
-## v0.9.5.76 Recognition Quality Note
-
-Review Rank Trace is now part of the data-quality boundary. Review surfaces must not treat technical review IDs or quarantine-row ordinals as Operational Truth ranks. Sentinel carries `visible_rank`, `raw_review_rank`, `screenshot_rank_window`, and `rank_trace_source` so human reviewers see the same rank range that appears in the linked screenshot.
-## v0.9.5.80 – Continuous Collection Decision
-
-Screenshot import runs are not collection boundaries. A snapshot may remain `COLLECTING` while open reviews exist, because real Sentinel users can upload screenshots continuously. Transition to `REVIEWING` must be explicit. Source-row-only review evidence must never be rendered as a proven visible/global rank.
-
-
-
-## ADR-008 – Separate OCR Evidence from Operational Mapping
-
-OCR output is an observation. Candidate matching is a hypothesis. Operational Truth is the validated result. Review UIs must never collapse these layers. When only a screenshot-local source row is known, Sentinel labels it as `OCR Row`; `Operational Rank` remains unresolved until a reliable mapping exists or a human reviewer resolves it.
+Some historical ADR numbers are duplicated in `docs/ADR/`. They are retained for historical continuity. Future ADRs should use the next unused number and a unique slug.
