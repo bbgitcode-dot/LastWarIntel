@@ -1,3 +1,9 @@
+## v0.9.5.121
+
+- Planning sprint for Evidence-first improvements.
+- Added roadmap for Crop Geometry Inspector, Row Alignment Heatmap, Evidence Timeline and Fragment Voting Visualizer.
+- No functional code changes in this documentation handover sprint.
+
 # Sentinel v0.9.5.43
 
 ## Fix

@@ -53,6 +53,73 @@ def _count_targets_by_field(targets: list[Any], field: str) -> int:
     return sum(1 for target in targets if getattr(target, "field", "") == field)
 
 
+
+
+def _is_harmless_alliance_case_target(target: Any, *, raw_alliance_match: bool, raw_alliance_case_sensitive_mismatch: bool) -> bool:
+    """Return True for low-value alliance case-only probes.
+
+    v0.9.5.122: Core Identity must not spend seconds on re-reading a tag
+    whose normalized alliance already matches and whose only difference is
+    display case such as ``PbC`` vs ``PBC``. Full Gold still remains blocked
+    until display evidence is exact; this gate only avoids expensive ReOCR
+    for a non-critical proof.
+    """
+    if getattr(target, "field", "") != "alliance_tag":
+        return False
+    reason = str(getattr(target, "reason", "") or "")
+    expected = str(getattr(target, "expected", "") or "")
+    observed = str(getattr(target, "observed", "") or "")
+    return bool(
+        raw_alliance_match
+        and raw_alliance_case_sensitive_mismatch
+        and reason == "case_sensitive_tag_difference"
+        and expected
+        and observed
+        and expected.upper() == observed.upper()
+        and expected != observed
+    )
+
+
+def _apply_reocr_budget_gate(
+    targets: list[Any],
+    *,
+    raw_alliance_match: bool,
+    raw_alliance_case_sensitive_mismatch: bool,
+    raw_name_display_exact: bool,
+    raw_name_normalized_match: bool,
+    name_normalized_similarity: float,
+    raw_power_match: bool,
+) -> tuple[list[Any], int, list[str]]:
+    """Drop low-yield ReOCR targets before invoking EasyOCR.
+
+    Diagnostic reports showed that alliance tag case probes dominate runtime even
+    when the transfer-critical identity is already safe through rank/power/name
+    and normalized alliance.  This function is intentionally conservative:
+    it only removes alliance case-only targets, never player-name targets and
+    never missing/different alliance tags.
+    """
+    kept: list[Any] = []
+    skipped = 0
+    reasons: list[str] = []
+    identity_core_name_stable = bool(raw_name_display_exact or raw_name_normalized_match or name_normalized_similarity >= 0.88)
+    for target in targets:
+        if (
+            raw_power_match
+            and identity_core_name_stable
+            and _is_harmless_alliance_case_target(
+                target,
+                raw_alliance_match=raw_alliance_match,
+                raw_alliance_case_sensitive_mismatch=raw_alliance_case_sensitive_mismatch,
+            )
+        ):
+            skipped += 1
+            if "budget_skip_alliance_case_only" not in reasons:
+                reasons.append("budget_skip_alliance_case_only")
+            continue
+        kept.append(target)
+    return kept, skipped, reasons
+
+
 def _evidence_field(item: Any) -> str:
     # v0.9.5.112 hotfix: CharacterVerificationEvidence stores the field
     # directly (item.field).  Older draft code looked for item.target.field,
@@ -951,6 +1018,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         raw_targets = parse_reocr_targets(character_verification_plan.to_json())
         local_targets = []
         skipped_targets = 0
+        budget_skipped_targets = 0
+        budget_gate_reasons: list[str] = []
         gt_screenshot = normalize_text(gt_row.get("screenshot", ""))
         row_slot = row_slots.get((gt_screenshot, expected_rank)) if expected_rank is not None else None
         if character_verification_candidate and screenshots_dir is not None and gt_screenshot:
@@ -962,6 +1031,16 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                 expected_alliance=expected_alliance_display,
                 observed_alliance=actual_alliance_display,
             )
+            if character_reocr_reader is not None:
+                local_targets, budget_skipped_targets, budget_gate_reasons = _apply_reocr_budget_gate(
+                    local_targets,
+                    raw_alliance_match=raw_alliance_match,
+                    raw_alliance_case_sensitive_mismatch=raw_alliance_case_sensitive_mismatch,
+                    raw_name_display_exact=raw_name_display_exact,
+                    raw_name_normalized_match=raw_name_normalized_match,
+                    name_normalized_similarity=name_normalized_similarity,
+                    raw_power_match=raw_power_match,
+                )
             skipped_targets = max(0, len(raw_targets) - len(local_targets))
             for target in local_targets:
                 expected_text = expected_name if target.field == "player_name" else expected_alliance_display
@@ -1011,7 +1090,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             reocr_summary["skipped_nonlocal"] = skipped_targets
             reocr_evidence_json = json.dumps([item.to_dict() for item in evidence_items], ensure_ascii=False)
             if reocr_summary["targets"] == 0:
-                reocr_status = "no_targets"
+                reocr_status = "not_requested_policy_budget" if budget_skipped_targets > 0 else "no_targets"
             elif reocr_summary["verified_expected"] == reocr_summary["targets"]:
                 reocr_status = "verified_expected"
             elif reocr_summary["verified_observed"] == reocr_summary["targets"]:
@@ -1055,11 +1134,16 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         ))
         verified_display_name = expected_name if verified_name_display_exact else actual_name
         verified_display_alliance = expected_alliance_display if verified_alliance_display_exact else actual_alliance_display
+        # v0.9.5.122: Core Identity can rely on normalized/current-snapshot
+        # alliance equivalence. Full display fidelity remains strict and still
+        # requires verified_alliance_display_exact. This prevents minutes of
+        # CPU-only ReOCR being spent just to prove harmless tag case drift.
+        core_alliance_match = bool(verified_alliance_display_exact or alliance_match)
         script_limited_core_identity, script_limited_policy_reason = _is_script_limited_core_identity(
             accepted_match=accepted_match,
             name_category=str(gt_row.get("name_category", "")),
             power_match=power_match,
-            verified_alliance_display_exact=verified_alliance_display_exact,
+            verified_alliance_display_exact=core_alliance_match,
             raw_name_normalized_match=raw_name_normalized_match,
             name_normalized_similarity=name_normalized_similarity,
             expected_name_latin_core=expected_name_normalized,
@@ -1069,7 +1153,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             accepted_match=accepted_match,
             name_category=str(gt_row.get("name_category", "")),
             power_match=power_match,
-            verified_alliance_display_exact=verified_alliance_display_exact,
+            verified_alliance_display_exact=core_alliance_match,
             verified_name_display_exact=verified_name_display_exact,
             raw_name_normalized_match=raw_name_normalized_match,
             name_normalized_similarity=name_normalized_similarity,
@@ -1097,7 +1181,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         # containment/high-similarity leftovers such as extra OCR junk around a
         # stable Latin player core.
         verified_exact_identity = bool(accepted_match and rank_match and power_match and verified_name_display_exact and verified_alliance_display_exact)
-        verified_core_identity = bool((accepted_match and power_match and verified_name_display_exact and verified_alliance_display_exact) or script_limited_core_identity or latin_residual_core_identity)
+        verified_core_identity = bool((accepted_match and power_match and verified_name_display_exact and core_alliance_match) or script_limited_core_identity or latin_residual_core_identity)
         verified_identity_resolution = bool(verified_exact_identity and not exact_identity)
         raw_core_identity = bool(accepted_match and power_match and name_display_exact and alliance_display_exact_match)
         verified_core_identity_resolution = bool(verified_core_identity and not raw_core_identity)
@@ -1180,6 +1264,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "verified_alliance_display": verified_display_alliance,
             "verified_name_display_exact_match": verified_name_display_exact,
             "verified_alliance_display_exact_match": verified_alliance_display_exact,
+            "core_alliance_match": core_alliance_match,
             "verified_exact_identity_match": verified_exact_identity,
             "verified_identity_resolution": verified_identity_resolution,
             "verified_core_identity_match": verified_core_identity,
@@ -1208,6 +1293,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             "character_reocr_verified_observed": reocr_summary.get("verified_observed", 0),
             "character_reocr_unresolved": reocr_summary.get("unresolved", 0),
             "character_reocr_skipped_nonlocal": reocr_summary.get("skipped_nonlocal", 0),
+            "character_reocr_budget_skipped": budget_skipped_targets,
+            "character_reocr_budget_gate_reasons": ";".join(budget_gate_reasons),
             "character_reocr_evidence": reocr_evidence_json,
             "ground_truth_row_slot": row_slot,
             "name_category": gt_row["name_category"],
@@ -1837,6 +1924,8 @@ def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple
     if str(row.get("alignment_guard_status", "")) not in {"", "row_alignment_observed"}:
         return "ROW_ALIGNMENT_WARNING", str(row.get("alignment_guard_status", ""))
     if row_reocr_debug.empty:
+        if str(row.get("character_reocr_status", "")) == "not_requested_policy_budget":
+            return "ROW_OK_POLICY_BUDGET", "ReOCR intentionally skipped by budget gate; core evidence remains available"
         if _bool_cell(row.get("character_verification_candidate")):
             return "ROW_EVIDENCE_MISSING", "character verification candidate without ReOCR evidence"
         return "ROW_OK_NO_REOCR", "accepted aligned row; no character evidence required"
@@ -1853,8 +1942,12 @@ def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple
     if "verified_observed" in statuses and "player_name" in fields:
         return "ROW_OBSERVED_TEXT_CONFIRMED", "ReOCR confirmed observed player-name glyphs instead of expected glyphs"
     if "crop_field_mismatch" in diagnostics or "field_mismatch" in anchors:
+        if _bool_cell(row.get("verified_core_identity_match")) and not _bool_cell(row.get("gold_core_blocker")):
+            return "ROW_OK_WITH_CROP_WARNING", "core identity is verified; crop field/power-column bleed kept as warning"
         return "ROW_FIELD_MISMATCH_DIAGNOSTIC", "ReOCR crop evidence reports field/power-column mismatch"
     if "vote_outside_allowed_set" in diagnostics:
+        if _bool_cell(row.get("verified_core_identity_match")) and not _bool_cell(row.get("gold_core_blocker")):
+            return "ROW_OK_WITH_VOTE_WARNING", "core identity is verified; outside-allowed-set votes kept as warning"
         return "ROW_VOTE_OUTSIDE_ALLOWED_SET", "ReOCR votes include text outside the allowed target set"
     return "ROW_OK_WITH_REOCR", "accepted aligned row with successful local ReOCR evidence"
 
@@ -1951,7 +2044,7 @@ def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.D
     fragments_df = pd.DataFrame(fragment_rows)
     if not evidence_df.empty:
         total_rows = int(len(evidence_df))
-        ok_mask = evidence_df["row_integrity_status"].astype(str).isin({"ROW_OK_NO_REOCR", "ROW_OK_WITH_REOCR", "ROW_VOTE_OUTSIDE_ALLOWED_SET"})
+        ok_mask = evidence_df["row_integrity_status"].astype(str).isin({"ROW_OK_NO_REOCR", "ROW_OK_WITH_REOCR", "ROW_OK_POLICY_BUDGET", "ROW_OK_WITH_CROP_WARNING", "ROW_OK_WITH_VOTE_WARNING", "ROW_VOTE_OUTSIDE_ALLOWED_SET"})
         inspect_mask = ~ok_mask
         status_summary = evidence_df.groupby("row_integrity_status", dropna=False).agg(
             rows=("rank", "count"),

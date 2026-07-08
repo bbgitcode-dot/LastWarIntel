@@ -1,5 +1,24 @@
+## v0.9.5.122 – ReOCR Budget Gate and Crop Hygiene
 
-## v0.9.5.120 – OCR Evidence Inspector and Row Integrity Diagnostics
+- Adds a conservative ReOCR budget gate for harmless alliance tag case-only probes such as `PbC` vs `PBC` when rank/power/name-core evidence is already stable. Full display Gold remains strict; this only avoids spending CPU on low-yield proof.
+- Separates Core Alliance equivalence from exact display fidelity: normalized/current-snapshot alliance matches can support Core Identity, while `verified_alliance_display_exact_match` still requires exact or screenshot-proven display evidence.
+- Reclassifies crop/power-column bleed and outside-allowed-set votes as `ROW_OK_WITH_*_WARNING` when Core Identity is already verified, so Evidence Inspector review effort focuses on real blockers.
+- Emits `character_reocr_budget_skipped` and `character_reocr_budget_gate_reasons` in validator detail rows for auditability.
+
+```bash
+git add .
+git commit -m "perf(data-guard): gate low-yield reocr and classify crop warnings"
+git tag -a v0.9.5.122 -m "v0.9.5.122 ReOCR Budget Gate and Crop Hygiene"
+```
+
+## v0.9.5.121
+
+- Planning sprint for Evidence-first improvements.
+- Added roadmap for Crop Geometry Inspector, Row Alignment Heatmap, Evidence Timeline and Fragment Voting Visualizer.
+- No functional code changes in this documentation handover sprint.
+
+
+## v0.9.5.121 – OCR Evidence Inspector and Row Integrity Diagnostics
 
 - Adds OCR Evidence Inspector output to the Ground Truth Validator.
 - Writes `ocr_evidence_report.json` and `ocr_evidence_report.xlsx`.
@@ -511,7 +530,7 @@ Validation: 24 focused smoke tests passed.
 
 
 
-## v0.9.5.120 – Latin Residual Validator Crashfix
+## v0.9.5.121 – Latin Residual Validator Crashfix
 
 - Fixes a validator crash introduced in v0.9.5.119 where `expected_name_key` / `actual_name_key` were referenced before initialization.
 - Keeps Latin Residual Core behavior unchanged.

@@ -1,8 +1,8 @@
-# Patch Summary – v0.9.5.120 OCR Evidence Inspector and Row Integrity Diagnostics
+# Patch Summary – v0.9.5.121 OCR Evidence Inspector and Row Integrity Diagnostics
 
 ## Purpose
 
-v0.9.5.120 turns the recent Thunder/YUNS discussion into diagnostics. The goal is not to guess identities and not to add another OCR heuristic. The goal is to expose whether a suspicious name came from the correct row, whether ReOCR crops are leaking into neighbouring fields, and which visual evidence Sentinel actually used.
+v0.9.5.121 turns the recent Thunder/YUNS discussion into diagnostics. The goal is not to guess identities and not to add another OCR heuristic. The goal is to expose whether a suspicious name came from the correct row, whether ReOCR crops are leaking into neighbouring fields, and which visual evidence Sentinel actually used.
 
 ## Changes
 
@@ -57,5 +57,5 @@ zip integrity OK
 ```bash
 git add .
 git commit -m "feat(data-guard): add OCR evidence inspector diagnostics"
-git tag -a v0.9.5.120 -m "v0.9.5.120 OCR Evidence Inspector and Row Integrity Diagnostics"
+git tag -a v0.9.5.121 -m "v0.9.5.121 OCR Evidence Inspector and Row Integrity Diagnostics"
 ```

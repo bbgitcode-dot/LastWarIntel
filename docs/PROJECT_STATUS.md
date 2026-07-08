@@ -156,6 +156,6 @@ Next focus remains player-name drift triage: latin-only glyph/separator fixes fi
 - Added reconstruction evidence to the existing character ReOCR debug stream with crop strategy `latin_name_block`, candidate text, selected reconstruction, confidence, and timing.
 - Core Identity can now accept a verified Latin name block when the whole-name OCR candidate supports the expected display more strongly than the observed OCR string.
 
-## Current Sprint – v0.9.5.120
+## Current Sprint – v0.9.5.121
 
 The current focus is Latin Residual Core Blocker Cleanup. `.118` successfully reduced mixed Latin/CJK/Hangul blockers through a script-limited policy. `.119` now handles the analogous Latin-only residual class: stable Latin core + verified alliance + matched power can satisfy Core Identity when OCR only added prefix/suffix garbage or formatting noise. Broad missing-glyph cases remain blocked and require future OCR/reconstruction work.
