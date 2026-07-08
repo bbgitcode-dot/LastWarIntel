@@ -164,3 +164,7 @@ The current focus is Latin Residual Core Blocker Cleanup. `.118` successfully re
 ## v0.9.5.123 Evidence Triage Update
 
 Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.
+
+## v0.9.5.124 Gold Fidelity Engine Phase 1
+
+The validator now begins reusing decisive Character ReOCR evidence within a single snapshot run. This is a performance and confidence-management step, not a historical identity lookup. Cache hits are exact target/text matches and remain fully auditable through explicit `evidence_cache_hit` provenance. The next sprint should measure cache-hit impact on the 551 benchmark and then decide whether broader display-confidence propagation is safe.

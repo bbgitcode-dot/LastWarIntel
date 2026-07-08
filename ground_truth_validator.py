@@ -35,7 +35,7 @@ from parser.name_normalization import normalize_player_name, normalized_name_sim
 from parser.power_normalization import compare_power
 from parser.sequence_alignment import find_best_sequence_candidate
 from parser.character_verification import analyze_player_name_characters, analyze_alliance_tag_characters, merge_verification_plans
-from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, verify_latin_name_block_from_screenshot, summarize_evidence, filter_local_glyph_targets
+from parser.targeted_character_reocr import parse_reocr_targets, verify_target_from_screenshot, verify_latin_name_block_from_screenshot, summarize_evidence, filter_local_glyph_targets, CharacterVerificationEvidence
 from parser.gap_recovery import annotate_gap_recovery
 from parser.gap_resolver import find_cross_server_gap_candidate
 from parser.evidence_resolver import find_same_server_evidence_candidate
@@ -203,6 +203,74 @@ def _apply_reocr_budget_gate(
         kept.append(target)
     return kept, skipped, reasons
 
+
+
+def _target_cache_key(target: Any, *, expected_text: str, observed_text: str) -> tuple[str, int, str, str, str, str, str]:
+    """Build a conservative snapshot-local key for reusable ReOCR evidence.
+
+    v0.9.5.124: Character ReOCR repeatedly validates identical glyph claims
+    such as an alliance display repair or a recurring confusion-family target.
+    Cache only the exact target/text pair; never generalize across different
+    names, positions, or expected/observed glyphs.
+    """
+    return (
+        str(getattr(target, "field", "") or ""),
+        int(getattr(target, "position", 0) or 0),
+        str(getattr(target, "expected", "") or ""),
+        str(getattr(target, "observed", "") or ""),
+        str(getattr(target, "reason", "") or ""),
+        str(expected_text or ""),
+        str(observed_text or ""),
+    )
+
+
+def _cacheable_reocr_evidence(item: Any) -> bool:
+    """Return True if an evidence item is safe to reuse within one snapshot.
+
+    Cached evidence is a confidence shortcut, not Operational Truth.  Only
+    decisive local glyph outcomes are cached; unresolved/ambiguous/debug-only
+    observations are kept uncached so bad geometry does not spread.
+    """
+    return str(getattr(item, "status", "")) in {"verified_expected", "verified_observed"}
+
+
+def _clone_cached_reocr_evidence(item: Any, *, target: Any, screenshot: str, row_slot: int | None, expected_text: str, observed_text: str) -> CharacterVerificationEvidence:
+    """Return a current-row evidence record derived from snapshot cache.
+
+    The clone deliberately clears crop/vote timing fields and marks provenance
+    as an evidence-cache hit.  This avoids pretending that the current crop was
+    reread while still letting downstream reports count the verified glyph.
+    """
+    return CharacterVerificationEvidence(
+        field=str(getattr(target, "field", getattr(item, "field", "")) or ""),
+        position=int(getattr(target, "position", getattr(item, "position", 0)) or 0),
+        expected=str(getattr(target, "expected", getattr(item, "expected", "")) or ""),
+        observed=str(getattr(target, "observed", getattr(item, "observed", "")) or ""),
+        screenshot=str(screenshot or ""),
+        row_slot=row_slot,
+        crop_box=None,
+        status=str(getattr(item, "status", "")),
+        selected=str(getattr(item, "selected", "") or ""),
+        confidence=float(getattr(item, "confidence", 0.0) or 0.0),
+        votes=tuple(),
+        reason="evidence_cache_hit",
+        crop_strategy="snapshot_evidence_cache",
+        crop_candidate_index=0,
+        crop_candidate_count=0,
+        crop_candidate_reason="cache_hit",
+        crop_anchor_status="cache_hit",
+        crop_anchor_text="",
+        crop_diagnostic="cache_hit",
+        text_length=len(str(expected_text or observed_text or "")),
+        expected_text=str(expected_text or ""),
+        observed_text=str(observed_text or ""),
+        allowed_chars="",
+        target_total_ms=0.0,
+        crop_generation_ms=0.0,
+        variant_build_ms=0.0,
+        ocr_read_ms=0.0,
+        vote_selection_ms=0.0,
+    )
 
 def _evidence_field(item: Any) -> str:
     # v0.9.5.112 hotfix: CharacterVerificationEvidence stores the field
@@ -1010,6 +1078,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     # of being corrected to PBC/IVE.
     alliance_vocabulary = build_alliance_vocabulary(ground_truth.get("alliance", []))
     row_slots = _ground_truth_row_slots(ground_truth)
+    # v0.9.5.124: snapshot-local evidence cache.  This cache never changes
+    # Operational Truth; it only prevents repeated CPU-heavy reads for an
+    # identical target/text pair after a decisive local glyph was already seen
+    # in this validation run.
+    reocr_evidence_cache: dict[tuple[str, int, str, str, str, str, str], Any] = {}
+    reocr_cache_stats = {"hits": 0, "misses": 0, "writes": 0, "saved_reocr": 0}
     for _, gt_row in ground_truth.iterrows():
         match, match_method, sequence_candidate = _find_match(gt_row, ocr, alliance_vocabulary)
         expected_name = normalize_name(gt_row["true_name"])
@@ -1147,14 +1221,33 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             for target in local_targets:
                 expected_text = expected_name if target.field == "player_name" else expected_alliance_display
                 observed_text = actual_name if target.field == "player_name" else actual_alliance_display
-                evidence_items.append(verify_target_from_screenshot(
+                cache_key = _target_cache_key(target, expected_text=expected_text, observed_text=observed_text)
+                cached_item = reocr_evidence_cache.get(cache_key)
+                if cached_item is not None:
+                    evidence_items.append(_clone_cached_reocr_evidence(
+                        cached_item,
+                        target=target,
+                        screenshot=gt_screenshot,
+                        row_slot=row_slot,
+                        expected_text=expected_text,
+                        observed_text=observed_text,
+                    ))
+                    reocr_cache_stats["hits"] += 1
+                    reocr_cache_stats["saved_reocr"] += 1
+                    continue
+                reocr_cache_stats["misses"] += 1
+                item = verify_target_from_screenshot(
                     screenshot_path=screenshot_path,
                     target=target,
                     expected_text=expected_text,
                     observed_text=observed_text,
                     row_slot=row_slot,
                     reader=character_reocr_reader,
-                ))
+                )
+                evidence_items.append(item)
+                if _cacheable_reocr_evidence(item):
+                    reocr_evidence_cache[cache_key] = item
+                    reocr_cache_stats["writes"] += 1
 
             # v0.9.5.117: v0.9.5.116 proved whole-name reconstruction works,
             # but it also ran after cheaper glyph verification had already
@@ -1426,6 +1519,8 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
         })
 
     detail = pd.DataFrame(rows)
+    for key, value in reocr_cache_stats.items():
+        detail[f"reocr_evidence_cache_{key}"] = int(value)
     detail, gap_metrics = annotate_gap_recovery(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     detail, context_inferences = apply_contextual_inference(detail)

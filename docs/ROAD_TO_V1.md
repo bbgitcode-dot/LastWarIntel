@@ -92,3 +92,7 @@ This distinction is important for scaling beyond the 549-676 transfer bucket. Se
 ## v0.9.5.123 Evidence Triage Update
 
 Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.
+
+## v0.9.5.124 V1 Evidence Reuse Step
+
+V1 requires Sentinel to scale beyond one manually curated bucket without depending on prior knowledge of every player. v0.9.5.124 keeps that rule intact while reducing repeated proof work: screenshot-local evidence may be reused only when the exact glyph target and field text match inside the current validation run. This is the first phase of the Gold Fidelity Engine: less repeated OCR, more auditable confidence reuse.

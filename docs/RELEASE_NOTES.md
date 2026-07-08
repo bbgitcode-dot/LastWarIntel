@@ -1,3 +1,25 @@
+## v0.9.5.124 – Gold Fidelity Engine Phase 1
+
+- Adds a snapshot-local Character ReOCR Evidence Cache for exact target/text pairs. Decisive `verified_expected` / `verified_observed` glyph outcomes can be reused inside the same validation run without re-reading the same crop class repeatedly.
+- Cached evidence is explicitly marked with `reason=evidence_cache_hit` and `crop_strategy=snapshot_evidence_cache`; it does not claim a fresh crop read and does not modify Operational Truth.
+- Keeps cache scope conservative: field, target position, expected glyph, observed glyph, reason, expected field text, and observed field text must all match. No historical player database or cross-snapshot identity memory is used.
+- Adds cache counters into validator detail rows: `reocr_evidence_cache_hits`, `reocr_evidence_cache_misses`, `reocr_evidence_cache_writes`, and `reocr_evidence_cache_saved_reocr`.
+- Extends smoke coverage for cache keys, cacheable outcomes, and cached-evidence provenance.
+
+Validation:
+
+```text
+focused smoke tests passed
+py_compile OK for changed modules
+zip integrity OK
+```
+
+```bash
+git add .
+git commit -m "perf(gold-fidelity): cache reusable reocr evidence"
+git tag -a v0.9.5.124 -m "v0.9.5.124 Gold Fidelity Engine Phase 1"
+```
+
 ## v0.9.5.123 – Evidence Triage and ReOCR Stop Rules
 
 - Adds a stricter pre-ReOCR Core Safety Gate for already stable Latin residual and script-limited identities.
