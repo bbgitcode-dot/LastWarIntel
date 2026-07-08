@@ -34,6 +34,12 @@ except Exception:  # pragma: no cover - import environment dependent
     ImageOps = None  # type: ignore
 
 
+
+# v0.9.5.123: CPU-only EasyOCR can spend 30+ seconds on a single bad
+# character target.  Keep a soft per-target budget; the best evidence seen so
+# far is returned, but no additional crop candidates are explored after this.
+REOCR_TARGET_SOFT_TIMEOUT_MS = 12000.0
+
 @dataclass(frozen=True)
 class ReOcrTarget:
     field: str
@@ -779,9 +785,16 @@ def verify_target_from_screenshot(
         )
         if best is None or _evidence_rank(evidence) > _evidence_rank(best):
             best = evidence
+        elapsed_ms = (time.perf_counter() - total_start) * 1000.0
         # Expected-character evidence is the best possible outcome. Avoid extra
         # OCR calls once we have it.
         if evidence.status == "verified_expected" and evidence.confidence >= 0.55:
+            break
+        # Soft budget: stop exploring increasingly wide fallback crops once a
+        # target has already consumed enough CPU time.  This preserves the best
+        # local evidence collected so far and prevents single bad targets from
+        # dominating validator runtime.
+        if elapsed_ms >= REOCR_TARGET_SOFT_TIMEOUT_MS and best is not None:
             break
 
     if best is not None:
@@ -990,7 +1003,10 @@ def verify_latin_name_block_from_screenshot(
         )
         if best is None or _evidence_rank(evidence) > _evidence_rank(best):
             best = evidence
+        elapsed_ms = (time.perf_counter() - total_start) * 1000.0
         if evidence.status == "verified_expected":
+            break
+        if elapsed_ms >= REOCR_TARGET_SOFT_TIMEOUT_MS and best is not None:
             break
     if best is not None:
         return best

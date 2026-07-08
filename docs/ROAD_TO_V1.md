@@ -87,3 +87,8 @@ V1 now tracks two related but distinct gates:
 2. **Full Row Gold**: Core Identity plus rank/display fidelity. This remains the stricter audit gate.
 
 This distinction is important for scaling beyond the 549-676 transfer bucket. Sentinel must not depend on a historical name database to solve first-contact player identities; it must read and verify identity fields from the current screenshot. v0.9.5.114 makes the reporting layer reflect that strategy.
+
+
+## v0.9.5.123 Evidence Triage Update
+
+Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.

@@ -55,6 +55,84 @@ def _count_targets_by_field(targets: list[Any], field: str) -> int:
 
 
 
+
+def _compact_ascii_key(text: str) -> str:
+    return re.sub(r"[^A-Za-z0-9]", "", str(text or "")).upper()
+
+
+def _is_pre_reocr_core_safe(
+    *,
+    accepted_match: bool,
+    name_category: str,
+    raw_power_match: bool,
+    raw_alliance_match: bool,
+    raw_name_display_exact: bool,
+    raw_name_normalized_match: bool,
+    name_normalized_similarity: float,
+    expected_name_latin_core: str,
+    actual_name_latin_core: str,
+    expected_name_key: str = "",
+    actual_name_key: str = "",
+) -> tuple[bool, str]:
+    """Return whether Core Identity is already strong before expensive ReOCR.
+
+    v0.9.5.123: this is deliberately stricter than the post-ReOCR core gate.
+    It is only used to skip low-yield evidence work, never to modify Operational
+    Truth or mark full display fidelity as exact.  It protects cases such as
+    x Zed/Pumpkin G where rank+power+alliance and a visible Latin core are
+    already sufficient for transfer intelligence, while keeping Joncollins21
+    eligible for real glyph repair because its 21/zl ending is not a stable
+    containment residual before ReOCR.
+    """
+    if not accepted_match:
+        return False, "not_accepted_match"
+    if not raw_power_match:
+        return False, "power_not_matched"
+    if not raw_alliance_match:
+        return False, "alliance_not_matched"
+    if raw_name_display_exact:
+        return True, "display_exact"
+
+    expected_core = _compact_ascii_key(expected_name_latin_core or expected_name_key)
+    actual_core = _compact_ascii_key(actual_name_latin_core or actual_name_key)
+    if not expected_core or not actual_core or actual_core == "UNKNOWN":
+        return False, "missing_or_unknown_core"
+
+    if name_category == "mixed_latin_cjk":
+        if raw_name_normalized_match and name_normalized_similarity >= 0.88 and (expected_core in actual_core or actual_core in expected_core or expected_core == actual_core):
+            return True, "script_limited_core_preverified"
+        return False, "mixed_latin_core_not_stable"
+
+    if name_category == "latin_only":
+        if len(expected_core) >= 3 and (expected_core in actual_core or (len(actual_core) >= 4 and actual_core in expected_core)):
+            return True, "latin_residual_core_preverified"
+        if raw_name_normalized_match and name_normalized_similarity >= 0.965:
+            return True, "latin_high_similarity_preverified"
+        return False, "latin_core_not_stable"
+
+    return False, "unsupported_name_category"
+
+
+def _is_low_yield_player_core_target(target: Any, *, core_safe: bool) -> bool:
+    """Return True for player-name targets that do not improve Core Truth.
+
+    Full Gold may still care about these glyphs, but the CPU-heavy validator
+    should not spend seconds on them during normal Core validation once the
+    row's transfer-critical identity is already pre-verified.
+    """
+    if not core_safe or getattr(target, "field", "") != "player_name":
+        return False
+    reason = str(getattr(target, "reason", "") or "")
+    expected = str(getattr(target, "expected", "") or "")
+    observed = str(getattr(target, "observed", "") or "")
+    # Case-only or contained-residual glyph probes are cosmetic once the Latin
+    # core has already passed the strict pre-ReOCR policy.
+    if expected and observed and expected.lower() == observed.lower() and expected != observed:
+        return True
+    if reason in {"same_confusion_family_difference", "ocr_confusable_character_difference", "display_character_difference"}:
+        return True
+    return False
+
 def _is_harmless_alliance_case_target(target: Any, *, raw_alliance_match: bool, raw_alliance_case_sensitive_mismatch: bool) -> bool:
     """Return True for low-value alliance case-only probes.
 
@@ -89,6 +167,7 @@ def _apply_reocr_budget_gate(
     raw_name_normalized_match: bool,
     name_normalized_similarity: float,
     raw_power_match: bool,
+    pre_core_safe: bool = False,
 ) -> tuple[list[Any], int, list[str]]:
     """Drop low-yield ReOCR targets before invoking EasyOCR.
 
@@ -115,6 +194,11 @@ def _apply_reocr_budget_gate(
             skipped += 1
             if "budget_skip_alliance_case_only" not in reasons:
                 reasons.append("budget_skip_alliance_case_only")
+            continue
+        if _is_low_yield_player_core_target(target, core_safe=pre_core_safe):
+            skipped += 1
+            if "budget_skip_core_safe_player_target" not in reasons:
+                reasons.append("budget_skip_core_safe_player_target")
             continue
         kept.append(target)
     return kept, skipped, reasons
@@ -1031,6 +1115,19 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                 expected_alliance=expected_alliance_display,
                 observed_alliance=actual_alliance_display,
             )
+            pre_core_safe, pre_core_gate_reason = _is_pre_reocr_core_safe(
+                accepted_match=accepted_match,
+                name_category=str(gt_row.get("name_category", "")),
+                raw_power_match=raw_power_match,
+                raw_alliance_match=raw_alliance_match,
+                raw_name_display_exact=raw_name_display_exact,
+                raw_name_normalized_match=raw_name_normalized_match,
+                name_normalized_similarity=name_normalized_similarity,
+                expected_name_latin_core=expected_name_normalized,
+                actual_name_latin_core=actual_name_normalized,
+                expected_name_key=expected_name_key,
+                actual_name_key=actual_name_key,
+            )
             if character_reocr_reader is not None:
                 local_targets, budget_skipped_targets, budget_gate_reasons = _apply_reocr_budget_gate(
                     local_targets,
@@ -1040,7 +1137,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
                     raw_name_normalized_match=raw_name_normalized_match,
                     name_normalized_similarity=name_normalized_similarity,
                     raw_power_match=raw_power_match,
+                    pre_core_safe=pre_core_safe,
                 )
+                if budget_skipped_targets > 0 and pre_core_safe:
+                    reason = f"budget_pre_core_safe:{pre_core_gate_reason}"
+                    if reason not in budget_gate_reasons:
+                        budget_gate_reasons.append(reason)
             skipped_targets = max(0, len(raw_targets) - len(local_targets))
             for target in local_targets:
                 expected_text = expected_name if target.field == "player_name" else expected_alliance_display
@@ -1090,7 +1192,12 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
             reocr_summary["skipped_nonlocal"] = skipped_targets
             reocr_evidence_json = json.dumps([item.to_dict() for item in evidence_items], ensure_ascii=False)
             if reocr_summary["targets"] == 0:
-                reocr_status = "not_requested_policy_budget" if budget_skipped_targets > 0 else "no_targets"
+                if budget_skipped_targets > 0:
+                    reocr_status = "not_requested_policy_budget"
+                elif skipped_targets > 0:
+                    reocr_status = "not_requested_policy_nonlocal"
+                else:
+                    reocr_status = "no_targets"
             elif reocr_summary["verified_expected"] == reocr_summary["targets"]:
                 reocr_status = "verified_expected"
             elif reocr_summary["verified_observed"] == reocr_summary["targets"]:
@@ -1924,8 +2031,20 @@ def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple
     if str(row.get("alignment_guard_status", "")) not in {"", "row_alignment_observed"}:
         return "ROW_ALIGNMENT_WARNING", str(row.get("alignment_guard_status", ""))
     if row_reocr_debug.empty:
-        if str(row.get("character_reocr_status", "")) == "not_requested_policy_budget":
-            return "ROW_OK_POLICY_BUDGET", "ReOCR intentionally skipped by budget gate; core evidence remains available"
+        reocr_status = str(row.get("character_reocr_status", ""))
+        if reocr_status == "not_requested_policy_budget":
+            # Backward-compatible default for older tests/reports that do not
+            # carry explicit Core-Gate columns: budget skips are considered OK
+            # unless the row explicitly says Core Identity is blocked.
+            if ("verified_core_identity_match" not in row.index and "gold_core_blocker" not in row.index) or (
+                _bool_cell(row.get("verified_core_identity_match")) and not _bool_cell(row.get("gold_core_blocker"))
+            ):
+                return "ROW_OK_POLICY_BUDGET", "ReOCR intentionally skipped by budget gate; core evidence remains available"
+            return "ROW_POLICY_BUDGET_REVIEW", "ReOCR skipped by budget policy but Core Identity is still blocked"
+        if reocr_status == "not_requested_policy_nonlocal":
+            if _bool_cell(row.get("verified_core_identity_match")) and not _bool_cell(row.get("gold_core_blocker")):
+                return "ROW_OK_POLICY_NONLOCAL", "nonlocal/multilingual character targets intentionally skipped after core verification"
+            return "ROW_POLICY_NONLOCAL_REVIEW", "nonlocal/multilingual targets skipped by policy; Core Identity still requires review"
         if _bool_cell(row.get("character_verification_candidate")):
             return "ROW_EVIDENCE_MISSING", "character verification candidate without ReOCR evidence"
         return "ROW_OK_NO_REOCR", "accepted aligned row; no character evidence required"
@@ -2044,7 +2163,7 @@ def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.D
     fragments_df = pd.DataFrame(fragment_rows)
     if not evidence_df.empty:
         total_rows = int(len(evidence_df))
-        ok_mask = evidence_df["row_integrity_status"].astype(str).isin({"ROW_OK_NO_REOCR", "ROW_OK_WITH_REOCR", "ROW_OK_POLICY_BUDGET", "ROW_OK_WITH_CROP_WARNING", "ROW_OK_WITH_VOTE_WARNING", "ROW_VOTE_OUTSIDE_ALLOWED_SET"})
+        ok_mask = evidence_df["row_integrity_status"].astype(str).isin({"ROW_OK_NO_REOCR", "ROW_OK_WITH_REOCR", "ROW_OK_POLICY_BUDGET", "ROW_OK_POLICY_NONLOCAL", "ROW_OK_WITH_CROP_WARNING", "ROW_OK_WITH_VOTE_WARNING", "ROW_VOTE_OUTSIDE_ALLOWED_SET"})
         inspect_mask = ~ok_mask
         status_summary = evidence_df.groupby("row_integrity_status", dropna=False).agg(
             rows=("rank", "count"),

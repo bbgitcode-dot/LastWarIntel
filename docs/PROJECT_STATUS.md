@@ -159,3 +159,8 @@ Next focus remains player-name drift triage: latin-only glyph/separator fixes fi
 ## Current Sprint – v0.9.5.121
 
 The current focus is Latin Residual Core Blocker Cleanup. `.118` successfully reduced mixed Latin/CJK/Hangul blockers through a script-limited policy. `.119` now handles the analogous Latin-only residual class: stable Latin core + verified alliance + matched power can satisfy Core Identity when OCR only added prefix/suffix garbage or formatting noise. Broad missing-glyph cases remain blocked and require future OCR/reconstruction work.
+
+
+## v0.9.5.123 Evidence Triage Update
+
+Sentinel now separates Core Truth from Full Gold more cleanly in the validator. ReOCR can be skipped by explicit policy when the remaining target is low-yield or nonlocal, and these skips are visible in evidence reports instead of being misclassified as missing evidence. The next work should focus on the remaining true Core blockers and slow-target reduction under real 551 screenshots.

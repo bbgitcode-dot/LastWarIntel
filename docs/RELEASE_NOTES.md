@@ -1,3 +1,25 @@
+## v0.9.5.123 – Evidence Triage and ReOCR Stop Rules
+
+- Adds a stricter pre-ReOCR Core Safety Gate for already stable Latin residual and script-limited identities.
+- Skips low-yield player-name glyph probes when Core Identity is already provably stable before ReOCR, while keeping true repair cases such as `Joncollins21` eligible.
+- Separates policy skips from missing evidence: nonlocal/multilingual targets now become `not_requested_policy_nonlocal` and row integrity reports classify them as `ROW_OK_POLICY_NONLOCAL` or `ROW_POLICY_NONLOCAL_REVIEW` instead of collapsing everything into `ROW_EVIDENCE_MISSING`.
+- Adds a soft per-target ReOCR timeout to stop one bad glyph target from dominating CPU-only validation runtime.
+- Keeps Full Gold strict and does not promote display fidelity without exact/screenshot-supported evidence.
+
+Validation:
+
+```text
+53 focused smoke tests passed
+py_compile OK for changed modules
+zip integrity OK
+```
+
+```bash
+git add .
+git commit -m "perf(data-guard): triage evidence and stop low-yield reocr"
+git tag -a v0.9.5.123 -m "v0.9.5.123 Evidence Triage and ReOCR Stop Rules"
+```
+
 ## v0.9.5.122 – ReOCR Budget Gate and Crop Hygiene
 
 - Adds a conservative ReOCR budget gate for harmless alliance tag case-only probes such as `PbC` vs `PBC` when rank/power/name-core evidence is already stable. Full display Gold remains strict; this only avoids spending CPU on low-yield proof.
