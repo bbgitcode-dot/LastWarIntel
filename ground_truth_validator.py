@@ -1820,6 +1820,167 @@ def _build_gold_blocker_triage(gold_fidelity_blockers: pd.DataFrame) -> tuple[pd
     triage_summary = triage_summary.sort_values(["high_value_rows", "rows"], ascending=[False, False]).reset_index(drop=True)
     return triage, triage_summary
 
+
+
+def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple[str, str]:
+    """Classify whether a validation row has trustworthy visual provenance.
+
+    This is diagnostic only.  It does not alter matching, ReOCR voting, DataGuard,
+    or Operational Truth.  The goal is to make cases such as a suspected
+    Thunder/YUNS row mix-up auditable: did Sentinel read the right row, did crops
+    bleed into another field, or is this simply script/OCR display drift?
+    """
+    if _bool_cell(row.get("alignment_context_gap")):
+        return "ROW_CONTEXT_GAP", "contextual inference row; character evidence intentionally blocked"
+    if not _bool_cell(row.get("valid_match")):
+        return "ROW_NOT_ACCEPTED", "row is not an accepted validator match"
+    if str(row.get("alignment_guard_status", "")) not in {"", "row_alignment_observed"}:
+        return "ROW_ALIGNMENT_WARNING", str(row.get("alignment_guard_status", ""))
+    if row_reocr_debug.empty:
+        if _bool_cell(row.get("character_verification_candidate")):
+            return "ROW_EVIDENCE_MISSING", "character verification candidate without ReOCR evidence"
+        return "ROW_OK_NO_REOCR", "accepted aligned row; no character evidence required"
+
+    statuses = set(row_reocr_debug.get("target_status", pd.Series(dtype=str)).astype(str))
+    diagnostics = set(row_reocr_debug.get("crop_diagnostic", pd.Series(dtype=str)).astype(str))
+    anchors = set(row_reocr_debug.get("crop_anchor_status", pd.Series(dtype=str)).astype(str))
+    fields = set(row_reocr_debug.get("target_field", pd.Series(dtype=str)).astype(str))
+
+    if "unresolved" in statuses:
+        return "ROW_REOCR_UNRESOLVED", "one or more local character targets remain unresolved"
+    if "ambiguous_vote" in statuses:
+        return "ROW_REOCR_AMBIGUOUS", "one or more local character targets produced ambiguous votes"
+    if "verified_observed" in statuses and "player_name" in fields:
+        return "ROW_OBSERVED_TEXT_CONFIRMED", "ReOCR confirmed observed player-name glyphs instead of expected glyphs"
+    if "crop_field_mismatch" in diagnostics or "field_mismatch" in anchors:
+        return "ROW_FIELD_MISMATCH_DIAGNOSTIC", "ReOCR crop evidence reports field/power-column mismatch"
+    if "vote_outside_allowed_set" in diagnostics:
+        return "ROW_VOTE_OUTSIDE_ALLOWED_SET", "ReOCR votes include text outside the allowed target set"
+    return "ROW_OK_WITH_REOCR", "accepted aligned row with successful local ReOCR evidence"
+
+
+def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
+    """Build row/fragment provenance diagnostics for OCR evidence inspection."""
+    evidence_rows: list[dict[str, Any]] = []
+    fragment_rows: list[dict[str, Any]] = []
+    for _, row in detail.iterrows():
+        rank = row.get("rank")
+        server = row.get("server")
+        row_debug = pd.DataFrame()
+        if not character_reocr_debug.empty:
+            row_debug = character_reocr_debug[
+                (character_reocr_debug.get("server") == server)
+                & (character_reocr_debug.get("rank") == rank)
+            ].copy()
+        status, reason = _row_evidence_status(row, row_debug)
+        target_count = int(len(row_debug)) if not row_debug.empty else 0
+        unresolved_targets = int((row_debug.get("target_status", pd.Series(dtype=str)).astype(str) == "unresolved").sum()) if not row_debug.empty else 0
+        verified_expected_targets = int((row_debug.get("target_status", pd.Series(dtype=str)).astype(str) == "verified_expected").sum()) if not row_debug.empty else 0
+        verified_observed_targets = int((row_debug.get("target_status", pd.Series(dtype=str)).astype(str) == "verified_observed").sum()) if not row_debug.empty else 0
+        field_mismatch_targets = int((row_debug.get("crop_anchor_status", pd.Series(dtype=str)).astype(str) == "field_mismatch").sum()) if not row_debug.empty else 0
+        vote_outside_targets = int((row_debug.get("crop_diagnostic", pd.Series(dtype=str)).astype(str) == "vote_outside_allowed_set").sum()) if not row_debug.empty else 0
+        evidence_rows.append({
+            "server": server,
+            "rank": rank,
+            "ocr_rank": row.get("ocr_rank"),
+            "screenshot": row.get("ground_truth_screenshot"),
+            "ocr_source_file": row.get("ocr_source_file"),
+            "ocr_sheet": row.get("ocr_sheet"),
+            "row_slot": row.get("ground_truth_row_slot"),
+            "row_integrity_status": status,
+            "row_integrity_reason": reason,
+            "alignment_guard_status": row.get("alignment_guard_status"),
+            "alignment_safe_for_character_verification": row.get("alignment_safe_for_character_verification"),
+            "alignment_context_gap": row.get("alignment_context_gap"),
+            "match_method": row.get("match_method"),
+            "failure_class": row.get("failure_class"),
+            "expected_name": row.get("expected_name"),
+            "ocr_name": row.get("ocr_name"),
+            "verified_name_display": row.get("verified_name_display"),
+            "expected_name_latin_core": row.get("expected_name_latin_core"),
+            "ocr_name_latin_core": row.get("ocr_name_latin_core"),
+            "expected_alliance_display": row.get("expected_alliance_display"),
+            "ocr_alliance_display": row.get("ocr_alliance_display"),
+            "verified_alliance_display": row.get("verified_alliance_display"),
+            "expected_power": row.get("expected_power"),
+            "ocr_power": row.get("ocr_power"),
+            "power_match": row.get("power_match"),
+            "rank_match": row.get("rank_match"),
+            "verified_core_identity_match": row.get("verified_core_identity_match"),
+            "gold_core_blocker": row.get("gold_core_blocker"),
+            "character_reocr_targets": row.get("character_reocr_targets"),
+            "character_reocr_verified_expected": row.get("character_reocr_verified_expected"),
+            "character_reocr_verified_observed": row.get("character_reocr_verified_observed"),
+            "character_reocr_unresolved": row.get("character_reocr_unresolved"),
+            "evidence_fragment_rows": target_count,
+            "evidence_verified_expected_targets": verified_expected_targets,
+            "evidence_verified_observed_targets": verified_observed_targets,
+            "evidence_unresolved_targets": unresolved_targets,
+            "evidence_field_mismatch_targets": field_mismatch_targets,
+            "evidence_vote_outside_allowed_targets": vote_outside_targets,
+            "source_evidence_note": "derived_from_validator_detail_and_character_reocr_debug",
+        })
+        if not row_debug.empty:
+            for _, frag in row_debug.iterrows():
+                fragment_rows.append({
+                    "server": server,
+                    "rank": rank,
+                    "screenshot": frag.get("screenshot") or row.get("ground_truth_screenshot"),
+                    "row_slot": frag.get("row_slot"),
+                    "target_index": frag.get("target_index"),
+                    "target_field": frag.get("target_field"),
+                    "target_position": frag.get("target_position"),
+                    "target_expected": frag.get("target_expected"),
+                    "target_observed": frag.get("target_observed"),
+                    "target_status": frag.get("target_status"),
+                    "selected": frag.get("selected"),
+                    "confidence": frag.get("confidence"),
+                    "crop_box": frag.get("crop_box"),
+                    "crop_strategy": frag.get("crop_strategy"),
+                    "crop_anchor_status": frag.get("crop_anchor_status"),
+                    "crop_anchor_text": frag.get("crop_anchor_text"),
+                    "crop_diagnostic": frag.get("crop_diagnostic"),
+                    "vote_texts": frag.get("vote_texts"),
+                    "nonempty_vote_chars": frag.get("nonempty_vote_chars"),
+                    "debug_read": frag.get("debug_read"),
+                    "target_total_ms": frag.get("target_total_ms"),
+                    "ocr_read_ms": frag.get("ocr_read_ms"),
+                    "provenance": "character_reocr_target",
+                })
+    evidence_df = pd.DataFrame(evidence_rows)
+    fragments_df = pd.DataFrame(fragment_rows)
+    if not evidence_df.empty:
+        total_rows = int(len(evidence_df))
+        ok_mask = evidence_df["row_integrity_status"].astype(str).isin({"ROW_OK_NO_REOCR", "ROW_OK_WITH_REOCR", "ROW_VOTE_OUTSIDE_ALLOWED_SET"})
+        inspect_mask = ~ok_mask
+        status_summary = evidence_df.groupby("row_integrity_status", dropna=False).agg(
+            rows=("rank", "count"),
+            core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+            context_gaps=("alignment_context_gap", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+            unresolved_targets=("evidence_unresolved_targets", "sum"),
+            field_mismatch_targets=("evidence_field_mismatch_targets", "sum"),
+        ).reset_index().to_dict(orient="records")
+    else:
+        total_rows = 0
+        ok_mask = pd.Series(dtype=bool)
+        inspect_mask = pd.Series(dtype=bool)
+        status_summary = []
+    payload = {
+        "summary": {
+            "rows": total_rows,
+            "row_integrity_ok_rows": int(ok_mask.sum()) if len(evidence_df) else 0,
+            "row_integrity_review_rows": int(inspect_mask.sum()) if len(evidence_df) else 0,
+            "row_integrity_score": round((float(ok_mask.sum()) / max(total_rows, 1)) * 100.0, 2) if total_rows else 0.0,
+            "fragment_rows": int(len(fragments_df)),
+            "source": "ground_truth_validator_detail_and_character_reocr_debug",
+            "operational_truth_modified": False,
+        },
+        "status_summary": status_summary,
+        "rows": evidence_df.to_dict(orient="records"),
+        "fragments": fragments_df.to_dict(orient="records"),
+    }
+    return payload, evidence_df, fragments_df
+
 def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.DataFrame, output_dir: Path, runtime_metrics: dict[str, float] | None = None) -> None:
     report_write_start = time.perf_counter()
     runtime_metrics = dict(runtime_metrics or {})
@@ -1969,6 +2130,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     else:
         character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
+    ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
+
     json_payload = {
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
@@ -2000,11 +2163,17 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         },
         "character_reocr_debug_summary": character_reocr_debug_summary.to_dict(orient="records"),
         "character_reocr_debug": character_reocr_debug.to_dict(orient="records"),
+        "ocr_evidence_summary": ocr_evidence_payload.get("summary", {}),
+        "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
+        "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
+        "ocr_evidence_fragments": ocr_evidence_fragments.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     reocr_debug_json_path = output_dir / "character_reocr_debug_report.json"
     reocr_debug_json_path.write_text(json.dumps({"summary": character_reocr_debug_summary.to_dict(orient="records"), "details": character_reocr_debug.to_dict(orient="records")}, ensure_ascii=False, indent=2), encoding="utf-8")
+    ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
+    ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -2039,6 +2208,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
+        _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
+        _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="ocr_evidence_status", index=False)
+        _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="ocr_evidence_rows", index=False)
+        _sanitize_frame(ocr_evidence_fragments).to_excel(writer, sheet_name="ocr_evidence_fragments", index=False)
         _sanitize_frame(detail).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(failures).to_excel(writer, sheet_name="failures", index=False)
 
@@ -2046,6 +2219,13 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     with pd.ExcelWriter(reocr_debug_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="details", index=False)
+
+    ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
+    with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="status_summary", index=False)
+        _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="rows", index=False)
+        _sanitize_frame(ocr_evidence_fragments).to_excel(writer, sheet_name="fragments", index=False)
 
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
@@ -2074,6 +2254,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Inference Excel: {inference_xlsx_path}")
     print(f"Character ReOCR Debug JSON:  {reocr_debug_json_path}")
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
+    print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
+    print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Runtime Debug JSON:  {runtime_json_path}")
     print(f"Runtime Debug Excel: {runtime_xlsx_path}")
 

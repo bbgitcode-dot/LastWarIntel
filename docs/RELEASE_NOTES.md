@@ -1,3 +1,14 @@
+
+## v0.9.5.120 – OCR Evidence Inspector and Row Integrity Diagnostics
+
+- Adds OCR Evidence Inspector output to the Ground Truth Validator.
+- Writes `ocr_evidence_report.json` and `ocr_evidence_report.xlsx`.
+- Adds row-level integrity diagnostics for accepted rows, contextual gaps, unresolved ReOCR, observed-text confirmations, and crop/field mismatch evidence.
+- Preserves fragment provenance from Character ReOCR: screenshot, row slot, crop box, target field, selected glyph, crop strategy, anchor status, diagnostic, and vote text.
+- Keeps matching, inference, ReOCR voting, DataGuard, Ranking Guard, and Operational Truth unchanged. This is evidence-first diagnostics, not identity auto-resolution.
+
+Validation: 12 focused smoke tests passed.
+
 ## v0.9.5.117 – Reconstruction Candidate Gate
 
 - Gates expensive Latin Name Block Reconstruction to residual high-confidence Latin-only player-name blockers.
