@@ -1,6 +1,6 @@
 # Sentinel Documentation
 
-Current documentation baseline: **v0.9.5.125**.
+Current documentation baseline: **v0.9.5.126**.
 
 Start here:
 

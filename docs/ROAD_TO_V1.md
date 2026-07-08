@@ -1,6 +1,6 @@
 # Road to V1 – Sentinel
 
-**Current release:** v0.9.5.125  
+**Current release:** v0.9.5.126  
 **Functional baseline:** v0.9.5.124 Gold Fidelity Engine Phase 1
 
 ## V1 principle
@@ -17,7 +17,7 @@ The acquisition pipeline can now match the 551 benchmark with 50/50 rows, 0 miss
 
 ## Milestones to v1.0.0
 
-### v0.9.5.126 – Gold Core Blocker Triage
+### v0.9.5.126 – Gold Core Blocker Triage ✅
 
 - Produce a dedicated blocker report for the remaining 15 Gold Core blockers.
 - Classify each blocker as local glyph, crop geometry, nonlocal script display, observed-text-confirmed, or manual review.
@@ -102,3 +102,8 @@ Sentinel reaches v1.0.0 when:
 - No blind pre/post transfer identity linking by rank/power/alliance alone.
 - No automatic Operational Truth mutation from read-only inference.
 - No snippets as release deliverables.
+
+
+## Latest completed milestone
+
+v0.9.5.126 adds the dedicated Gold Core blocker report. The next natural sprint is v0.9.5.127 Local Glyph Resolution Hardening, using the report instead of broad OCR tuning.

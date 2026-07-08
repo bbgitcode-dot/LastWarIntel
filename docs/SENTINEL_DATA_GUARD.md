@@ -1,7 +1,7 @@
 # Sentinel Data Guard
 
-**Current release:** v0.9.5.125  
-**Functional baseline:** v0.9.5.124
+**Current release:** v0.9.5.126  
+**Functional baseline:** v0.9.5.126
 
 ## Prime directive
 
@@ -36,3 +36,8 @@ If `[PbC]` case-sensitive evidence has already been verified for an exact target
 ## Current next guardrail
 
 The next functional sprint must reduce the 15 Gold Core blockers without weakening these rules.
+
+
+## v0.9.5.126 guardrail
+
+Gold Core blocker classification is diagnostic. A row can receive a proposed fix lane without becoming Operational Truth. `observed_text_confirmed`, `crop_geometry_problem`, and `context_gap_read_only` remain strict stop signs.

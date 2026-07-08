@@ -1,5 +1,54 @@
 # Patch Summary
 
+## v0.9.5.126 – Gold Core Blocker Triage
+
+### Purpose
+
+Turn the remaining Gold Core blockers into an explicit operational triage report. The sprint is intentionally diagnostic: it classifies blockers and proposes safe fix lanes without changing matching, inference, ReOCR voting, DataGuard, Ranking Guard, or Operational Truth.
+
+### Code Changes
+
+- Added `_classify_gold_core_blocker(...)`.
+- Added `_build_gold_core_blocker_report(...)`.
+- Merged Gold Blocker Triage with OCR Evidence Inspector row statuses.
+- Wrote standalone `gold_core_blocker_report.json/xlsx`.
+- Embedded Gold Core summary/detail sections into the existing validation reports.
+
+### Classification Lanes
+
+- `local_glyph_solvable` – local Latin glyph/crop refinement candidate.
+- `mixed_local_and_nonlocal_blocker` – local glyph work exists, but full display is still limited by script/nonlocal policy.
+- `policy_nonlocal_script_display` – multilingual/nonlocal display cannot be safely repaired by local glyph logic.
+- `crop_geometry_problem` – crop anchor or field/power-column bleed must be fixed first.
+- `observed_text_confirmed` – local evidence supports observed OCR text, so expected display stays blocked.
+- `vote_warning_gate_review` – potential warning downgrade candidate only if selected expected glyph and Core Identity are otherwise proven.
+- `context_gap_read_only` – alignment/context issue; not a Character ReOCR problem.
+- `manual_review` – unexpected signature requiring manual inspection.
+
+### Safety
+
+No Operational Truth mutation. No historical player-memory shortcut. No pre/post transfer identity inference. No Character ReOCR on context gaps.
+
+### Validation
+
+```text
+pytest -q tests/smoke/test_gold_core_blocker_report_126.py tests/smoke/test_gold_blocker_triage_113.py tests/smoke/test_gold_gate_cleanup_114.py
+6 passed
+python3 -m py_compile ground_truth_validator.py
+OK
+```
+
+### Commit / Tag
+
+```bash
+git add .
+git commit -m "feat(gold-core): add blocker triage report for v0.9.5.126"
+git tag -a v0.9.5.126 -m "v0.9.5.126 Gold Core Blocker Triage"
+```
+
+---
+
+
 ## v0.9.5.125 – Documentation Consolidation & Handover
 
 ### Purpose

@@ -1,5 +1,39 @@
 # Release Notes
 
+## v0.9.5.126 – Gold Core Blocker Triage
+
+### Purpose
+
+Create the first dedicated Gold Core blocker triage layer. The sprint does not tune generic OCR and does not weaken DataGuard. It makes the remaining Gold Core blockers actionable by exposing each blocked row with its evidence status, failure class, fix lane, and next safe action.
+
+### Changes
+
+- Added `gold_core_blocker_report.json`.
+- Added `gold_core_blocker_report.xlsx`.
+- Added `gold_core_summary` and `gold_core_blockers` sheets to the main validation workbook.
+- Added `gold_core_blocker_summary` and `gold_core_blockers` sections to `ground_truth_validation_report.json`.
+- Added diagnostic classes: `local_glyph_solvable`, `mixed_local_and_nonlocal_blocker`, `policy_nonlocal_script_display`, `crop_geometry_problem`, `observed_text_confirmed`, `vote_warning_gate_review`, `context_gap_read_only`, and `manual_review`.
+- Added smoke tests for Gold Core blocker report classification.
+
+### Validation
+
+```text
+pytest -q tests/smoke/test_gold_core_blocker_report_126.py tests/smoke/test_gold_blocker_triage_113.py tests/smoke/test_gold_gate_cleanup_114.py
+6 passed
+py_compile OK
+```
+
+### Commit / Tag
+
+```bash
+git add .
+git commit -m "feat(gold-core): add blocker triage report for v0.9.5.126"
+git tag -a v0.9.5.126 -m "v0.9.5.126 Gold Core Blocker Triage"
+```
+
+---
+
+
 ## v0.9.5.125 – Documentation Consolidation & Handover
 
 This sprint consolidates Sentinel project knowledge after the Gold Fidelity Engine Phase 1 milestone. It is a documentation-first release: no OCR, matching, DataGuard, ReOCR, cache, inference, or Operational Truth logic is intentionally changed.
