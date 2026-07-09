@@ -1,18 +1,2 @@
-Release: v0.9.5.129
-Title: Read-only Verification Execution
-
-Summary:
-- Executes the read-only evidence lane introduced in v0.9.5.128 for eligible Context Gap rows.
-- Adds report-only fields: read_only_reocr_executed, read_only_reocr_evidence, read_only_suggested_display, read_only_confidence, read_only_operational_truth_modified.
-- Keeps Character ReOCR for Context Gaps evidence-only and does not promote suggestions into verified display, export, snapshot, database, or Ground Truth.
-- Updates alignment_intelligence_report.json/xlsx payload shape for Phase II execution tracking.
-- Preserves DataGuard, Ranking Guard, Alignment Guard, and Operational Truth immutability.
-
-Validation:
-pytest -q tests/smoke/test_alignment_intelligence_128.py tests/smoke/test_read_only_verification_129.py
-python -m py_compile ground_truth_validator.py
-
-Commit:
-git add .
-git commit -m "feat(alignment): execute read-only verification evidence for v0.9.5.129"
-git tag -a v0.9.5.129 -m "v0.9.5.129 Read-only Verification Execution"
+v0.9.5.130
+feat(docs): define Display Reconstruction Engine roadmap after validation analysis

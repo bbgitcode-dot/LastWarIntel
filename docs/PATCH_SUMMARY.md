@@ -310,3 +310,9 @@ git add .
 git commit -m "perf(gold-fidelity): cache reusable reocr evidence"
 git tag -a v0.9.5.124 -m "v0.9.5.124 Gold Fidelity Engine Phase 1"
 ```
+
+
+## v0.9.5.130
+- Documentation sprint.
+- Captured analysis of validation results.
+- Defined Display Reconstruction Engine as next engineering milestone.

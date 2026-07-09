@@ -125,3 +125,7 @@ Recommended scope:
 ## v0.9.5.128 Update – Alignment Intelligence Phase I
 
 Sentinel now records Alignment Intelligence for Context Gap rows. High-confidence contextual inferences can be marked as read-only verification candidates via `alignment_score` and `verification_allowed_read_only`, while Operational Truth remains locked. This prepares the next sprint to collect evidence from uncertain rows without weakening DataGuard.
+
+
+### Update v0.9.5.130
+Sentinel has effectively solved matching, gap recovery and operational identity. Remaining work is concentrated on display fidelity, multilingual character reconstruction and evidence-backed verified display output.
