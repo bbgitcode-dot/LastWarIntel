@@ -115,3 +115,10 @@ Report-only Display Proposal
 ```
 
 The engine scores fragment quality using crop quality, OCR confidence, vote consensus, position stability, unicode/script class and status weight. These scores are diagnostic and can only make promotion more conservative.
+
+
+## v0.9.5.134 – Evidence Budget Manager
+
+This release adds a read-only Evidence Budget Manager for Display Fidelity. The new budget layer scores display reconstruction candidates before future expensive ReOCR work is promoted into the active pipeline. It introduces `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`, and the standalone `evidence_budget_report.json/xlsx`.
+
+The sprint does not change Operational Truth, snapshots, exports, Ground Truth, or DataGuard policy. Its purpose is to make future Character ReOCR investment explainable and selective: high-value candidates can receive full budget, medium candidates receive targeted budget, weak evidence is blocked early or served from cache.

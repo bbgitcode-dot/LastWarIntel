@@ -1707,3 +1707,10 @@ Introduce a read-only Evidence Confidence layer for Display Reconstruction. The 
 - Context-gap suggestions remain evidence-only.
 - Low-confidence fragment sets are blocked from display promotion.
 - No historical player memory is used as primary identity evidence.
+
+
+## v0.9.5.134 – Evidence Budget Manager
+
+This release adds a read-only Evidence Budget Manager for Display Fidelity. The new budget layer scores display reconstruction candidates before future expensive ReOCR work is promoted into the active pipeline. It introduces `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`, and the standalone `evidence_budget_report.json/xlsx`.
+
+The sprint does not change Operational Truth, snapshots, exports, Ground Truth, or DataGuard policy. Its purpose is to make future Character ReOCR investment explainable and selective: high-value candidates can receive full budget, medium candidates receive targeted budget, weak evidence is blocked early or served from cache.

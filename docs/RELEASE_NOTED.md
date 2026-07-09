@@ -42,3 +42,11 @@ Strategic intent: Sentinel now starts converting stored character evidence into 
 - Added display coverage metrics for name/tag/display proposals.
 - Added `display_confidence_decision`.
 - DataGuard remains unchanged; Operational Truth is not modified.
+
+
+## v0.9.5.134 – Evidence Budget Manager
+
+- Added `evidence_budget_report.json` and `evidence_budget_report.xlsx`.
+- Added read-only fields: `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`.
+- Added budget recommendation layer for future Character ReOCR runtime reduction.
+- Operational Truth remains unchanged.

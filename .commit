@@ -1,10 +1,10 @@
-version: 0.9.5.133
-name: Evidence Confidence Engine
-commit: feat(evidence): add display evidence confidence scoring
-tag: v0.9.5.133
+version: 0.9.5.134
+name: Evidence Budget Manager
+commit: feat(evidence): add evidence budget manager for display fidelity
+tag: v0.9.5.134
 
 Summary:
-- Adds read-only Evidence Confidence scoring for display reconstruction fragments.
-- Adds Evidence Coverage metrics for name/tag/display proposals.
-- Adds evidence_confidence_report.json/xlsx.
+- Adds read-only Evidence Budget Manager decisions for display reconstruction candidates.
+- Adds evidence_priority_score, evidence_budget_tier, evidence_budget_action, and evidence_budget_reason.
+- Adds evidence_budget_report.json/xlsx.
 - Keeps Operational Truth, snapshots, exports, and Ground Truth unchanged.

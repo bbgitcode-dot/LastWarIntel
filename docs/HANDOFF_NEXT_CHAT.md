@@ -114,13 +114,13 @@ Main question for `.132`: Which reconstructed display proposals are safe report-
 
 Current release: `Sentinel_v0.9.5.132.zip`.
 
-Next recommended sprint: `v0.9.5.133 – Crop Geometry Optimizer`.
+Next recommended sprint: `v0.9.5.134 – Crop Geometry Optimizer`.
 
 Rationale: `.132` prevents unsafe display promotion. The next bottleneck is better evidence collection: crop bleed, anchor mismatch, and low-coverage character fragments still limit Display Fidelity.
 
-## Handoff after v0.9.5.133
+## Handoff after v0.9.5.134
 
-Current release: `Sentinel_v0.9.5.133.zip`.
+Current release: `Sentinel_v0.9.5.134.zip`.
 
 Implemented:
 - Evidence Confidence Engine
@@ -129,3 +129,7 @@ Implemented:
 - `evidence_confidence_report.json/xlsx`
 
 Next recommended sprint: `v0.9.5.134 – Crop Geometry Optimizer`.
+
+
+Next recommended sprint: v0.9.5.135 – Evidence Budget Execution / Runtime Reduction.
+Attach the latest `evidence_budget_report.json/xlsx`, `evidence_confidence_report.json/xlsx`, and runtime reports.

@@ -112,12 +112,16 @@ Main question for `.132`: Which reconstructed display proposals are safe report-
 
 ## Next Chat Addendum after v0.9.5.132
 
-Start from `Sentinel_v0.9.5.132.zip`. The next recommended sprint is `v0.9.5.133 – Crop Geometry Optimizer`: improve evidence quality before further promotion rules. Keep Operational Truth locked and keep Display Reconstruction report-only.
+Start from `Sentinel_v0.9.5.132.zip`. The next recommended sprint is `v0.9.5.134 – Crop Geometry Optimizer`: improve evidence quality before further promotion rules. Keep Operational Truth locked and keep Display Reconstruction report-only.
 
-## Next Chat Addendum after v0.9.5.133
+## Next Chat Addendum after v0.9.5.134
 
-Start from `Sentinel_v0.9.5.133.zip`.
+Start from `Sentinel_v0.9.5.134.zip`.
 
 Next recommended sprint: `v0.9.5.134 – Crop Geometry Optimizer`.
 
 Goal: improve the quality of character fragments that feed Evidence Confidence. Do not weaken DataGuard, Promotion Guard, or Operational Truth protection.
+
+
+Next recommended sprint: v0.9.5.135 – Evidence Budget Execution / Runtime Reduction.
+Attach the latest `evidence_budget_report.json/xlsx`, `evidence_confidence_report.json/xlsx`, and runtime reports.

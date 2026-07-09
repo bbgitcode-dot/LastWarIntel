@@ -2743,6 +2743,104 @@ def _evidence_confidence_summary(items: list[dict[str, Any]], expected_name: str
         **component_avg,
     }
 
+
+def _evidence_budget_decision(row: pd.Series, evidence: dict[str, Any], status: str) -> dict[str, Any]:
+    """Compute v0.9.5.134 read-only Evidence Budget decision.
+
+    The budget manager does not skip work at runtime yet. It produces a stable
+    decision report that can be used to move expensive Character ReOCR earlier
+    in the pipeline without weakening DataGuard. Operational Truth is untouched.
+    """
+    try:
+        rank = int(row.get("rank", 9999) or 9999)
+    except Exception:
+        rank = 9999
+    try:
+        alignment_score = float(row.get("alignment_score", 0.0) or 0.0)
+    except Exception:
+        alignment_score = 0.0
+    try:
+        power_similarity = float(row.get("power_similarity", 0.0) or 0.0)
+    except Exception:
+        power_similarity = 0.0
+    fragment_confidence = float(evidence.get("evidence_avg_fragment_confidence", 0.0) or 0.0)
+    display_coverage = float(evidence.get("display_coverage_score", 0.0) or 0.0)
+    fragments = int(evidence.get("evidence_fragments_total", 0) or 0)
+    unresolved = int(evidence.get("evidence_unresolved_fragments", 0) or 0)
+    observed = int(evidence.get("evidence_observed_fragments", 0) or 0)
+    gold_core = bool(row.get("gold_core_blocker", False))
+    context_gap = bool(row.get("alignment_context_gap", False))
+
+    if rank <= 10:
+        ranking_weight = 1.0
+    elif rank <= 25:
+        ranking_weight = 0.82
+    elif rank <= 50:
+        ranking_weight = 0.65
+    else:
+        ranking_weight = 0.35
+
+    coverage_potential = max(display_coverage, min(1.0, fragments / 6.0 if fragments else 0.0))
+    risk_bonus = 0.12 if gold_core else 0.0
+    context_penalty = 0.20 if context_gap else 0.0
+    negative_evidence_penalty = min(0.30, (unresolved * 0.05) + (observed * 0.08))
+    priority = (
+        ranking_weight * 0.24
+        + max(0.0, min(1.0, power_similarity)) * 0.15
+        + max(0.0, min(1.0, alignment_score)) * 0.18
+        + fragment_confidence * 0.18
+        + coverage_potential * 0.17
+        + risk_bonus
+        - context_penalty
+        - negative_evidence_penalty
+    )
+    priority = round(max(0.0, min(1.0, priority)), 4)
+
+    decision = str(evidence.get("display_confidence_decision", "") or "")
+    if context_gap:
+        tier = "context_evidence_only"
+        action = "contextual_suggestion_only"
+        reason = "context_gap_read_only_no_budget_promotion"
+    elif status in {"blocked_display_promotion", "alliance_reconstructed_name_blocked"} and (display_coverage < 0.50 or fragment_confidence < 0.72):
+        tier = "low"
+        action = "block_early_or_reuse_cache"
+        reason = "promotion_guard_blocked_low_budget_return"
+    elif decision == "eligible" and priority >= 0.70:
+        tier = "high"
+        action = "full_character_reocr_budget"
+        reason = "high_priority_and_eligible_evidence"
+    elif priority >= 0.62 and fragments > 0 and unresolved <= 1 and observed == 0:
+        tier = "medium"
+        action = "targeted_character_reocr_budget"
+        reason = "recoverable_evidence_with_limited_open_targets"
+    elif priority >= 0.50 and (fragment_confidence >= 0.70 or display_coverage >= 0.50):
+        tier = "watch"
+        action = "cache_or_limited_retry"
+        reason = "some_evidence_but_not_enough_for_full_budget"
+    else:
+        tier = "low"
+        action = "block_early_or_reuse_cache"
+        reason = "low_coverage_or_low_fragment_confidence"
+
+    expected_cost_ms = 0
+    if action == "full_character_reocr_budget":
+        expected_cost_ms = 12000
+    elif action == "targeted_character_reocr_budget":
+        expected_cost_ms = 6500
+    elif action == "cache_or_limited_retry":
+        expected_cost_ms = 2500
+    else:
+        expected_cost_ms = 0
+
+    return {
+        "evidence_priority_score": priority,
+        "evidence_budget_tier": tier,
+        "evidence_budget_action": action,
+        "evidence_budget_reason": reason,
+        "evidence_budget_expected_cost_ms": expected_cost_ms,
+        "evidence_budget_operational_truth_modified": False,
+    }
+
 def _safe_char_replace(text: str, position: int, replacement: str) -> tuple[str, bool]:
     """Return text with one character replaced if the position is valid.
 
@@ -2930,6 +3028,8 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         display_promotion_block_reason = "blocked_evidence_confidence"
         notes.append("blocked_evidence_confidence")
 
+    evidence_budget = _evidence_budget_decision(row, evidence_confidence, status)
+
     return {
         "display_reconstruction_status": status,
         "display_reconstruction_source": source,
@@ -2944,6 +3044,7 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         "display_promotion_eligible": display_promotion_eligible,
         "display_promotion_block_reason": display_promotion_block_reason,
         **evidence_confidence,
+        **evidence_budget,
         "display_reconstruction_operational_truth_modified": False,
     }
 
@@ -2957,7 +3058,7 @@ def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.133 guarded Display Reconstruction + Evidence Confidence report."""
+    """Build v0.9.5.134 guarded Display Reconstruction + Evidence Budget report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -2970,7 +3071,8 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
         "evidence_unresolved_fragments", "evidence_avg_fragment_confidence",
         "display_name_coverage_score", "display_alliance_coverage_score", "display_coverage_score",
-        "display_confidence_decision", "evidence_avg_crop_quality", "evidence_avg_ocr_confidence",
+        "display_confidence_decision", "evidence_priority_score", "evidence_budget_tier", "evidence_budget_action",
+        "evidence_budget_reason", "evidence_avg_crop_quality", "evidence_avg_ocr_confidence",
         "evidence_avg_vote_consensus", "evidence_avg_position_stability", "evidence_avg_unicode_class",
         "alignment_context_gap", "gold_core_blocker", "row_integrity_status",
         "display_reconstruction_operational_truth_modified",
@@ -3003,11 +3105,14 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
         avg_display_coverage=("display_coverage_score", "mean"),
         promotion_eligible_rows=("display_promotion_eligible", "sum"),
+        avg_priority_score=("evidence_priority_score", "mean"),
     ).reset_index()
     summary["avg_confidence"] = summary["avg_confidence"].astype(float).round(4)
     summary["avg_fragment_confidence"] = summary["avg_fragment_confidence"].astype(float).round(4)
     summary["avg_display_coverage"] = summary["avg_display_coverage"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.133_evidence_confidence_engine")
+    if "avg_priority_score" in summary.columns:
+        summary["avg_priority_score"] = summary["avg_priority_score"].astype(float).round(4)
+    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
 
@@ -3022,6 +3127,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
         "server", "rank", "expected_alliance_display", "expected_name", "ocr_alliance_display", "ocr_name",
         "display_reconstruction_status", "display_reconstructed_alliance_tag", "display_reconstructed_name",
         "display_promotion_eligible", "display_promotion_block_reason", "display_confidence_decision",
+        "evidence_priority_score", "evidence_budget_tier", "evidence_budget_action", "evidence_budget_reason",
         "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
         "evidence_unresolved_fragments", "evidence_avg_fragment_confidence", "display_name_coverage_score",
         "display_alliance_coverage_score", "display_coverage_score", "evidence_avg_crop_quality",
@@ -3038,7 +3144,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.133_evidence_confidence_engine", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["display_confidence_decision", "display_promotion_eligible"], dropna=False).agg(
         rows=("rank", "count"),
         avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
@@ -3051,9 +3157,52 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     ).reset_index()
     for col in ["avg_fragment_confidence", "avg_display_coverage", "avg_name_coverage", "avg_alliance_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.133_evidence_confidence_engine")
+    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_confidence_decision"]).reset_index(drop=True)
+
+
+def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.134 Evidence Budget Manager report.
+
+    The report ranks display-evidence rows by likely return on expensive ReOCR.
+    It is deliberately read-only: it recommends budget allocation but does not
+    mutate OCR output, exports, snapshots, Ground Truth, or Operational Truth.
+    """
+    cols = [
+        "server", "rank", "expected_alliance_display", "expected_name", "ocr_alliance_display", "ocr_name",
+        "display_reconstruction_status", "display_confidence_decision", "display_promotion_eligible",
+        "evidence_priority_score", "evidence_budget_tier", "evidence_budget_action", "evidence_budget_reason",
+        "evidence_budget_expected_cost_ms", "evidence_avg_fragment_confidence", "display_coverage_score",
+        "display_name_coverage_score", "display_alliance_coverage_score", "evidence_fragments_total",
+        "evidence_unresolved_fragments", "evidence_observed_fragments", "alignment_context_gap", "gold_core_blocker",
+        "evidence_budget_operational_truth_modified",
+    ]
+    if detail.empty:
+        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+    rows = detail.copy()
+    for col in cols:
+        if col not in rows.columns:
+            rows[col] = ""
+    report = rows[cols].copy()
+    report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
+    if report.empty:
+        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
+    summary = report.groupby(["evidence_budget_tier", "evidence_budget_action"], dropna=False).agg(
+        rows=("rank", "count"),
+        avg_priority_score=("evidence_priority_score", "mean"),
+        avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
+        avg_display_coverage=("display_coverage_score", "mean"),
+        expected_cost_ms=("evidence_budget_expected_cost_ms", "sum"),
+        promotion_eligible_rows=("display_promotion_eligible", "sum"),
+        context_gap_rows=("alignment_context_gap", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+        gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+    ).reset_index()
+    for col in ["avg_priority_score", "avg_fragment_confidence", "avg_display_coverage"]:
+        summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
+    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
+    summary["operational_truth_modified"] = False
+    return summary, report.sort_values(["evidence_priority_score", "rank"], ascending=[False, True]).reset_index(drop=True)
 
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
@@ -3353,6 +3502,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
+    evidence_budget_summary, evidence_budget_rows = _build_evidence_budget_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
@@ -3399,6 +3549,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "ocr_evidence_fragments": ocr_evidence_fragments.to_dict(orient="records"),
         "evidence_confidence_summary": evidence_confidence_summary.to_dict(orient="records"),
         "evidence_confidence_rows": evidence_confidence_rows.to_dict(orient="records"),
+        "evidence_budget_summary": evidence_budget_summary.to_dict(orient="records"),
+        "evidence_budget_rows": evidence_budget_rows.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -3416,6 +3568,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     display_reconstruction_json_path.write_text(json.dumps(_json_safe({"summary": display_reconstruction_summary.to_dict(orient="records"), "details": display_reconstruction_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     evidence_confidence_json_path = output_dir / "evidence_confidence_report.json"
     evidence_confidence_json_path.write_text(json.dumps(_json_safe({"summary": evidence_confidence_summary.to_dict(orient="records"), "details": evidence_confidence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    evidence_budget_json_path = output_dir / "evidence_budget_report.json"
+    evidence_budget_json_path.write_text(json.dumps(_json_safe({"summary": evidence_budget_summary.to_dict(orient="records"), "details": evidence_budget_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -3458,6 +3612,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(display_reconstruction_rows).to_excel(writer, sheet_name="display_recon_rows", index=False)
         _sanitize_frame(evidence_confidence_summary).to_excel(writer, sheet_name="evidence_conf", index=False)
         _sanitize_frame(evidence_confidence_rows).to_excel(writer, sheet_name="evidence_conf_rows", index=False)
+        _sanitize_frame(evidence_budget_summary).to_excel(writer, sheet_name="evidence_budget", index=False)
+        _sanitize_frame(evidence_budget_rows).to_excel(writer, sheet_name="evidence_budget_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
@@ -3498,6 +3654,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_confidence_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(evidence_confidence_rows).to_excel(writer, sheet_name="details", index=False)
 
+    evidence_budget_xlsx_path = output_dir / "evidence_budget_report.xlsx"
+    with pd.ExcelWriter(evidence_budget_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(evidence_budget_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(evidence_budget_rows).to_excel(writer, sheet_name="details", index=False)
+
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
         pd.DataFrame([inference_summary]).to_excel(writer, sheet_name="summary", index=False)
@@ -3528,6 +3689,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
     print(f"Evidence Confidence JSON:      {evidence_confidence_json_path}")
+    print(f"Evidence Budget JSON:          {evidence_budget_json_path}")
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
     print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")
