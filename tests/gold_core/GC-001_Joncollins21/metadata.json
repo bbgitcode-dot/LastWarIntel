@@ -1,0 +1,13 @@
+{
+  "id": "GC-001",
+  "server": 551,
+  "rank": 1,
+  "expected_alliance_display": "PbC",
+  "expected_name": "Joncollins21",
+  "expected_power": 416693161,
+  "historical_ocr_name": "Joncollinszl",
+  "failure_class": "latin_single_glyph",
+  "resolved_in": "v0.9.5.139",
+  "regression_introduced_in": "v0.9.5.140",
+  "policy": "Must remain cleared by Strike I/Gold-Core evidence and must never alter Operational Truth."
+}

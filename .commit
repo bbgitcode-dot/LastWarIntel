@@ -1,4 +1,4 @@
-version: 0.9.5.139
-summary: Gold Blocker Strike I adds a narrow single-glyph Latin clearance path and fixes Gold report phase labels.
-commit: feat(gold-core): add blocker strike clearance for localized latin glyphs
-tag: v0.9.5.139
+version: 0.9.5.140
+commit: feat(gold-core): add GC-001 regression suite and Strike II clearance
+tag: v0.9.5.140
+notes: Gold Regression & Strike II with guarded Latin missing-glyph clearance. Operational Truth remains unchanged.

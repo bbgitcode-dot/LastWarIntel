@@ -3103,7 +3103,7 @@ def _hamming_distance_same_length(left: str, right: str) -> int | None:
 
 
 def _gold_blocker_strike_i_clearance(row: pd.Series) -> tuple[bool, str]:
-    """v0.9.5.139 Gold Blocker Strike I: clear one-glyph Latin blocker cases.
+    """v0.9.5.140 Gold Regression & Strike II: clear one-glyph Latin blocker cases.
 
     This is deliberately narrow.  It only affects validator evidence status, never
     Operational Truth.  A row may be cleared when every non-name identity anchor is
@@ -3137,8 +3137,133 @@ def _gold_blocker_strike_i_clearance(row: pd.Series) -> tuple[bool, str]:
         return True, "strike_single_latin_glyph_difference_with_full_identity_anchors"
     return False, "strike_blocked_multiple_name_glyph_differences"
 
+
+
+def _latin_compact(value: Any) -> str:
+    """Compact Latin display text for guarded blocker-strike comparison."""
+    text = normalize_text(value)
+    return "".join(ch for ch in text if (ch.isascii() and ch.isalnum()) or ("\u00c0" <= ch <= "\u024f"))
+
+
+def _levenshtein_ops(expected: str, observed: str) -> list[tuple[str, str, str, int, int]]:
+    """Return a minimal edit script from observed to expected.
+
+    Ops are tuples: (op, expected_char, observed_char, expected_index, observed_index)
+    where op is equal/replace/insert/delete.  Insert means a character is missing
+    in observed and should be inserted from expected; delete means observed has an
+    extra character not present in expected.
+    """
+    a = normalize_text(expected)
+    b = normalize_text(observed)
+    n, m = len(a), len(b)
+    dp = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n + 1):
+        dp[i][0] = i
+    for j in range(m + 1):
+        dp[0][j] = j
+    for i in range(1, n + 1):
+        for j in range(1, m + 1):
+            cost = 0 if a[i - 1] == b[j - 1] else 1
+            dp[i][j] = min(
+                dp[i - 1][j] + 1,      # insert expected char
+                dp[i][j - 1] + 1,      # delete observed char
+                dp[i - 1][j - 1] + cost,
+            )
+    ops: list[tuple[str, str, str, int, int]] = []
+    i, j = n, m
+    while i > 0 or j > 0:
+        if i > 0 and j > 0 and dp[i][j] == dp[i - 1][j - 1] + (0 if a[i - 1] == b[j - 1] else 1):
+            op = "equal" if a[i - 1] == b[j - 1] else "replace"
+            ops.append((op, a[i - 1], b[j - 1], i - 1, j - 1))
+            i -= 1
+            j -= 1
+        elif i > 0 and dp[i][j] == dp[i - 1][j] + 1:
+            ops.append(("insert", a[i - 1], "", i - 1, j))
+            i -= 1
+        else:
+            ops.append(("delete", "", b[j - 1], i, j - 1))
+            j -= 1
+    return list(reversed(ops))
+
+
+_STRIKE_II_CONFUSION_FAMILIES = [
+    set("2zZ"),
+    set("1Il|"),
+    set("0Oo"),
+    set("5Ss"),
+    set("8Bb"),
+    set("6G"),
+]
+
+
+def _strike_ii_confusable(expected: str, observed: str) -> bool:
+    if expected == observed:
+        return True
+    for family in _STRIKE_II_CONFUSION_FAMILIES:
+        if expected in family and observed in family:
+            return True
+    return False
+
+
+def _gold_blocker_strike_ii_clearance(row: pd.Series) -> tuple[bool, str]:
+    """v0.9.5.140 Gold Blocker Strike II: clear one missing Latin glyph plus one confusable glyph.
+
+    Strike I cleared single local substitutions.  Strike II remains narrow but
+    handles the next safe class seen in the 551 benchmark: a fully anchored Latin
+    display where the remaining difference is exactly one missing Latin character
+    plus, optionally, one known local glyph confusion such as 2/Z or 1/l.
+
+    This is evidence-only benchmark clearance. It never mutates snapshots,
+    exports, Ground Truth, or Operational Truth.
+    """
+    if not _bool_cell(row.get("gold_core_blocker", False)):
+        return False, "not_a_gold_core_blocker"
+    if _bool_cell(row.get("alignment_context_gap", False)):
+        return False, "strike_ii_blocked_context_gap_read_only"
+    if not _bool_cell(row.get("power_match", False)):
+        return False, "strike_ii_blocked_power_not_proven"
+    if not (_bool_cell(row.get("core_alliance_match", False)) or normalize_text(row.get("display_reconstructed_alliance_tag", "")) == normalize_text(row.get("expected_alliance_display", ""))):
+        return False, "strike_ii_blocked_core_alliance_not_proven"
+    if _int_cell(row.get("display_reconstruction_observed_votes", 0)) > 0:
+        return False, "strike_ii_blocked_observed_votes"
+    if _int_cell(row.get("display_reconstruction_unresolved_targets", 0)) > 1:
+        return False, "strike_ii_blocked_too_many_unresolved_fragments"
+
+    expected = normalize_text(row.get("expected_name", ""))
+    reconstructed = normalize_text(row.get("display_reconstructed_name", "") or row.get("verified_name_display", "") or row.get("ocr_name", ""))
+    if not (_is_latin_display_text(expected) and _is_latin_display_text(reconstructed)):
+        return False, "strike_ii_blocked_non_latin_or_unknown_name"
+    expected_compact = _latin_compact(expected)
+    reconstructed_compact = _latin_compact(reconstructed)
+    if not expected_compact or not reconstructed_compact:
+        return False, "strike_ii_blocked_empty_latin_core"
+
+    ops = [op for op in _levenshtein_ops(expected_compact, reconstructed_compact) if op[0] != "equal"]
+    if not ops:
+        return True, "strike_ii_exact_latin_core_already_proven"
+    if len(ops) > 2:
+        return False, "strike_ii_blocked_more_than_two_latin_edits"
+
+    inserts = [op for op in ops if op[0] == "insert"]
+    deletes = [op for op in ops if op[0] == "delete"]
+    replaces = [op for op in ops if op[0] == "replace"]
+    if deletes:
+        return False, "strike_ii_blocked_extra_observed_latin_glyph"
+    if len(inserts) > 1 or len(replaces) > 1:
+        return False, "strike_ii_blocked_edit_shape_not_supported"
+    if replaces and not _strike_ii_confusable(replaces[0][1], replaces[0][2]):
+        return False, "strike_ii_blocked_replacement_not_confusion_family"
+
+    # Need at least one affirmative evidence signal. This prevents a pure string
+    # similarity shortcut from clearing a blocker without Character Acquisition.
+    confirmed = _int_cell(row.get("evidence_confirmed_fragments", 0)) + _int_cell(row.get("character_reocr_verified_expected", 0))
+    if confirmed < 1:
+        return False, "strike_ii_blocked_no_confirmed_character_evidence"
+
+    return True, "strike_ii_one_missing_latin_glyph_plus_optional_confusable_with_full_identity_anchors"
+
 def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
-    """Apply v0.9.5.139 Gold Blocker Strike I rules.
+    """Apply v0.9.5.140 Gold Regression & Strike II rules.
 
     This is the first functional blocker-elimination gate.  It does not mutate
     OCR export rows, snapshots, Ground Truth, or Operational Truth.  It only
@@ -3186,7 +3311,8 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
         and reconstruction_status in {"full_display_reconstructed", "name_reconstructed", "already_exact"}
     )
     strike_clear, strike_reason = _gold_blocker_strike_i_clearance(row)
-    clear = bool(strict_clear or strike_clear)
+    strike_ii_clear, strike_ii_reason = _gold_blocker_strike_ii_clearance(row)
+    clear = bool(strict_clear or strike_clear or strike_ii_clear)
 
     if strict_clear:
         reason = "display_reconstruction_proves_name_and_core_alliance"
@@ -3194,6 +3320,9 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     elif strike_clear:
         reason = strike_reason
         action = "clear_gold_core_blocker_strike_i"
+    elif strike_ii_clear:
+        reason = strike_ii_reason
+        action = "clear_gold_core_blocker_strike_ii"
     elif not original_blocker:
         reason = "not_a_gold_core_blocker"
         action = "not_applicable"
@@ -3252,7 +3381,7 @@ def _apply_gold_core_elimination(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.139 Gold Blocker Strike I report."""
+    """Build v0.9.5.140 Gold Regression & Strike II report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -3265,7 +3394,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     ]
     if detail.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.139_gold_blocker_strike_i",
+            "phase": "v0.9.5.140_gold_regression_strike_ii",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": 0,
@@ -3279,7 +3408,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     report = report[report["gold_core_elimination_candidate"].fillna(False).astype(bool) | report["gold_core_elimination_cleared"].fillna(False).astype(bool)].copy()
     if report.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.139_gold_blocker_strike_i",
+            "phase": "v0.9.5.140_gold_regression_strike_ii",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": int(rows.get("gold_core_blocker", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),
@@ -3292,7 +3421,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
         min_rank=("rank", "min"),
         max_rank=("rank", "max"),
     ).reset_index()
-    summary.insert(0, "phase", "v0.9.5.139_gold_blocker_strike_i")
+    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["gold_core_blocker_after_elimination", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3351,7 +3480,7 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
     summary["avg_display_coverage"] = summary["avg_display_coverage"].astype(float).round(4)
     if "avg_priority_score" in summary.columns:
         summary["avg_priority_score"] = summary["avg_priority_score"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
 
@@ -3383,7 +3512,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["display_confidence_decision", "display_promotion_eligible"], dropna=False).agg(
         rows=("rank", "count"),
         avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
@@ -3396,7 +3525,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     ).reset_index()
     for col in ["avg_fragment_confidence", "avg_display_coverage", "avg_name_coverage", "avg_alliance_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_confidence_decision"]).reset_index(drop=True)
 
@@ -3418,7 +3547,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
         "evidence_budget_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3426,7 +3555,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["evidence_budget_tier", "evidence_budget_action"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3439,7 +3568,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     ).reset_index()
     for col in ["avg_priority_score", "avg_fragment_confidence", "avg_display_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["evidence_priority_score", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3534,7 +3663,7 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
         "scheduler_expected_runtime_ms": scheduled_cost_ms,
         "scheduler_estimated_saved_ms": estimated_saved_ms,
         "scheduler_accuracy_mode": bool(GOLD_ACCURACY_MODE),
-        "scheduler_active_phase": "v0.9.5.139_gold_accuracy_mode",
+        "scheduler_active_phase": "v0.9.5.140_gold_regression_strike_ii",
         "scheduler_operational_truth_modified": False,
     }
 
@@ -3565,7 +3694,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         "scheduler_accuracy_mode", "scheduler_active_phase", "scheduler_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.139_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3573,7 +3702,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.139_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["scheduler_priority", "evidence_scheduler_decision"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3585,7 +3714,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
     ).reset_index()
     summary["avg_priority_score"] = pd.to_numeric(summary["avg_priority_score"], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.139_gold_accuracy_mode")
+    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
 
@@ -3665,7 +3794,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
     """
     if character_reocr_debug.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.139_character_acquisition_engine",
+            "phase": "v0.9.5.140_gold_regression_strike_ii",
             "rows": 0,
             "observations": 0,
             "avg_observation_confidence": 0.0,
@@ -3760,7 +3889,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
 
     if consensus.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.139_character_acquisition_engine",
+            "phase": "v0.9.5.140_gold_regression_strike_ii",
             "rows": 0,
             "observations": int(len(obs)),
             "avg_observation_confidence": round(float(obs["acquisition_observation_confidence"].mean()), 4) if len(obs) else 0.0,
@@ -3774,7 +3903,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
             avg_vote_consensus=("vote_consensus", "mean"),
             avg_crop_quality=("crop_quality_avg", "mean"),
         ).reset_index()
-        summary.insert(0, "phase", "v0.9.5.139_character_acquisition_engine")
+        summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
         for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality"]:
             summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
         summary["operational_truth_modified"] = False
@@ -4068,7 +4197,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "avg_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
         "max_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).max()), 4) if len(detail) else 0.0,
         "operational_truth_modified": False,
-        "phase": "v0.9.5.139_read_only_verification_execution",
+        "phase": "v0.9.5.140_gold_regression_strike_ii",
     }])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
