@@ -3369,6 +3369,218 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
 
+
+def _acquisition_vote_consensus(row: pd.Series) -> tuple[str, float, int]:
+    """Return a lightweight consensus signal from Character ReOCR debug votes.
+
+    v0.9.5.137 Character Acquisition Engine Phase I converts raw targeted
+    Character ReOCR fragments into observation-level consensus.  This is still
+    evidence-only: it never mutates OCR rows, Ground Truth, snapshots, exports,
+    verified display fields, or Operational Truth.
+    """
+    selected = normalize_text(row.get("selected", ""))
+    nonempty = normalize_text(row.get("nonempty_vote_chars", ""))
+    votes: list[str] = []
+    if nonempty:
+        votes.extend([v for v in nonempty.split(";") if v])
+    if selected:
+        votes.append(selected)
+    if not votes:
+        return selected, 0.0, 0
+    counts: dict[str, int] = {}
+    for vote in votes:
+        counts[vote] = counts.get(vote, 0) + 1
+    winner, count = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0]
+    consensus = count / max(len(votes), 1)
+    return winner, round(consensus, 4), len(votes)
+
+
+def _acquisition_crop_quality(row: pd.Series) -> float:
+    diagnostic = str(row.get("debug_read", row.get("crop_diagnostic", "")) or "")
+    anchor = str(row.get("crop_anchor_status", "") or "")
+    width = float(row.get("crop_width", 0) or 0)
+    height = float(row.get("crop_height", 0) or 0)
+    quality = 0.70
+    if diagnostic == "verified_expected":
+        quality += 0.15
+    if diagnostic == "vote_outside_allowed_set":
+        quality -= 0.12
+    if diagnostic == "crop_field_mismatch" or anchor == "field_mismatch":
+        quality -= 0.20
+    if anchor == "anchor_seen":
+        quality += 0.10
+    if anchor == "cache_hit":
+        quality += 0.12
+    if width >= 16 and height >= 40:
+        quality += 0.05
+    return round(max(0.0, min(1.0, quality)), 4)
+
+
+def _character_observation_confidence(row: pd.Series) -> float:
+    try:
+        base_conf = float(row.get("confidence", 0.0) or 0.0)
+    except Exception:
+        base_conf = 0.0
+    _, vote_consensus, _ = _acquisition_vote_consensus(row)
+    crop_quality = _acquisition_crop_quality(row)
+    status = str(row.get("target_status", "") or "")
+    status_weight = {
+        "verified_expected": 1.0,
+        "verified_observed": 0.78,
+        "ambiguous_vote": 0.45,
+        "unresolved": 0.25,
+    }.get(status, 0.35)
+    # Confidence is deliberately bounded and explainable rather than magical.
+    confidence = (base_conf * 0.38) + (vote_consensus * 0.27) + (crop_quality * 0.20) + (status_weight * 0.15)
+    return round(max(0.0, min(1.0, confidence)), 4)
+
+
+def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.137 Character Acquisition Engine reports.
+
+    The report groups multiple targeted observations per character position,
+    computes consensus, confidence, crop quality, and a position heatmap.  It is
+    an Evidence Layer artifact only.  Promotion remains controlled by the
+    Display Reconstruction/Promotion Guard and Operational Truth is locked.
+    """
+    if character_reocr_debug.empty:
+        summary = pd.DataFrame([{
+            "phase": "v0.9.5.137_character_acquisition_engine_phase1",
+            "rows": 0,
+            "observations": 0,
+            "avg_observation_confidence": 0.0,
+            "operational_truth_modified": False,
+        }])
+        empty_cols = [
+            "server", "rank", "target_field", "target_position", "observation_count",
+            "consensus_char", "consensus_status", "consensus_confidence",
+            "vote_consensus", "crop_quality_avg", "expected_char", "observed_char",
+            "selected_chars", "target_statuses", "debug_reads", "character_acquisition_operational_truth_modified",
+        ]
+        return summary, pd.DataFrame(columns=empty_cols), pd.DataFrame(columns=empty_cols), detail
+
+    obs = character_reocr_debug.copy()
+    obs["acquisition_consensus_char"] = ""
+    obs["acquisition_vote_consensus"] = 0.0
+    obs["acquisition_vote_count"] = 0
+    for idx, row in obs.iterrows():
+        char, vote_consensus, vote_count = _acquisition_vote_consensus(row)
+        obs.at[idx, "acquisition_consensus_char"] = char
+        obs.at[idx, "acquisition_vote_consensus"] = vote_consensus
+        obs.at[idx, "acquisition_vote_count"] = vote_count
+    obs["acquisition_crop_quality"] = obs.apply(_acquisition_crop_quality, axis=1)
+    obs["acquisition_observation_confidence"] = obs.apply(_character_observation_confidence, axis=1)
+    obs["character_acquisition_operational_truth_modified"] = False
+
+    group_cols = ["server", "rank", "target_field", "target_position"]
+    records: list[dict[str, Any]] = []
+    for keys, group in obs.groupby(group_cols, dropna=False):
+        server, rank, field, position = keys
+        selected_chars = [normalize_text(v) for v in group.get("acquisition_consensus_char", pd.Series(dtype=str)).tolist() if normalize_text(v)]
+        counts: dict[str, int] = {}
+        for char in selected_chars:
+            counts[char] = counts.get(char, 0) + 1
+        consensus_char = ""
+        consensus_ratio = 0.0
+        if counts:
+            consensus_char, count = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0]
+            consensus_ratio = count / max(sum(counts.values()), 1)
+        statuses = sorted(set(str(v or "") for v in group.get("target_status", pd.Series(dtype=str)).tolist()))
+        debug_reads = sorted(set(str(v or "") for v in group.get("debug_read", pd.Series(dtype=str)).tolist()))
+        expected_chars = [normalize_text(v) for v in group.get("target_expected", pd.Series(dtype=str)).tolist() if normalize_text(v)]
+        observed_chars = [normalize_text(v) for v in group.get("target_observed", pd.Series(dtype=str)).tolist() if normalize_text(v)]
+        expected_char = expected_chars[0] if expected_chars else ""
+        observed_char = observed_chars[0] if observed_chars else ""
+        avg_conf = float(pd.to_numeric(group["acquisition_observation_confidence"], errors="coerce").fillna(0).mean())
+        avg_vote = float(pd.to_numeric(group["acquisition_vote_consensus"], errors="coerce").fillna(0).mean())
+        avg_crop = float(pd.to_numeric(group["acquisition_crop_quality"], errors="coerce").fillna(0).mean())
+        if "verified_expected" in statuses and consensus_char == expected_char and avg_conf >= 0.70:
+            consensus_status = "consensus_verified_expected"
+        elif "verified_observed" in statuses and consensus_char == observed_char and avg_conf >= 0.70:
+            consensus_status = "consensus_verified_observed"
+        elif avg_conf >= 0.62 and consensus_ratio >= 0.66 and consensus_char:
+            consensus_status = "consensus_probable"
+        elif "ambiguous_vote" in statuses:
+            consensus_status = "consensus_ambiguous"
+        else:
+            consensus_status = "consensus_unresolved"
+        records.append({
+            "server": server,
+            "rank": rank,
+            "target_field": field,
+            "target_position": position,
+            "observation_count": int(len(group)),
+            "consensus_char": consensus_char,
+            "consensus_status": consensus_status,
+            "consensus_confidence": round(avg_conf, 4),
+            "vote_consensus": round(avg_vote, 4),
+            "crop_quality_avg": round(avg_crop, 4),
+            "expected_char": expected_char,
+            "observed_char": observed_char,
+            "selected_chars": ";".join(selected_chars),
+            "target_statuses": ";".join(statuses),
+            "debug_reads": ";".join(debug_reads),
+            "character_acquisition_operational_truth_modified": False,
+        })
+
+    consensus = pd.DataFrame(records)
+    if consensus.empty:
+        heatmap = pd.DataFrame(columns=["target_field", "target_position", "positions", "avg_consensus_confidence", "verified_positions", "problem_positions"])
+    else:
+        heatmap = consensus.groupby(["target_field", "target_position"], dropna=False).agg(
+            positions=("rank", "count"),
+            avg_consensus_confidence=("consensus_confidence", "mean"),
+            verified_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).str.contains("verified_expected|verified_observed", regex=True).sum())),
+            probable_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_probable").sum())),
+            ambiguous_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_ambiguous").sum())),
+            unresolved_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_unresolved").sum())),
+        ).reset_index()
+        heatmap["avg_consensus_confidence"] = pd.to_numeric(heatmap["avg_consensus_confidence"], errors="coerce").fillna(0).round(4)
+        heatmap["problem_positions"] = heatmap["ambiguous_positions"] + heatmap["unresolved_positions"]
+
+    if consensus.empty:
+        summary = pd.DataFrame([{
+            "phase": "v0.9.5.137_character_acquisition_engine_phase1",
+            "rows": 0,
+            "observations": int(len(obs)),
+            "avg_observation_confidence": round(float(obs["acquisition_observation_confidence"].mean()), 4) if len(obs) else 0.0,
+            "operational_truth_modified": False,
+        }])
+    else:
+        summary = consensus.groupby(["target_field", "consensus_status"], dropna=False).agg(
+            rows=("rank", "count"),
+            observations=("observation_count", "sum"),
+            avg_consensus_confidence=("consensus_confidence", "mean"),
+            avg_vote_consensus=("vote_consensus", "mean"),
+            avg_crop_quality=("crop_quality_avg", "mean"),
+        ).reset_index()
+        summary.insert(0, "phase", "v0.9.5.137_character_acquisition_engine_phase1")
+        for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality"]:
+            summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
+        summary["operational_truth_modified"] = False
+
+    detail_out = detail.copy()
+    if not consensus.empty:
+        by_rank = consensus.groupby(["server", "rank"], dropna=False).agg(
+            character_acquisition_positions=("target_position", "count"),
+            character_acquisition_verified_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).str.contains("verified_expected|verified_observed", regex=True).sum())),
+            character_acquisition_probable_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_probable").sum())),
+            character_acquisition_unresolved_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_unresolved").sum())),
+            character_acquisition_avg_confidence=("consensus_confidence", "mean"),
+        ).reset_index()
+        by_rank["character_acquisition_avg_confidence"] = pd.to_numeric(by_rank["character_acquisition_avg_confidence"], errors="coerce").fillna(0).round(4)
+        detail_out = detail_out.merge(by_rank, on=["server", "rank"], how="left")
+    for col in [
+        "character_acquisition_positions", "character_acquisition_verified_positions",
+        "character_acquisition_probable_positions", "character_acquisition_unresolved_positions",
+        "character_acquisition_avg_confidence",
+    ]:
+        if col not in detail_out.columns:
+            detail_out[col] = 0
+        detail_out[col] = pd.to_numeric(detail_out[col], errors="coerce").fillna(0)
+    detail_out["character_acquisition_operational_truth_modified"] = False
+    return summary, consensus, heatmap, detail_out
+
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
     evidence_rows: list[dict[str, Any]] = []
@@ -3664,6 +3876,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     else:
         character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
+    character_acquisition_summary, character_acquisition_rows, character_acquisition_heatmap, detail = _build_character_acquisition_report(detail, character_reocr_debug)
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
@@ -3710,6 +3923,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         },
         "character_reocr_debug_summary": character_reocr_debug_summary.to_dict(orient="records"),
         "character_reocr_debug": character_reocr_debug.to_dict(orient="records"),
+        "character_acquisition_summary": character_acquisition_summary.to_dict(orient="records"),
+        "character_acquisition_rows": character_acquisition_rows.to_dict(orient="records"),
+        "character_acquisition_heatmap": character_acquisition_heatmap.to_dict(orient="records"),
         "ocr_evidence_summary": ocr_evidence_payload.get("summary", {}),
         "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
         "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
@@ -3725,6 +3941,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     reocr_debug_json_path = output_dir / "character_reocr_debug_report.json"
     reocr_debug_json_path.write_text(json.dumps({"summary": character_reocr_debug_summary.to_dict(orient="records"), "details": character_reocr_debug.to_dict(orient="records")}, ensure_ascii=False, indent=2), encoding="utf-8")
+    character_acquisition_json_path = output_dir / "character_acquisition_report.json"
+    character_acquisition_json_path.write_text(json.dumps(_json_safe({"summary": character_acquisition_summary.to_dict(orient="records"), "details": character_acquisition_rows.to_dict(orient="records"), "heatmap": character_acquisition_heatmap.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -3789,6 +4007,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_scheduler_rows).to_excel(writer, sheet_name="evidence_sched_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
+        _sanitize_frame(character_acquisition_summary).to_excel(writer, sheet_name="char_acq_summary", index=False)
+        _sanitize_frame(character_acquisition_rows).to_excel(writer, sheet_name="char_acq_rows", index=False)
+        _sanitize_frame(character_acquisition_heatmap).to_excel(writer, sheet_name="char_acq_heatmap", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="ocr_evidence_status", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="ocr_evidence_rows", index=False)
@@ -3800,6 +4021,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     with pd.ExcelWriter(reocr_debug_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="details", index=False)
+
+    character_acquisition_xlsx_path = output_dir / "character_acquisition_report.xlsx"
+    with pd.ExcelWriter(character_acquisition_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(character_acquisition_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(character_acquisition_rows).to_excel(writer, sheet_name="details", index=False)
+        _sanitize_frame(character_acquisition_heatmap).to_excel(writer, sheet_name="heatmap", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -3859,6 +4086,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Inference Excel: {inference_xlsx_path}")
     print(f"Character ReOCR Debug JSON:  {reocr_debug_json_path}")
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
+    print(f"Character Acquisition JSON:   {character_acquisition_json_path}")
+    print(f"Character Acquisition Excel:  {character_acquisition_xlsx_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
     print(f"Evidence Confidence JSON:      {evidence_confidence_json_path}")

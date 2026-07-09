@@ -1,5 +1,27 @@
 # Patch Summary
 
+## v0.9.5.137 – Character Acquisition Engine Phase I
+
+### Purpose
+
+v0.9.5.137 adds an evidence-only Character Acquisition Engine. The sprint shifts the Gold Accuracy line from additional guards toward better character evidence acquisition: multiple Character ReOCR observations are grouped by field and position, scored, and converted into consensus diagnostics.
+
+### Implemented
+
+- Added `character_acquisition_report.json` and `character_acquisition_report.xlsx`.
+- Added per-observation confidence using OCR confidence, vote consensus, crop quality and target status.
+- Added per-character consensus rows keyed by server, rank, field and position.
+- Added acquisition heatmap for weak recurring character positions.
+- Attached acquisition counts and average confidence to validation detail rows.
+- Kept Character Acquisition strictly evidence-only; Operational Truth is not modified.
+
+### Validation
+
+- New Character Acquisition smoke tests pass.
+- Existing display reconstruction, guard and budget smoke tests remain green.
+- `py_compile` passes for `ground_truth_validator.py`.
+
+
 ## v0.9.5.129 – Read-only Verification Execution
 
 ### Purpose

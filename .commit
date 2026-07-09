@@ -1,12 +1,12 @@
-version: 0.9.5.136
-title: Gold Accuracy Mode
-commit: feat(accuracy): implement Gold Accuracy Mode
-tag: v0.9.5.136
-base: v0.9.5.135
+version: 0.9.5.137
+title: Character Acquisition Engine Phase I
+commit: feat(character): add acquisition consensus evidence engine
+tag: v0.9.5.137
+base: v0.9.5.136
 notes:
-  - Functional sprint, not documentation-only.
-  - Enables GOLD_ACCURACY_MODE by default in ground_truth_validator.py.
-  - Disables runtime-saving ReOCR budget skips for local glyph targets.
-  - Converts scheduler early-exit/cache-only behavior into accuracy-first evidence scheduling.
-  - Keeps context-gap rows read-only and blocks Operational Truth mutation.
-  - Updates scheduler report phase/columns for Gold Accuracy Mode.
+  - Adds Character Acquisition Engine Phase I as an evidence-only layer.
+  - Builds character_acquisition_report.json/xlsx from Character ReOCR observations.
+  - Computes observation confidence, vote consensus, crop quality and per-position consensus.
+  - Adds character acquisition heatmap for recurring weak character positions.
+  - Attaches acquisition counts and confidence to validation detail rows.
+  - Does not modify Operational Truth, snapshots, exports, Ground Truth or verified display fields.
