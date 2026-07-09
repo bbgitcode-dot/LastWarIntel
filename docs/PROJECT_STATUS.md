@@ -1,3 +1,11 @@
+# v0.9.5.141 – Character Position Intelligence Phase I
+
+- Implements functional Character Position Intelligence in the validator, not just report scaffolding.
+- Adds `character_position_intelligence_report.json/xlsx` with position-level risk, action, and rank-level acquisition focus.
+- Feeds weak/critical position decisions into the Evidence Scheduler so Gold Accuracy prioritizes problematic character positions.
+- Keeps Display Reconstruction, Strike clearance, Context Gaps, and Operational Truth read-only.
+- Report phase label: `v0.9.5.141_character_position_intelligence`.
+
 # v0.9.5.140 – Gold Regression & Strike II
 
 - Adds permanent GC-001 Joncollins21 Gold-Core regression metadata.
@@ -7,7 +15,7 @@
 
 # Project Status – Sentinel v0.9.5.140
 
-**Current release:** v0.9.5.140 Gold Core Elimination Phase I  
+**Current release:** v0.9.5.141 Gold Core Elimination Phase I  
 **Functional baseline:** v0.9.5.136 Gold Accuracy Mode  
 **Sprint posture:** Gold Accuracy / evidence acquisition over runtime optimization
 

@@ -1,3 +1,11 @@
+# v0.9.5.141 – Character Position Intelligence Phase I
+
+- Implements functional Character Position Intelligence in the validator, not just report scaffolding.
+- Adds `character_position_intelligence_report.json/xlsx` with position-level risk, action, and rank-level acquisition focus.
+- Feeds weak/critical position decisions into the Evidence Scheduler so Gold Accuracy prioritizes problematic character positions.
+- Keeps Display Reconstruction, Strike clearance, Context Gaps, and Operational Truth read-only.
+- Report phase label: `v0.9.5.141_character_position_intelligence`.
+
 # v0.9.5.140 – Gold Regression & Strike II
 
 - Adds permanent GC-001 Joncollins21 Gold-Core regression metadata.
@@ -23,7 +31,7 @@ Arbeite nach unserem Modus Operandi:
 - DataGuard und Ranking Guard haben Vorrang vor OCR-Optimismus;
 - Gold Accuracy hat Vorrang vor Runtime.
 
-Aktuelle Basis ist Sentinel_v0.9.5.140.zip.
+Aktuelle Basis ist Sentinel_v0.9.5.141.zip.
 Bitte lies zuerst /docs/PROJECT_STATUS.md, /docs/ROAD_TO_V1.md, /docs/MODUS_OPERANDI.md, /docs/SENTINEL_DATA_GUARD.md, /docs/LESSONS_LEARNED.md und /docs/PATCH_SUMMARY.md.
 
 Nächster empfohlener Sprint ist v0.9.5.140 – Multi-Crop Consensus.
@@ -32,7 +40,7 @@ Ziel: die Character Acquisition Engine nutzen, um pro schwacher Zeichenposition 
 
 ## Current release
 
-- Current release: `v0.9.5.140 Gold Core Elimination Phase I`
+- Current release: `v0.9.5.141 Gold Core Elimination Phase I`
 - Functional baseline: `v0.9.5.136 Gold Accuracy Mode`
 - Next recommended sprint: `v0.9.5.140 Multi-Crop Consensus`
 

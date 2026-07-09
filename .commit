@@ -1,4 +1,4 @@
-version: 0.9.5.140
-commit: feat(gold-core): add GC-001 regression suite and Strike II clearance
-tag: v0.9.5.140
-notes: Gold Regression & Strike II with guarded Latin missing-glyph clearance. Operational Truth remains unchanged.
+version: 0.9.5.141
+commit: feat(character): implement character position intelligence
+tag: v0.9.5.141
+notes: Character Position Intelligence adds position risk, adaptive acquisition actions, and scheduler integration. Operational Truth remains unchanged.

@@ -3103,7 +3103,7 @@ def _hamming_distance_same_length(left: str, right: str) -> int | None:
 
 
 def _gold_blocker_strike_i_clearance(row: pd.Series) -> tuple[bool, str]:
-    """v0.9.5.140 Gold Regression & Strike II: clear one-glyph Latin blocker cases.
+    """v0.9.5.141 Gold Regression & Strike II: clear one-glyph Latin blocker cases.
 
     This is deliberately narrow.  It only affects validator evidence status, never
     Operational Truth.  A row may be cleared when every non-name identity anchor is
@@ -3206,7 +3206,7 @@ def _strike_ii_confusable(expected: str, observed: str) -> bool:
 
 
 def _gold_blocker_strike_ii_clearance(row: pd.Series) -> tuple[bool, str]:
-    """v0.9.5.140 Gold Blocker Strike II: clear one missing Latin glyph plus one confusable glyph.
+    """v0.9.5.141 Gold Blocker Strike II: clear one missing Latin glyph plus one confusable glyph.
 
     Strike I cleared single local substitutions.  Strike II remains narrow but
     handles the next safe class seen in the 551 benchmark: a fully anchored Latin
@@ -3263,7 +3263,7 @@ def _gold_blocker_strike_ii_clearance(row: pd.Series) -> tuple[bool, str]:
     return True, "strike_ii_one_missing_latin_glyph_plus_optional_confusable_with_full_identity_anchors"
 
 def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
-    """Apply v0.9.5.140 Gold Regression & Strike II rules.
+    """Apply v0.9.5.141 Gold Regression & Strike II rules.
 
     This is the first functional blocker-elimination gate.  It does not mutate
     OCR export rows, snapshots, Ground Truth, or Operational Truth.  It only
@@ -3381,7 +3381,7 @@ def _apply_gold_core_elimination(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.140 Gold Regression & Strike II report."""
+    """Build v0.9.5.141 Gold Regression & Strike II report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -3394,7 +3394,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     ]
     if detail.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.140_gold_regression_strike_ii",
+            "phase": "v0.9.5.141_character_position_intelligence",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": 0,
@@ -3408,7 +3408,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     report = report[report["gold_core_elimination_candidate"].fillna(False).astype(bool) | report["gold_core_elimination_cleared"].fillna(False).astype(bool)].copy()
     if report.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.140_gold_regression_strike_ii",
+            "phase": "v0.9.5.141_character_position_intelligence",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": int(rows.get("gold_core_blocker", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),
@@ -3421,7 +3421,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
         min_rank=("rank", "min"),
         max_rank=("rank", "max"),
     ).reset_index()
-    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["gold_core_blocker_after_elimination", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3480,7 +3480,7 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
     summary["avg_display_coverage"] = summary["avg_display_coverage"].astype(float).round(4)
     if "avg_priority_score" in summary.columns:
         summary["avg_priority_score"] = summary["avg_priority_score"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
 
@@ -3512,7 +3512,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.141_character_position_intelligence", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["display_confidence_decision", "display_promotion_eligible"], dropna=False).agg(
         rows=("rank", "count"),
         avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
@@ -3525,7 +3525,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     ).reset_index()
     for col in ["avg_fragment_confidence", "avg_display_coverage", "avg_name_coverage", "avg_alliance_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_confidence_decision"]).reset_index(drop=True)
 
@@ -3547,7 +3547,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
         "evidence_budget_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.141_character_position_intelligence", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3555,7 +3555,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.141_character_position_intelligence", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["evidence_budget_tier", "evidence_budget_action"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3568,7 +3568,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     ).reset_index()
     for col in ["avg_priority_score", "avg_fragment_confidence", "avg_display_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["evidence_priority_score", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3606,10 +3606,27 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
     context_gap = bool(row.get("alignment_context_gap", False))
     promotion_eligible = bool(row.get("display_promotion_eligible", False))
 
+    position_action = str(row.get("character_position_action", "") or "")
+    try:
+        position_risk = float(row.get("character_position_max_risk", 0.0) or 0.0)
+    except Exception:
+        position_risk = 0.0
     scheduled_cost_ms = cost_ms or 6500
     estimated_saved_ms = 0
 
-    if context_gap or tier == "context_evidence_only":
+    if (not context_gap) and position_action == "forced_position_acquisition":
+        scheduler_priority = "critical"
+        scheduler_decision = "schedule_position_forced_acquisition"
+        scheduler_reason = "character_position_intelligence_critical_position_accuracy_first"
+        queue_order = 5
+        scheduled_cost_ms = max(cost_ms or 0, 15000)
+    elif (not context_gap) and position_action == "position_adaptive_multicrop_retry":
+        scheduler_priority = "high"
+        scheduler_decision = "schedule_position_adaptive_multicrop_retry"
+        scheduler_reason = "character_position_intelligence_weak_position_requires_extra_evidence"
+        queue_order = 15
+        scheduled_cost_ms = max(cost_ms or 0, 12000)
+    elif context_gap or tier == "context_evidence_only":
         # Context-gap rows are evidence-only by DataGuard policy. They may carry
         # a contextual display suggestion, but they must not be promoted or
         # turned into Operational Truth.
@@ -3663,7 +3680,7 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
         "scheduler_expected_runtime_ms": scheduled_cost_ms,
         "scheduler_estimated_saved_ms": estimated_saved_ms,
         "scheduler_accuracy_mode": bool(GOLD_ACCURACY_MODE),
-        "scheduler_active_phase": "v0.9.5.140_gold_regression_strike_ii",
+        "scheduler_active_phase": "v0.9.5.141_character_position_intelligence",
         "scheduler_operational_truth_modified": False,
     }
 
@@ -3694,7 +3711,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         "scheduler_accuracy_mode", "scheduler_active_phase", "scheduler_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.141_character_position_intelligence", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3702,7 +3719,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.140_gold_regression_strike_ii", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.141_character_position_intelligence", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["scheduler_priority", "evidence_scheduler_decision"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3714,7 +3731,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
     ).reset_index()
     summary["avg_priority_score"] = pd.to_numeric(summary["avg_priority_score"], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
 
@@ -3794,7 +3811,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
     """
     if character_reocr_debug.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.140_gold_regression_strike_ii",
+            "phase": "v0.9.5.141_character_position_intelligence",
             "rows": 0,
             "observations": 0,
             "avg_observation_confidence": 0.0,
@@ -3879,17 +3896,21 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
         heatmap = consensus.groupby(["target_field", "target_position"], dropna=False).agg(
             positions=("rank", "count"),
             avg_consensus_confidence=("consensus_confidence", "mean"),
+            avg_vote_consensus=("vote_consensus", "mean"),
+            avg_crop_quality=("crop_quality_avg", "mean"),
+            avg_observation_count=("observation_count", "mean"),
             verified_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).str.contains("verified_expected|verified_observed", regex=True).sum())),
             probable_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_probable").sum())),
             ambiguous_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_ambiguous").sum())),
             unresolved_positions=("consensus_status", lambda values: int(pd.Series(values).astype(str).eq("consensus_unresolved").sum())),
         ).reset_index()
-        heatmap["avg_consensus_confidence"] = pd.to_numeric(heatmap["avg_consensus_confidence"], errors="coerce").fillna(0).round(4)
+        for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality", "avg_observation_count"]:
+            heatmap[col] = pd.to_numeric(heatmap[col], errors="coerce").fillna(0).round(4)
         heatmap["problem_positions"] = heatmap["ambiguous_positions"] + heatmap["unresolved_positions"]
 
     if consensus.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.140_gold_regression_strike_ii",
+            "phase": "v0.9.5.141_character_position_intelligence",
             "rows": 0,
             "observations": int(len(obs)),
             "avg_observation_confidence": round(float(obs["acquisition_observation_confidence"].mean()), 4) if len(obs) else 0.0,
@@ -3903,7 +3924,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
             avg_vote_consensus=("vote_consensus", "mean"),
             avg_crop_quality=("crop_quality_avg", "mean"),
         ).reset_index()
-        summary.insert(0, "phase", "v0.9.5.140_gold_regression_strike_ii")
+        summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
         for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality"]:
             summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
         summary["operational_truth_modified"] = False
@@ -3929,6 +3950,176 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
         detail_out[col] = pd.to_numeric(detail_out[col], errors="coerce").fillna(0)
     detail_out["character_acquisition_operational_truth_modified"] = False
     return summary, consensus, heatmap, detail_out
+
+
+def _position_intelligence_level(risk_score: float) -> str:
+    if risk_score >= 0.70:
+        return "critical"
+    if risk_score >= 0.50:
+        return "weak"
+    if risk_score >= 0.30:
+        return "watch"
+    return "stable"
+
+
+def _position_intelligence_action(level: str, problem_positions: int, avg_confidence: float) -> str:
+    if level == "critical":
+        return "forced_position_acquisition"
+    if level == "weak":
+        return "position_adaptive_multicrop_retry"
+    if level == "watch" or problem_positions > 0 or avg_confidence < 0.70:
+        return "watch_position_collect_extra_evidence"
+    return "standard_acquisition"
+
+
+def _build_character_position_intelligence_report(
+    acquisition_rows: pd.DataFrame,
+    acquisition_heatmap: pd.DataFrame,
+    detail: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.141 Character Position Intelligence reports.
+
+    This layer turns Character Acquisition heatmap data into actionable,
+    position-specific intelligence. It does not mutate OCR output, Ground Truth,
+    exports, snapshots, or Operational Truth. Its functional output is consumed
+    by the Evidence Scheduler as an accuracy-first hint: weak positions are
+    scheduled for stronger evidence collection instead of being treated like an
+    entire bad name.
+    """
+    empty_position_cols = [
+        "phase", "target_field", "target_position", "positions", "verified_positions",
+        "probable_positions", "ambiguous_positions", "unresolved_positions", "problem_positions",
+        "problem_ratio", "avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality",
+        "avg_observation_count", "position_risk_score", "position_intelligence_level",
+        "position_intelligence_action", "position_intelligence_reason",
+        "character_position_operational_truth_modified",
+    ]
+    empty_row_cols = [
+        "server", "rank", "expected_name", "ocr_name", "expected_alliance_display", "ocr_alliance_display",
+        "character_position_max_risk", "character_position_critical_positions", "character_position_weak_positions",
+        "character_position_watch_positions", "character_position_action", "character_position_reason",
+        "character_position_focus", "character_position_operational_truth_modified",
+    ]
+    if acquisition_heatmap.empty:
+        summary = pd.DataFrame([{
+            "phase": "v0.9.5.141_character_position_intelligence",
+            "positions": 0,
+            "critical_positions": 0,
+            "weak_positions": 0,
+            "watch_positions": 0,
+            "stable_positions": 0,
+            "operational_truth_modified": False,
+        }])
+        return summary, pd.DataFrame(columns=empty_position_cols), pd.DataFrame(columns=empty_row_cols), detail
+
+    positions = acquisition_heatmap.copy()
+    for col in ["positions", "verified_positions", "probable_positions", "ambiguous_positions", "unresolved_positions", "problem_positions"]:
+        if col not in positions.columns:
+            positions[col] = 0
+        positions[col] = pd.to_numeric(positions[col], errors="coerce").fillna(0)
+    for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality"]:
+        if col not in positions.columns:
+            positions[col] = 0.0
+        positions[col] = pd.to_numeric(positions[col], errors="coerce").fillna(0.0)
+    if "avg_observation_count" not in positions.columns:
+        positions["avg_observation_count"] = 1.0
+    positions["avg_observation_count"] = pd.to_numeric(positions["avg_observation_count"], errors="coerce").fillna(1.0)
+    positions["problem_ratio"] = (positions["problem_positions"] / positions["positions"].replace(0, 1)).round(4)
+    # Risk is deliberately explainable: unresolved/ambiguous positions, weak confidence,
+    # weak crop quality, and single-observation evidence are all bad for Gold Accuracy.
+    positions["position_risk_score"] = (
+        (positions["problem_ratio"] * 0.35)
+        + ((1 - positions["avg_consensus_confidence"].clip(0, 1)) * 0.30)
+        + ((1 - positions["avg_crop_quality"].clip(0, 1)) * 0.20)
+        + ((positions["avg_observation_count"].le(1).astype(float)) * 0.15)
+    ).clip(0, 1).round(4)
+    positions["position_intelligence_level"] = positions["position_risk_score"].apply(_position_intelligence_level)
+    positions["position_intelligence_action"] = positions.apply(
+        lambda r: _position_intelligence_action(
+            str(r.get("position_intelligence_level", "stable")),
+            int(r.get("problem_positions", 0) or 0),
+            float(r.get("avg_consensus_confidence", 0.0) or 0.0),
+        ),
+        axis=1,
+    )
+    positions["position_intelligence_reason"] = positions.apply(
+        lambda r: ";".join(filter(None, [
+            "low_consensus_confidence" if float(r.get("avg_consensus_confidence", 0) or 0) < 0.70 else "",
+            "problem_positions_present" if int(r.get("problem_positions", 0) or 0) > 0 else "",
+            "weak_crop_quality" if float(r.get("avg_crop_quality", 0) or 0) < 0.70 else "",
+            "single_observation_only" if float(r.get("avg_observation_count", 1) or 1) <= 1 else "",
+        ])) or "position_stable",
+        axis=1,
+    )
+    positions.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
+    positions["character_position_operational_truth_modified"] = False
+
+    summary = positions.groupby(["target_field", "position_intelligence_level", "position_intelligence_action"], dropna=False).agg(
+        positions=("target_position", "count"),
+        avg_position_risk=("position_risk_score", "mean"),
+        avg_consensus_confidence=("avg_consensus_confidence", "mean"),
+        problem_positions=("problem_positions", "sum"),
+    ).reset_index()
+    summary.insert(0, "phase", "v0.9.5.141_character_position_intelligence")
+    for col in ["avg_position_risk", "avg_consensus_confidence"]:
+        summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
+    summary["operational_truth_modified"] = False
+
+    detail_out = detail.copy()
+    if acquisition_rows.empty:
+        row_actions = pd.DataFrame(columns=empty_row_cols)
+    else:
+        join_cols = ["target_field", "target_position", "position_risk_score", "position_intelligence_level", "position_intelligence_action", "position_intelligence_reason"]
+        rows = acquisition_rows.merge(positions[join_cols], on=["target_field", "target_position"], how="left")
+        rows["position_risk_score"] = pd.to_numeric(rows["position_risk_score"], errors="coerce").fillna(0.0)
+        def _row_action(group: pd.DataFrame) -> pd.Series:
+            levels = group.get("position_intelligence_level", pd.Series(dtype=str)).astype(str).tolist()
+            actions = group.get("position_intelligence_action", pd.Series(dtype=str)).astype(str).tolist()
+            risks = pd.to_numeric(group.get("position_risk_score", pd.Series(dtype=float)), errors="coerce").fillna(0.0)
+            focus = []
+            for _, gr in group.sort_values("position_risk_score", ascending=False).head(5).iterrows():
+                focus.append(f"{gr.get('target_field')}[{gr.get('target_position')}]:{gr.get('position_intelligence_level')}:{float(gr.get('position_risk_score') or 0):.2f}")
+            if "critical" in levels:
+                action = "forced_position_acquisition"
+            elif "weak" in levels:
+                action = "position_adaptive_multicrop_retry"
+            elif "watch" in levels:
+                action = "watch_position_collect_extra_evidence"
+            else:
+                action = "standard_acquisition"
+            return pd.Series({
+                "character_position_max_risk": round(float(risks.max() if len(risks) else 0.0), 4),
+                "character_position_critical_positions": int(levels.count("critical")),
+                "character_position_weak_positions": int(levels.count("weak")),
+                "character_position_watch_positions": int(levels.count("watch")),
+                "character_position_action": action,
+                "character_position_reason": ";".join(sorted(set(a for a in actions if a))) or "standard_acquisition",
+                "character_position_focus": " | ".join(focus),
+                "character_position_operational_truth_modified": False,
+            })
+        row_actions = rows.groupby(["server", "rank"], dropna=False).apply(_row_action, include_groups=False).reset_index()
+        keep = ["server", "rank", "expected_name", "ocr_name", "expected_alliance_display", "ocr_alliance_display"]
+        base = detail[[c for c in keep if c in detail.columns]].copy()
+        row_actions = row_actions.merge(base, on=["server", "rank"], how="left")
+        ordered = [c for c in empty_row_cols if c in row_actions.columns]
+        row_actions = row_actions[ordered]
+        detail_out = detail_out.merge(row_actions[[c for c in row_actions.columns if c in ["server", "rank"] or c.startswith("character_position_")]], on=["server", "rank"], how="left")
+
+    for col, default in {
+        "character_position_max_risk": 0.0,
+        "character_position_critical_positions": 0,
+        "character_position_weak_positions": 0,
+        "character_position_watch_positions": 0,
+        "character_position_action": "standard_acquisition",
+        "character_position_reason": "standard_acquisition",
+        "character_position_focus": "",
+        "character_position_operational_truth_modified": False,
+    }.items():
+        if col not in detail_out.columns:
+            detail_out[col] = default
+        else:
+            detail_out[col] = detail_out[col].fillna(default)
+    return summary, positions, row_actions, detail_out
 
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
@@ -4197,7 +4388,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "avg_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
         "max_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).max()), 4) if len(detail) else 0.0,
         "operational_truth_modified": False,
-        "phase": "v0.9.5.140_gold_regression_strike_ii",
+        "phase": "v0.9.5.141_character_position_intelligence",
     }])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
@@ -4226,6 +4417,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
     character_acquisition_summary, character_acquisition_rows, character_acquisition_heatmap, detail = _build_character_acquisition_report(detail, character_reocr_debug)
+    character_position_summary, character_position_rows, character_position_rank_rows, detail = _build_character_position_intelligence_report(character_acquisition_rows, character_acquisition_heatmap, detail)
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
@@ -4278,6 +4470,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_acquisition_summary": character_acquisition_summary.to_dict(orient="records"),
         "character_acquisition_rows": character_acquisition_rows.to_dict(orient="records"),
         "character_acquisition_heatmap": character_acquisition_heatmap.to_dict(orient="records"),
+        "character_position_summary": character_position_summary.to_dict(orient="records"),
+        "character_position_rows": character_position_rows.to_dict(orient="records"),
+        "character_position_rank_rows": character_position_rank_rows.to_dict(orient="records"),
         "ocr_evidence_summary": ocr_evidence_payload.get("summary", {}),
         "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
         "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
@@ -4295,6 +4490,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     reocr_debug_json_path.write_text(json.dumps({"summary": character_reocr_debug_summary.to_dict(orient="records"), "details": character_reocr_debug.to_dict(orient="records")}, ensure_ascii=False, indent=2), encoding="utf-8")
     character_acquisition_json_path = output_dir / "character_acquisition_report.json"
     character_acquisition_json_path.write_text(json.dumps(_json_safe({"summary": character_acquisition_summary.to_dict(orient="records"), "details": character_acquisition_rows.to_dict(orient="records"), "heatmap": character_acquisition_heatmap.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    character_position_json_path = output_dir / "character_position_intelligence_report.json"
+    character_position_json_path.write_text(json.dumps(_json_safe({"summary": character_position_summary.to_dict(orient="records"), "positions": character_position_rows.to_dict(orient="records"), "rank_actions": character_position_rank_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -4366,6 +4563,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_acquisition_summary).to_excel(writer, sheet_name="char_acq_summary", index=False)
         _sanitize_frame(character_acquisition_rows).to_excel(writer, sheet_name="char_acq_rows", index=False)
         _sanitize_frame(character_acquisition_heatmap).to_excel(writer, sheet_name="char_acq_heatmap", index=False)
+        _sanitize_frame(character_position_summary).to_excel(writer, sheet_name="char_pos_summary", index=False)
+        _sanitize_frame(character_position_rows).to_excel(writer, sheet_name="char_pos_positions", index=False)
+        _sanitize_frame(character_position_rank_rows).to_excel(writer, sheet_name="char_pos_rank", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="ocr_evidence_status", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="ocr_evidence_rows", index=False)
@@ -4383,6 +4583,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_acquisition_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(character_acquisition_rows).to_excel(writer, sheet_name="details", index=False)
         _sanitize_frame(character_acquisition_heatmap).to_excel(writer, sheet_name="heatmap", index=False)
+
+    character_position_xlsx_path = output_dir / "character_position_intelligence_report.xlsx"
+    with pd.ExcelWriter(character_position_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(character_position_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(character_position_rows).to_excel(writer, sheet_name="positions", index=False)
+        _sanitize_frame(character_position_rank_rows).to_excel(writer, sheet_name="rank_actions", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -4449,6 +4655,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
     print(f"Character Acquisition JSON:   {character_acquisition_json_path}")
     print(f"Character Acquisition Excel:  {character_acquisition_xlsx_path}")
+    print(f"Character Position JSON:      {character_position_json_path}")
+    print(f"Character Position Excel:     {character_position_xlsx_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
     print(f"Evidence Confidence JSON:      {evidence_confidence_json_path}")
