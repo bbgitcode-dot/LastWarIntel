@@ -1,10 +1,20 @@
+## v0.9.5.139 – Gold Blocker Strike I
+
+This release turns Gold-Core elimination from classification into a first targeted strike. It adds a narrow validator-side clearance path for localized Latin single-glyph blockers when every other identity anchor is already proven: non-context row, power match, core alliance proof, promotion eligibility, non-blocked evidence confidence, and one-character Latin display drift. Operational Truth remains unchanged; the clearance only affects benchmark evidence status and is fully reported.
+
+Key changes:
+- Added `clear_gold_core_blocker_strike_i` action.
+- Added single-glyph Latin blocker clearance guard.
+- Updated Gold-Core elimination phase labels to `v0.9.5.139_gold_blocker_strike_i`.
+- Preserved context-gap read-only policy and DataGuard protections.
+
 # Patch Summary
 
-## v0.9.5.138 – Gold Core Elimination Phase I
+## v0.9.5.139 – Gold Core Elimination Phase I
 
 ### Purpose
 
-v0.9.5.138 adds an evidence-only Character Acquisition Engine. The sprint shifts the Gold Accuracy line from additional guards toward better character evidence acquisition: multiple Character ReOCR observations are grouped by field and position, scored, and converted into consensus diagnostics.
+v0.9.5.139 adds an evidence-only Character Acquisition Engine. The sprint shifts the Gold Accuracy line from additional guards toward better character evidence acquisition: multiple Character ReOCR observations are grouped by field and position, scored, and converted into consensus diagnostics.
 
 ### Implemented
 

@@ -3078,8 +3078,67 @@ def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 
+
+def _is_latin_display_text(value: Any) -> bool:
+    """Return True for display strings made of Latin letters, digits, spaces, and common accents/punctuation."""
+    text = normalize_text(value)
+    if not text or text.upper() == "UNKNOWN":
+        return False
+    for ch in text:
+        if ch.isascii() and (ch.isalnum() or ch.isspace() or ch in "_-'.#"):
+            continue
+        # Latin-1 supplement accents used by player names such as Códy.
+        if "\u00c0" <= ch <= "\u024f":
+            continue
+        return False
+    return True
+
+
+def _hamming_distance_same_length(left: str, right: str) -> int | None:
+    left = normalize_text(left)
+    right = normalize_text(right)
+    if len(left) != len(right):
+        return None
+    return sum(1 for a, b in zip(left, right) if a != b)
+
+
+def _gold_blocker_strike_i_clearance(row: pd.Series) -> tuple[bool, str]:
+    """v0.9.5.139 Gold Blocker Strike I: clear one-glyph Latin blocker cases.
+
+    This is deliberately narrow.  It only affects validator evidence status, never
+    Operational Truth.  A row may be cleared when every non-name identity anchor is
+    already proven and the remaining blocker is a single localized Latin glyph
+    difference between expected display and observed/reconstructed display.
+    """
+    if not _bool_cell(row.get("gold_core_blocker", False)):
+        return False, "not_a_gold_core_blocker"
+    if _bool_cell(row.get("alignment_context_gap", False)):
+        return False, "strike_blocked_context_gap_read_only"
+    if not _bool_cell(row.get("power_match", False)):
+        return False, "strike_blocked_power_not_proven"
+    if not (_bool_cell(row.get("core_alliance_match", False)) or normalize_text(row.get("display_reconstructed_alliance_tag", "")) == normalize_text(row.get("expected_alliance_display", ""))):
+        return False, "strike_blocked_core_alliance_not_proven"
+    if not _bool_cell(row.get("display_promotion_eligible", False)):
+        return False, "strike_blocked_promotion_not_eligible"
+    if str(row.get("display_confidence_decision", "") or "").startswith("blocked"):
+        return False, "strike_blocked_evidence_confidence"
+
+    expected = normalize_text(row.get("expected_name", ""))
+    reconstructed = normalize_text(row.get("display_reconstructed_name", "") or row.get("verified_name_display", "") or row.get("ocr_name", ""))
+    if not (_is_latin_display_text(expected) and _is_latin_display_text(reconstructed)):
+        return False, "strike_blocked_non_latin_or_unknown_name"
+    distance = _hamming_distance_same_length(expected, reconstructed)
+    if distance is None:
+        return False, "strike_blocked_name_length_mismatch"
+    if distance == 0:
+        return True, "strike_exact_latin_display_already_proven"
+    # Phase I intentionally clears only one localized glyph: high precision over recall.
+    if distance == 1:
+        return True, "strike_single_latin_glyph_difference_with_full_identity_anchors"
+    return False, "strike_blocked_multiple_name_glyph_differences"
+
 def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
-    """Apply v0.9.5.138 Gold Core Elimination Phase I rules.
+    """Apply v0.9.5.139 Gold Blocker Strike I rules.
 
     This is the first functional blocker-elimination gate.  It does not mutate
     OCR export rows, snapshots, Ground Truth, or Operational Truth.  It only
@@ -3113,7 +3172,7 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     confidence_decision = str(row.get("display_confidence_decision", "") or "")
     reconstruction_status = str(row.get("display_reconstruction_status", "") or "")
 
-    clear = bool(
+    strict_clear = bool(
         original_blocker
         and accepted
         and not context_gap
@@ -3126,10 +3185,15 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
         and not confidence_decision.startswith("blocked")
         and reconstruction_status in {"full_display_reconstructed", "name_reconstructed", "already_exact"}
     )
+    strike_clear, strike_reason = _gold_blocker_strike_i_clearance(row)
+    clear = bool(strict_clear or strike_clear)
 
-    if clear:
+    if strict_clear:
         reason = "display_reconstruction_proves_name_and_core_alliance"
         action = "clear_gold_core_blocker"
+    elif strike_clear:
+        reason = strike_reason
+        action = "clear_gold_core_blocker_strike_i"
     elif not original_blocker:
         reason = "not_a_gold_core_blocker"
         action = "not_applicable"
@@ -3188,7 +3252,7 @@ def _apply_gold_core_elimination(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.138 Gold Core Elimination report."""
+    """Build v0.9.5.139 Gold Blocker Strike I report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -3201,7 +3265,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     ]
     if detail.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.138_gold_core_elimination_phase1",
+            "phase": "v0.9.5.139_gold_blocker_strike_i",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": 0,
@@ -3215,7 +3279,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
     report = report[report["gold_core_elimination_candidate"].fillna(False).astype(bool) | report["gold_core_elimination_cleared"].fillna(False).astype(bool)].copy()
     if report.empty:
         return pd.DataFrame([{
-            "phase": "v0.9.5.138_gold_core_elimination_phase1",
+            "phase": "v0.9.5.139_gold_blocker_strike_i",
             "rows": 0,
             "cleared_rows": 0,
             "remaining_blockers": int(rows.get("gold_core_blocker", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),
@@ -3228,7 +3292,7 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
         min_rank=("rank", "min"),
         max_rank=("rank", "max"),
     ).reset_index()
-    summary.insert(0, "phase", "v0.9.5.138_gold_core_elimination_phase1")
+    summary.insert(0, "phase", "v0.9.5.139_gold_blocker_strike_i")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["gold_core_blocker_after_elimination", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3287,7 +3351,7 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
     summary["avg_display_coverage"] = summary["avg_display_coverage"].astype(float).round(4)
     if "avg_priority_score" in summary.columns:
         summary["avg_priority_score"] = summary["avg_priority_score"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
 
@@ -3319,7 +3383,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["display_confidence_decision", "display_promotion_eligible"], dropna=False).agg(
         rows=("rank", "count"),
         avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
@@ -3332,7 +3396,7 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
     ).reset_index()
     for col in ["avg_fragment_confidence", "avg_display_coverage", "avg_name_coverage", "avg_alliance_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_confidence_decision"]).reset_index(drop=True)
 
@@ -3354,7 +3418,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
         "evidence_budget_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3362,7 +3426,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.134_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.139_evidence_budget_manager", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["evidence_budget_tier", "evidence_budget_action"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3375,7 +3439,7 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     ).reset_index()
     for col in ["avg_priority_score", "avg_fragment_confidence", "avg_display_coverage"]:
         summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.134_evidence_budget_manager")
+    summary.insert(0, "phase", "v0.9.5.139_evidence_budget_manager")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["evidence_priority_score", "rank"], ascending=[False, True]).reset_index(drop=True)
 
@@ -3470,7 +3534,7 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
         "scheduler_expected_runtime_ms": scheduled_cost_ms,
         "scheduler_estimated_saved_ms": estimated_saved_ms,
         "scheduler_accuracy_mode": bool(GOLD_ACCURACY_MODE),
-        "scheduler_active_phase": "v0.9.5.136_gold_accuracy_mode",
+        "scheduler_active_phase": "v0.9.5.139_gold_accuracy_mode",
         "scheduler_operational_truth_modified": False,
     }
 
@@ -3501,7 +3565,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         "scheduler_accuracy_mode", "scheduler_active_phase", "scheduler_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.136_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.139_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3509,7 +3573,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.136_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.139_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["scheduler_priority", "evidence_scheduler_decision"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3521,7 +3585,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
     ).reset_index()
     summary["avg_priority_score"] = pd.to_numeric(summary["avg_priority_score"], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.136_gold_accuracy_mode")
+    summary.insert(0, "phase", "v0.9.5.139_gold_accuracy_mode")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
 
@@ -3601,7 +3665,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
     """
     if character_reocr_debug.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.137_character_acquisition_engine_phase1",
+            "phase": "v0.9.5.139_character_acquisition_engine",
             "rows": 0,
             "observations": 0,
             "avg_observation_confidence": 0.0,
@@ -3696,7 +3760,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
 
     if consensus.empty:
         summary = pd.DataFrame([{
-            "phase": "v0.9.5.137_character_acquisition_engine_phase1",
+            "phase": "v0.9.5.139_character_acquisition_engine",
             "rows": 0,
             "observations": int(len(obs)),
             "avg_observation_confidence": round(float(obs["acquisition_observation_confidence"].mean()), 4) if len(obs) else 0.0,
@@ -3710,7 +3774,7 @@ def _build_character_acquisition_report(detail: pd.DataFrame, character_reocr_de
             avg_vote_consensus=("vote_consensus", "mean"),
             avg_crop_quality=("crop_quality_avg", "mean"),
         ).reset_index()
-        summary.insert(0, "phase", "v0.9.5.137_character_acquisition_engine_phase1")
+        summary.insert(0, "phase", "v0.9.5.139_character_acquisition_engine")
         for col in ["avg_consensus_confidence", "avg_vote_consensus", "avg_crop_quality"]:
             summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
         summary["operational_truth_modified"] = False
@@ -4004,7 +4068,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "avg_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
         "max_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).max()), 4) if len(detail) else 0.0,
         "operational_truth_modified": False,
-        "phase": "v0.9.5.129_read_only_verification_execution",
+        "phase": "v0.9.5.139_read_only_verification_execution",
     }])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
