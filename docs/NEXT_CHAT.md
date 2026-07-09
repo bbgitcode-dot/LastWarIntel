@@ -16,7 +16,7 @@ Arbeite nach unserem Modus Operandi:
 - DataGuard und Ranking Guard haben Vorrang vor OCR-Optimismus;
 - Gold Accuracy hat Vorrang vor Runtime.
 
-Aktuelle Basis ist Sentinel_v0.9.5.137.zip.
+Aktuelle Basis ist Sentinel_v0.9.5.138.zip.
 Bitte lies zuerst /docs/PROJECT_STATUS.md, /docs/ROAD_TO_V1.md, /docs/MODUS_OPERANDI.md, /docs/SENTINEL_DATA_GUARD.md, /docs/LESSONS_LEARNED.md und /docs/PATCH_SUMMARY.md.
 
 Nächster empfohlener Sprint ist v0.9.5.138 – Multi-Crop Consensus.
@@ -25,7 +25,7 @@ Ziel: die Character Acquisition Engine nutzen, um pro schwacher Zeichenposition 
 
 ## Current release
 
-- Current release: `v0.9.5.137 Character Acquisition Engine Phase I`
+- Current release: `v0.9.5.138 Gold Core Elimination Phase I`
 - Functional baseline: `v0.9.5.136 Gold Accuracy Mode`
 - Next recommended sprint: `v0.9.5.138 Multi-Crop Consensus`
 

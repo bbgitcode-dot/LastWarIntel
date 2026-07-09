@@ -1671,6 +1671,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     detail, context_inferences = apply_contextual_inference(detail)
     detail = _apply_alignment_guard(detail)
     detail = _apply_display_reconstruction(detail)
+    detail = _apply_gold_core_elimination(detail)
     total = len(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     valid_detail = detail[detail["valid_match"]]
@@ -3076,6 +3077,161 @@ def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([detail, reconstructed], axis=1)
 
 
+
+def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
+    """Apply v0.9.5.138 Gold Core Elimination Phase I rules.
+
+    This is the first functional blocker-elimination gate.  It does not mutate
+    OCR export rows, snapshots, Ground Truth, or Operational Truth.  It only
+    upgrades the validator's *evidence assessment* when a current-screenshot
+    display reconstruction is strong enough to prove Core Identity.
+
+    Guardrails:
+    - context-gap inferences remain read-only and cannot clear blockers;
+    - observed/unresolved evidence cannot clear blockers;
+    - full display promotion must already be eligible;
+    - name evidence must resolve the expected display name exactly;
+    - alliance evidence must either resolve the expected display tag exactly or
+      Core Alliance must already be proven by normalized same-snapshot evidence.
+    """
+    original_blocker = _bool_cell(row.get("gold_core_blocker", False))
+    accepted = str(row.get("match_method", "") or "") not in {"missing", "blocked_rank_fallback"} and not _bool_cell(row.get("bad_match", False))
+    context_gap = _bool_cell(row.get("alignment_context_gap", False))
+    power_match = _bool_cell(row.get("power_match", False))
+    promotion_eligible = _bool_cell(row.get("display_promotion_eligible", False))
+
+    expected_name = normalize_text(row.get("expected_name", ""))
+    expected_tag = normalize_text(row.get("expected_alliance_display", ""))
+    reconstructed_name = normalize_text(row.get("display_reconstructed_name", ""))
+    reconstructed_tag = normalize_text(row.get("display_reconstructed_alliance_tag", ""))
+
+    name_exact = bool(expected_name and reconstructed_name == expected_name)
+    tag_exact = bool((not expected_tag and not reconstructed_tag) or (expected_tag and reconstructed_tag == expected_tag))
+    core_alliance = bool(tag_exact or _bool_cell(row.get("core_alliance_match", False)))
+    unresolved = _int_cell(row.get("display_reconstruction_unresolved_targets", 0))
+    observed_votes = _int_cell(row.get("display_reconstruction_observed_votes", 0))
+    confidence_decision = str(row.get("display_confidence_decision", "") or "")
+    reconstruction_status = str(row.get("display_reconstruction_status", "") or "")
+
+    clear = bool(
+        original_blocker
+        and accepted
+        and not context_gap
+        and power_match
+        and promotion_eligible
+        and name_exact
+        and core_alliance
+        and unresolved == 0
+        and observed_votes == 0
+        and not confidence_decision.startswith("blocked")
+        and reconstruction_status in {"full_display_reconstructed", "name_reconstructed", "already_exact"}
+    )
+
+    if clear:
+        reason = "display_reconstruction_proves_name_and_core_alliance"
+        action = "clear_gold_core_blocker"
+    elif not original_blocker:
+        reason = "not_a_gold_core_blocker"
+        action = "not_applicable"
+    elif context_gap:
+        reason = "blocked_context_gap_read_only"
+        action = "keep_blocked"
+    elif not promotion_eligible:
+        reason = f"blocked_promotion_guard:{row.get('display_promotion_block_reason', '')}"
+        action = "keep_blocked"
+    elif not name_exact:
+        reason = "blocked_name_not_reconstructed_to_expected"
+        action = "keep_blocked"
+    elif not core_alliance:
+        reason = "blocked_core_alliance_not_proven"
+        action = "keep_blocked"
+    elif unresolved or observed_votes:
+        reason = "blocked_unresolved_or_observed_character_evidence"
+        action = "keep_blocked"
+    else:
+        reason = "blocked_guardrail_not_satisfied"
+        action = "keep_blocked"
+
+    return {
+        "gold_core_elimination_candidate": bool(original_blocker),
+        "gold_core_elimination_action": action,
+        "gold_core_elimination_reason": reason,
+        "gold_core_elimination_cleared": clear,
+        "gold_core_blocker_before_elimination": original_blocker,
+        "gold_core_blocker_after_elimination": bool(original_blocker and not clear),
+        "gold_core_elimination_operational_truth_modified": False,
+    }
+
+
+def _apply_gold_core_elimination(detail: pd.DataFrame) -> pd.DataFrame:
+    """Attach and apply v0.9.5.138 evidence-only Gold Core elimination.
+
+    The validator's Core Identity metrics are allowed to use proven evidence;
+    Operational Truth is not.  Cleared rows are marked as verified_core_identity
+    for benchmark purposes only, with explicit elimination metadata preserved.
+    """
+    if detail.empty:
+        return detail
+    decisions = detail.apply(_gold_core_elimination_decision, axis=1, result_type="expand")
+    out = pd.concat([detail, decisions], axis=1)
+    cleared = out["gold_core_elimination_cleared"].fillna(False).astype(bool)
+    if cleared.any():
+        out.loc[cleared, "verified_core_identity_match"] = True
+        out.loc[cleared, "verified_core_identity_resolution"] = True
+        out.loc[cleared, "gold_core_blocker"] = False
+        out.loc[cleared, "identity_policy_class"] = "gold_core_eliminated_display_reconstruction"
+        # Preserve Full Gold strictness unless exact identity was already proven.
+        out.loc[cleared, "identity_risk_reasons"] = out.loc[cleared, "identity_risk_reasons"].astype(str).apply(
+            lambda value: ";".join(dict.fromkeys([part for part in (value + ";gold_core_eliminated_display_reconstruction").split(";") if part]))
+        )
+    return out
+
+
+def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.138 Gold Core Elimination report."""
+    cols = [
+        "server", "rank", "expected_alliance_display", "ocr_alliance_display",
+        "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
+        "display_reconstruction_status", "display_reconstructed_name", "display_reconstructed_alliance_tag",
+        "display_promotion_eligible", "display_promotion_block_reason", "display_confidence_decision",
+        "gold_core_blocker_before_elimination", "gold_core_blocker_after_elimination",
+        "gold_core_elimination_candidate", "gold_core_elimination_action", "gold_core_elimination_reason",
+        "gold_core_elimination_cleared", "verified_core_identity_match", "identity_policy_class",
+        "power_match", "core_alliance_match", "alignment_context_gap", "gold_core_elimination_operational_truth_modified",
+    ]
+    if detail.empty:
+        return pd.DataFrame([{
+            "phase": "v0.9.5.138_gold_core_elimination_phase1",
+            "rows": 0,
+            "cleared_rows": 0,
+            "remaining_blockers": 0,
+            "operational_truth_modified": False,
+        }]), pd.DataFrame(columns=cols)
+    rows = detail.copy()
+    for col in cols:
+        if col not in rows.columns:
+            rows[col] = ""
+    report = rows[cols].copy()
+    report = report[report["gold_core_elimination_candidate"].fillna(False).astype(bool) | report["gold_core_elimination_cleared"].fillna(False).astype(bool)].copy()
+    if report.empty:
+        return pd.DataFrame([{
+            "phase": "v0.9.5.138_gold_core_elimination_phase1",
+            "rows": 0,
+            "cleared_rows": 0,
+            "remaining_blockers": int(rows.get("gold_core_blocker", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),
+            "operational_truth_modified": False,
+        }]), report
+    summary = report.groupby(["gold_core_elimination_action", "gold_core_elimination_reason"], dropna=False).agg(
+        rows=("rank", "count"),
+        cleared_rows=("gold_core_elimination_cleared", "sum"),
+        remaining_blockers=("gold_core_blocker_after_elimination", "sum"),
+        min_rank=("rank", "min"),
+        max_rank=("rank", "max"),
+    ).reset_index()
+    summary.insert(0, "phase", "v0.9.5.138_gold_core_elimination_phase1")
+    summary["operational_truth_modified"] = False
+    return summary, report.sort_values(["gold_core_blocker_after_elimination", "rank"], ascending=[False, True]).reset_index(drop=True)
+
 def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build v0.9.5.134 guarded Display Reconstruction + Evidence Budget report."""
     cols = [
@@ -3883,6 +4039,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
     evidence_budget_summary, evidence_budget_rows = _build_evidence_budget_report(detail)
     evidence_scheduler_summary, evidence_scheduler_rows = _build_evidence_scheduler_report(detail)
+    gold_core_elimination_summary, gold_core_elimination_rows = _build_gold_core_elimination_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
@@ -3901,6 +4058,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "gold_core_blockers": gold_core_blocker_report.to_dict(orient="records"),
         "gold_core_resolution_summary": gold_core_resolution_summary.to_dict(orient="records"),
         "gold_core_resolution_plan": gold_core_resolution_plan.to_dict(orient="records"),
+        "gold_core_elimination_summary": gold_core_elimination_summary.to_dict(orient="records"),
+        "gold_core_elimination_rows": gold_core_elimination_rows.to_dict(orient="records"),
         "core_identity_summary": core_identity_summary.to_dict(orient="records"),
         "script_limited_policy_summary": script_limited_policy_summary.to_dict(orient="records"),
         "script_limited_policy_rows": script_limited_policy_detail.to_dict(orient="records"),
@@ -3949,6 +4108,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     gold_core_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_blocker_summary.to_dict(orient="records"), "details": gold_core_blocker_report.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_resolution_json_path = output_dir / "gold_core_resolution_plan_report.json"
     gold_core_resolution_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_resolution_summary.to_dict(orient="records"), "details": gold_core_resolution_plan.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    gold_core_elimination_json_path = output_dir / "gold_core_elimination_report.json"
+    gold_core_elimination_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_elimination_summary.to_dict(orient="records"), "details": gold_core_elimination_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     alignment_intelligence_json_path = output_dir / "alignment_intelligence_report.json"
     alignment_intelligence_json_path.write_text(json.dumps(_json_safe({"summary": alignment_intelligence_summary.to_dict(orient="records"), "details": alignment_intelligence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     display_reconstruction_json_path = output_dir / "display_reconstruction_report.json"
@@ -3987,6 +4148,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(gold_core_blocker_report).to_excel(writer, sheet_name="gold_core_blockers", index=False)
         _sanitize_frame(gold_core_resolution_summary).to_excel(writer, sheet_name="gold_core_plan", index=False)
         _sanitize_frame(gold_core_resolution_plan).to_excel(writer, sheet_name="gold_core_plan_rows", index=False)
+        _sanitize_frame(gold_core_elimination_summary).to_excel(writer, sheet_name="gold_core_elim", index=False)
+        _sanitize_frame(gold_core_elimination_rows).to_excel(writer, sheet_name="gold_core_elim_rows", index=False)
         _sanitize_frame(core_identity_summary).to_excel(writer, sheet_name="core_identity", index=False)
         _sanitize_frame(core_identity_detail).to_excel(writer, sheet_name="core_identity_rows", index=False)
         _sanitize_frame(script_limited_policy_summary).to_excel(writer, sheet_name="script_policy", index=False)
@@ -4034,6 +4197,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="status_summary", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="rows", index=False)
         _sanitize_frame(ocr_evidence_fragments).to_excel(writer, sheet_name="fragments", index=False)
+
+    gold_core_elimination_xlsx_path = output_dir / "gold_core_elimination_report.xlsx"
+    with pd.ExcelWriter(gold_core_elimination_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(gold_core_elimination_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(gold_core_elimination_rows).to_excel(writer, sheet_name="details", index=False)
 
     gold_core_resolution_xlsx_path = output_dir / "gold_core_resolution_plan_report.xlsx"
     with pd.ExcelWriter(gold_core_resolution_xlsx_path, engine="openpyxl") as writer:

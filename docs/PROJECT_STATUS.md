@@ -1,6 +1,6 @@
-# Project Status – Sentinel v0.9.5.137
+# Project Status – Sentinel v0.9.5.138
 
-**Current release:** v0.9.5.137 Character Acquisition Engine Phase I  
+**Current release:** v0.9.5.138 Gold Core Elimination Phase I  
 **Functional baseline:** v0.9.5.136 Gold Accuracy Mode  
 **Sprint posture:** Gold Accuracy / evidence acquisition over runtime optimization
 
@@ -8,9 +8,9 @@
 
 Sentinel's structural identity pipeline is stable: Ranking Guard, Data Guard, Gap Recovery, Alignment Intelligence, Display Reconstruction, Promotion Guard and the Evidence Scheduler are mature enough that the next quality gains come from better character evidence acquisition, not more global scheduling or promotion logic.
 
-## What v0.9.5.137 adds
+## What v0.9.5.138 adds
 
-- Character Acquisition Engine Phase I.
+- Gold Core Elimination Phase I.
 - `character_acquisition_report.json/xlsx`.
 - Per-observation confidence from OCR confidence, vote consensus, crop quality and target status.
 - Per-position character consensus across observations.
@@ -27,3 +27,10 @@ Sentinel's structural identity pipeline is stable: Ranking Guard, Data Guard, Ga
 ## Next recommended sprint
 
 `v0.9.5.138 – Multi-Crop Consensus` should use the new acquisition report to gather richer observations per weak character position. The objective is to improve the 15 remaining Gold-Core blockers by increasing character evidence quality rather than adding new decision gates.
+
+
+## v0.9.5.138 Functional Outcome
+
+The sprint moves from diagnostics to functional Gold-Core elimination. Sentinel now has an evidence-only gate that can reduce Gold Core blockers when display reconstruction is strong enough to prove Core Identity. The gate updates benchmark validation status only; it does not write to snapshots, exports, Ground Truth, or Operational Truth.
+
+Next work: run Server 551 regression and inspect `gold_core_elimination_report.*` to verify how many of the 15 blockers are actually cleared.

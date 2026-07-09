@@ -1,10 +1,10 @@
 # Release Notes
 
-## v0.9.5.137 – Character Acquisition Engine Phase I
+## v0.9.5.138 – Gold Core Elimination Phase I
 
 ### Purpose
 
-v0.9.5.137 adds an evidence-only Character Acquisition Engine. The sprint shifts the Gold Accuracy line from additional guards toward better character evidence acquisition: multiple Character ReOCR observations are grouped by field and position, scored, and converted into consensus diagnostics.
+v0.9.5.138 adds an evidence-only Character Acquisition Engine. The sprint shifts the Gold Accuracy line from additional guards toward better character evidence acquisition: multiple Character ReOCR observations are grouped by field and position, scored, and converted into consensus diagnostics.
 
 ### Implemented
 

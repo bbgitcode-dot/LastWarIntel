@@ -1,12 +1,5 @@
-version: 0.9.5.137
-title: Character Acquisition Engine Phase I
-commit: feat(character): add acquisition consensus evidence engine
-tag: v0.9.5.137
-base: v0.9.5.136
-notes:
-  - Adds Character Acquisition Engine Phase I as an evidence-only layer.
-  - Builds character_acquisition_report.json/xlsx from Character ReOCR observations.
-  - Computes observation confidence, vote consensus, crop quality and per-position consensus.
-  - Adds character acquisition heatmap for recurring weak character positions.
-  - Attaches acquisition counts and confidence to validation detail rows.
-  - Does not modify Operational Truth, snapshots, exports, Ground Truth or verified display fields.
+version: 0.9.5.138
+sprint: Gold Core Elimination Phase I
+commit: feat(gold-core): implement display-evidence blocker elimination
+tag: v0.9.5.138
+notes: Functional validator sprint. Adds evidence-only Gold Core Elimination rules, report artifacts, and tests. Operational Truth remains locked.

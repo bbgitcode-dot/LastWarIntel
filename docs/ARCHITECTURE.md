@@ -1,6 +1,6 @@
 # Sentinel Architecture
 
-**Current version:** v0.9.5.137
+**Current version:** v0.9.5.138
 
 ## Gold Accuracy Architecture
 
@@ -28,7 +28,7 @@ Reports / Decision Support
 
 ## Character Acquisition Engine
 
-The v0.9.5.137 Character Acquisition Engine converts individual Character ReOCR fragments into scored observations and per-position consensus. It produces:
+The v0.9.5.138 Character Acquisition Engine converts individual Character ReOCR fragments into scored observations and per-position consensus. It produces:
 
 - observation confidence,
 - vote consensus,
@@ -38,3 +38,10 @@ The v0.9.5.137 Character Acquisition Engine converts individual Character ReOCR 
 - row-level acquisition coverage metrics.
 
 This layer is strictly read-only. It does not mutate Operational Truth, snapshots, exports, Ground Truth, or verified display fields. Its purpose is to increase evidence quality for later Gold-Core blocker elimination.
+
+
+## Gold Core Elimination Gate
+
+v0.9.5.138 adds a validator-side elimination gate after Display Reconstruction and before final benchmark summaries. It may mark a Gold Core blocker as cleared only when current-run evidence satisfies strict guardrails: exact reconstructed display name, proven Core Alliance, power match, promotion eligibility, no unresolved/observed character evidence, and no context gap.
+
+This is an Evidence Layer decision. Operational Truth remains unchanged.
