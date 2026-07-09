@@ -172,3 +172,8 @@ Next milestone toward V1:
 This release adds a read-only Evidence Budget Manager for Display Fidelity. The new budget layer scores display reconstruction candidates before future expensive ReOCR work is promoted into the active pipeline. It introduces `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`, and the standalone `evidence_budget_report.json/xlsx`.
 
 The sprint does not change Operational Truth, snapshots, exports, Ground Truth, or DataGuard policy. Its purpose is to make future Character ReOCR investment explainable and selective: high-value candidates can receive full budget, medium candidates receive targeted budget, weak evidence is blocked early or served from cache.
+
+
+## v0.9.5.135 – Evidence Scheduler Phase I
+
+Milestone toward V1: Sentinel now has the first scheduler layer for evidence work. The scheduler is report-only, but it defines how expensive ReOCR work should be prioritized and where early exits are safe. Next steps are runtime enforcement, adaptive retry/crop strategies, and Promotion Engine 2.0.

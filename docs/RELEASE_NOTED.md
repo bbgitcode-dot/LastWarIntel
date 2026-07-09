@@ -50,3 +50,10 @@ Strategic intent: Sentinel now starts converting stored character evidence into 
 - Added read-only fields: `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`.
 - Added budget recommendation layer for future Character ReOCR runtime reduction.
 - Operational Truth remains unchanged.
+
+
+## v0.9.5.135 – Evidence Scheduler Phase I
+
+- Added read-only Evidence Scheduler reports and queue decisions.
+- Converts passive Evidence Budget recommendations into an execution plan.
+- No Operational Truth mutation.

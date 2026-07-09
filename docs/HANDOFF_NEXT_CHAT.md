@@ -133,3 +133,18 @@ Next recommended sprint: `v0.9.5.134 – Crop Geometry Optimizer`.
 
 Next recommended sprint: v0.9.5.135 – Evidence Budget Execution / Runtime Reduction.
 Attach the latest `evidence_budget_report.json/xlsx`, `evidence_confidence_report.json/xlsx`, and runtime reports.
+
+
+## Handoff after v0.9.5.135
+
+Current release: `Sentinel_v0.9.5.135.zip`.
+
+Latest sprint: Evidence Scheduler Phase I.
+
+Start next from `.135` and inspect:
+- `evidence_scheduler_report.json/xlsx`
+- `evidence_budget_report.json/xlsx`
+- `runtime_debug_report.json/xlsx`
+- `display_reconstruction_report.json/xlsx`
+
+Recommended next sprint: `v0.9.5.136 – Active Scheduler Runtime Enforcement`. Goal: make selected scheduler decisions influence Character ReOCR execution while preserving DataGuard and report-only promotion boundaries.

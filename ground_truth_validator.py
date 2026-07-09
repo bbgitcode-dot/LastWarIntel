@@ -2720,6 +2720,12 @@ def _evidence_confidence_summary(items: list[dict[str, Any]], expected_name: str
         display_coverage = round((name_applied + tag_applied) / denom, 4)
     if status == "contextual_display_suggestion":
         confidence_decision = "suggested_contextual"
+    elif status in {"full_display_reconstructed", "name_reconstructed", "alliance_reconstructed"} and not observed_votes and not unresolved and avg_fragment_confidence >= 0.55:
+        # A targeted glyph may reconstruct the exact display while touching only
+        # one or two positions. Do not punish these narrow, high-quality fixes
+        # for low whole-string coverage; the Promotion Guard already blocked
+        # unsafe UNKNOWN bases and unresolved fragments before this layer.
+        confidence_decision = "eligible"
     elif observed_votes or unresolved or avg_fragment_confidence < 0.55 or display_coverage < 0.5:
         confidence_decision = "blocked_low_evidence"
     elif avg_fragment_confidence < 0.72 or display_coverage < 0.8:
@@ -3204,6 +3210,147 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["evidence_priority_score", "rank"], ascending=[False, True]).reset_index(drop=True)
 
+
+
+def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
+    """Compute v0.9.5.135 read-only Evidence Scheduler decision.
+
+    The scheduler turns the v0.9.5.134 Evidence Budget recommendation into an
+    execution-plan decision. Phase I is intentionally conservative and report-only:
+    it does not mutate OCR rows, Character ReOCR evidence, exports, snapshots,
+    Ground Truth, or Operational Truth. It is designed to be moved in front of
+    Character ReOCR in a later runtime sprint.
+    """
+    tier = str(row.get("evidence_budget_tier", "") or "").strip().lower()
+    action = str(row.get("evidence_budget_action", "") or "").strip().lower()
+    decision = str(row.get("display_confidence_decision", "") or "").strip().lower()
+    status = str(row.get("display_reconstruction_status", "") or "").strip().lower()
+    try:
+        priority = float(row.get("evidence_priority_score", 0.0) or 0.0)
+    except Exception:
+        priority = 0.0
+    try:
+        cost_ms = int(float(row.get("evidence_budget_expected_cost_ms", 0) or 0))
+    except Exception:
+        cost_ms = 0
+    try:
+        coverage = float(row.get("display_coverage_score", 0.0) or 0.0)
+    except Exception:
+        coverage = 0.0
+    try:
+        frag_conf = float(row.get("evidence_avg_fragment_confidence", 0.0) or 0.0)
+    except Exception:
+        frag_conf = 0.0
+    unresolved = int(float(row.get("evidence_unresolved_fragments", 0) or 0))
+    observed = int(float(row.get("evidence_observed_fragments", 0) or 0))
+    context_gap = bool(row.get("alignment_context_gap", False))
+    promotion_eligible = bool(row.get("display_promotion_eligible", False))
+
+    if context_gap or tier == "context_evidence_only":
+        scheduler_priority = "evidence_only"
+        scheduler_decision = "skip_reocr_context_only"
+        scheduler_reason = "context_gap_read_only_evidence_is_not_promoted"
+        queue_order = 90
+        scheduled_cost_ms = 0
+        estimated_saved_ms = max(cost_ms, 0)
+    elif action == "block_early_or_reuse_cache" or tier == "low":
+        scheduler_priority = "low"
+        scheduler_decision = "early_exit_cache_only"
+        scheduler_reason = "low_budget_return_or_low_coverage"
+        queue_order = 80
+        scheduled_cost_ms = 0
+        estimated_saved_ms = max(cost_ms, 0)
+    elif promotion_eligible and action == "full_character_reocr_budget" and priority >= 0.70:
+        scheduler_priority = "critical" if priority >= 0.85 else "high"
+        scheduler_decision = "schedule_full_reocr"
+        scheduler_reason = "eligible_high_return_evidence"
+        queue_order = 10 if scheduler_priority == "critical" else 20
+        scheduled_cost_ms = cost_ms or 12000
+        estimated_saved_ms = 0
+    elif action == "targeted_character_reocr_budget" and priority >= 0.58 and unresolved <= 1 and observed == 0:
+        scheduler_priority = "medium"
+        scheduler_decision = "schedule_targeted_reocr"
+        scheduler_reason = "recoverable_targeted_evidence"
+        queue_order = 30
+        scheduled_cost_ms = cost_ms or 6500
+        estimated_saved_ms = 0
+    elif action == "cache_or_limited_retry" and (frag_conf >= 0.72 or coverage >= 0.50):
+        scheduler_priority = "watch"
+        scheduler_decision = "schedule_limited_retry_if_budget_remains"
+        scheduler_reason = "watchlist_evidence_with_limited_retry_value"
+        queue_order = 50
+        scheduled_cost_ms = min(cost_ms or 2500, 2500)
+        estimated_saved_ms = max((cost_ms or 2500) - scheduled_cost_ms, 0)
+    else:
+        scheduler_priority = "low"
+        scheduler_decision = "early_exit_cache_only"
+        scheduler_reason = "insufficient_scheduler_value"
+        queue_order = 80
+        scheduled_cost_ms = 0
+        estimated_saved_ms = max(cost_ms, 0)
+
+    return {
+        "evidence_scheduler_decision": scheduler_decision,
+        "scheduler_priority": scheduler_priority,
+        "scheduler_reason": scheduler_reason,
+        "scheduler_queue_order": queue_order,
+        "scheduler_expected_runtime_ms": scheduled_cost_ms,
+        "scheduler_estimated_saved_ms": estimated_saved_ms,
+        "scheduler_active_phase": "phase1_report_only",
+        "scheduler_operational_truth_modified": False,
+    }
+
+
+def _attach_evidence_scheduler(detail: pd.DataFrame) -> pd.DataFrame:
+    """Attach v0.9.5.135 scheduler decisions to validation detail."""
+    if detail.empty:
+        return detail
+    scheduled = detail.apply(_scheduler_priority_from_budget, axis=1, result_type="expand")
+    return pd.concat([detail, scheduled], axis=1)
+
+
+def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.135 Evidence Scheduler report.
+
+    The scheduler report shows which Evidence Budget candidates should be
+    executed, deferred, or early-exited. It is read-only in Phase I and exists to
+    make the next runtime optimization safe and measurable.
+    """
+    cols = [
+        "server", "rank", "expected_alliance_display", "expected_name", "ocr_alliance_display", "ocr_name",
+        "display_reconstruction_status", "display_confidence_decision", "display_promotion_eligible",
+        "evidence_priority_score", "evidence_budget_tier", "evidence_budget_action", "evidence_budget_reason",
+        "evidence_budget_expected_cost_ms", "evidence_scheduler_decision", "scheduler_priority",
+        "scheduler_reason", "scheduler_queue_order", "scheduler_expected_runtime_ms", "scheduler_estimated_saved_ms",
+        "evidence_avg_fragment_confidence", "display_coverage_score", "evidence_fragments_total",
+        "evidence_unresolved_fragments", "evidence_observed_fragments", "alignment_context_gap", "gold_core_blocker",
+        "scheduler_active_phase", "scheduler_operational_truth_modified",
+    ]
+    if detail.empty:
+        return pd.DataFrame([{"phase": "v0.9.5.135_evidence_scheduler_phase1", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+    rows = detail.copy()
+    for col in cols:
+        if col not in rows.columns:
+            rows[col] = ""
+    report = rows[cols].copy()
+    report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
+    if report.empty:
+        return pd.DataFrame([{"phase": "v0.9.5.135_evidence_scheduler_phase1", "rows": 0, "operational_truth_modified": False}]), report
+    summary = report.groupby(["scheduler_priority", "evidence_scheduler_decision"], dropna=False).agg(
+        rows=("rank", "count"),
+        avg_priority_score=("evidence_priority_score", "mean"),
+        scheduled_runtime_ms=("scheduler_expected_runtime_ms", "sum"),
+        estimated_saved_ms=("scheduler_estimated_saved_ms", "sum"),
+        budget_expected_cost_ms=("evidence_budget_expected_cost_ms", "sum"),
+        promotion_eligible_rows=("display_promotion_eligible", "sum"),
+        context_gap_rows=("alignment_context_gap", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+        gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+    ).reset_index()
+    summary["avg_priority_score"] = pd.to_numeric(summary["avg_priority_score"], errors="coerce").fillna(0).round(4)
+    summary.insert(0, "phase", "v0.9.5.135_evidence_scheduler_phase1")
+    summary["operational_truth_modified"] = False
+    return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
+
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
     evidence_rows: list[dict[str, Any]] = []
@@ -3500,9 +3647,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
+    detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
     evidence_budget_summary, evidence_budget_rows = _build_evidence_budget_report(detail)
+    evidence_scheduler_summary, evidence_scheduler_rows = _build_evidence_scheduler_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
@@ -3551,6 +3700,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "evidence_confidence_rows": evidence_confidence_rows.to_dict(orient="records"),
         "evidence_budget_summary": evidence_budget_summary.to_dict(orient="records"),
         "evidence_budget_rows": evidence_budget_rows.to_dict(orient="records"),
+        "evidence_scheduler_summary": evidence_scheduler_summary.to_dict(orient="records"),
+        "evidence_scheduler_rows": evidence_scheduler_rows.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -3570,6 +3721,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_confidence_json_path.write_text(json.dumps(_json_safe({"summary": evidence_confidence_summary.to_dict(orient="records"), "details": evidence_confidence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     evidence_budget_json_path = output_dir / "evidence_budget_report.json"
     evidence_budget_json_path.write_text(json.dumps(_json_safe({"summary": evidence_budget_summary.to_dict(orient="records"), "details": evidence_budget_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    evidence_scheduler_json_path = output_dir / "evidence_scheduler_report.json"
+    evidence_scheduler_json_path.write_text(json.dumps(_json_safe({"summary": evidence_scheduler_summary.to_dict(orient="records"), "details": evidence_scheduler_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -3614,6 +3767,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_confidence_rows).to_excel(writer, sheet_name="evidence_conf_rows", index=False)
         _sanitize_frame(evidence_budget_summary).to_excel(writer, sheet_name="evidence_budget", index=False)
         _sanitize_frame(evidence_budget_rows).to_excel(writer, sheet_name="evidence_budget_rows", index=False)
+        _sanitize_frame(evidence_scheduler_summary).to_excel(writer, sheet_name="evidence_scheduler", index=False)
+        _sanitize_frame(evidence_scheduler_rows).to_excel(writer, sheet_name="evidence_sched_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)

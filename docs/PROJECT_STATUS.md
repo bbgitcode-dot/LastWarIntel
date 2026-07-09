@@ -181,3 +181,10 @@ Recommended next sprint:
 This release adds a read-only Evidence Budget Manager for Display Fidelity. The new budget layer scores display reconstruction candidates before future expensive ReOCR work is promoted into the active pipeline. It introduces `evidence_priority_score`, `evidence_budget_tier`, `evidence_budget_action`, `evidence_budget_reason`, and the standalone `evidence_budget_report.json/xlsx`.
 
 The sprint does not change Operational Truth, snapshots, exports, Ground Truth, or DataGuard policy. Its purpose is to make future Character ReOCR investment explainable and selective: high-value candidates can receive full budget, medium candidates receive targeted budget, weak evidence is blocked early or served from cache.
+
+
+## v0.9.5.135 – Evidence Scheduler Phase I
+
+Current focus moved from collecting more display evidence to deciding which evidence is worth expensive Character ReOCR. The new Evidence Scheduler consumes the Evidence Budget fields and produces a read-only execution queue: full ReOCR, targeted ReOCR, limited retry, early exit/cache-only, or context-only evidence.
+
+This prepares the next performance sprint without weakening DataGuard. Operational Truth remains immutable.

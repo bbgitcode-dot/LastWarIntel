@@ -125,3 +125,12 @@ Goal: improve the quality of character fragments that feed Evidence Confidence. 
 
 Next recommended sprint: v0.9.5.135 – Evidence Budget Execution / Runtime Reduction.
 Attach the latest `evidence_budget_report.json/xlsx`, `evidence_confidence_report.json/xlsx`, and runtime reports.
+
+
+## Next Chat Addendum after v0.9.5.135
+
+Start from `Sentinel_v0.9.5.135.zip`.
+
+Read `/docs/PROJECT_STATUS.md`, `/docs/PATCH_SUMMARY.md`, `/docs/SENTINEL_DATA_GUARD.md`, and inspect `evidence_scheduler_report.*`.
+
+Recommended next sprint: `v0.9.5.136 – Active Scheduler Runtime Enforcement`. Do not weaken Operational Truth. The scheduler may control work selection, not data promotion.
