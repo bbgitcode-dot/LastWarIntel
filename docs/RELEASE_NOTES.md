@@ -1723,3 +1723,9 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 - Introduced scheduler fields: `evidence_scheduler_decision`, `scheduler_priority`, `scheduler_reason`, `scheduler_expected_runtime_ms`, `scheduler_estimated_saved_ms`.
 - Added queue decisions for full ReOCR, targeted ReOCR, limited retry, early exit/cache-only, and context-only evidence.
 - Operational Truth remains locked; scheduler output is report-only in Phase I.
+
+
+## v0.9.5.136 - Gold Accuracy Mode
+- Accuracy-first scheduling.
+- Runtime no longer used as primary optimization criterion.
+- Evidence collection prioritized over early exit.

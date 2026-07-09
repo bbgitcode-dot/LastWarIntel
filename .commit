@@ -1,10 +1,1 @@
-version: 0.9.5.135
-title: Evidence Scheduler Phase I
-commit: feat(evidence): introduce evidence scheduler and adaptive execution queue
-tag: v0.9.5.135
-base: v0.9.5.134
-notes:
-  - Adds read-only Evidence Scheduler decisions on top of Evidence Budget Manager.
-  - Emits evidence_scheduler_report.json/xlsx.
-  - Introduces early-exit, targeted, limited-retry, full-ReOCR, and context-only queue decisions.
-  - Operational Truth remains untouched.
+feat(accuracy): enable Gold Accuracy Mode
