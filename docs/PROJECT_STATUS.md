@@ -129,3 +129,20 @@ Sentinel now records Alignment Intelligence for Context Gap rows. High-confidenc
 
 ### Update v0.9.5.130
 Sentinel has effectively solved matching, gap recovery and operational identity. Remaining work is concentrated on display fidelity, multilingual character reconstruction and evidence-backed verified display output.
+
+
+### Update v0.9.5.131
+
+`v0.9.5.131` implements **Display Reconstruction Engine Phase I**. The previous run showed that Ranking Guard, DataGuard, gap recovery and matching are stable, while the remaining quality loss is concentrated in display fidelity: exact player-name and alliance-tag rendering.
+
+The new engine does not try to improve OCR directly. Instead, it consumes already collected Character ReOCR evidence and accepted read-only context-gap evidence to create report-only reconstructed display proposals. This introduces a clean Evidence Layer between raw OCR and any future Gold export.
+
+Current policy remains conservative:
+
+- Operational Truth is not modified.
+- Ground Truth is not modified.
+- Snapshots are not modified.
+- Existing verified display fields are not overwritten.
+- Context-gap suggestions remain evidence-only.
+
+Next focus: use the new `display_reconstruction_report` to decide which rows are safe candidates for a future Gold Display export lane and which still require crop geometry or multilingual script policy work.

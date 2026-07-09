@@ -54,3 +54,8 @@ Alignment Intelligence is read-only. `verification_allowed_read_only` means Sent
 
 The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
 
+
+
+## v0.9.5.131 DataGuard Note
+
+Display Reconstruction is explicitly read-only. It may propose `display_reconstructed_name` and `display_reconstructed_alliance_tag` in reports, but it may not write to Operational Truth, snapshots, Ground Truth, or verified display fields. Any future promotion path must be implemented as a separate guarded export policy.

@@ -79,3 +79,21 @@ The validation pipeline now includes an Alignment Intelligence layer after conte
 
 The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
 
+
+
+## v0.9.5.131 Architecture Note – Display Reconstruction Engine
+
+The validator now has a read-only Display Reconstruction stage after Alignment Guard and Character ReOCR evidence collection. This stage consumes evidence and emits display proposals; it does not mutate any operational identity field.
+
+Pipeline position:
+
+```text
+OCR Export
+  -> Ranking Guard
+  -> Context Inference / Alignment Guard
+  -> Character ReOCR Evidence
+  -> Display Reconstruction Report
+  -> DataGuard / Gold policy review
+```
+
+This keeps Evidence before Inference intact while making evidence useful for human review and future Gold Display exports.

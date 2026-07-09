@@ -316,3 +316,33 @@ git tag -a v0.9.5.124 -m "v0.9.5.124 Gold Fidelity Engine Phase 1"
 - Documentation sprint.
 - Captured analysis of validation results.
 - Defined Display Reconstruction Engine as next engineering milestone.
+
+
+## v0.9.5.131
+
+### Display Reconstruction Engine Phase I
+
+This sprint turns the previous `.130` roadmap into the first functional evidence-consumption layer. Sentinel now produces a dedicated Display Reconstruction report from already collected Character ReOCR evidence and read-only context-gap evidence.
+
+### Added
+
+- `_apply_display_reconstruction()` in `ground_truth_validator.py`.
+- `_build_display_reconstruction_report()` for standalone JSON/XLSX output.
+- Report-only reconstruction columns on validation detail rows.
+- `display_reconstruction_report.json/xlsx`.
+- Smoke test: `tests/smoke/test_display_reconstruction_131.py`.
+
+### Guardrails
+
+- Operational Truth remains locked.
+- `verified_name_display` and `verified_alliance_display` are not overwritten.
+- Context-gap suggestions remain `read_only_contextual_inference`.
+- Observed-vote conflicts are surfaced instead of silently corrected.
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(display): add read-only display reconstruction report"
+git tag -a v0.9.5.131 -m "v0.9.5.131 Display Reconstruction Engine Phase I"
+```

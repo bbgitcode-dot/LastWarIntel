@@ -131,3 +131,15 @@ The path to v1.0 now explicitly separates Operational Truth from read-only Evide
 
 The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
 
+
+
+## v0.9.5.131 Road-to-v1 Update
+
+Display Fidelity is now a first-class pipeline stage. The path to v1 should treat identity readiness and display readiness separately:
+
+1. **Core Identity Ready** – rank, alliance, power and identity are safe enough for strategic assessment.
+2. **Display Reconstruction Ready** – character evidence can produce a report-only display proposal.
+3. **Gold Display Ready** – reconstructed display can be promoted to a guarded export field without touching Operational Truth.
+4. **V1 Readiness** – multi-server regression confirms that DataGuard, Ranking Guard and Display Reconstruction behave consistently across 549–554.
+
+Recommended next sprint: `v0.9.5.132 – Display Reconstruction Evaluation`, using the new report to quantify how many of the 15 Gold Core blockers can be safely converted into report-only display proposals versus crop/script/manual lanes.

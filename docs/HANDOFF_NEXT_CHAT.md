@@ -91,3 +91,21 @@ Recommended next sprint: `v0.9.5.129 – Read-Only Evidence Execution`. Start fr
 
 The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
 
+
+
+## Current handoff after v0.9.5.131
+
+Current release: `Sentinel_v0.9.5.131.zip`
+
+Implemented: Display Reconstruction Engine Phase I.
+
+Next recommended sprint: `v0.9.5.132 – Display Reconstruction Evaluation`.
+
+Start by reading:
+
+- `display_reconstruction_report.json/xlsx` from the next run
+- `ground_truth_validation_report.json/xlsx`
+- `character_reocr_debug_report.json/xlsx`
+- `gold_core_blocker_report.json/xlsx`
+
+Main question for `.132`: Which reconstructed display proposals are safe report-only wins, which rows remain crop geometry problems, and which require multilingual/nonlocal script policy?

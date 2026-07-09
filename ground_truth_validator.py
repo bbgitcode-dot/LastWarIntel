@@ -1657,6 +1657,7 @@ def validate(ground_truth: pd.DataFrame, ocr: pd.DataFrame, quarantine: pd.DataF
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     detail, context_inferences = apply_contextual_inference(detail)
     detail = _apply_alignment_guard(detail)
+    detail = _apply_display_reconstruction(detail)
     total = len(detail)
     detail["valid_match"] = (~detail["match_method"].isin(["missing", "blocked_rank_fallback"])) & (~detail["bad_match"])
     valid_detail = detail[detail["valid_match"]]
@@ -2574,6 +2575,210 @@ def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple
     return "ROW_OK_WITH_REOCR", "accepted aligned row with successful local ReOCR evidence"
 
 
+
+def _safe_char_replace(text: str, position: int, replacement: str) -> tuple[str, bool]:
+    """Return text with one character replaced if the position is valid.
+
+    Display Reconstruction is report-only. Failed replacements are surfaced in
+    diagnostics instead of being guessed or forced into Operational Truth.
+    """
+    text = normalize_text(text)
+    replacement = normalize_text(replacement)
+    if not replacement:
+        return text, False
+    chars = list(text)
+    if position < 0 or position >= len(chars):
+        return text, False
+    chars[position] = replacement[0]
+    return "".join(chars), True
+
+
+def _display_confidence_from_items(items: list[dict[str, Any]]) -> float:
+    values: list[float] = []
+    for item in items:
+        try:
+            values.append(float(item.get("confidence", 0.0) or 0.0))
+        except Exception:
+            continue
+    if not values:
+        return 0.0
+    return round(sum(values) / max(len(values), 1), 4)
+
+
+def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
+    """Build a read-only reconstructed display proposal from character evidence.
+
+    v0.9.5.131: The engine consumes already-collected Character ReOCR evidence
+    and produces report-only display proposals. It never changes expected/OCR
+    fields, verified_* fields, exports, snapshots, or Ground Truth.  The goal is
+    to make the Evidence Layer useful for Display Fidelity without weakening
+    DataGuard.
+    """
+    expected_name = normalize_text(row.get("expected_name", ""))
+    expected_tag = normalize_text(row.get("expected_alliance_display", row.get("expected_alliance", "")))
+    observed_name = normalize_text(row.get("ocr_name", ""))
+    observed_tag = normalize_text(row.get("ocr_alliance_display", row.get("ocr_alliance", "")))
+    if not observed_name:
+        observed_name = normalize_text(row.get("verified_name_display", ""))
+    if not observed_tag:
+        observed_tag = normalize_text(row.get("verified_alliance_display", ""))
+
+    evidence_items = _parse_json_list(row.get("character_reocr_evidence", "[]"))
+    read_only_items = _parse_json_list(row.get("read_only_reocr_evidence", "[]"))
+
+    name = observed_name
+    tag = observed_tag
+    name_applied = 0
+    tag_applied = 0
+    unresolved = 0
+    observed_votes = 0
+    useful_items: list[dict[str, Any]] = []
+    notes: list[str] = []
+
+    for item in evidence_items:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status", "") or "")
+        field = str(item.get("field", "") or "")
+        expected_char = normalize_text(item.get("expected", ""))
+        position = item.get("position", None)
+        try:
+            position_int = int(position)
+        except Exception:
+            position_int = -1
+        if status == "verified_observed":
+            observed_votes += 1
+            useful_items.append(item)
+            continue
+        if status != "verified_expected":
+            unresolved += 1
+            continue
+        if field == "player_name":
+            name, applied = _safe_char_replace(name, position_int, expected_char)
+            if applied:
+                name_applied += 1
+                useful_items.append(item)
+            else:
+                unresolved += 1
+        elif field == "alliance_tag":
+            tag, applied = _safe_char_replace(tag, position_int, expected_char)
+            if applied:
+                tag_applied += 1
+                useful_items.append(item)
+            else:
+                unresolved += 1
+
+    source = "none"
+    status = "not_reconstructed"
+    if name_applied or tag_applied:
+        source = "character_reocr_evidence"
+        status = "partial_reconstruction"
+        if expected_name and name == expected_name and expected_tag and tag == expected_tag:
+            status = "full_display_reconstructed"
+        elif expected_name and name == expected_name:
+            status = "name_reconstructed"
+        elif expected_tag and tag == expected_tag:
+            status = "alliance_reconstructed"
+    elif read_only_items:
+        # Context-gap read-only suggestions are evidence-only. They are not
+        # promoted to operational verified_display_* fields, but the display
+        # reconstruction report should expose them as contextual proposals.
+        first = read_only_items[0] if isinstance(read_only_items[0], dict) else {}
+        suggested_name = normalize_text(first.get("suggested_name_display", ""))
+        suggested_tag = normalize_text(first.get("suggested_alliance_display", ""))
+        if suggested_name or suggested_tag:
+            name = suggested_name or name
+            tag = suggested_tag or tag
+            source = "read_only_contextual_inference"
+            status = "contextual_display_suggestion"
+            notes.append("context_gap_evidence_only")
+            useful_items.extend(read_only_items)
+
+    if observed_votes:
+        notes.append("observed_vote_blocks_expected_display")
+    if unresolved:
+        notes.append("unresolved_or_unapplied_fragments")
+    if not (name_applied or tag_applied or read_only_items):
+        if bool(row.get("verified_name_display_exact_match", False)) and bool(row.get("verified_alliance_display_exact_match", False)):
+            status = "already_exact"
+            source = "existing_verified_display"
+
+    confidence = _display_confidence_from_items(useful_items)
+    if source == "read_only_contextual_inference":
+        try:
+            confidence = round(float(row.get("read_only_confidence", 0.0) or row.get("inference_confidence", 0.0) or 0.0), 4)
+        except Exception:
+            confidence = 0.0
+    elif status == "already_exact":
+        confidence = 1.0
+
+    return {
+        "display_reconstruction_status": status,
+        "display_reconstruction_source": source,
+        "display_reconstructed_name": name,
+        "display_reconstructed_alliance_tag": tag,
+        "display_reconstruction_confidence": confidence,
+        "display_reconstruction_name_targets_applied": name_applied,
+        "display_reconstruction_alliance_targets_applied": tag_applied,
+        "display_reconstruction_unresolved_targets": unresolved,
+        "display_reconstruction_observed_votes": observed_votes,
+        "display_reconstruction_notes": ";".join(dict.fromkeys(notes)),
+        "display_reconstruction_operational_truth_modified": False,
+    }
+
+
+def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
+    """Attach read-only display reconstruction columns to validation detail."""
+    if detail.empty:
+        return detail
+    reconstructed = detail.apply(_reconstruct_display_row, axis=1, result_type="expand")
+    return pd.concat([detail, reconstructed], axis=1)
+
+
+def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.131 Display Reconstruction Engine report."""
+    cols = [
+        "server", "rank", "expected_alliance_display", "ocr_alliance_display",
+        "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
+        "display_reconstruction_status", "display_reconstruction_source",
+        "display_reconstructed_alliance_tag", "display_reconstructed_name",
+        "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
+        "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
+        "display_reconstruction_observed_votes", "display_reconstruction_notes",
+        "alignment_context_gap", "gold_core_blocker", "row_integrity_status",
+        "display_reconstruction_operational_truth_modified",
+    ]
+    if detail.empty:
+        return pd.DataFrame(columns=["display_reconstruction_status", "rows"]), pd.DataFrame(columns=cols)
+    rows = detail.copy()
+    for col in cols:
+        if col not in rows.columns:
+            rows[col] = ""
+    report = rows[cols].copy()
+    report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
+    if report.empty:
+        summary = pd.DataFrame([{
+            "rows": 0,
+            "reconstructed_rows": 0,
+            "contextual_suggestion_rows": 0,
+            "full_display_reconstructed_rows": 0,
+            "already_exact_rows": 0,
+            "operational_truth_modified": False,
+        }])
+        return summary, report
+    summary = report.groupby(["display_reconstruction_status", "display_reconstruction_source"], dropna=False).agg(
+        rows=("rank", "count"),
+        avg_confidence=("display_reconstruction_confidence", "mean"),
+        name_targets_applied=("display_reconstruction_name_targets_applied", "sum"),
+        alliance_targets_applied=("display_reconstruction_alliance_targets_applied", "sum"),
+        unresolved_targets=("display_reconstruction_unresolved_targets", "sum"),
+        observed_votes=("display_reconstruction_observed_votes", "sum"),
+    ).reset_index()
+    summary["avg_confidence"] = summary["avg_confidence"].astype(float).round(4)
+    summary.insert(0, "phase", "v0.9.5.131_display_reconstruction_engine_phase1")
+    summary["operational_truth_modified"] = False
+    return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
+
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
     evidence_rows: list[dict[str, Any]] = []
@@ -2870,6 +3075,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         character_reocr_debug_summary = pd.DataFrame(columns=["target_field", "target_status", "debug_read", "rows", "high_value_rows", "avg_vote_count"])
 
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
+    display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
@@ -2927,6 +3133,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     gold_core_resolution_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_resolution_summary.to_dict(orient="records"), "details": gold_core_resolution_plan.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     alignment_intelligence_json_path = output_dir / "alignment_intelligence_report.json"
     alignment_intelligence_json_path.write_text(json.dumps(_json_safe({"summary": alignment_intelligence_summary.to_dict(orient="records"), "details": alignment_intelligence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    display_reconstruction_json_path = output_dir / "display_reconstruction_report.json"
+    display_reconstruction_json_path.write_text(json.dumps(_json_safe({"summary": display_reconstruction_summary.to_dict(orient="records"), "details": display_reconstruction_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -2965,6 +3173,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
         _sanitize_frame(alignment_intelligence_summary).to_excel(writer, sheet_name="alignment_intelligence", index=False)
         _sanitize_frame(alignment_intelligence_rows).to_excel(writer, sheet_name="alignment_intel_rows", index=False)
+        _sanitize_frame(display_reconstruction_summary).to_excel(writer, sheet_name="display_reconstruct", index=False)
+        _sanitize_frame(display_reconstruction_rows).to_excel(writer, sheet_name="display_recon_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
@@ -2995,6 +3205,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(alignment_intelligence_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(alignment_intelligence_rows).to_excel(writer, sheet_name="details", index=False)
 
+    display_reconstruction_xlsx_path = output_dir / "display_reconstruction_report.xlsx"
+    with pd.ExcelWriter(display_reconstruction_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(display_reconstruction_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(display_reconstruction_rows).to_excel(writer, sheet_name="details", index=False)
+
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
         pd.DataFrame([inference_summary]).to_excel(writer, sheet_name="summary", index=False)
@@ -3023,6 +3238,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Character ReOCR Debug JSON:  {reocr_debug_json_path}")
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
+    print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
     print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")
