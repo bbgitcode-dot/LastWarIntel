@@ -34,3 +34,11 @@ Strategic intent: Sentinel now starts converting stored character evidence into 
 - Blocks unsafe name promotion from `UNKNOWN`, low coverage, unresolved fragments, or observed-vote conflicts.
 - Added `display_promotion_eligible` and `display_promotion_block_reason`.
 - Operational Truth remains unchanged.
+
+## v0.9.5.133 – Evidence Confidence Engine
+
+- Added read-only `evidence_confidence_report.json/xlsx`.
+- Added fragment confidence components for crop, OCR, votes, position, unicode/script and status.
+- Added display coverage metrics for name/tag/display proposals.
+- Added `display_confidence_decision`.
+- DataGuard remains unchanged; Operational Truth is not modified.

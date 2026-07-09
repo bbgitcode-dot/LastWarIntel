@@ -117,3 +117,15 @@ Current release: `Sentinel_v0.9.5.132.zip`.
 Next recommended sprint: `v0.9.5.133 – Crop Geometry Optimizer`.
 
 Rationale: `.132` prevents unsafe display promotion. The next bottleneck is better evidence collection: crop bleed, anchor mismatch, and low-coverage character fragments still limit Display Fidelity.
+
+## Handoff after v0.9.5.133
+
+Current release: `Sentinel_v0.9.5.133.zip`.
+
+Implemented:
+- Evidence Confidence Engine
+- Fragment confidence scoring
+- Display coverage scoring
+- `evidence_confidence_report.json/xlsx`
+
+Next recommended sprint: `v0.9.5.134 – Crop Geometry Optimizer`.

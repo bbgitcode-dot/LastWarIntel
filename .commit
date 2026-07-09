@@ -1,7 +1,10 @@
-v0.9.5.132
-feat(display): add reconstruction promotion guard
+version: 0.9.5.133
+name: Evidence Confidence Engine
+commit: feat(evidence): add display evidence confidence scoring
+tag: v0.9.5.133
 
-Commit:
-git add .
-git commit -m "feat(display): add reconstruction promotion guard"
-git tag -a v0.9.5.132 -m "v0.9.5.132 Display Reconstruction Guard"
+Summary:
+- Adds read-only Evidence Confidence scoring for display reconstruction fragments.
+- Adds Evidence Coverage metrics for name/tag/display proposals.
+- Adds evidence_confidence_report.json/xlsx.
+- Keeps Operational Truth, snapshots, exports, and Ground Truth unchanged.

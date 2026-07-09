@@ -379,3 +379,38 @@ git add .
 git commit -m "feat(display): add reconstruction promotion guard"
 git tag -a v0.9.5.132 -m "v0.9.5.132 Display Reconstruction Guard"
 ```
+
+## v0.9.5.133
+
+Sprint: **Evidence Confidence Engine**
+
+This patch adds a read-only confidence layer on top of Display Reconstruction.
+
+Implemented:
+- `evidence_confidence_report.json/xlsx`
+- `evidence_avg_fragment_confidence`
+- `display_name_coverage_score`
+- `display_alliance_coverage_score`
+- `display_coverage_score`
+- `display_confidence_decision`
+- fragment confidence components for crop/OCR/vote/position/script/status
+
+Safety:
+- no Operational Truth changes
+- no export mutation
+- no snapshot mutation
+- no Ground Truth mutation
+- context-gap display remains suggestion-only
+
+Validation target:
+```bash
+pytest tests/smoke -q
+python -m py_compile ground_truth_validator.py
+```
+
+Commit:
+```bash
+git add .
+git commit -m "feat(evidence): add display evidence confidence scoring"
+git tag -a v0.9.5.133 -m "v0.9.5.133 Evidence Confidence Engine"
+```

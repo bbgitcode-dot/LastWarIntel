@@ -152,3 +152,25 @@ Next focus: use the new `display_reconstruction_report` to decide which rows are
 The `.131` run proved that Display Reconstruction can consume Character ReOCR evidence, but it also exposed the risk of over-aggressive name synthesis. `.132` therefore adds a promotion guard: evidence can still be collected and reported, but reconstructed display names are blocked when the base text is `UNKNOWN`, evidence coverage is too low, unresolved fragments remain, or observed votes conflict with expected glyphs.
 
 This keeps the next phase aligned with DataGuard: Evidence before Inference, read-only reconstruction remains read-only, and Operational Truth is never modified.
+
+## v0.9.5.133 Status Update – Evidence Confidence Engine
+
+Sentinel now separates display reconstruction from evidence confidence. The Display Reconstruction Guard introduced in `.132` prevented unsafe promotion; `.133` makes that decision explainable by scoring the underlying fragments and calculating coverage.
+
+New reports:
+- `evidence_confidence_report.json`
+- `evidence_confidence_report.xlsx`
+
+Key architectural change:
+- Character evidence is no longer treated as flat evidence.
+- Each fragment receives a diagnostic confidence score.
+- Each display proposal receives name/tag/display coverage metrics.
+- Promotion decisions can be tightened by Evidence Confidence but cannot override DataGuard.
+
+Current strategic interpretation:
+- Ranking Guard, DataGuard, Gap Recovery and Context Inference remain stable.
+- Display Fidelity is now governed by reconstruction + promotion + evidence confidence.
+- Remaining blockers should be handled by improving fragment quality and crop geometry, not by weakening promotion rules.
+
+Recommended next sprint:
+`v0.9.5.134 – Crop Geometry Optimizer`, focused on improving fragment quality before additional display promotion.

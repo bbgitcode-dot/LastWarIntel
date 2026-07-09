@@ -63,3 +63,13 @@ Display Reconstruction is explicitly read-only. It may propose `display_reconstr
 ## v0.9.5.132 DataGuard Note – Display Promotion Guard
 
 Display Reconstruction Guard formalizes that reconstructed display strings are evidence products, not Operational Truth. Unsafe display-name promotion is blocked when the evidence base is insufficient, while safe partial evidence such as alliance-tag reconstruction may still be reported. No Ground Truth, snapshot, export, or verified display field is silently changed.
+
+## v0.9.5.133 DataGuard Note – Evidence Confidence
+
+Evidence Confidence is an Evidence Layer feature only. It may classify fragments, score coverage, and explain promotion decisions. It may not alter Operational Truth.
+
+Rules:
+- Fragment confidence can block promotion.
+- Fragment confidence cannot force promotion.
+- Context-gap suggestions remain read-only.
+- Ground Truth, snapshots and exports remain unchanged.

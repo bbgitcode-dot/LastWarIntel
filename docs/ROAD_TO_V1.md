@@ -152,3 +152,16 @@ Display Fidelity now requires two separate layers:
 2. Reconstruction Guard: decides whether those proposals are safe to promote as display suggestions.
 
 The next milestone should focus on crop geometry and coverage-aware reconstruction, because the remaining blockers are dominated by crop bleed, nonlocal script policy, and insufficient evidence coverage rather than player matching.
+
+## v0.9.5.133 Road-to-V1 Adjustment
+
+`.133` adds the Evidence Confidence Engine. This moves Sentinel closer to V1 by making display reconstruction explainable instead of merely heuristic.
+
+V1 requirement clarified:
+- Operational identity must remain protected by DataGuard.
+- Display proposals must expose confidence and coverage.
+- Promotion must be evidence-based and reversible in reports.
+
+Next milestone toward V1:
+- Improve crop geometry and fragment quality so Evidence Confidence has stronger input.
+- Do not loosen promotion thresholds to chase short-term display score gains.

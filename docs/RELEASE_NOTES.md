@@ -1676,3 +1676,34 @@ Strategic intent: Sentinel now starts converting stored character evidence into 
 - Adds `display_promotion_eligible` and `display_promotion_block_reason` to validation/detail reports.
 - Introduces guarded statuses for blocked name promotion while preserving safe alliance reconstruction.
 - Keeps Display Reconstruction strictly read-only: no Ground Truth, snapshot, export, or Operational Truth mutation.
+
+## v0.9.5.133 – Evidence Confidence Engine
+
+### Goal
+Introduce a read-only Evidence Confidence layer for Display Reconstruction. The previous guard prevented unsafe promotion; this sprint explains *why* evidence is eligible, suggested, or blocked.
+
+### Added
+- `evidence_confidence_report.json/xlsx`.
+- Fragment-level confidence scoring components:
+  - crop quality
+  - OCR confidence
+  - vote consensus
+  - position stability
+  - unicode/script class
+  - status weight
+- Display coverage metrics:
+  - `display_name_coverage_score`
+  - `display_alliance_coverage_score`
+  - `display_coverage_score`
+- `display_confidence_decision` classification:
+  - `eligible`
+  - `suggested_evidence_only`
+  - `suggested_contextual`
+  - `blocked_low_evidence`
+- Promotion Guard 2.0: Evidence Confidence can only tighten promotion decisions, never loosen DataGuard rules.
+
+### Guardrails
+- Operational Truth remains unchanged.
+- Context-gap suggestions remain evidence-only.
+- Low-confidence fragment sets are blocked from display promotion.
+- No historical player memory is used as primary identity evidence.

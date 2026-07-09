@@ -2576,6 +2576,173 @@ def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple
 
 
 
+
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def _vote_consensus_score(item: dict[str, Any]) -> float:
+    """Return how consistently OCR variants support the selected character.
+
+    This is diagnostic only and feeds the v0.9.5.133 Evidence Confidence
+    report fields. It does not alter matching, exports, snapshots, or Ground
+    Truth.
+    """
+    selected = normalize_text(item.get("selected", ""))
+    votes = item.get("votes", [])
+    if not isinstance(votes, list) or not votes:
+        return 0.0
+    chars: list[str] = []
+    for vote in votes:
+        if not isinstance(vote, dict):
+            continue
+        char = normalize_text(vote.get("char", ""))
+        if char:
+            chars.append(char[:1])
+    if not chars:
+        return 0.0
+    if not selected:
+        return 0.0
+    return round(sum(1 for char in chars if char == selected[:1]) / len(chars), 4)
+
+
+def _ocr_confidence_score(item: dict[str, Any]) -> float:
+    direct = _safe_float(item.get("confidence"), 0.0)
+    votes = item.get("votes", [])
+    vote_values: list[float] = []
+    if isinstance(votes, list):
+        for vote in votes:
+            if isinstance(vote, dict):
+                vote_values.append(_safe_float(vote.get("confidence"), 0.0))
+    vote_avg = sum(vote_values) / len(vote_values) if vote_values else 0.0
+    # OCR vote confidences are often low even for correct glyphs. Keep direct
+    # selected confidence dominant, but still expose weak OCR support.
+    return round(max(0.0, min(1.0, (direct * 0.75) + (vote_avg * 0.25))), 4)
+
+
+def _crop_quality_score(item: dict[str, Any]) -> float:
+    anchor = str(item.get("crop_anchor_status", "") or "")
+    diagnostic = str(item.get("crop_diagnostic", "") or "")
+    score = 0.65
+    if anchor in {"anchor_seen", "cache_hit"}:
+        score += 0.25
+    elif anchor in {"text_without_anchor"}:
+        score += 0.05
+    elif anchor in {"field_mismatch"}:
+        score -= 0.25
+    if diagnostic in {"crop_anchor_ok", "cache_hit", "verified_expected"}:
+        score += 0.1
+    if diagnostic in {"crop_power_column_bleed", "crop_field_mismatch", "vote_outside_allowed_set"}:
+        score -= 0.15
+    return round(max(0.0, min(1.0, score)), 4)
+
+
+def _unicode_class_score(item: dict[str, Any]) -> float:
+    expected = normalize_text(item.get("expected", ""))
+    selected = normalize_text(item.get("selected", ""))
+    char = (expected or selected)[:1]
+    if not char:
+        return 0.0
+    codepoint = ord(char)
+    if codepoint < 128:
+        return 1.0
+    # Nonlocal glyphs are accepted as evidence, but they need stronger
+    # independent support before promotion.
+    return 0.78
+
+
+def _position_stability_score(item: dict[str, Any]) -> float:
+    candidate_count = int(_safe_float(item.get("crop_candidate_count"), 0.0))
+    candidate_index = int(_safe_float(item.get("crop_candidate_index"), 0.0))
+    reason = str(item.get("crop_candidate_reason", "") or "")
+    if str(item.get("crop_anchor_status", "")) == "cache_hit":
+        return 1.0
+    score = 0.75
+    if reason in {"base", "tag_block_anchor"}:
+        score += 0.15
+    if candidate_count and candidate_index >= max(candidate_count - 1, 0):
+        score -= 0.1
+    return round(max(0.0, min(1.0, score)), 4)
+
+
+def _fragment_confidence(item: dict[str, Any]) -> tuple[float, dict[str, float]]:
+    """Score one character evidence fragment for explainable promotion control."""
+    status = str(item.get("status", "") or "")
+    status_weight = 1.0 if status == "verified_expected" else (0.45 if status == "verified_observed" else 0.2)
+    components = {
+        "crop_quality": _crop_quality_score(item),
+        "ocr_confidence": _ocr_confidence_score(item),
+        "vote_consensus": _vote_consensus_score(item),
+        "position_stability": _position_stability_score(item),
+        "unicode_class": _unicode_class_score(item),
+        "status_weight": round(status_weight, 4),
+    }
+    weighted = (
+        components["crop_quality"] * 0.18
+        + components["ocr_confidence"] * 0.24
+        + components["vote_consensus"] * 0.24
+        + components["position_stability"] * 0.14
+        + components["unicode_class"] * 0.08
+        + components["status_weight"] * 0.12
+    )
+    return round(max(0.0, min(1.0, weighted)), 4), components
+
+
+def _evidence_confidence_summary(items: list[dict[str, Any]], expected_name: str, expected_tag: str, name_applied: int, tag_applied: int, unresolved: int, observed_votes: int, status: str) -> dict[str, Any]:
+    scored: list[float] = []
+    component_totals: dict[str, list[float]] = {
+        "crop_quality": [], "ocr_confidence": [], "vote_consensus": [],
+        "position_stability": [], "unicode_class": [], "status_weight": [],
+    }
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        score, components = _fragment_confidence(item)
+        scored.append(score)
+        item["fragment_confidence"] = score
+        item["fragment_confidence_components"] = components
+        for key, value in components.items():
+            component_totals.setdefault(key, []).append(value)
+    avg_fragment_confidence = round(sum(scored) / len(scored), 4) if scored else 0.0
+    name_len = len(normalize_text(expected_name))
+    tag_len = len(normalize_text(expected_tag))
+    name_coverage = round(name_applied / name_len, 4) if name_len else (1.0 if status == "already_exact" else 0.0)
+    tag_coverage = round(tag_applied / tag_len, 4) if tag_len else 0.0
+    if status == "already_exact":
+        display_coverage = 1.0
+    else:
+        denom = max(name_len + tag_len, 1)
+        display_coverage = round((name_applied + tag_applied) / denom, 4)
+    if status == "contextual_display_suggestion":
+        confidence_decision = "suggested_contextual"
+    elif observed_votes or unresolved or avg_fragment_confidence < 0.55 or display_coverage < 0.5:
+        confidence_decision = "blocked_low_evidence"
+    elif avg_fragment_confidence < 0.72 or display_coverage < 0.8:
+        confidence_decision = "suggested_evidence_only"
+    else:
+        confidence_decision = "eligible"
+    component_avg = {
+        f"evidence_avg_{key}": round(sum(values) / len(values), 4) if values else 0.0
+        for key, values in component_totals.items()
+    }
+    return {
+        "evidence_fragments_total": len(scored),
+        "evidence_confirmed_fragments": sum(1 for item in items if isinstance(item, dict) and str(item.get("status", "")) == "verified_expected"),
+        "evidence_observed_fragments": observed_votes,
+        "evidence_unresolved_fragments": unresolved,
+        "evidence_avg_fragment_confidence": avg_fragment_confidence,
+        "display_name_coverage_score": name_coverage,
+        "display_alliance_coverage_score": tag_coverage,
+        "display_coverage_score": display_coverage,
+        "display_confidence_decision": confidence_decision,
+        **component_avg,
+    }
+
 def _safe_char_replace(text: str, position: int, replacement: str) -> tuple[str, bool]:
     """Return text with one character replaced if the position is valid.
 
@@ -2746,6 +2913,23 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
     elif status == "already_exact":
         confidence = 1.0
 
+    evidence_confidence = _evidence_confidence_summary(
+        useful_items,
+        expected_name=expected_name,
+        expected_tag=expected_tag,
+        name_applied=name_applied,
+        tag_applied=tag_applied,
+        unresolved=unresolved,
+        observed_votes=observed_votes,
+        status=status,
+    )
+    # Promotion Guard 2.0: evidence confidence can only tighten promotion.
+    # It never promotes context gaps or low-coverage fragments into Operational Truth.
+    if evidence_confidence["display_confidence_decision"].startswith("blocked") and display_promotion_eligible:
+        display_promotion_eligible = False
+        display_promotion_block_reason = "blocked_evidence_confidence"
+        notes.append("blocked_evidence_confidence")
+
     return {
         "display_reconstruction_status": status,
         "display_reconstruction_source": source,
@@ -2759,6 +2943,7 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         "display_reconstruction_notes": ";".join(dict.fromkeys(notes)),
         "display_promotion_eligible": display_promotion_eligible,
         "display_promotion_block_reason": display_promotion_block_reason,
+        **evidence_confidence,
         "display_reconstruction_operational_truth_modified": False,
     }
 
@@ -2772,7 +2957,7 @@ def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.132 guarded Display Reconstruction report."""
+    """Build v0.9.5.133 guarded Display Reconstruction + Evidence Confidence report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -2782,6 +2967,11 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
         "display_reconstruction_observed_votes", "display_reconstruction_notes",
         "display_promotion_eligible", "display_promotion_block_reason",
+        "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
+        "evidence_unresolved_fragments", "evidence_avg_fragment_confidence",
+        "display_name_coverage_score", "display_alliance_coverage_score", "display_coverage_score",
+        "display_confidence_decision", "evidence_avg_crop_quality", "evidence_avg_ocr_confidence",
+        "evidence_avg_vote_consensus", "evidence_avg_position_stability", "evidence_avg_unicode_class",
         "alignment_context_gap", "gold_core_blocker", "row_integrity_status",
         "display_reconstruction_operational_truth_modified",
     ]
@@ -2810,11 +3000,60 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         alliance_targets_applied=("display_reconstruction_alliance_targets_applied", "sum"),
         unresolved_targets=("display_reconstruction_unresolved_targets", "sum"),
         observed_votes=("display_reconstruction_observed_votes", "sum"),
+        avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
+        avg_display_coverage=("display_coverage_score", "mean"),
+        promotion_eligible_rows=("display_promotion_eligible", "sum"),
     ).reset_index()
     summary["avg_confidence"] = summary["avg_confidence"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.132_display_reconstruction_guard")
+    summary["avg_fragment_confidence"] = summary["avg_fragment_confidence"].astype(float).round(4)
+    summary["avg_display_coverage"] = summary["avg_display_coverage"].astype(float).round(4)
+    summary.insert(0, "phase", "v0.9.5.133_evidence_confidence_engine")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
+
+
+def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build v0.9.5.133 Evidence Confidence report.
+
+    This report explains why a reconstructed display is eligible, suggested, or
+    blocked. It is read-only and does not feed Operational Truth.
+    """
+    cols = [
+        "server", "rank", "expected_alliance_display", "expected_name", "ocr_alliance_display", "ocr_name",
+        "display_reconstruction_status", "display_reconstructed_alliance_tag", "display_reconstructed_name",
+        "display_promotion_eligible", "display_promotion_block_reason", "display_confidence_decision",
+        "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
+        "evidence_unresolved_fragments", "evidence_avg_fragment_confidence", "display_name_coverage_score",
+        "display_alliance_coverage_score", "display_coverage_score", "evidence_avg_crop_quality",
+        "evidence_avg_ocr_confidence", "evidence_avg_vote_consensus", "evidence_avg_position_stability",
+        "evidence_avg_unicode_class", "alignment_context_gap", "gold_core_blocker",
+        "display_reconstruction_operational_truth_modified",
+    ]
+    if detail.empty:
+        return pd.DataFrame(columns=["display_confidence_decision", "rows"]), pd.DataFrame(columns=cols)
+    rows = detail.copy()
+    for col in cols:
+        if col not in rows.columns:
+            rows[col] = ""
+    report = rows[cols].copy()
+    report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
+    if report.empty:
+        return pd.DataFrame([{"phase": "v0.9.5.133_evidence_confidence_engine", "rows": 0, "operational_truth_modified": False}]), report
+    summary = report.groupby(["display_confidence_decision", "display_promotion_eligible"], dropna=False).agg(
+        rows=("rank", "count"),
+        avg_fragment_confidence=("evidence_avg_fragment_confidence", "mean"),
+        avg_display_coverage=("display_coverage_score", "mean"),
+        avg_name_coverage=("display_name_coverage_score", "mean"),
+        avg_alliance_coverage=("display_alliance_coverage_score", "mean"),
+        blocked_rows=("display_promotion_eligible", lambda values: int((~pd.Series(values).fillna(False).astype(bool)).sum())),
+        context_gap_rows=("alignment_context_gap", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+        gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
+    ).reset_index()
+    for col in ["avg_fragment_confidence", "avg_display_coverage", "avg_name_coverage", "avg_alliance_coverage"]:
+        summary[col] = pd.to_numeric(summary[col], errors="coerce").fillna(0).round(4)
+    summary.insert(0, "phase", "v0.9.5.133_evidence_confidence_engine")
+    summary["operational_truth_modified"] = False
+    return summary, report.sort_values(["rank", "display_confidence_decision"]).reset_index(drop=True)
 
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
@@ -3113,6 +3352,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
+    evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
@@ -3157,6 +3397,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
         "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
         "ocr_evidence_fragments": ocr_evidence_fragments.to_dict(orient="records"),
+        "evidence_confidence_summary": evidence_confidence_summary.to_dict(orient="records"),
+        "evidence_confidence_rows": evidence_confidence_rows.to_dict(orient="records"),
         "details": detail.to_dict(orient="records"),
     }
     json_path.write_text(json.dumps(json_payload, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -3172,6 +3414,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     alignment_intelligence_json_path.write_text(json.dumps(_json_safe({"summary": alignment_intelligence_summary.to_dict(orient="records"), "details": alignment_intelligence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     display_reconstruction_json_path = output_dir / "display_reconstruction_report.json"
     display_reconstruction_json_path.write_text(json.dumps(_json_safe({"summary": display_reconstruction_summary.to_dict(orient="records"), "details": display_reconstruction_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    evidence_confidence_json_path = output_dir / "evidence_confidence_report.json"
+    evidence_confidence_json_path.write_text(json.dumps(_json_safe({"summary": evidence_confidence_summary.to_dict(orient="records"), "details": evidence_confidence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -3212,6 +3456,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(alignment_intelligence_rows).to_excel(writer, sheet_name="alignment_intel_rows", index=False)
         _sanitize_frame(display_reconstruction_summary).to_excel(writer, sheet_name="display_reconstruct", index=False)
         _sanitize_frame(display_reconstruction_rows).to_excel(writer, sheet_name="display_recon_rows", index=False)
+        _sanitize_frame(evidence_confidence_summary).to_excel(writer, sheet_name="evidence_conf", index=False)
+        _sanitize_frame(evidence_confidence_rows).to_excel(writer, sheet_name="evidence_conf_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
@@ -3247,6 +3493,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(display_reconstruction_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(display_reconstruction_rows).to_excel(writer, sheet_name="details", index=False)
 
+    evidence_confidence_xlsx_path = output_dir / "evidence_confidence_report.xlsx"
+    with pd.ExcelWriter(evidence_confidence_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(evidence_confidence_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(evidence_confidence_rows).to_excel(writer, sheet_name="details", index=False)
+
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
         pd.DataFrame([inference_summary]).to_excel(writer, sheet_name="summary", index=False)
@@ -3276,6 +3527,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
+    print(f"Evidence Confidence JSON:      {evidence_confidence_json_path}")
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
     print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")

@@ -97,3 +97,21 @@ OCR Export
 ```
 
 This keeps Evidence before Inference intact while making evidence useful for human review and future Gold Display exports.
+
+## v0.9.5.133 Architecture Addendum – Evidence Confidence Engine
+
+The Display Fidelity pipeline now includes an Evidence Confidence stage:
+
+```text
+Character ReOCR Evidence
+        ↓
+Fragment Confidence
+        ↓
+Evidence Coverage Score
+        ↓
+Display Reconstruction Guard
+        ↓
+Report-only Display Proposal
+```
+
+The engine scores fragment quality using crop quality, OCR confidence, vote consensus, position stability, unicode/script class and status weight. These scores are diagnostic and can only make promotion more conservative.
