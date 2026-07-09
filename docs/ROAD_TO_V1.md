@@ -1,6 +1,6 @@
 # Road to V1 – Sentinel
 
-**Current release:** v0.9.5.126  
+**Current release:** v0.9.5.127  
 **Functional baseline:** v0.9.5.124 Gold Fidelity Engine Phase 1
 
 ## V1 principle
@@ -33,17 +33,33 @@ Gold Core blocker list is explicit and actionable
 No context gap enters Character ReOCR
 ```
 
-### v0.9.5.127 – Local Glyph Resolution Hardening
+### v0.9.5.127 – Gold Core Resolution Plan ✅
 
-- Improve local glyph proof for rows such as `Mizzenmast`, `Drpeek`, `S I G I`, and similar Latin-only blockers.
-- Add stronger per-target confidence semantics: selected expected glyph vs noisy vote environment.
+- Convert blocker classes into safe execution lanes.
+- Add `gold_core_resolution_plan_report.json/xlsx`.
+- Separate local automation candidates from crop geometry, script policy, observed evidence, and context gaps.
 - Avoid broad identity inference from rank/power/alliance alone.
 
 Exit criteria:
 
 ```text
+Every Gold Core blocker has a next safe action
+Automation candidates are explicitly separated from hard-stop cases
+Operational Truth remains unchanged
+```
+
+### v0.9.5.128 – Safe Warning Downgrade & Local Glyph Retry
+
+- Implement strict resolver logic only for `P1_LOCAL_GLYPH_RETRY` and `P1_WARNING_DOWNGRADE_SAFE`.
+- Keep crop-geometry, policy-nonlocal, observed-text, and context-gap cases blocked.
+- Measure blocker reduction against 0 new bad matches.
+
+Exit criteria:
+
+```text
 Gold Core blockers reduced without new bad matches
-Runtime remains under control on CPU-only validation
+No context gap enters Character ReOCR
+Runtime remains controlled on CPU-only validation
 ```
 
 ### v0.9.5.128 – Multilingual Display Policy
@@ -106,4 +122,4 @@ Sentinel reaches v1.0.0 when:
 
 ## Latest completed milestone
 
-v0.9.5.126 adds the dedicated Gold Core blocker report. The next natural sprint is v0.9.5.127 Local Glyph Resolution Hardening, using the report instead of broad OCR tuning.
+v0.9.5.127 adds the Gold Core Resolution Plan report. The next natural sprint is v0.9.5.128 Safe Warning Downgrade & Local Glyph Retry, using explicit resolution actions instead of broad OCR tuning.

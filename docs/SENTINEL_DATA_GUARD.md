@@ -1,7 +1,7 @@
 # Sentinel Data Guard
 
-**Current release:** v0.9.5.126  
-**Functional baseline:** v0.9.5.126
+**Current release:** v0.9.5.127  
+**Functional baseline:** v0.9.5.127
 
 ## Prime directive
 
@@ -41,3 +41,8 @@ The next functional sprint must reduce the 15 Gold Core blockers without weakeni
 ## v0.9.5.126 guardrail
 
 Gold Core blocker classification is diagnostic. A row can receive a proposed fix lane without becoming Operational Truth. `observed_text_confirmed`, `crop_geometry_problem`, and `context_gap_read_only` remain strict stop signs.
+
+
+## v0.9.5.127 guardrail
+
+The Gold Core Resolution Plan is planning-only. It may mark a row as a local automation candidate, but it does not promote display text into Operational Truth. Crop geometry problems, observed-text-confirmed rows, nonlocal script display rows, and context gaps remain hard stop signs until their own evidence path is implemented.

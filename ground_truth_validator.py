@@ -2249,6 +2249,144 @@ def _build_gold_core_blocker_report(gold_blocker_triage: pd.DataFrame, ocr_evide
     return core, summary
 
 
+
+def _classify_gold_core_resolution_action(row: pd.Series) -> tuple[str, str, str, str, bool]:
+    """Convert Gold Core blocker classes into v0.9.5.127 execution lanes.
+
+    This is still diagnostic and planning-only.  It deliberately does not
+    promote verified display text, does not mutate Operational Truth, and does
+    not treat rank/power/alliance continuity as identity proof.  The purpose is
+    to make the next safe engineering step explicit for every blocker row.
+    """
+    failure_class = str(row.get("gold_core_failure_class", "") or "")
+    status = str(row.get("row_integrity_status", "") or "")
+    verified_expected = _int_cell(row.get("evidence_verified_expected_targets", row.get("character_reocr_verified_expected")))
+    verified_observed = _int_cell(row.get("evidence_verified_observed_targets", row.get("character_reocr_verified_observed")))
+    unresolved = _int_cell(row.get("evidence_unresolved_targets", row.get("character_reocr_unresolved")))
+    field_mismatch = _int_cell(row.get("evidence_field_mismatch_targets"))
+    vote_outside = _int_cell(row.get("evidence_vote_outside_allowed_targets"))
+    skipped_nonlocal = _int_cell(row.get("character_reocr_skipped_nonlocal"))
+    core_match = _bool_cell(row.get("verified_core_identity_match"))
+
+    if failure_class == "local_glyph_solvable":
+        return (
+            "P1_LOCAL_GLYPH_RETRY",
+            "local_glyph_resolution",
+            "Run tighter local glyph crop candidates and require decisive expected-glyph evidence before clearing the blocker.",
+            "Local Latin glyph blocker; safe to improve screenshot-local crop/vote mechanics.",
+            True,
+        )
+    if failure_class == "vote_warning_gate_review":
+        if verified_expected > 0 and verified_observed == 0 and unresolved == 0 and field_mismatch == 0:
+            if core_match:
+                return (
+                    "P1_WARNING_DOWNGRADE_SAFE",
+                    "vote_warning_policy",
+                    "Downgrade outside-allowed-set noise to warning when Core Identity is already proven and selected glyph evidence is expected-only.",
+                    "Noisy vote environment but expected glyph evidence is decisive and no observed/unresolved/field-mismatch stop sign is present.",
+                    True,
+                )
+            return (
+                "P1_WARNING_DOWNGRADE_BLOCKED_BY_CORE",
+                "vote_warning_policy",
+                "Keep blocked until the row has independent Core Identity proof; do not clear from glyph fragments alone.",
+                "Expected glyph evidence exists, but Core Identity is not yet proven end-to-end.",
+                False,
+            )
+        return (
+            "P2_WARNING_REVIEW_NEEDS_EVIDENCE",
+            "vote_warning_policy",
+            "Collect decisive selected-glyph evidence before any warning downgrade is considered.",
+            "Vote warning lacks clean expected-only evidence.",
+            False,
+        )
+    if failure_class == "crop_geometry_problem" or status == "ROW_FIELD_MISMATCH_DIAGNOSTIC":
+        return (
+            "P1_CROP_GEOMETRY_FIRST",
+            "crop_geometry",
+            "Fix player/tag crop anchoring and field isolation before using the glyph evidence.",
+            "Field mismatch or power-column bleed is a hard stop for local glyph acceptance.",
+            False,
+        )
+    if failure_class == "mixed_local_and_nonlocal_blocker":
+        return (
+            "P1_SPLIT_LOCAL_FROM_SCRIPT",
+            "split_policy",
+            "Separate local Latin glyph targets from nonlocal script spans; only local targets may be resolved automatically.",
+            "Mixed blocker cannot be cleared by a single local glyph rule.",
+            False,
+        )
+    if failure_class == "observed_text_confirmed" or verified_observed > 0:
+        return (
+            "P2_MANUAL_BENCHMARK_REVIEW",
+            "manual_or_benchmark_evidence",
+            "Do not override observed evidence. Review screenshot/ground-truth display before changing policy.",
+            "ReOCR confirms observed text against expected benchmark display.",
+            False,
+        )
+    if failure_class == "policy_nonlocal_script_display" or skipped_nonlocal > 0:
+        return (
+            "P2_SCRIPT_POLICY_REQUIRED",
+            "script_display_policy",
+            "Keep conservative until multilingual display policy or stronger script OCR exists.",
+            "Nonlocal script display is outside safe local glyph correction.",
+            False,
+        )
+    if failure_class == "context_gap_read_only":
+        return (
+            "P2_ALIGNMENT_ONLY",
+            "row_alignment",
+            "Keep read-only; improve row localization but never run Character ReOCR on context gaps.",
+            "Context gaps are not glyph failures.",
+            False,
+        )
+    return (
+        "P3_MANUAL_TRIAGE",
+        "manual_triage",
+        "Inspect complete evidence before changing validator behavior.",
+        "Unexpected blocker/action signature.",
+        False,
+    )
+
+
+def _build_gold_core_resolution_plan_report(gold_core_blocker_report: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Build the v0.9.5.127 safe execution plan from Gold Core blockers."""
+    if gold_core_blocker_report.empty:
+        cols = [
+            "server", "rank", "expected_name", "ocr_name", "verified_name_display",
+            "expected_alliance_display", "ocr_alliance_display", "verified_alliance_display",
+            "row_integrity_status", "gold_core_failure_class", "gold_core_resolution_action",
+            "gold_core_resolution_lane", "gold_core_resolution_next_step",
+            "gold_core_resolution_guardrail", "gold_core_local_automation_candidate",
+        ]
+        return pd.DataFrame(columns=cols), pd.DataFrame(columns=[
+            "gold_core_resolution_action", "gold_core_resolution_lane", "rows", "automation_candidate_rows", "high_value_rows", "min_rank", "max_rank",
+        ])
+
+    plan = gold_core_blocker_report.copy()
+    action = plan.apply(_classify_gold_core_resolution_action, axis=1, result_type="expand")
+    action.columns = [
+        "gold_core_resolution_action",
+        "gold_core_resolution_lane",
+        "gold_core_resolution_next_step",
+        "gold_core_resolution_guardrail",
+        "gold_core_local_automation_candidate",
+    ]
+    plan = pd.concat([plan.reset_index(drop=True), action.reset_index(drop=True)], axis=1)
+    if "gold_blocker_priority" not in plan.columns:
+        plan["gold_blocker_priority"] = "P2"
+    plan["gold_core_local_automation_candidate"] = plan["gold_core_local_automation_candidate"].fillna(False).astype(bool)
+    plan = plan.sort_values(["gold_blocker_priority", "gold_core_resolution_action", "rank"], ascending=[True, True, True]).reset_index(drop=True)
+    summary = plan.groupby(["gold_core_resolution_action", "gold_core_resolution_lane"], dropna=False).agg(
+        rows=("rank", "count"),
+        automation_candidate_rows=("gold_core_local_automation_candidate", "sum"),
+        high_value_rows=("gold_blocker_priority", lambda values: int((values == "P1").sum())),
+        min_rank=("rank", "min"),
+        max_rank=("rank", "max"),
+    ).reset_index().sort_values(["high_value_rows", "automation_candidate_rows", "rows"], ascending=[False, False, False]).reset_index(drop=True)
+    return plan, summary
+
+
 def _row_evidence_status(row: pd.Series, row_reocr_debug: pd.DataFrame) -> tuple[str, str]:
     """Classify whether a validation row has trustworthy visual provenance.
 
@@ -2577,6 +2715,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
+    gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
 
     json_payload = {
         "summary": summary_rows[0],
@@ -2591,6 +2730,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "gold_blocker_triage": gold_blocker_triage.to_dict(orient="records"),
         "gold_core_blocker_summary": gold_core_blocker_summary.to_dict(orient="records"),
         "gold_core_blockers": gold_core_blocker_report.to_dict(orient="records"),
+        "gold_core_resolution_summary": gold_core_resolution_summary.to_dict(orient="records"),
+        "gold_core_resolution_plan": gold_core_resolution_plan.to_dict(orient="records"),
         "core_identity_summary": core_identity_summary.to_dict(orient="records"),
         "script_limited_policy_summary": script_limited_policy_summary.to_dict(orient="records"),
         "script_limited_policy_rows": script_limited_policy_detail.to_dict(orient="records"),
@@ -2624,6 +2765,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
     gold_core_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_blocker_summary.to_dict(orient="records"), "details": gold_core_blocker_report.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    gold_core_resolution_json_path = output_dir / "gold_core_resolution_plan_report.json"
+    gold_core_resolution_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_resolution_summary.to_dict(orient="records"), "details": gold_core_resolution_plan.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -2650,6 +2793,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(gold_blocker_triage).to_excel(writer, sheet_name="gold_blocker_details", index=False)
         _sanitize_frame(gold_core_blocker_summary).to_excel(writer, sheet_name="gold_core_summary", index=False)
         _sanitize_frame(gold_core_blocker_report).to_excel(writer, sheet_name="gold_core_blockers", index=False)
+        _sanitize_frame(gold_core_resolution_summary).to_excel(writer, sheet_name="gold_core_plan", index=False)
+        _sanitize_frame(gold_core_resolution_plan).to_excel(writer, sheet_name="gold_core_plan_rows", index=False)
         _sanitize_frame(core_identity_summary).to_excel(writer, sheet_name="core_identity", index=False)
         _sanitize_frame(core_identity_detail).to_excel(writer, sheet_name="core_identity_rows", index=False)
         _sanitize_frame(script_limited_policy_summary).to_excel(writer, sheet_name="script_policy", index=False)
@@ -2678,6 +2823,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="status_summary", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="rows", index=False)
         _sanitize_frame(ocr_evidence_fragments).to_excel(writer, sheet_name="fragments", index=False)
+
+    gold_core_resolution_xlsx_path = output_dir / "gold_core_resolution_plan_report.xlsx"
+    with pd.ExcelWriter(gold_core_resolution_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(gold_core_resolution_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(gold_core_resolution_plan).to_excel(writer, sheet_name="details", index=False)
 
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
@@ -2708,6 +2858,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Character ReOCR Debug Excel: {reocr_debug_xlsx_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
+    print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
+    print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")
     print(f"Runtime Debug JSON:  {runtime_json_path}")
     print(f"Runtime Debug Excel: {runtime_xlsx_path}")
 

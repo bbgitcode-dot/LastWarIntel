@@ -1,5 +1,43 @@
 # Release Notes
 
+## v0.9.5.127 – Gold Core Resolution Plan
+
+### Purpose
+
+Convert the v0.9.5.126 Gold Core blocker triage into an executable, guardrail-safe resolution plan. This sprint does not weaken DataGuard, Ranking Guard, Alignment Guard, or Operational Truth. It adds a dedicated planning layer that tells Sentinel which blockers are safe local automation candidates and which must remain blocked by crop geometry, script policy, observed evidence, or manual review.
+
+### Implemented
+
+- Added `gold_core_resolution_plan_report.json`.
+- Added `gold_core_resolution_plan_report.xlsx`.
+- Embedded `gold_core_resolution_summary` and `gold_core_resolution_plan` into `ground_truth_validation_report.json`.
+- Added `gold_core_plan` and `gold_core_plan_rows` sheets to the validation workbook.
+- Added `_classify_gold_core_resolution_action(...)` and `_build_gold_core_resolution_plan_report(...)`.
+- Added smoke tests for safe warning downgrade, crop-geometry stop signs, and nonlocal script policy blocking.
+
+### Guardrails
+
+- No Operational Truth mutation.
+- No Character ReOCR on context gaps.
+- No historical identity memory.
+- No rank/power/alliance-only player continuity promotion.
+- Vote-warning downgrade is only a candidate path when expected-only glyph evidence is clean and Core Identity is already proven.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_gold_core_resolution_plan_127.py tests/smoke/test_gold_core_blocker_report_126.py
+python -m py_compile ground_truth_validator.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(gold-core): add resolution plan report for v0.9.5.127"
+git tag -a v0.9.5.127 -m "v0.9.5.127 Gold Core Resolution Plan"
+```
+
 ## v0.9.5.126 – Gold Core Blocker Triage
 
 ### Purpose
