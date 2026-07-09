@@ -123,3 +123,7 @@ Sentinel reaches v1.0.0 when:
 ## Latest completed milestone
 
 v0.9.5.127 adds the Gold Core Resolution Plan report. The next natural sprint is v0.9.5.128 Safe Warning Downgrade & Local Glyph Retry, using explicit resolution actions instead of broad OCR tuning.
+
+## v0.9.5.128 Road-to-v1 Impact
+
+The path to v1.0 now explicitly separates Operational Truth from read-only Evidence Collection. Before Gold Core can become production-ready, Sentinel must use Alignment Intelligence to collect more evidence from high-confidence context gaps without promoting that evidence into snapshots or exports.

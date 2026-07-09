@@ -83,3 +83,7 @@ P1_SPLIT_LOCAL_FROM_SCRIPT: 1 row
 - Do not run Character ReOCR on context gaps.
 - Do not silently convert read-only inference into Operational Truth.
 - Do not downgrade vote warnings when Core Identity is not independently proven.
+
+## Next Recommended Sprint after v0.9.5.128
+
+Recommended next sprint: `v0.9.5.129 – Read-Only Evidence Execution`. Start from `alignment_intelligence_report.json/xlsx`. Implement actual read-only evidence collection for rows with `verification_allowed_read_only=true`, but keep Operational Truth, exports, snapshots, and Ground Truth immutable.

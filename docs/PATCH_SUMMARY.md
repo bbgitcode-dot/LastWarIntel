@@ -1,5 +1,47 @@
 # Patch Summary
 
+## v0.9.5.128 – Alignment Intelligence Phase I
+
+### Purpose
+
+Introduce a first Alignment Intelligence layer for Context Gap rows. The sprint keeps DataGuard and Operational Truth locked, but records when a contextual row has enough structural evidence to allow future read-only character evidence work. This is not an OCR tuning sprint and it does not promote contextual inference into truth.
+
+### Implemented
+
+- Added per-row `alignment_score`.
+- Added `alignment_score_evidence`.
+- Added `verification_allowed_read_only`.
+- Added `verification_block_reason`.
+- Added `read_only_verification_status`.
+- Added standalone `alignment_intelligence_report.json`.
+- Added standalone `alignment_intelligence_report.xlsx`.
+- Embedded Alignment Intelligence summary and rows in `ground_truth_validation_report.json`.
+- Added `alignment_intelligence` and `alignment_intel_rows` workbook sheets.
+- Added smoke tests for high-confidence Context Gap read-only eligibility and normal observed-row policy preservation.
+
+### Guardrails
+
+- Operational Truth remains unchanged.
+- Context Gap verification is evidence-only.
+- No snapshot/export/database mutation.
+- No rank/power/alliance continuity promotion.
+- No Character ReOCR execution on Context Gaps in Phase I; `.128` only introduces the safe scoring and report gate.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_alignment_intelligence_128.py tests/smoke/test_gold_core_resolution_plan_127.py tests/smoke/test_gold_core_blocker_report_126.py
+python -m py_compile ground_truth_validator.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(alignment): add read-only alignment intelligence for v0.9.5.128"
+git tag -a v0.9.5.128 -m "v0.9.5.128 Alignment Intelligence Phase I"
+```
+
 ## v0.9.5.127 – Gold Core Resolution Plan
 
 ### Purpose

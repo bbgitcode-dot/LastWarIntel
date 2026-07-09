@@ -83,3 +83,7 @@ P1_SPLIT_LOCAL_FROM_SCRIPT: 1 row
 - Do not run Character ReOCR on context gaps.
 - Do not silently convert read-only inference into Operational Truth.
 - Do not downgrade vote warnings when Core Identity is not independently proven.
+
+## v0.9.5.128 Handoff
+
+Current release: `Sentinel_v0.9.5.128.zip`. Focus of the next chat should be the `alignment_intelligence_report` and whether eligible Context Gap rows can safely run read-only evidence collection in `.129`.

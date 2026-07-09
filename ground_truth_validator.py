@@ -1028,6 +1028,62 @@ def _ground_truth_row_slots(ground_truth: pd.DataFrame) -> dict[tuple[str, int],
 
 
 
+def _alignment_score_for_row(row: pd.Series, *, inference_context_gap: bool) -> tuple[float, str, bool, str]:
+    """Score whether a row is safe enough for read-only evidence work.
+
+    v0.9.5.128 introduces Alignment Intelligence Phase I.  The score is not a
+    match decision and it never changes Operational Truth.  It only records how
+    much structural evidence exists for a contextual row so later phases can run
+    read-only verification without weakening DataGuard.
+    """
+    evidence: list[str] = []
+    score = 0.0
+
+    if inference_context_gap:
+        score += 0.20
+        evidence.append("context_gap_detected")
+    else:
+        score += 0.55
+        evidence.append("row_alignment_observed")
+
+    if str(row.get("inference_status", "") or "") == "accepted":
+        score += 0.22
+        evidence.append("accepted_read_only_inference")
+    if str(row.get("gap_recoverable", "") or "").lower() in {"true", "1", "yes"}:
+        score += 0.12
+        evidence.append("recoverable_bounded_gap")
+    gap_reason = str(row.get("gap_reason", "") or "")
+    if gap_reason:
+        evidence.append(f"gap_reason:{gap_reason}")
+    inference_evidence = str(row.get("inference_evidence", "") or "")
+    for marker, weight in [
+        ("rank_between_trusted_neighbors", 0.10),
+        ("tight_bounded_gap", 0.08),
+        ("expected_power_fits_neighbor_trend", 0.08),
+        ("unsafe_row_match_blocked", 0.05),
+    ]:
+        if marker in inference_evidence:
+            score += weight
+            evidence.append(marker)
+    try:
+        power_similarity = float(row.get("power_similarity", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        power_similarity = 0.0
+    if power_similarity >= 0.98:
+        score += 0.05
+        evidence.append("high_power_similarity")
+
+    score = min(0.99, round(score, 4))
+    read_only_allowed = bool(inference_context_gap and score >= 0.90)
+    if read_only_allowed:
+        block_reason = "read_only_character_verification_allowed;operational_truth_locked"
+    elif inference_context_gap:
+        block_reason = "alignment_score_below_read_only_threshold"
+    else:
+        block_reason = "normal_row_character_verification_policy"
+    return score, ";".join(dict.fromkeys(evidence)), read_only_allowed, block_reason
+
+
 def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
     """Separate contextual alignment gaps from true character fidelity work.
 
@@ -1035,23 +1091,34 @@ def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
     they are not row-level OCR matches. Comparing their Ground Truth identity
     against the rejected neighbouring OCR row creates false Character Re-OCR
     targets such as K9 Thunder vs YUNS.
+
+    v0.9.5.128 keeps the strict operational guard, but adds Alignment
+    Intelligence diagnostics.  High-confidence context gaps can become eligible
+    for read-only evidence collection in reports while still being blocked from
+    Operational Truth, exports, snapshots, and full Gold acceptance.
     """
     if detail.empty:
         return detail
     guarded = detail.copy()
     inference_mask = guarded["match_method"].astype(str).str.startswith("inference_") | (guarded["failure_class"].astype(str) == "inferred_context_gap")
     guarded["alignment_guard_status"] = "row_alignment_observed"
-    guarded.loc[inference_mask, "alignment_guard_status"] = "context_gap_no_character_verification"
+    guarded.loc[inference_mask, "alignment_guard_status"] = "context_gap_read_only_evidence_gate"
     guarded["alignment_safe_for_character_verification"] = ~inference_mask
 
+    scores = guarded.apply(lambda row: _alignment_score_for_row(row, inference_context_gap=bool(inference_mask.loc[row.name])), axis=1, result_type="expand")
+    scores.columns = ["alignment_score", "alignment_score_evidence", "verification_allowed_read_only", "verification_block_reason"]
+    guarded = pd.concat([guarded, scores], axis=1)
+    guarded["read_only_verification_status"] = "not_applicable"
+    guarded.loc[guarded["verification_allowed_read_only"].astype(bool), "read_only_verification_status"] = "eligible_not_executed_phase1"
+
     if inference_mask.any():
-        guarded.loc[inference_mask, "character_verification_candidate"] = False
+        guarded.loc[inference_mask, "character_verification_candidate"] = guarded.loc[inference_mask, "verification_allowed_read_only"]
         guarded.loc[inference_mask, "high_value_character_verification"] = False
-        guarded.loc[inference_mask, "character_verification_reasons"] = "alignment_context_gap_not_character_drift"
+        guarded.loc[inference_mask, "character_verification_reasons"] = "alignment_context_gap_read_only_evidence_only"
         guarded.loc[inference_mask, "character_verification_targets"] = "[]"
         guarded.loc[inference_mask, "player_name_character_verification_targets"] = "[]"
         guarded.loc[inference_mask, "alliance_tag_character_verification_targets"] = "[]"
-        guarded.loc[inference_mask, "character_reocr_status"] = "not_requested_alignment_context_gap"
+        guarded.loc[inference_mask, "character_reocr_status"] = "not_executed_read_only_alignment_phase1"
         guarded.loc[inference_mask, "character_reocr_targets"] = 0
         guarded.loc[inference_mask, "character_reocr_verified_expected"] = 0
         guarded.loc[inference_mask, "character_reocr_verified_observed"] = 0
@@ -1059,12 +1126,13 @@ def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
         guarded.loc[inference_mask, "character_reocr_evidence"] = "[]"
         guarded.loc[inference_mask, "gold_fidelity_blocker"] = False
         guarded.loc[inference_mask, "identity_risk"] = False
-        guarded.loc[inference_mask, "identity_risk_reasons"] = "alignment_context_gap"
+        guarded.loc[inference_mask, "identity_risk_reasons"] = "alignment_context_gap_read_only"
         guarded.loc[inference_mask, "high_value_identity_risk"] = False
         guarded.loc[inference_mask, "alignment_context_gap"] = True
     if "alignment_context_gap" not in guarded.columns:
         guarded["alignment_context_gap"] = False
     guarded["alignment_context_gap"] = guarded["alignment_context_gap"].where(guarded["alignment_context_gap"].notna(), False).astype(bool)
+    guarded["verification_allowed_read_only"] = guarded["verification_allowed_read_only"].where(guarded["verification_allowed_read_only"].notna(), False).astype(bool)
     return guarded
 
 
@@ -2687,6 +2755,27 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         character_reocr_targets=("character_reocr_targets", "sum"),
         gold_fidelity_blocker_rows=("gold_fidelity_blocker", "sum"),
     ).reset_index() if not alignment_context_gaps.empty else pd.DataFrame(columns=["alignment_guard_status", "rows", "inference_rows", "character_reocr_targets", "gold_fidelity_blocker_rows"])
+
+    alignment_intelligence_rows = detail[[
+        col for col in [
+            "server", "rank", "ocr_rank", "expected_name", "ocr_name", "expected_alliance_display",
+            "ocr_alliance_display", "expected_power", "ocr_power", "match_method", "failure_class",
+            "alignment_guard_status", "alignment_context_gap", "alignment_score",
+            "alignment_score_evidence", "verification_allowed_read_only", "verification_block_reason",
+            "read_only_verification_status", "inference_status", "inference_confidence",
+            "inference_evidence", "gap_status", "gap_reason", "gap_previous_anchor_rank",
+            "gap_next_anchor_rank", "operational_truth_modified"
+        ] if col in detail.columns
+    ]].copy()
+    alignment_intelligence_summary = pd.DataFrame([{
+        "rows": int(len(detail)),
+        "context_gap_rows": int(detail.get("alignment_context_gap", pd.Series(False, index=detail.index)).fillna(False).astype(bool).sum()),
+        "read_only_verification_candidate_rows": int(detail.get("verification_allowed_read_only", pd.Series(False, index=detail.index)).fillna(False).astype(bool).sum()),
+        "avg_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
+        "max_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).max()), 4) if len(detail) else 0.0,
+        "operational_truth_modified": False,
+        "phase": "v0.9.5.128_alignment_intelligence_phase1",
+    }])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(
         rows=("rank", "count"),
@@ -2740,6 +2829,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "core_identity_verified_rows": core_identity_detail.to_dict(orient="records"),
         "alignment_guard_summary": alignment_guard_summary.to_dict(orient="records"),
         "alignment_context_gaps": alignment_context_gaps.to_dict(orient="records"),
+        "alignment_intelligence_summary": alignment_intelligence_summary.to_dict(orient="records"),
+        "alignment_intelligence_rows": alignment_intelligence_rows.to_dict(orient="records"),
         "character_reocr": {
             "target_count": int(detail.get("character_reocr_targets", pd.Series(dtype=int)).sum()),
             "verified_expected": int(detail.get("character_reocr_verified_expected", pd.Series(dtype=int)).sum()),
@@ -2767,6 +2858,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     gold_core_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_blocker_summary.to_dict(orient="records"), "details": gold_core_blocker_report.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_resolution_json_path = output_dir / "gold_core_resolution_plan_report.json"
     gold_core_resolution_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_resolution_summary.to_dict(orient="records"), "details": gold_core_resolution_plan.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    alignment_intelligence_json_path = output_dir / "alignment_intelligence_report.json"
+    alignment_intelligence_json_path.write_text(json.dumps(_json_safe({"summary": alignment_intelligence_summary.to_dict(orient="records"), "details": alignment_intelligence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
 
     inference_detail = detail[detail["match_method"].astype(str).str.startswith("inference_")].copy()
     inference_summary = {
@@ -2803,6 +2896,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(latin_residual_policy_detail).to_excel(writer, sheet_name="latin_residual_rows", index=False)
         _sanitize_frame(alignment_guard_summary).to_excel(writer, sheet_name="alignment_guard", index=False)
         _sanitize_frame(alignment_context_gaps).to_excel(writer, sheet_name="alignment_context_gaps", index=False)
+        _sanitize_frame(alignment_intelligence_summary).to_excel(writer, sheet_name="alignment_intelligence", index=False)
+        _sanitize_frame(alignment_intelligence_rows).to_excel(writer, sheet_name="alignment_intel_rows", index=False)
         _sanitize_frame(character_reocr_debug_summary).to_excel(writer, sheet_name="reocr_debug_summary", index=False)
         _sanitize_frame(character_reocr_debug).to_excel(writer, sheet_name="reocr_debug", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
@@ -2828,6 +2923,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     with pd.ExcelWriter(gold_core_resolution_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(gold_core_resolution_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(gold_core_resolution_plan).to_excel(writer, sheet_name="details", index=False)
+    alignment_intelligence_xlsx_path = output_dir / "alignment_intelligence_report.xlsx"
+    with pd.ExcelWriter(alignment_intelligence_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(alignment_intelligence_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(alignment_intelligence_rows).to_excel(writer, sheet_name="details", index=False)
 
     inference_xlsx_path = output_dir / "inference_report.xlsx"
     with pd.ExcelWriter(inference_xlsx_path, engine="openpyxl") as writer:
@@ -2860,6 +2959,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
     print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")
+    print(f"Alignment Intelligence JSON:     {alignment_intelligence_json_path}")
+    print(f"Alignment Intelligence Excel:    {alignment_intelligence_xlsx_path}")
     print(f"Runtime Debug JSON:  {runtime_json_path}")
     print(f"Runtime Debug Excel: {runtime_xlsx_path}")
 

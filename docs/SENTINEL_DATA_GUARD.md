@@ -46,3 +46,7 @@ Gold Core blocker classification is diagnostic. A row can receive a proposed fix
 ## v0.9.5.127 guardrail
 
 The Gold Core Resolution Plan is planning-only. It may mark a row as a local automation candidate, but it does not promote display text into Operational Truth. Crop geometry problems, observed-text-confirmed rows, nonlocal script display rows, and context gaps remain hard stop signs until their own evidence path is implemented.
+
+## v0.9.5.128 DataGuard Note
+
+Alignment Intelligence is read-only. `verification_allowed_read_only` means Sentinel may produce diagnostic evidence for a high-confidence Context Gap, not that it may alter Ground Truth, snapshots, exports, or database state. Operational Truth remains the write boundary.

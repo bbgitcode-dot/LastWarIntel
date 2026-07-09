@@ -1,17 +1,18 @@
-Release: v0.9.5.127 Gold Core Resolution Plan
+Release: v0.9.5.128
+Title: Alignment Intelligence Phase I
 
-Commit:
-  git add .
-  git commit -m "feat(gold-core): add resolution plan report for v0.9.5.127"
-  git tag -a v0.9.5.127 -m "v0.9.5.127 Gold Core Resolution Plan"
+Summary:
+- Adds Alignment Intelligence scoring for Context Gap rows.
+- Adds read-only verification eligibility fields without executing Context Gap ReOCR.
+- Emits alignment_intelligence_report.json/xlsx.
+- Embeds Alignment Intelligence in the main validation JSON/workbook.
+- Preserves DataGuard, Ranking Guard, Alignment Guard, and Operational Truth immutability.
 
 Validation:
-  pytest -q tests/smoke/test_gold_core_resolution_plan_127.py tests/smoke/test_gold_core_blocker_report_126.py
-  python -m py_compile ground_truth_validator.py
+pytest -q tests/smoke/test_alignment_intelligence_128.py tests/smoke/test_gold_core_resolution_plan_127.py tests/smoke/test_gold_core_blocker_report_126.py
+python -m py_compile ground_truth_validator.py
 
-Notes:
-  - Adds gold_core_resolution_plan_report.json/xlsx.
-  - Embeds Gold Core resolution summary/detail into validation JSON/XLSX outputs.
-  - Keeps Operational Truth unchanged.
-  - Keeps context gaps out of Character ReOCR.
-  - Does not infer player continuity from rank/power/alliance alone.
+Commit:
+git add .
+git commit -m "feat(alignment): add read-only alignment intelligence for v0.9.5.128"
+git tag -a v0.9.5.128 -m "v0.9.5.128 Alignment Intelligence Phase I"

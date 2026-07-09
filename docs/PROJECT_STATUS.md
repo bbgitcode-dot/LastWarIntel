@@ -65,3 +65,7 @@ Recommended scope:
 - Historical player memory is not an identity shortcut.
 - Context gaps never enter Character ReOCR.
 - Evidence before inference remains the governing rule.
+
+## v0.9.5.128 Update – Alignment Intelligence Phase I
+
+Sentinel now records Alignment Intelligence for Context Gap rows. High-confidence contextual inferences can be marked as read-only verification candidates via `alignment_score` and `verification_allowed_read_only`, while Operational Truth remains locked. This prepares the next sprint to collect evidence from uncertain rows without weakening DataGuard.
