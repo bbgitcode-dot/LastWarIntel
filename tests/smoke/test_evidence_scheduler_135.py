@@ -7,7 +7,7 @@ from ground_truth_validator import (
 )
 
 
-def test_scheduler_early_exits_low_budget_rows():
+def test_gold_accuracy_scheduler_does_not_early_exit_low_budget_rows():
     row = pd.Series({
         "evidence_budget_tier": "low",
         "evidence_budget_action": "block_early_or_reuse_cache",
@@ -23,9 +23,10 @@ def test_scheduler_early_exits_low_budget_rows():
         "display_promotion_eligible": False,
     })
     decision = _scheduler_priority_from_budget(row)
-    assert decision["evidence_scheduler_decision"] == "early_exit_cache_only"
-    assert decision["scheduler_expected_runtime_ms"] == 0
-    assert decision["scheduler_estimated_saved_ms"] == 6500
+    assert decision["evidence_scheduler_decision"] == "schedule_accuracy_reocr"
+    assert decision["scheduler_expected_runtime_ms"] == 6500
+    assert decision["scheduler_estimated_saved_ms"] == 0
+    assert decision["scheduler_accuracy_mode"] is True
     assert decision["scheduler_operational_truth_modified"] is False
 
 
@@ -82,3 +83,4 @@ def test_scheduler_report_summarizes_queue():
     assert not rows.empty
     assert rows.iloc[0]["evidence_scheduler_decision"] == "schedule_full_reocr"
     assert "scheduled_runtime_ms" in summary.columns
+    assert bool(rows.iloc[0]["scheduler_accuracy_mode"]) is True

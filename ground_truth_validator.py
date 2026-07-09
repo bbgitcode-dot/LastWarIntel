@@ -133,6 +133,13 @@ def _is_low_yield_player_core_target(target: Any, *, core_safe: bool) -> bool:
         return True
     return False
 
+
+# v0.9.5.136 Gold Accuracy Mode
+# Accuracy is the default sprint behavior: Scheduler and ReOCR gates may still
+# order work, but they must not suppress evidence collection solely to save
+# runtime. Promotion remains guarded and Operational Truth remains locked.
+GOLD_ACCURACY_MODE = True
+
 def _is_harmless_alliance_case_target(target: Any, *, raw_alliance_match: bool, raw_alliance_case_sensitive_mismatch: bool) -> bool:
     """Return True for low-value alliance case-only probes.
 
@@ -177,6 +184,12 @@ def _apply_reocr_budget_gate(
     it only removes alliance case-only targets, never player-name targets and
     never missing/different alliance tags.
     """
+    if GOLD_ACCURACY_MODE:
+        # v0.9.5.136: runtime-saving gates are disabled in Gold Accuracy Mode.
+        # Keep all local targets so Character ReOCR can collect maximum evidence.
+        # Nonlocal/script policy remains handled outside this local glyph budget gate.
+        return list(targets), 0, ["gold_accuracy_mode_budget_gate_disabled"] if targets else []
+
     kept: list[Any] = []
     skipped = 0
     reasons: list[str] = []
@@ -3213,18 +3226,16 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
 
 
 def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
-    """Compute v0.9.5.135 read-only Evidence Scheduler decision.
+    """Compute v0.9.5.136 Gold Accuracy Scheduler decision.
 
-    The scheduler turns the v0.9.5.134 Evidence Budget recommendation into an
-    execution-plan decision. Phase I is intentionally conservative and report-only:
-    it does not mutate OCR rows, Character ReOCR evidence, exports, snapshots,
-    Ground Truth, or Operational Truth. It is designed to be moved in front of
-    Character ReOCR in a later runtime sprint.
+    In Gold Accuracy Mode the scheduler is an accuracy orchestrator, not a
+    runtime saver. It may order work and label context-only rows, but it must
+    not early-exit low budget rows merely to save time. Evidence collection is
+    maximized; promotion and Operational Truth remain protected by the existing
+    guards.
     """
     tier = str(row.get("evidence_budget_tier", "") or "").strip().lower()
     action = str(row.get("evidence_budget_action", "") or "").strip().lower()
-    decision = str(row.get("display_confidence_decision", "") or "").strip().lower()
-    status = str(row.get("display_reconstruction_status", "") or "").strip().lower()
     try:
         priority = float(row.get("evidence_priority_score", 0.0) or 0.0)
     except Exception:
@@ -3246,48 +3257,54 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
     context_gap = bool(row.get("alignment_context_gap", False))
     promotion_eligible = bool(row.get("display_promotion_eligible", False))
 
+    scheduled_cost_ms = cost_ms or 6500
+    estimated_saved_ms = 0
+
     if context_gap or tier == "context_evidence_only":
+        # Context-gap rows are evidence-only by DataGuard policy. They may carry
+        # a contextual display suggestion, but they must not be promoted or
+        # turned into Operational Truth.
         scheduler_priority = "evidence_only"
-        scheduler_decision = "skip_reocr_context_only"
-        scheduler_reason = "context_gap_read_only_evidence_is_not_promoted"
+        scheduler_decision = "collect_context_evidence_only"
+        scheduler_reason = "context_gap_read_only_evidence_operational_truth_locked"
         queue_order = 90
         scheduled_cost_ms = 0
-        estimated_saved_ms = max(cost_ms, 0)
-    elif action == "block_early_or_reuse_cache" or tier == "low":
-        scheduler_priority = "low"
-        scheduler_decision = "early_exit_cache_only"
-        scheduler_reason = "low_budget_return_or_low_coverage"
-        queue_order = 80
-        scheduled_cost_ms = 0
-        estimated_saved_ms = max(cost_ms, 0)
     elif promotion_eligible and action == "full_character_reocr_budget" and priority >= 0.70:
         scheduler_priority = "critical" if priority >= 0.85 else "high"
         scheduler_decision = "schedule_full_reocr"
-        scheduler_reason = "eligible_high_return_evidence"
+        scheduler_reason = "gold_accuracy_high_return_full_evidence"
         queue_order = 10 if scheduler_priority == "critical" else 20
         scheduled_cost_ms = cost_ms or 12000
-        estimated_saved_ms = 0
-    elif action == "targeted_character_reocr_budget" and priority >= 0.58 and unresolved <= 1 and observed == 0:
+    elif action == "full_character_reocr_budget" or tier == "high":
+        scheduler_priority = "high"
+        scheduler_decision = "schedule_full_reocr"
+        scheduler_reason = "gold_accuracy_full_evidence_collection"
+        queue_order = 20
+        scheduled_cost_ms = cost_ms or 12000
+    elif action == "targeted_character_reocr_budget" or tier == "medium":
         scheduler_priority = "medium"
         scheduler_decision = "schedule_targeted_reocr"
-        scheduler_reason = "recoverable_targeted_evidence"
+        scheduler_reason = "gold_accuracy_targeted_evidence_collection"
         queue_order = 30
         scheduled_cost_ms = cost_ms or 6500
-        estimated_saved_ms = 0
-    elif action == "cache_or_limited_retry" and (frag_conf >= 0.72 or coverage >= 0.50):
+    elif action == "cache_or_limited_retry" or tier == "watch":
         scheduler_priority = "watch"
-        scheduler_decision = "schedule_limited_retry_if_budget_remains"
-        scheduler_reason = "watchlist_evidence_with_limited_retry_value"
+        scheduler_decision = "schedule_limited_retry"
+        scheduler_reason = "gold_accuracy_watchlist_retry_not_runtime_limited"
         queue_order = 50
-        scheduled_cost_ms = min(cost_ms or 2500, 2500)
-        estimated_saved_ms = max((cost_ms or 2500) - scheduled_cost_ms, 0)
-    else:
+        scheduled_cost_ms = cost_ms or 3500
+    elif action == "block_early_or_reuse_cache" or tier == "low":
         scheduler_priority = "low"
-        scheduler_decision = "early_exit_cache_only"
-        scheduler_reason = "insufficient_scheduler_value"
-        queue_order = 80
-        scheduled_cost_ms = 0
-        estimated_saved_ms = max(cost_ms, 0)
+        scheduler_decision = "schedule_accuracy_reocr"
+        scheduler_reason = "gold_accuracy_mode_disables_runtime_early_exit"
+        queue_order = 70
+        scheduled_cost_ms = cost_ms or 6500
+    else:
+        scheduler_priority = "watch" if (frag_conf >= 0.50 or coverage >= 0.15 or unresolved > 0 or observed > 0) else "low"
+        scheduler_decision = "schedule_accuracy_reocr"
+        scheduler_reason = "gold_accuracy_default_collect_more_evidence"
+        queue_order = 60 if scheduler_priority == "watch" else 70
+        scheduled_cost_ms = cost_ms or 6500
 
     return {
         "evidence_scheduler_decision": scheduler_decision,
@@ -3296,7 +3313,8 @@ def _scheduler_priority_from_budget(row: pd.Series) -> dict[str, Any]:
         "scheduler_queue_order": queue_order,
         "scheduler_expected_runtime_ms": scheduled_cost_ms,
         "scheduler_estimated_saved_ms": estimated_saved_ms,
-        "scheduler_active_phase": "phase1_report_only",
+        "scheduler_accuracy_mode": bool(GOLD_ACCURACY_MODE),
+        "scheduler_active_phase": "v0.9.5.136_gold_accuracy_mode",
         "scheduler_operational_truth_modified": False,
     }
 
@@ -3310,11 +3328,11 @@ def _attach_evidence_scheduler(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.135 Evidence Scheduler report.
+    """Build v0.9.5.136 Gold Accuracy Scheduler report.
 
     The scheduler report shows which Evidence Budget candidates should be
-    executed, deferred, or early-exited. It is read-only in Phase I and exists to
-    make the next runtime optimization safe and measurable.
+    executed under Gold Accuracy Mode. It is read-only for Operational Truth,
+    but it intentionally disables runtime-first early exits in scheduling reports.
     """
     cols = [
         "server", "rank", "expected_alliance_display", "expected_name", "ocr_alliance_display", "ocr_name",
@@ -3324,10 +3342,10 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         "scheduler_reason", "scheduler_queue_order", "scheduler_expected_runtime_ms", "scheduler_estimated_saved_ms",
         "evidence_avg_fragment_confidence", "display_coverage_score", "evidence_fragments_total",
         "evidence_unresolved_fragments", "evidence_observed_fragments", "alignment_context_gap", "gold_core_blocker",
-        "scheduler_active_phase", "scheduler_operational_truth_modified",
+        "scheduler_accuracy_mode", "scheduler_active_phase", "scheduler_operational_truth_modified",
     ]
     if detail.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.135_evidence_scheduler_phase1", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
+        return pd.DataFrame([{"phase": "v0.9.5.136_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), pd.DataFrame(columns=cols)
     rows = detail.copy()
     for col in cols:
         if col not in rows.columns:
@@ -3335,7 +3353,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
     report = rows[cols].copy()
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
-        return pd.DataFrame([{"phase": "v0.9.5.135_evidence_scheduler_phase1", "rows": 0, "operational_truth_modified": False}]), report
+        return pd.DataFrame([{"phase": "v0.9.5.136_gold_accuracy_mode", "rows": 0, "operational_truth_modified": False}]), report
     summary = report.groupby(["scheduler_priority", "evidence_scheduler_decision"], dropna=False).agg(
         rows=("rank", "count"),
         avg_priority_score=("evidence_priority_score", "mean"),
@@ -3347,7 +3365,7 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         gold_core_blockers=("gold_core_blocker", lambda values: int(pd.Series(values).fillna(False).astype(bool).sum())),
     ).reset_index()
     summary["avg_priority_score"] = pd.to_numeric(summary["avg_priority_score"], errors="coerce").fillna(0).round(4)
-    summary.insert(0, "phase", "v0.9.5.135_evidence_scheduler_phase1")
+    summary.insert(0, "phase", "v0.9.5.136_gold_accuracy_mode")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["scheduler_queue_order", "evidence_priority_score", "rank"], ascending=[True, False, True]).reset_index(drop=True)
 

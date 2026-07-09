@@ -57,3 +57,8 @@ Strategic intent: Sentinel now starts converting stored character evidence into 
 - Added read-only Evidence Scheduler reports and queue decisions.
 - Converts passive Evidence Budget recommendations into an execution plan.
 - No Operational Truth mutation.
+
+## v0.9.5.136 – Gold Accuracy Mode
+
+Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold Fidelity work. `GOLD_ACCURACY_MODE` is enabled in the validator, local glyph ReOCR budget skips are disabled, and Evidence Scheduler decisions no longer early-exit rows solely to save runtime. Context-gap evidence remains read-only and Operational Truth remains locked.
+

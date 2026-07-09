@@ -136,3 +136,8 @@ Evidence Budget Manager
 ```
 
 Phase I is read-only. It adds scheduling decisions to reports without changing runtime OCR execution or Operational Truth.
+
+## v0.9.5.136 – Gold Accuracy Mode Architecture
+
+Gold Accuracy Mode changes the Evidence Scheduler role from budget saver to accuracy orchestrator. Runtime-first early exits are disabled for local glyph evidence collection. Context-gap rows remain evidence-only, and Display Promotion/Operational Truth mutation remains guarded. The scheduler may still prioritize queue order, but it must not suppress useful ReOCR work solely for speed.
+

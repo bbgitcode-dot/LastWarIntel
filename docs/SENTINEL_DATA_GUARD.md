@@ -85,3 +85,8 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 ## v0.9.5.135 – Scheduler Guardrail
 
 The Evidence Scheduler is explicitly read-only in Phase I. Scheduler decisions may recommend skipping, retrying, or prioritizing evidence collection, but they do not promote display values and do not modify Operational Truth.
+
+## v0.9.5.136 DataGuard Note
+
+Gold Accuracy Mode increases evidence collection without weakening DataGuard. More ReOCR may run, but additional evidence remains evidence until promotion rules allow it. Contextual inference and display reconstruction remain read-only by default. Operational Truth is not modified by scheduler, confidence, or reconstruction reports.
+

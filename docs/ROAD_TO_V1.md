@@ -177,3 +177,8 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 ## v0.9.5.135 – Evidence Scheduler Phase I
 
 Milestone toward V1: Sentinel now has the first scheduler layer for evidence work. The scheduler is report-only, but it defines how expensive ReOCR work should be prioritized and where early exits are safe. Next steps are runtime enforcement, adaptive retry/crop strategies, and Promotion Engine 2.0.
+
+## v0.9.5.136 Road to V1 Update
+
+Before V1, Sentinel prioritizes high-accuracy Gold Fidelity over runtime optimization. Performance tuning is deferred until the evidence and promotion stack reliably produces highly accurate display data. The next milestones should focus on eliminating Gold Core blockers, strengthening nonlocal script policy, and increasing coverage while maintaining DataGuard guarantees.
+

@@ -1724,8 +1724,7 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 - Added queue decisions for full ReOCR, targeted ReOCR, limited retry, early exit/cache-only, and context-only evidence.
 - Operational Truth remains locked; scheduler output is report-only in Phase I.
 
+## v0.9.5.136 – Gold Accuracy Mode
 
-## v0.9.5.136 - Gold Accuracy Mode
-- Accuracy-first scheduling.
-- Runtime no longer used as primary optimization criterion.
-- Evidence collection prioritized over early exit.
+Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold Fidelity work. `GOLD_ACCURACY_MODE` is enabled in the validator, local glyph ReOCR budget skips are disabled, and Evidence Scheduler decisions no longer early-exit rows solely to save runtime. Context-gap evidence remains read-only and Operational Truth remains locked.
+

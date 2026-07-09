@@ -437,3 +437,13 @@ Turn the passive Evidence Budget Manager into a report-only scheduler plan that 
 
 ### Safety
 The scheduler is Phase I/report-only. It does not alter OCR rows, exports, snapshots, Ground Truth, or Operational Truth.
+
+## v0.9.5.136 – Gold Accuracy Mode
+
+- Added functional `GOLD_ACCURACY_MODE = True`.
+- Disabled runtime-first local glyph budget skips in `_apply_reocr_budget_gate`.
+- Reworked Evidence Scheduler into an accuracy orchestrator.
+- Replaced low-priority `early_exit_cache_only` behavior with `schedule_accuracy_reocr`.
+- Preserved read-only contextual inference and Operational Truth protection.
+- Added Gold Accuracy Mode smoke tests.
+

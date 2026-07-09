@@ -188,3 +188,8 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 Current focus moved from collecting more display evidence to deciding which evidence is worth expensive Character ReOCR. The new Evidence Scheduler consumes the Evidence Budget fields and produces a read-only execution queue: full ReOCR, targeted ReOCR, limited retry, early exit/cache-only, or context-only evidence.
 
 This prepares the next performance sprint without weakening DataGuard. Operational Truth remains immutable.
+
+## v0.9.5.136 Status – Gold Accuracy Mode
+
+The project direction has been corrected: Gold data accuracy is the primary objective; runtime is secondary. The scheduler is no longer treated as a runtime-saving mechanism during the Gold Fidelity phase. It now orders and explains work while continuing to collect evidence wherever local glyph ReOCR can improve confidence. Operational Truth remains unchanged unless a separate guarded promotion path explicitly permits it.
+
