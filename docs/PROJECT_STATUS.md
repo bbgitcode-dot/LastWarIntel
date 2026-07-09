@@ -1,3 +1,59 @@
+# Project Status – Sentinel v0.9.5.129
+
+**Current release:** v0.9.5.129 Read-only Verification Execution  
+**Functional baseline:** v0.9.5.128 Alignment Intelligence Phase I  
+**Sprint posture:** evidence execution without truth promotion
+
+## Current state
+
+SENTINEL has moved from eligibility diagnostics to evidence execution for Context Gap rows. v0.9.5.128 identified high-confidence Context Gaps through `alignment_score` and `verification_allowed_read_only`; v0.9.5.129 now executes that lane in report-only mode.
+
+## What changed in v0.9.5.129
+
+Eligible Context Gap rows now receive:
+
+```text
+read_only_reocr_executed
+read_only_reocr_evidence
+read_only_suggested_display
+read_only_confidence
+read_only_operational_truth_modified = false
+```
+
+This means SENTINEL can collect and expose useful evidence from uncertain rows while still refusing to mutate Operational Truth.
+
+## Strategic interpretation
+
+This is an architecture milestone rather than an OCR improvement. The system can now separate three layers:
+
+1. **Observed OCR** – what the parser saw.
+2. **Read-only Evidence** – what structural context strongly suggests.
+3. **Operational Truth** – what is allowed into trusted data.
+
+The third layer remains locked unless future policy explicitly promotes evidence under strict rules.
+
+## Next recommended sprint
+
+**v0.9.5.130 – Evidence Consumption Policy**
+
+Recommended scope:
+
+1. Define when read-only evidence can become a review recommendation.
+2. Keep automatic Operational Truth promotion disabled.
+3. Add a separate `review_recommendation_report` or extend `ocr_evidence_report` with clear recommendation status.
+4. Preserve DataGuard: evidence can inform humans; it must not silently rewrite truth.
+
+## Hard guardrails
+
+- Operational Truth is never silently changed.
+- Read-only inference remains read-only.
+- Historical player memory is not an identity shortcut.
+- Context Gap evidence is report-only.
+- Evidence before inference remains the governing rule.
+
+
+---
+
 # Project Status – Sentinel v0.9.5.127
 
 **Current release:** v0.9.5.127 Gold Core Resolution Plan  

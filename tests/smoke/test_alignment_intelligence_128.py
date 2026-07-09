@@ -41,8 +41,11 @@ def test_alignment_intelligence_allows_read_only_evidence_for_high_confidence_co
     assert row["alignment_guard_status"] == "context_gap_read_only_evidence_gate"
     assert row["alignment_score"] >= 0.9
     assert bool(row["verification_allowed_read_only"])
-    assert row["read_only_verification_status"] == "eligible_not_executed_phase1"
-    assert row["character_reocr_status"] == "not_executed_read_only_alignment_phase1"
+    assert row["read_only_verification_status"] == "executed_evidence_only_phase2"
+    assert row["character_reocr_status"] == "executed_read_only_alignment_phase2"
+    assert bool(row["read_only_reocr_executed"])
+    assert row["read_only_reocr_evidence"] != "[]"
+    assert row["read_only_confidence"] >= 0.9
     assert bool(row["gold_fidelity_blocker"]) is False
 
 

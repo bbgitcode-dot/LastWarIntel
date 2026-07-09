@@ -87,3 +87,7 @@ P1_SPLIT_LOCAL_FROM_SCRIPT: 1 row
 ## v0.9.5.128 Handoff
 
 Current release: `Sentinel_v0.9.5.128.zip`. Focus of the next chat should be the `alignment_intelligence_report` and whether eligible Context Gap rows can safely run read-only evidence collection in `.129`.
+## v0.9.5.129 Road-to-V1 Update – Read-only Evidence Execution
+
+The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
+

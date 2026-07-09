@@ -1,5 +1,40 @@
 # Release Notes
 
+## v0.9.5.129 – Read-only Verification Execution
+
+v0.9.5.129 executes the read-only Context Gap evidence lane introduced in v0.9.5.128. Eligible high-confidence Context Gaps now produce report-only suggested display and confidence evidence while Operational Truth remains locked.
+
+### Added
+
+- `read_only_reocr_executed`
+- `read_only_reocr_evidence`
+- `read_only_suggested_display`
+- `read_only_confidence`
+- `read_only_operational_truth_modified`
+- Phase marker: `v0.9.5.129_read_only_verification_execution`
+
+### Guardrails
+
+- Evidence-only execution.
+- No verified display overwrite.
+- No export/snapshot/database/Ground Truth mutation.
+- No promotion from contextual inference into Operational Truth.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_alignment_intelligence_128.py tests/smoke/test_read_only_verification_129.py
+python -m py_compile ground_truth_validator.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(alignment): execute read-only verification evidence for v0.9.5.129"
+git tag -a v0.9.5.129 -m "v0.9.5.129 Read-only Verification Execution"
+```
+
 ## v0.9.5.128 – Alignment Intelligence Phase I
 
 ### Purpose

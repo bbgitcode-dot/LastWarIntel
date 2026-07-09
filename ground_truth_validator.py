@@ -1084,6 +1084,69 @@ def _alignment_score_for_row(row: pd.Series, *, inference_context_gap: bool) -> 
     return score, ";".join(dict.fromkeys(evidence)), read_only_allowed, block_reason
 
 
+def _build_read_only_alignment_evidence(row: pd.Series) -> str:
+    """Build evidence-only payload for high-confidence context gaps.
+
+    v0.9.5.129 executes the read-only lane introduced in v0.9.5.128.  This is
+    deliberately not a display resolver and not an Operational Truth update.
+    It records the contextual evidence, the suggested Ground Truth display, and
+    the OCR/quarantine contradiction that caused the row to remain guarded.
+    """
+    payload = {
+        "status": "executed_read_only_contextual_verification",
+        "scope": "evidence_only",
+        "operational_truth_modified": False,
+        "server": _json_safe(row.get("server")),
+        "rank": _json_safe(row.get("rank")),
+        "suggested_name_display": normalize_text(row.get("expected_name", "")),
+        "suggested_alliance_display": normalize_text(row.get("expected_alliance_display", row.get("expected_alliance", ""))),
+        "suggested_power": _json_safe(row.get("expected_power")),
+        "observed_name_display": normalize_text(row.get("ocr_name", "")),
+        "observed_alliance_display": normalize_text(row.get("ocr_alliance_display", row.get("ocr_alliance", ""))),
+        "observed_power": _json_safe(row.get("ocr_power")),
+        "quarantine_name": normalize_text(row.get("quarantine_name", "")),
+        "quarantine_alliance": normalize_text(row.get("quarantine_alliance", "")),
+        "quarantine_power": _json_safe(row.get("quarantine_power")),
+        "quarantine_reason": normalize_text(row.get("quarantine_reason", "")),
+        "alignment_score": _json_safe(row.get("alignment_score")),
+        "inference_confidence": _json_safe(row.get("inference_confidence")),
+        "alignment_score_evidence": normalize_text(row.get("alignment_score_evidence", "")),
+        "inference_evidence": normalize_text(row.get("inference_evidence", "")),
+        "decision": "evidence_collected_no_promotion",
+    }
+    return json.dumps([payload], ensure_ascii=False)
+
+
+def _apply_read_only_alignment_execution(guarded: pd.DataFrame, inference_mask: pd.Series) -> pd.DataFrame:
+    """Execute the read-only evidence lane for eligible context gaps.
+
+    The execution produces report-only fields. It does not modify verified
+    display fields, match fields, exports, snapshots, or Ground Truth.
+    """
+    if guarded.empty:
+        return guarded
+    eligible_mask = inference_mask & guarded["verification_allowed_read_only"].astype(bool)
+    guarded["read_only_reocr_executed"] = False
+    guarded["read_only_reocr_evidence"] = "[]"
+    guarded["read_only_suggested_display"] = ""
+    guarded["read_only_confidence"] = 0.0
+    guarded["read_only_operational_truth_modified"] = False
+    if eligible_mask.any():
+        guarded.loc[eligible_mask, "read_only_reocr_executed"] = True
+        guarded.loc[eligible_mask, "read_only_verification_status"] = "executed_evidence_only_phase2"
+        guarded.loc[eligible_mask, "character_reocr_status"] = "executed_read_only_alignment_phase2"
+        guarded.loc[eligible_mask, "read_only_reocr_evidence"] = guarded.loc[eligible_mask].apply(_build_read_only_alignment_evidence, axis=1)
+        guarded.loc[eligible_mask, "read_only_suggested_display"] = guarded.loc[eligible_mask].apply(
+            lambda row: f"{normalize_text(row.get('expected_alliance_display', row.get('expected_alliance', '')))} | {normalize_text(row.get('expected_name', ''))}",
+            axis=1,
+        )
+        guarded.loc[eligible_mask, "read_only_confidence"] = guarded.loc[eligible_mask].apply(
+            lambda row: round(max(float(row.get("alignment_score", 0.0) or 0.0), float(row.get("inference_confidence", 0.0) or 0.0)), 4),
+            axis=1,
+        )
+    return guarded
+
+
 def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
     """Separate contextual alignment gaps from true character fidelity work.
 
@@ -1092,10 +1155,10 @@ def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
     against the rejected neighbouring OCR row creates false Character Re-OCR
     targets such as K9 Thunder vs YUNS.
 
-    v0.9.5.128 keeps the strict operational guard, but adds Alignment
-    Intelligence diagnostics.  High-confidence context gaps can become eligible
-    for read-only evidence collection in reports while still being blocked from
-    Operational Truth, exports, snapshots, and full Gold acceptance.
+    v0.9.5.128 kept the strict operational guard while adding Alignment
+    Intelligence diagnostics. v0.9.5.129 executes that evidence lane in read-only
+    mode: eligible context gaps now receive report-only suggested displays and
+    evidence payloads, but Operational Truth remains locked.
     """
     if detail.empty:
         return detail
@@ -1129,6 +1192,7 @@ def _apply_alignment_guard(detail: pd.DataFrame) -> pd.DataFrame:
         guarded.loc[inference_mask, "identity_risk_reasons"] = "alignment_context_gap_read_only"
         guarded.loc[inference_mask, "high_value_identity_risk"] = False
         guarded.loc[inference_mask, "alignment_context_gap"] = True
+    guarded = _apply_read_only_alignment_execution(guarded, inference_mask)
     if "alignment_context_gap" not in guarded.columns:
         guarded["alignment_context_gap"] = False
     guarded["alignment_context_gap"] = guarded["alignment_context_gap"].where(guarded["alignment_context_gap"].notna(), False).astype(bool)
@@ -2762,19 +2826,22 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
             "ocr_alliance_display", "expected_power", "ocr_power", "match_method", "failure_class",
             "alignment_guard_status", "alignment_context_gap", "alignment_score",
             "alignment_score_evidence", "verification_allowed_read_only", "verification_block_reason",
-            "read_only_verification_status", "inference_status", "inference_confidence",
-            "inference_evidence", "gap_status", "gap_reason", "gap_previous_anchor_rank",
-            "gap_next_anchor_rank", "operational_truth_modified"
+            "read_only_verification_status", "read_only_reocr_executed", "read_only_reocr_evidence",
+            "read_only_suggested_display", "read_only_confidence", "read_only_operational_truth_modified",
+            "inference_status", "inference_confidence", "inference_evidence", "gap_status", "gap_reason",
+            "gap_previous_anchor_rank", "gap_next_anchor_rank", "operational_truth_modified"
         ] if col in detail.columns
     ]].copy()
     alignment_intelligence_summary = pd.DataFrame([{
         "rows": int(len(detail)),
         "context_gap_rows": int(detail.get("alignment_context_gap", pd.Series(False, index=detail.index)).fillna(False).astype(bool).sum()),
         "read_only_verification_candidate_rows": int(detail.get("verification_allowed_read_only", pd.Series(False, index=detail.index)).fillna(False).astype(bool).sum()),
+        "read_only_reocr_executed_rows": int(detail.get("read_only_reocr_executed", pd.Series(False, index=detail.index)).fillna(False).astype(bool).sum()),
+        "avg_read_only_confidence": round(float(pd.to_numeric(detail.get("read_only_confidence", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
         "avg_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).mean()), 4) if len(detail) else 0.0,
         "max_alignment_score": round(float(pd.to_numeric(detail.get("alignment_score", pd.Series(dtype=float)), errors="coerce").fillna(0).max()), 4) if len(detail) else 0.0,
         "operational_truth_modified": False,
-        "phase": "v0.9.5.128_alignment_intelligence_phase1",
+        "phase": "v0.9.5.129_read_only_verification_execution",
     }])
     character_verification_detail = detail[detail["character_verification_candidate"]].copy()
     character_verification_summary = character_verification_detail.groupby("character_verification_reasons", dropna=False).agg(

@@ -127,3 +127,7 @@ v0.9.5.127 adds the Gold Core Resolution Plan report. The next natural sprint is
 ## v0.9.5.128 Road-to-v1 Impact
 
 The path to v1.0 now explicitly separates Operational Truth from read-only Evidence Collection. Before Gold Core can become production-ready, Sentinel must use Alignment Intelligence to collect more evidence from high-confidence context gaps without promoting that evidence into snapshots or exports.
+## v0.9.5.129 Road-to-V1 Update – Read-only Evidence Execution
+
+The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
+

@@ -50,3 +50,7 @@ The Gold Core Resolution Plan is planning-only. It may mark a row as a local aut
 ## v0.9.5.128 DataGuard Note
 
 Alignment Intelligence is read-only. `verification_allowed_read_only` means Sentinel may produce diagnostic evidence for a high-confidence Context Gap, not that it may alter Ground Truth, snapshots, exports, or database state. Operational Truth remains the write boundary.
+## v0.9.5.129 Road-to-V1 Update – Read-only Evidence Execution
+
+The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
+

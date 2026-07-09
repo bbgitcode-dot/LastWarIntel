@@ -1,5 +1,45 @@
 # Patch Summary
 
+## v0.9.5.129 – Read-only Verification Execution
+
+### Purpose
+
+Execute the read-only evidence lane that v0.9.5.128 only made eligible. Context Gap rows with strong structural evidence now receive report-only verification output. This is not an Operational Truth resolver and it does not write into exports, snapshots, database state, or Ground Truth.
+
+### Implemented
+
+- Added `read_only_reocr_executed`.
+- Added `read_only_reocr_evidence` as an evidence-only JSON payload.
+- Added `read_only_suggested_display`.
+- Added `read_only_confidence`.
+- Added `read_only_operational_truth_modified` and keeps it `false`.
+- Upgraded eligible Context Gap rows from `eligible_not_executed_phase1` to `executed_evidence_only_phase2`.
+- Updated `alignment_intelligence_report.json/xlsx` with execution fields.
+- Added smoke test coverage for read-only evidence execution without truth promotion.
+
+### Guardrails
+
+- No Operational Truth mutation.
+- No verified-display promotion from Context Gap evidence.
+- No snapshot/export/database mutation.
+- No rank/power/alliance-only player continuity promotion.
+- Context Gap evidence remains report-only until a later explicit policy decides how to consume it.
+
+### Validation
+
+```bash
+pytest -q tests/smoke/test_alignment_intelligence_128.py tests/smoke/test_read_only_verification_129.py
+python -m py_compile ground_truth_validator.py
+```
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(alignment): execute read-only verification evidence for v0.9.5.129"
+git tag -a v0.9.5.129 -m "v0.9.5.129 Read-only Verification Execution"
+```
+
 ## v0.9.5.128 – Alignment Intelligence Phase I
 
 ### Purpose

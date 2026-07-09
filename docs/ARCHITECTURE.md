@@ -75,3 +75,7 @@ This separation is essential for safe pre/post transfer analysis.
 ## v0.9.5.128 Architecture Note – Alignment Intelligence
 
 The validation pipeline now includes an Alignment Intelligence layer after contextual inference and before reporting. It scores structural evidence for context gaps and emits read-only verification eligibility fields: `alignment_score`, `alignment_score_evidence`, `verification_allowed_read_only`, `verification_block_reason`, and `read_only_verification_status`.
+## v0.9.5.129 Road-to-V1 Update – Read-only Evidence Execution
+
+The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
+

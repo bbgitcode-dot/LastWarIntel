@@ -87,3 +87,7 @@ P1_SPLIT_LOCAL_FROM_SCRIPT: 1 row
 ## Next Recommended Sprint after v0.9.5.128
 
 Recommended next sprint: `v0.9.5.129 – Read-Only Evidence Execution`. Start from `alignment_intelligence_report.json/xlsx`. Implement actual read-only evidence collection for rows with `verification_allowed_read_only=true`, but keep Operational Truth, exports, snapshots, and Ground Truth immutable.
+## v0.9.5.129 Road-to-V1 Update – Read-only Evidence Execution
+
+The Alignment Intelligence lane now executes evidence-only verification for eligible Context Gap rows. This improves explainability without weakening DataGuard. The next V1-critical step is not automatic correction; it is an explicit evidence consumption policy that separates review recommendations from Operational Truth.
+
