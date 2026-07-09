@@ -1668,3 +1668,11 @@ Active resolution of recoverable validation gaps caused by screenshot/server buc
 - Added smoke tests for local character reconstruction, context-gap display suggestions, and report generation.
 
 Strategic intent: Sentinel now starts converting stored character evidence into explainable display proposals without weakening DataGuard.
+
+## v0.9.5.132 – Display Reconstruction Guard
+
+- Added promotion control for Display Reconstruction Engine Phase I.
+- Prevents unsafe display-name synthesis such as rebuilding names from `UNKNOWN` with sparse fragments.
+- Adds `display_promotion_eligible` and `display_promotion_block_reason` to validation/detail reports.
+- Introduces guarded statuses for blocked name promotion while preserving safe alliance reconstruction.
+- Keeps Display Reconstruction strictly read-only: no Ground Truth, snapshot, export, or Operational Truth mutation.

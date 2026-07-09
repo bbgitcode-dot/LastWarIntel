@@ -59,3 +59,7 @@ The Alignment Intelligence lane now executes evidence-only verification for elig
 ## v0.9.5.131 DataGuard Note
 
 Display Reconstruction is explicitly read-only. It may propose `display_reconstructed_name` and `display_reconstructed_alliance_tag` in reports, but it may not write to Operational Truth, snapshots, Ground Truth, or verified display fields. Any future promotion path must be implemented as a separate guarded export policy.
+
+## v0.9.5.132 DataGuard Note – Display Promotion Guard
+
+Display Reconstruction Guard formalizes that reconstructed display strings are evidence products, not Operational Truth. Unsafe display-name promotion is blocked when the evidence base is insufficient, while safe partial evidence such as alliance-tag reconstruction may still be reported. No Ground Truth, snapshot, export, or verified display field is silently changed.

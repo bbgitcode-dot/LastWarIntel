@@ -1,2 +1,7 @@
-v0.9.5.131
-feat(display): add read-only display reconstruction report
+v0.9.5.132
+feat(display): add reconstruction promotion guard
+
+Commit:
+git add .
+git commit -m "feat(display): add reconstruction promotion guard"
+git tag -a v0.9.5.132 -m "v0.9.5.132 Display Reconstruction Guard"

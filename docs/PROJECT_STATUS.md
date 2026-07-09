@@ -146,3 +146,9 @@ Current policy remains conservative:
 - Context-gap suggestions remain evidence-only.
 
 Next focus: use the new `display_reconstruction_report` to decide which rows are safe candidates for a future Gold Display export lane and which still require crop geometry or multilingual script policy work.
+
+## v0.9.5.132 Status Update – Display Reconstruction Guard
+
+The `.131` run proved that Display Reconstruction can consume Character ReOCR evidence, but it also exposed the risk of over-aggressive name synthesis. `.132` therefore adds a promotion guard: evidence can still be collected and reported, but reconstructed display names are blocked when the base text is `UNKNOWN`, evidence coverage is too low, unresolved fragments remain, or observed votes conflict with expected glyphs.
+
+This keeps the next phase aligned with DataGuard: Evidence before Inference, read-only reconstruction remains read-only, and Operational Truth is never modified.

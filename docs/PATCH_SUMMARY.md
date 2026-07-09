@@ -346,3 +346,36 @@ git add .
 git commit -m "feat(display): add read-only display reconstruction report"
 git tag -a v0.9.5.131 -m "v0.9.5.131 Display Reconstruction Engine Phase I"
 ```
+
+## v0.9.5.132
+
+### Display Reconstruction Guard
+
+This sprint adds the safety layer required after `.131`: Display Reconstruction may still collect and expose evidence, but unsafe name promotion is blocked before a synthesized display string is surfaced.
+
+### Added
+
+- Display promotion guard in `ground_truth_validator.py`.
+- New report fields:
+  - `display_promotion_eligible`
+  - `display_promotion_block_reason`
+- New guarded statuses:
+  - `alliance_reconstructed_name_blocked`
+  - `blocked_display_promotion`
+- Smoke test: `tests/smoke/test_display_reconstruction_guard_132.py`.
+
+### Guardrails
+
+- Blocks name reconstruction from `UNKNOWN` bases.
+- Blocks low-coverage name reconstruction when the reconstructed name does not match expected display.
+- Blocks name promotion when observed-vote conflicts or unresolved fragments remain.
+- Allows safe alliance reconstruction to remain visible even when name promotion is blocked.
+- Operational Truth remains unchanged.
+
+### Commit
+
+```bash
+git add .
+git commit -m "feat(display): add reconstruction promotion guard"
+git tag -a v0.9.5.132 -m "v0.9.5.132 Display Reconstruction Guard"
+```

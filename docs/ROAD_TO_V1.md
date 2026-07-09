@@ -143,3 +143,12 @@ Display Fidelity is now a first-class pipeline stage. The path to v1 should trea
 4. **V1 Readiness** – multi-server regression confirms that DataGuard, Ranking Guard and Display Reconstruction behave consistently across 549–554.
 
 Recommended next sprint: `v0.9.5.132 – Display Reconstruction Evaluation`, using the new report to quantify how many of the 15 Gold Core blockers can be safely converted into report-only display proposals versus crop/script/manual lanes.
+
+## v0.9.5.132 Road-to-V1 Adjustment
+
+Display Fidelity now requires two separate layers:
+
+1. Reconstruction Engine: builds report-only display proposals from Character ReOCR and contextual evidence.
+2. Reconstruction Guard: decides whether those proposals are safe to promote as display suggestions.
+
+The next milestone should focus on crop geometry and coverage-aware reconstruction, because the remaining blockers are dominated by crop bleed, nonlocal script policy, and insufficient evidence coverage rather than player matching.

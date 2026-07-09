@@ -2608,8 +2608,8 @@ def _display_confidence_from_items(items: list[dict[str, Any]]) -> float:
 def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
     """Build a read-only reconstructed display proposal from character evidence.
 
-    v0.9.5.131: The engine consumes already-collected Character ReOCR evidence
-    and produces report-only display proposals. It never changes expected/OCR
+    v0.9.5.132: The engine consumes already-collected Character ReOCR evidence
+    and produces guarded, report-only display proposals. It never changes expected/OCR
     fields, verified_* fields, exports, snapshots, or Ground Truth.  The goal is
     to make the Evidence Layer useful for Display Fidelity without weakening
     DataGuard.
@@ -2668,12 +2668,44 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
             else:
                 unresolved += 1
 
+    # v0.9.5.132 Display Reconstruction Guard:
+    # Character evidence may propose display strings, but promotion is blocked
+    # when the name base is UNKNOWN, evidence coverage is too thin, observed
+    # votes contradict expected glyphs, or unresolved fragments remain. This is
+    # report-only; Operational Truth is never modified.
+    name_promotion_block_reasons: list[str] = []
+    name_promotion_candidate = bool(name_applied)
+    expected_name_len = len(expected_name) if expected_name else 0
+    name_coverage = (name_applied / expected_name_len) if expected_name_len else 0.0
+    if name_promotion_candidate:
+        if observed_name.upper() == "UNKNOWN":
+            name_promotion_block_reasons.append("blocked_unknown_base")
+        if expected_name and name != expected_name and name_coverage < 0.5:
+            name_promotion_block_reasons.append("blocked_low_coverage")
+        if observed_votes:
+            name_promotion_block_reasons.append("blocked_observed_votes")
+        if unresolved:
+            name_promotion_block_reasons.append("blocked_unresolved_fragments")
+
+    if name_promotion_block_reasons:
+        # Keep tag evidence, but do not surface a synthesized name built on an
+        # unsafe base such as UNKNOWN -> GNKNIWN.
+        name = observed_name
+        notes.extend(name_promotion_block_reasons)
+
+    display_promotion_eligible = not bool(name_promotion_block_reasons)
+    display_promotion_block_reason = ";".join(dict.fromkeys(name_promotion_block_reasons))
+
     source = "none"
     status = "not_reconstructed"
     if name_applied or tag_applied:
         source = "character_reocr_evidence"
         status = "partial_reconstruction"
-        if expected_name and name == expected_name and expected_tag and tag == expected_tag:
+        if name_promotion_block_reasons and tag_applied and expected_tag and tag == expected_tag:
+            status = "alliance_reconstructed_name_blocked"
+        elif name_promotion_block_reasons:
+            status = "blocked_display_promotion"
+        elif expected_name and name == expected_name and expected_tag and tag == expected_tag:
             status = "full_display_reconstructed"
         elif expected_name and name == expected_name:
             status = "name_reconstructed"
@@ -2691,6 +2723,8 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
             tag = suggested_tag or tag
             source = "read_only_contextual_inference"
             status = "contextual_display_suggestion"
+            display_promotion_eligible = False
+            display_promotion_block_reason = "context_gap_evidence_only"
             notes.append("context_gap_evidence_only")
             useful_items.extend(read_only_items)
 
@@ -2723,6 +2757,8 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         "display_reconstruction_unresolved_targets": unresolved,
         "display_reconstruction_observed_votes": observed_votes,
         "display_reconstruction_notes": ";".join(dict.fromkeys(notes)),
+        "display_promotion_eligible": display_promotion_eligible,
+        "display_promotion_block_reason": display_promotion_block_reason,
         "display_reconstruction_operational_truth_modified": False,
     }
 
@@ -2736,7 +2772,7 @@ def _apply_display_reconstruction(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.131 Display Reconstruction Engine report."""
+    """Build v0.9.5.132 guarded Display Reconstruction report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
@@ -2745,6 +2781,7 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
         "display_reconstruction_observed_votes", "display_reconstruction_notes",
+        "display_promotion_eligible", "display_promotion_block_reason",
         "alignment_context_gap", "gold_core_blocker", "row_integrity_status",
         "display_reconstruction_operational_truth_modified",
     ]
@@ -2775,7 +2812,7 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         observed_votes=("display_reconstruction_observed_votes", "sum"),
     ).reset_index()
     summary["avg_confidence"] = summary["avg_confidence"].astype(float).round(4)
-    summary.insert(0, "phase", "v0.9.5.131_display_reconstruction_engine_phase1")
+    summary.insert(0, "phase", "v0.9.5.132_display_reconstruction_guard")
     summary["operational_truth_modified"] = False
     return summary, report.sort_values(["rank", "display_reconstruction_status"]).reset_index(drop=True)
 

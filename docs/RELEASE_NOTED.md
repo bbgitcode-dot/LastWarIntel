@@ -27,3 +27,10 @@ Canonical release notes live in `RELEASE_NOTES.md`. This file exists only as a c
 - Added smoke tests for local character reconstruction, context-gap display suggestions, and report generation.
 
 Strategic intent: Sentinel now starts converting stored character evidence into explainable display proposals without weakening DataGuard.
+
+## v0.9.5.132 – Display Reconstruction Guard
+
+- Added guarded promotion rules for report-only display reconstruction.
+- Blocks unsafe name promotion from `UNKNOWN`, low coverage, unresolved fragments, or observed-vote conflicts.
+- Added `display_promotion_eligible` and `display_promotion_block_reason`.
+- Operational Truth remains unchanged.

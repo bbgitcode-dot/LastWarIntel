@@ -109,3 +109,11 @@ Start by reading:
 - `gold_core_blocker_report.json/xlsx`
 
 Main question for `.132`: Which reconstructed display proposals are safe report-only wins, which rows remain crop geometry problems, and which require multilingual/nonlocal script policy?
+
+## Handoff after v0.9.5.132
+
+Current release: `Sentinel_v0.9.5.132.zip`.
+
+Next recommended sprint: `v0.9.5.133 – Crop Geometry Optimizer`.
+
+Rationale: `.132` prevents unsafe display promotion. The next bottleneck is better evidence collection: crop bleed, anchor mismatch, and low-coverage character fragments still limit Display Fidelity.

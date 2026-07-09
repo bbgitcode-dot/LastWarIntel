@@ -109,3 +109,7 @@ Start by reading:
 - `gold_core_blocker_report.json/xlsx`
 
 Main question for `.132`: Which reconstructed display proposals are safe report-only wins, which rows remain crop geometry problems, and which require multilingual/nonlocal script policy?
+
+## Next Chat Addendum after v0.9.5.132
+
+Start from `Sentinel_v0.9.5.132.zip`. The next recommended sprint is `v0.9.5.133 – Crop Geometry Optimizer`: improve evidence quality before further promotion rules. Keep Operational Truth locked and keep Display Reconstruction report-only.
