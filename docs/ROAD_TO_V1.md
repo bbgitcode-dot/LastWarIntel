@@ -53,3 +53,7 @@ Runtime is secondary during the Gold Accuracy phase. The target is a highly accu
 
 
 | v0.9.5.140 | Gold Blocker Strike I | Clear the first narrow localized Latin glyph blocker under strict evidence guardrails. |
+
+## Gold Core Strike IV completed – v0.9.5.143
+
+Strike IV establishes the quality-intelligence layer required before Gold Core Zero: root-cause classification, recommendations, recurrence tracking and regression requirements. The next milestone is evidence-driven elimination of the remaining root-cause clusters, followed by a V1 release candidate.

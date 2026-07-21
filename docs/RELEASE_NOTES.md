@@ -1790,3 +1790,11 @@ The sprint does not change Operational Truth, snapshots, exports, Ground Truth, 
 
 Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold Fidelity work. `GOLD_ACCURACY_MODE` is enabled in the validator, local glyph ReOCR budget skips are disabled, and Evidence Scheduler decisions no longer early-exit rows solely to save runtime. Context-gap evidence remains read-only and Operational Truth remains locked.
 
+## v0.9.5.143 – Gold Core Strike IV
+
+- Added read-only Gold Core root-cause analytics.
+- Added persistent `gold_core_failure_memory.json`.
+- Added `gold_core_analytics_report.json` and `.xlsx`.
+- Added evidence-based recommendations per Gold Core case.
+- Added regression coverage for Strike IV.
+- Operational Truth remains unchanged.

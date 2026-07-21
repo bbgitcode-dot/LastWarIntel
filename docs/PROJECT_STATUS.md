@@ -74,3 +74,7 @@ Key changes:
 - Added single-glyph Latin blocker clearance guard.
 - Updated Gold-Core elimination phase labels to `v0.9.5.140_gold_blocker_strike_i`.
 - Preserved context-gap read-only policy and DataGuard protections.
+
+## Current sprint: v0.9.5.143 – Gold Core Strike IV
+
+The Gold Core phase now includes read-only root-cause analytics and persistent failure memory. The next benchmark run on server 551 should be used to measure the remaining blocker distribution and select the highest-impact path toward Gold Core Zero.

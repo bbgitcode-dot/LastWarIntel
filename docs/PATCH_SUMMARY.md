@@ -509,3 +509,6 @@ The scheduler is Phase I/report-only. It does not alter OCR rows, exports, snaps
 - Preserved read-only contextual inference and Operational Truth protection.
 - Added Gold Accuracy Mode smoke tests.
 
+## v0.9.5.143
+
+Gold Core Strike IV turns remaining blockers into explainable quality intelligence. Each candidate is assigned a root-cause class, confidence, priority and recommended next action. A persistent failure memory tracks recurrence and resolution across validator runs. No OCR export, snapshot, Ground Truth or Operational Truth is modified.

@@ -1,4 +1,4 @@
-version: 0.9.5.142
-commit: feat(gold-core): implement conservative strike iii confusion-only clearance
-tag: v0.9.5.142
-notes: Strike III clears at most two proven Latin glyph-confusion substitutions under full same-snapshot identity anchors. Operational Truth remains unchanged.
+version: 0.9.5.143
+commit: feat(gold-core): add strike iv root-cause analytics and failure memory
+tag: v0.9.5.143
+notes: Adds read-only Gold Core root-cause classification, recommendations, analytics reports, and persistent failure memory. Operational Truth remains unchanged.

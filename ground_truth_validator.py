@@ -4483,6 +4483,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     gold_core_elimination_summary, gold_core_elimination_rows = _build_gold_core_elimination_report(detail)
     gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
     gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
+    from gold_core.quality_intelligence import build_gold_core_quality_intelligence
+    gold_core_analytics_summary, gold_core_analytics_rows, gold_core_failure_memory = build_gold_core_quality_intelligence(detail, output_dir)
 
     json_payload = {
         "summary": summary_rows[0],
@@ -4501,6 +4503,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "gold_core_resolution_plan": gold_core_resolution_plan.to_dict(orient="records"),
         "gold_core_elimination_summary": gold_core_elimination_summary.to_dict(orient="records"),
         "gold_core_elimination_rows": gold_core_elimination_rows.to_dict(orient="records"),
+        "gold_core_analytics_summary": gold_core_analytics_summary.to_dict(orient="records"),
+        "gold_core_analytics_rows": gold_core_analytics_rows.to_dict(orient="records"),
+        "gold_core_failure_memory": gold_core_failure_memory.to_dict(orient="records"),
         "core_identity_summary": core_identity_summary.to_dict(orient="records"),
         "script_limited_policy_summary": script_limited_policy_summary.to_dict(orient="records"),
         "script_limited_policy_rows": script_limited_policy_detail.to_dict(orient="records"),
@@ -4556,6 +4561,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     gold_core_resolution_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_resolution_summary.to_dict(orient="records"), "details": gold_core_resolution_plan.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_elimination_json_path = output_dir / "gold_core_elimination_report.json"
     gold_core_elimination_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_elimination_summary.to_dict(orient="records"), "details": gold_core_elimination_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    gold_core_analytics_json_path = output_dir / "gold_core_analytics_report.json"
+    gold_core_analytics_json_path.write_text(json.dumps(_json_safe({"summary": gold_core_analytics_summary.to_dict(orient="records"), "details": gold_core_analytics_rows.to_dict(orient="records"), "failure_memory": gold_core_failure_memory.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     alignment_intelligence_json_path = output_dir / "alignment_intelligence_report.json"
     alignment_intelligence_json_path.write_text(json.dumps(_json_safe({"summary": alignment_intelligence_summary.to_dict(orient="records"), "details": alignment_intelligence_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     display_reconstruction_json_path = output_dir / "display_reconstruction_report.json"
@@ -4662,6 +4669,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     with pd.ExcelWriter(gold_core_resolution_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(gold_core_resolution_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(gold_core_resolution_plan).to_excel(writer, sheet_name="details", index=False)
+    gold_core_analytics_xlsx_path = output_dir / "gold_core_analytics_report.xlsx"
+    with pd.ExcelWriter(gold_core_analytics_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(gold_core_analytics_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(gold_core_analytics_rows).to_excel(writer, sheet_name="root_causes", index=False)
+        _sanitize_frame(gold_core_failure_memory).to_excel(writer, sheet_name="failure_memory", index=False)
     alignment_intelligence_xlsx_path = output_dir / "alignment_intelligence_report.xlsx"
     with pd.ExcelWriter(alignment_intelligence_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(alignment_intelligence_summary).to_excel(writer, sheet_name="summary", index=False)
@@ -4720,6 +4732,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"OCR Evidence Excel: {ocr_evidence_xlsx_path}")
     print(f"Gold Core Resolution Plan JSON:  {gold_core_resolution_json_path}")
     print(f"Gold Core Resolution Plan Excel: {gold_core_resolution_xlsx_path}")
+    print(f"Gold Core Analytics JSON:         {gold_core_analytics_json_path}")
+    print(f"Gold Core Analytics Excel:        {gold_core_analytics_xlsx_path}")
     print(f"Alignment Intelligence JSON:     {alignment_intelligence_json_path}")
     print(f"Alignment Intelligence Excel:    {alignment_intelligence_xlsx_path}")
     print(f"Runtime Debug JSON:  {runtime_json_path}")

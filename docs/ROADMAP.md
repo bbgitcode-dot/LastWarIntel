@@ -224,3 +224,12 @@ Completed in v0.9.5.48.
 Completed: Command Center / Review Center consolidation foundation and review-history deduplication.
 
 Next recommended sprint: interactive review resolution model. The groundwork now exists for selecting a candidate or entering a manual value without creating duplicate history items on every rerun.
+
+## v0.9.5.143 – Gold Core Strike IV
+
+- Root Cause Analytics
+- Failure Memory
+- Gold Core Analytics reports
+- Read-only improvement recommendations
+
+Next: Gold Core Zero based on the measured server 551 blocker distribution.
