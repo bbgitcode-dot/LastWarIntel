@@ -1,3 +1,22 @@
+# Sentinel Roadmap – Current Direction
+
+## Completed external acquisition milestone
+
+- **SentinelCapture:** completed as a separate sister project. It now provides the raw screenshot corpus independently of SENTINEL OCR and analysis.
+- Public third-party upload remains deferred; Capture is the controlled Gold acquisition source.
+
+## Current milestone: Gold Core Strike III
+
+- Eliminate observed Gold-Core blocker classes conservatively.
+- Preserve Evidence before Inference and immutable Operational Truth.
+- Turn every solved blocker into a permanent regression.
+
+## Next
+
+- Gold Core Strike IV based on the `.142` benchmark outcome.
+- Gold Core zero / V1 release candidate.
+- After V1 data fidelity: Knowledge, longitudinal change detection and explainable Strategic Intelligence.
+
 ## v0.9.5.61 Roadmap Update
 
 ### Completed

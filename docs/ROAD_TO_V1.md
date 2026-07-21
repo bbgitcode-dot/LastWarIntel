@@ -1,3 +1,21 @@
+# Road to V1 – Sentinel
+
+**Current release:** v0.9.5.142  
+**Current line:** Gold Accuracy / targeted Gold-Core elimination
+
+## Immediate sequence
+
+1. Run the Server 551 Gold benchmark with `.142`.
+2. Compare remaining Gold-Core blockers against `.141`.
+3. Convert every newly cleared blocker into a permanent `tests/gold_core/GC-xxx_*` regression case.
+4. Classify remaining blockers by edit shape, glyph family, crop quality and evidence stability.
+5. Continue with Gold Core Strike IV only from observed blocker classes; do not add generic fuzzy identity logic.
+6. Freeze V1 only after Gold Core reaches zero and the regression suite remains stable.
+
+## Guardrail
+
+Gold-Core clearance is validator evidence assessment only. Operational Truth, Ground Truth, snapshots and exports remain immutable unless existing guarded promotion rules prove exact display fidelity.
+
 # v0.9.5.141 – Character Position Intelligence Phase I
 
 - Implements functional Character Position Intelligence in the validator, not just report scaffolding.

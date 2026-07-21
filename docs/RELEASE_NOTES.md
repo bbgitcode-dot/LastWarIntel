@@ -1,3 +1,18 @@
+# v0.9.5.142 – Gold Core Strike III
+
+## Functional changes
+
+- Adds a conservative Strike III validator gate for one or two Latin substitutions that belong exclusively to known OCR glyph-confusion families.
+- Requires accepted same-snapshot identity matching, exact power anchor, proven Core Alliance, Promotion Guard eligibility, zero unresolved fragments, zero observed votes, and confirmed character evidence for every changed position.
+- Blocks identity guessing, arbitrary fuzzy substitutions, insertion/deletion shapes, context-gap inference and unstable Character Position Intelligence states.
+- Preserves Operational Truth, Ground Truth, snapshots and exports unchanged.
+- Adds dedicated Strike III smoke regressions while retaining Strike I/II coverage.
+
+## Validation
+
+- Targeted Gold-Core regression suite: 12 passed.
+- The legacy full smoke suite is not clean in the supplied .141 baseline because it contains two shell-command files saved as Python tests and obsolete OCR configuration imports. These pre-existing collection defects were not masked or rewritten in this sprint.
+
 # v0.9.5.141 – Character Position Intelligence Phase I
 
 - Implements functional Character Position Intelligence in the validator, not just report scaffolding.

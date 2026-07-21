@@ -1,4 +1,4 @@
-version: 0.9.5.141
-commit: feat(character): implement character position intelligence
-tag: v0.9.5.141
-notes: Character Position Intelligence adds position risk, adaptive acquisition actions, and scheduler integration. Operational Truth remains unchanged.
+version: 0.9.5.142
+commit: feat(gold-core): implement conservative strike iii confusion-only clearance
+tag: v0.9.5.142
+notes: Strike III clears at most two proven Latin glyph-confusion substitutions under full same-snapshot identity anchors. Operational Truth remains unchanged.

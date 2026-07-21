@@ -3262,8 +3262,60 @@ def _gold_blocker_strike_ii_clearance(row: pd.Series) -> tuple[bool, str]:
 
     return True, "strike_ii_one_missing_latin_glyph_plus_optional_confusable_with_full_identity_anchors"
 
+
+
+def _gold_blocker_strike_iii_clearance(row: pd.Series) -> tuple[bool, str]:
+    """v0.9.5.142 Gold Core Strike III: clear up to two confusion-only Latin substitutions.
+
+    This gate is deliberately narrower than generic fuzzy matching. It requires
+    current-snapshot identity anchors, zero unresolved/observed character votes,
+    and confirmed character evidence for every changed position. It never
+    mutates Operational Truth; it only clears the validator-side Gold Core flag.
+    """
+    if not _bool_cell(row.get("gold_core_blocker", False)):
+        return False, "not_a_gold_core_blocker"
+    if _bool_cell(row.get("alignment_context_gap", False)):
+        return False, "strike_iii_blocked_context_gap_read_only"
+    if _bool_cell(row.get("bad_match", False)) or str(row.get("match_method", "") or "") in {"missing", "blocked_rank_fallback"}:
+        return False, "strike_iii_blocked_identity_match_not_accepted"
+    if not _bool_cell(row.get("power_match", False)):
+        return False, "strike_iii_blocked_power_not_proven"
+    if not (_bool_cell(row.get("core_alliance_match", False)) or normalize_text(row.get("display_reconstructed_alliance_tag", "")) == normalize_text(row.get("expected_alliance_display", ""))):
+        return False, "strike_iii_blocked_core_alliance_not_proven"
+    if not _bool_cell(row.get("display_promotion_eligible", False)):
+        return False, "strike_iii_blocked_promotion_guard"
+    if _int_cell(row.get("display_reconstruction_observed_votes", 0)) > 0:
+        return False, "strike_iii_blocked_observed_votes"
+    if _int_cell(row.get("display_reconstruction_unresolved_targets", 0)) > 0:
+        return False, "strike_iii_blocked_unresolved_fragments"
+
+    expected = _latin_compact(normalize_text(row.get("expected_name", "")))
+    reconstructed = _latin_compact(normalize_text(row.get("display_reconstructed_name", "") or row.get("verified_name_display", "") or row.get("ocr_name", "")))
+    if not expected or not reconstructed or len(expected) != len(reconstructed):
+        return False, "strike_iii_blocked_non_substitution_edit_shape"
+    if not (_is_latin_display_text(expected) and _is_latin_display_text(reconstructed)):
+        return False, "strike_iii_blocked_non_latin_name"
+
+    ops = [op for op in _levenshtein_ops(expected, reconstructed) if op[0] != "equal"]
+    if not ops:
+        return True, "strike_iii_exact_latin_core_already_proven"
+    if len(ops) > 2 or any(op[0] != "replace" for op in ops):
+        return False, "strike_iii_blocked_requires_one_or_two_substitutions"
+    if any(not _strike_ii_confusable(op[1], op[2]) for op in ops):
+        return False, "strike_iii_blocked_substitution_not_confusion_family"
+
+    confirmed = _int_cell(row.get("evidence_confirmed_fragments", 0)) + _int_cell(row.get("character_reocr_verified_expected", 0))
+    if confirmed < len(ops):
+        return False, "strike_iii_blocked_insufficient_confirmed_character_evidence"
+
+    position_action = str(row.get("character_position_action", "") or "")
+    if position_action in {"forced_position_acquisition", "position_adaptive_multicrop_retry"}:
+        return False, "strike_iii_blocked_position_evidence_still_unstable"
+
+    return True, "strike_iii_one_or_two_confusion_only_substitutions_with_full_identity_anchors"
+
 def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
-    """Apply v0.9.5.141 Gold Regression & Strike II rules.
+    """Apply v0.9.5.142 Gold Core Strike III rules.
 
     This is the first functional blocker-elimination gate.  It does not mutate
     OCR export rows, snapshots, Ground Truth, or Operational Truth.  It only
@@ -3312,7 +3364,8 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     )
     strike_clear, strike_reason = _gold_blocker_strike_i_clearance(row)
     strike_ii_clear, strike_ii_reason = _gold_blocker_strike_ii_clearance(row)
-    clear = bool(strict_clear or strike_clear or strike_ii_clear)
+    strike_iii_clear, strike_iii_reason = _gold_blocker_strike_iii_clearance(row)
+    clear = bool(strict_clear or strike_clear or strike_ii_clear or strike_iii_clear)
 
     if strict_clear:
         reason = "display_reconstruction_proves_name_and_core_alliance"
@@ -3323,6 +3376,9 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     elif strike_ii_clear:
         reason = strike_ii_reason
         action = "clear_gold_core_blocker_strike_ii"
+    elif strike_iii_clear:
+        reason = strike_iii_reason
+        action = "clear_gold_core_blocker_strike_iii"
     elif not original_blocker:
         reason = "not_a_gold_core_blocker"
         action = "not_applicable"
@@ -3381,7 +3437,7 @@ def _apply_gold_core_elimination(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Build v0.9.5.141 Gold Regression & Strike II report."""
+    """Build v0.9.5.142 Gold Core Strike III report."""
     cols = [
         "server", "rank", "expected_alliance_display", "ocr_alliance_display",
         "expected_name", "ocr_name", "verified_name_display", "verified_alliance_display",
