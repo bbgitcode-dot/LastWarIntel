@@ -233,3 +233,13 @@ Next recommended sprint: interactive review resolution model. The groundwork now
 - Read-only improvement recommendations
 
 Next: Gold Core Zero based on the measured server 551 blocker distribution.
+
+
+## v0.9.5.144 – Gold Core Strike V
+
+- Root Cause Truth hierarchy with established validator triage as authority.
+- Stable Gold Core case IDs and cross-report Case Explorer.
+- Failure Memory 2.0 and generated Casebook.
+- Recommendation confidence/impact scoring.
+
+Next: run Server 551, execute the highest-impact verified fix lanes, and begin Gold Core Zero elimination.

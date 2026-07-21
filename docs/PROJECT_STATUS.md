@@ -75,6 +75,13 @@ Key changes:
 - Updated Gold-Core elimination phase labels to `v0.9.5.140_gold_blocker_strike_i`.
 - Preserved context-gap read-only policy and DataGuard protections.
 
-## Current sprint: v0.9.5.143 – Gold Core Strike IV
+## Previous sprint: v0.9.5.143 – Gold Core Strike IV
 
 The Gold Core phase now includes read-only root-cause analytics and persistent failure memory. The next benchmark run on server 551 should be used to measure the remaining blocker distribution and select the highest-impact path toward Gold Core Zero.
+
+## v0.9.5.144 status – Gold Core Strike V
+
+Gold Core Root Cause Truth is consolidated. Established blocker classification now leads
+analytics, and every case can be traced through one stable case ID, Failure Memory,
+prioritized recommendation, and cross-report explorer. The next phase is targeted
+Gold Core elimination based on the generated action plan, not further analytics scaffolding.

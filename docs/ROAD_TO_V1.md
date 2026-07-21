@@ -57,3 +57,12 @@ Runtime is secondary during the Gold Accuracy phase. The target is a highly accu
 ## Gold Core Strike IV completed – v0.9.5.143
 
 Strike IV establishes the quality-intelligence layer required before Gold Core Zero: root-cause classification, recommendations, recurrence tracking and regression requirements. The next milestone is evidence-driven elimination of the remaining root-cause clusters, followed by a V1 release candidate.
+
+## After v0.9.5.144
+
+1. Run Server 551 Ground Truth validation and inspect the generated Casebook.
+2. Execute the highest-impact established fix lanes.
+3. Convert every resolved blocker into a permanent regression case.
+4. Reach Gold Core Zero.
+5. Enter V1.0 release-candidate stabilization.
+6. Begin SENTINEL Intelligence development on stable post-transfer raw data.

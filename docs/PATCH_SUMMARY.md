@@ -512,3 +512,18 @@ The scheduler is Phase I/report-only. It does not alter OCR rows, exports, snaps
 ## v0.9.5.143
 
 Gold Core Strike IV turns remaining blockers into explainable quality intelligence. Each candidate is assigned a root-cause class, confidence, priority and recommended next action. A persistent failure memory tracks recurrence and resolution across validator runs. No OCR export, snapshot, Ground Truth or Operational Truth is modified.
+
+## v0.9.5.144 – Gold Core Strike V
+
+Gold Core knowledge is consolidated into one consistent case model. Existing validator
+triage is authoritative; analytics heuristics are fallback-only. The validator now emits
+a case explorer, prioritized action list, generated casebook, enriched analytics workbook,
+and Failure Memory 2.0. All artifacts are read-only and cross-linked through stable
+server/rank case IDs.
+
+Validation target:
+
+```cmd
+pytest -q tests\smoke\test_gold_core_strike_v_144.py tests\smoke\test_gold_core_strike_iv_143.py tests\smoke\test_gold_core_strike_iii_142.py tests\smoke\test_gold_core_strike_140.py tests\smoke\test_gold_blocker_strike_139.py tests\smoke\test_character_position_intelligence_141.py
+python -m py_compile ground_truth_validator.py gold_core\quality_intelligence.py
+```

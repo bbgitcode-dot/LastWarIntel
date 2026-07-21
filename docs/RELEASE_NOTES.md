@@ -1798,3 +1798,19 @@ Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold
 - Added evidence-based recommendations per Gold Core case.
 - Added regression coverage for Strike IV.
 - Operational Truth remains unchanged.
+
+## v0.9.5.144 – Gold Core Strike V: Knowledge Consolidation
+
+- Established Gold Core triage is now the authoritative Root Cause Truth chain.
+- Strike IV heuristics were demoted to fallback-only status and cannot overwrite
+  `gold_core_failure_class`, `gold_core_failure_domain`, or `gold_core_fix_lane`.
+- Added stable benchmark case IDs based on server and rank.
+- Added `gold_core_case_explorer.json` and `gold_core_case_explorer.xlsx`.
+- Added a generated `GOLD_CORE_CASEBOOK.md` per validator run.
+- Added cross-report links for blocker, resolution, OCR evidence, character position,
+  display reconstruction, analytics, and Failure Memory reports.
+- Added recommendation scoring and expected-impact aggregation.
+- Upgraded Failure Memory with solved/regression versions, owner, occurrence count,
+  first/last seen, stable IDs, priority, and authoritative truth fields.
+- Alliance-tag extraction remains separated from multilingual player-name analysis.
+- Operational Truth remains unchanged.

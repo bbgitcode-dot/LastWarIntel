@@ -1,4 +1,4 @@
-version: 0.9.5.143
-commit: feat(gold-core): add strike iv root-cause analytics and failure memory
-tag: v0.9.5.143
-notes: Adds read-only Gold Core root-cause classification, recommendations, analytics reports, and persistent failure memory. Operational Truth remains unchanged.
+version: 0.9.5.144
+commit: feat(gold-core): consolidate root-cause truth and case explorer
+tag: v0.9.5.144
+notes: Gold Core Strike V makes established validator triage authoritative, adds stable case IDs, Case Explorer, Casebook, recommendation scoring and Failure Memory 2.0. Operational Truth remains unchanged.
