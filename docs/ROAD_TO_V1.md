@@ -74,3 +74,7 @@ Strike IV establishes the quality-intelligence layer required before Gold Core Z
 - Measure actual blocker reduction in the Server 551 benchmark.
 - Continue with the next highest-impact root cause only after regression stability is confirmed.
 
+
+### v0.9.5.146 — Gold Core Zero II
+
+Promotion Guard Rationalization converts the former aggregate blocker into an explainable guard matrix and safely removes low-coverage false negatives for evidence-complete vote-warning cases. Remaining work toward Gold Core Zero must be driven by the new per-condition diagnostics rather than by broad guard relaxation.

@@ -248,3 +248,10 @@ Next: run Server 551, execute the highest-impact verified fix lanes, and begin G
 
 Status: implemented. Adds conservative vote-warning elimination with explicit diagnostics and regression protection. Benchmark validation remains the release acceptance step.
 
+
+## Gold Core Zero II — v0.9.5.146
+
+- Explain every Promotion Guard condition per Gold Case.
+- Rationalize only low-coverage vote-warning false negatives with complete current-snapshot identity evidence.
+- Preserve hard blocking for crop, script, observed-text, mixed, and context-gap cases.
+- Use benchmark output to select the next root-cause elimination sprint.

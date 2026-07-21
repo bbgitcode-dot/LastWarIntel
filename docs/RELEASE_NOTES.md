@@ -1824,3 +1824,13 @@ Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold
 - Added regression coverage for safe clearance and all principal stop signs.
 - Operational Truth and OCR exports remain unchanged.
 
+
+## v0.9.5.146 — Gold Core Zero II: Promotion Guard Rationalization
+
+- Added complete promotion-guard diagnostics per Gold Core candidate.
+- Added explicit failed-check lists, primary blocker, legacy reason, and evidence counters to the Gold Core elimination report.
+- Added a narrow promotion-guard override only for authoritative `vote_warning_gate_review` cases blocked by low coverage or budget policy.
+- Override requires accepted matching, exact name proof, alliance proof, power proof, expected-only current-screenshot vote consensus, and zero observed, unresolved, or crop-field counterevidence.
+- Crop geometry, script policy, mixed blockers, context gaps, and observed-text conflicts remain hard blocked.
+- Failure Memory records newly resolved cases as solved in v0.9.5.146.
+- Operational Truth, Ground Truth, snapshots, and OCR exports remain unchanged.

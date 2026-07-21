@@ -1,4 +1,4 @@
-version: 0.9.5.145
-commit: feat(gold-core): eliminate warning-only vote blockers with deterministic policy
-tag: v0.9.5.145
-notes: Gold Core Zero I adds a conservative vote-selection policy gate for expected-only screenshot evidence, explicit policy diagnostics, resolved/open case status normalization, and regression protection. Operational Truth remains unchanged.
+version: 0.9.5.146
+commit: feat(gold-core): rationalize promotion guard with evidence-bound diagnostics
+tag: v0.9.5.146
+notes: Gold Core Zero II exposes every promotion-guard condition and permits a narrow low-coverage override only for authoritative vote-warning cases with expected-only current-screenshot consensus and full identity anchors. Operational Truth remains unchanged.

@@ -90,3 +90,7 @@ Gold Core elimination based on the generated action plan, not further analytics 
 
 Gold Core knowledge consolidation is complete enough to begin targeted elimination. The first elimination lane is Vote Selection Policy. `.145` introduces a narrow, deterministic warning downgrade for expected-only vote noise. It does not relax crop, identity, script, or counterevidence safeguards. The next benchmark determines the actual blocker reduction and which remaining root-cause lane should be addressed next.
 
+
+## v0.9.5.146 Status — Gold Core Zero II
+
+The Promotion Guard is no longer an opaque terminal reason. Sentinel now records every individual guard condition and identifies the first active blocker per Gold Case. A conservative rationalization path can clear only authoritative vote-warning cases where low coverage is the sole legacy blocker and all current-snapshot identity evidence is otherwise complete. The next benchmark must measure both blocker reduction and the distribution of `promotion_guard_primary_blocker` across remaining cases.

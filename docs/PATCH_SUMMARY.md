@@ -540,3 +540,21 @@ Begin measurable Gold Core elimination by resolving warning-only vote noise with
 - Elimination attribution is explicit as `clear_gold_core_blocker_vote_policy`.
 - Operational Truth is read-only.
 
+
+## v0.9.5.146 — Gold Core Zero II
+
+### Objective
+Make the Promotion Guard explainable and remove only proven low-coverage false negatives.
+
+### Implementation
+- `_promotion_guard_diagnostics()` emits the complete guard truth table for every candidate.
+- `_gold_core_promotion_guard_clearance()` applies a class-bound, evidence-bound override.
+- New elimination attribution: `clear_gold_core_blocker_promotion_guard_rationalized`.
+- Gold Core elimination reports now expose the exact failed conditions instead of only the legacy aggregate reason.
+
+### Guardrails
+- Override is restricted to `vote_warning_gate_review`.
+- A legacy `blocked_low_coverage` or budget reason is required.
+- Expected-only screenshot evidence, exact name, alliance, power, and accepted matching are mandatory.
+- Any context gap, observed counterevidence, unresolved vote, crop mismatch, or different failure class remains blocked.
+- Operational Truth is never modified.

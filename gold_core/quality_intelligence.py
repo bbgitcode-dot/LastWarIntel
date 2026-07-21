@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 
-PHASE = "v0.9.5.145_gold_core_zero_i"
+PHASE = "v0.9.5.146_gold_core_zero_ii"
 
 
 def _b(v: Any) -> bool:
@@ -248,7 +248,7 @@ def build_gold_core_quality_intelligence(
             "last_seen": now,
             "times_seen": int(prev.get("times_seen", 0)) + 1,
             "resolved_at": resolved_at,
-            "solved_version": prev.get("solved_version") or ("0.9.5.145" if row["resolved"] else ""),
+            "solved_version": prev.get("solved_version") or ("0.9.5.146" if row["resolved"] else ""),
             "regression_version": prev.get("regression_version", ""),
             "fix_owner": prev.get("fix_owner", "unassigned"),
             "regression_required": bool(row["resolved"]),
