@@ -85,3 +85,8 @@ Gold Core Root Cause Truth is consolidated. Established blocker classification n
 analytics, and every case can be traced through one stable case ID, Failure Memory,
 prioritized recommendation, and cross-report explorer. The next phase is targeted
 Gold Core elimination based on the generated action plan, not further analytics scaffolding.
+
+## v0.9.5.145 Status — Gold Core Zero I
+
+Gold Core knowledge consolidation is complete enough to begin targeted elimination. The first elimination lane is Vote Selection Policy. `.145` introduces a narrow, deterministic warning downgrade for expected-only vote noise. It does not relax crop, identity, script, or counterevidence safeguards. The next benchmark determines the actual blocker reduction and which remaining root-cause lane should be addressed next.
+

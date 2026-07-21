@@ -527,3 +527,16 @@ Validation target:
 pytest -q tests\smoke\test_gold_core_strike_v_144.py tests\smoke\test_gold_core_strike_iv_143.py tests\smoke\test_gold_core_strike_iii_142.py tests\smoke\test_gold_core_strike_140.py tests\smoke\test_gold_blocker_strike_139.py tests\smoke\test_character_position_intelligence_141.py
 python -m py_compile ground_truth_validator.py gold_core\quality_intelligence.py
 ```
+
+## v0.9.5.145 — Gold Core Zero I
+
+### Objective
+Begin measurable Gold Core elimination by resolving warning-only vote noise without weakening evidence standards.
+
+### Implementation
+- `_gold_core_vote_policy_clearance()` parses current-snapshot character evidence.
+- Expected-only consensus may clear only with exact player-name proof, alliance proof, power proof, accepted matching, and zero counterevidence.
+- Crop mismatch, observed evidence, unresolved/ambiguous votes, context gaps, missing identity anchors, or non-accepted matches remain hard blockers.
+- Elimination attribution is explicit as `clear_gold_core_blocker_vote_policy`.
+- Operational Truth is read-only.
+

@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 
-PHASE = "v0.9.5.144_gold_core_strike_v"
+PHASE = "v0.9.5.145_gold_core_zero_i"
 
 
 def _b(v: Any) -> bool:
@@ -18,7 +18,14 @@ def _b(v: Any) -> bool:
 
 
 def _s(v: Any) -> str:
-    return "" if v is None else str(v).strip()
+    if v is None:
+        return ""
+    try:
+        if pd.isna(v):
+            return ""
+    except Exception:
+        pass
+    return str(v).strip()
 
 
 def _n(v: Any, default: float = 0.0) -> float:
@@ -186,6 +193,7 @@ def build_gold_core_quality_intelligence(
             "blocker_before": before,
             "blocker_after": after,
             "resolved": bool(before and not after),
+            "case_status": "RESOLVED" if before and not after else "OPEN",
             "operational_truth_modified": False,
         })
 
@@ -240,7 +248,7 @@ def build_gold_core_quality_intelligence(
             "last_seen": now,
             "times_seen": int(prev.get("times_seen", 0)) + 1,
             "resolved_at": resolved_at,
-            "solved_version": prev.get("solved_version") or ("0.9.5.144" if row["resolved"] else ""),
+            "solved_version": prev.get("solved_version") or ("0.9.5.145" if row["resolved"] else ""),
             "regression_version": prev.get("regression_version", ""),
             "fix_owner": prev.get("fix_owner", "unassigned"),
             "regression_required": bool(row["resolved"]),

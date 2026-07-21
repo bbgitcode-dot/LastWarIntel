@@ -66,3 +66,11 @@ Strike IV establishes the quality-intelligence layer required before Gold Core Z
 4. Reach Gold Core Zero.
 5. Enter V1.0 release-candidate stabilization.
 6. Begin SENTINEL Intelligence development on stable post-transfer raw data.
+
+### v0.9.5.145 — Gold Core Zero I
+
+- Target the largest blocker cluster: vote-selection-policy warnings.
+- Require expected-only screenshot consensus plus independent Core Identity anchors.
+- Measure actual blocker reduction in the Server 551 benchmark.
+- Continue with the next highest-impact root cause only after regression stability is confirmed.
+

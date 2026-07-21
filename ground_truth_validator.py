@@ -3314,6 +3314,88 @@ def _gold_blocker_strike_iii_clearance(row: pd.Series) -> tuple[bool, str]:
 
     return True, "strike_iii_one_or_two_confusion_only_substitutions_with_full_identity_anchors"
 
+
+
+def _parse_character_reocr_evidence(value: Any) -> list[dict[str, Any]]:
+    """Return normalized character-evidence rows from the validator payload."""
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if isinstance(value, str) and value.strip():
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            return []
+        if isinstance(parsed, list):
+            return [item for item in parsed if isinstance(item, dict)]
+    return []
+
+
+def _gold_core_vote_policy_clearance(row: pd.Series) -> tuple[bool, str, dict[str, Any]]:
+    """v0.9.5.145 Gold Core Zero I: deterministically clear warning-only vote noise.
+
+    This gate is intentionally narrow. A row may clear only when the selected
+    screenshot-local glyph evidence resolves to the expected character, no
+    observed/unresolved/crop-conflict evidence exists, and name, alliance and
+    power anchors independently prove the same Core Identity. Operational Truth
+    and OCR exports remain unchanged.
+    """
+    evidence = _parse_character_reocr_evidence(row.get("character_reocr_evidence", ""))
+    vote_warning_items = [
+        item for item in evidence
+        if str(item.get("crop_diagnostic", "") or "") == "vote_outside_allowed_set"
+    ]
+    statuses = [str(item.get("status", "") or "") for item in evidence]
+    field_mismatch = any(str(item.get("crop_diagnostic", "") or "") in {"crop_field_mismatch", "crop_power_column_bleed"} or str(item.get("crop_anchor_status", "") or "") == "field_mismatch" for item in evidence)
+    selected_expected = bool(vote_warning_items) and all(
+        str(item.get("status", "") or "") == "verified_expected"
+        and normalize_text(item.get("selected", ""))[:1] == normalize_text(item.get("expected", ""))[:1]
+        for item in vote_warning_items
+    )
+    observed = _int_cell(row.get("character_reocr_verified_observed", 0)) + sum(1 for status in statuses if status == "verified_observed")
+    unresolved = _int_cell(row.get("character_reocr_unresolved", 0)) + sum(1 for status in statuses if status in {"unresolved", "ambiguous_vote"})
+
+    expected_name = normalize_text(row.get("expected_name", ""))
+    proven_name = normalize_text(row.get("display_reconstructed_name", "") or row.get("verified_name_display", "") or row.get("ocr_name", ""))
+    name_exact = bool(expected_name and proven_name == expected_name)
+    expected_tag = normalize_text(row.get("expected_alliance_display", ""))
+    proven_tag = normalize_text(row.get("display_reconstructed_alliance_tag", "") or row.get("verified_alliance_display", "") or row.get("ocr_alliance_display", ""))
+    alliance_proven = bool(_bool_cell(row.get("core_alliance_match", False)) or (expected_tag and proven_tag == expected_tag) or (not expected_tag and not proven_tag))
+    accepted = str(row.get("match_method", "") or "") not in {"missing", "blocked_rank_fallback"} and not _bool_cell(row.get("bad_match", False))
+
+    diagnostics = {
+        "vote_policy_warning_items": len(vote_warning_items),
+        "vote_policy_selected_expected": selected_expected,
+        "vote_policy_observed_evidence": observed,
+        "vote_policy_unresolved_evidence": unresolved,
+        "vote_policy_field_mismatch": field_mismatch,
+        "vote_policy_name_exact": name_exact,
+        "vote_policy_alliance_proven": alliance_proven,
+        "vote_policy_power_proven": _bool_cell(row.get("power_match", False)),
+    }
+    if not _bool_cell(row.get("gold_core_blocker", False)):
+        return False, "not_a_gold_core_blocker", diagnostics
+    if _bool_cell(row.get("alignment_context_gap", False)):
+        return False, "vote_policy_blocked_context_gap_read_only", diagnostics
+    if not accepted:
+        return False, "vote_policy_blocked_identity_match_not_accepted", diagnostics
+    if not vote_warning_items:
+        return False, "vote_policy_not_a_warning_only_case", diagnostics
+    if not selected_expected:
+        return False, "vote_policy_blocked_selected_glyph_not_expected", diagnostics
+    if observed > 0:
+        return False, "vote_policy_blocked_observed_counterevidence", diagnostics
+    if unresolved > 0:
+        return False, "vote_policy_blocked_unresolved_or_ambiguous_votes", diagnostics
+    if field_mismatch:
+        return False, "vote_policy_blocked_crop_geometry_conflict", diagnostics
+    if not name_exact:
+        return False, "vote_policy_blocked_name_not_exact", diagnostics
+    if not alliance_proven:
+        return False, "vote_policy_blocked_alliance_not_proven", diagnostics
+    if not _bool_cell(row.get("power_match", False)):
+        return False, "vote_policy_blocked_power_not_proven", diagnostics
+    return True, "vote_warning_noise_downgraded_after_expected_only_consensus", diagnostics
+
 def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     """Apply v0.9.5.142 Gold Core Strike III rules.
 
@@ -3365,11 +3447,17 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
     strike_clear, strike_reason = _gold_blocker_strike_i_clearance(row)
     strike_ii_clear, strike_ii_reason = _gold_blocker_strike_ii_clearance(row)
     strike_iii_clear, strike_iii_reason = _gold_blocker_strike_iii_clearance(row)
-    clear = bool(strict_clear or strike_clear or strike_ii_clear or strike_iii_clear)
+    vote_policy_clear, vote_policy_reason, vote_policy_diagnostics = _gold_core_vote_policy_clearance(row)
+    clear = bool(strict_clear or strike_clear or strike_ii_clear or strike_iii_clear or vote_policy_clear)
 
     if strict_clear:
         reason = "display_reconstruction_proves_name_and_core_alliance"
         action = "clear_gold_core_blocker"
+    elif vote_policy_clear:
+        # Attribute warning-only eliminations to the dedicated v0.9.5.145 policy
+        # even when an older generic strike would also accept the exact display.
+        reason = vote_policy_reason
+        action = "clear_gold_core_blocker_vote_policy"
     elif strike_clear:
         reason = strike_reason
         action = "clear_gold_core_blocker_strike_i"
@@ -3409,6 +3497,7 @@ def _gold_core_elimination_decision(row: pd.Series) -> dict[str, Any]:
         "gold_core_blocker_before_elimination": original_blocker,
         "gold_core_blocker_after_elimination": bool(original_blocker and not clear),
         "gold_core_elimination_operational_truth_modified": False,
+        **vote_policy_diagnostics,
     }
 
 
@@ -3447,6 +3536,9 @@ def _build_gold_core_elimination_report(detail: pd.DataFrame) -> tuple[pd.DataFr
         "gold_core_elimination_candidate", "gold_core_elimination_action", "gold_core_elimination_reason",
         "gold_core_elimination_cleared", "verified_core_identity_match", "identity_policy_class",
         "power_match", "core_alliance_match", "alignment_context_gap", "gold_core_elimination_operational_truth_modified",
+        "vote_policy_warning_items", "vote_policy_selected_expected", "vote_policy_observed_evidence",
+        "vote_policy_unresolved_evidence", "vote_policy_field_mismatch", "vote_policy_name_exact",
+        "vote_policy_alliance_proven", "vote_policy_power_proven",
     ]
     if detail.empty:
         return pd.DataFrame([{

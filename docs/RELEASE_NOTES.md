@@ -1814,3 +1814,13 @@ Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold
   first/last seen, stable IDs, priority, and authoritative truth fields.
 - Alliance-tag extraction remains separated from multilingual player-name analysis.
 - Operational Truth remains unchanged.
+
+## v0.9.5.145 — Gold Core Zero I
+
+- Added a deterministic warning-only Vote Selection Policy gate.
+- Clears a Gold Core blocker only when the selected screenshot-local glyph equals the expected glyph, no observed/unresolved/crop-conflict evidence exists, and name, alliance and power anchors independently agree.
+- Added explicit vote-policy diagnostics to the Gold Core elimination report.
+- Normalized Gold Case status to `OPEN` / `RESOLVED` and removed `nan` classification leakage.
+- Added regression coverage for safe clearance and all principal stop signs.
+- Operational Truth and OCR exports remain unchanged.
+

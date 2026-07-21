@@ -243,3 +243,8 @@ Next: Gold Core Zero based on the measured server 551 blocker distribution.
 - Recommendation confidence/impact scoring.
 
 Next: run Server 551, execute the highest-impact verified fix lanes, and begin Gold Core Zero elimination.
+
+## Gold Core Zero I — v0.9.5.145
+
+Status: implemented. Adds conservative vote-warning elimination with explicit diagnostics and regression protection. Benchmark validation remains the release acceptance step.
+
