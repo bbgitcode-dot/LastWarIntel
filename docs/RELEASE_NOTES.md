@@ -1834,3 +1834,13 @@ Functional accuracy sprint. Sentinel now treats runtime as secondary during Gold
 - Crop geometry, script policy, mixed blockers, context gaps, and observed-text conflicts remain hard blocked.
 - Failure Memory records newly resolved cases as solved in v0.9.5.146.
 - Operational Truth, Ground Truth, snapshots, and OCR exports remain unchanged.
+
+## v0.9.5.147 — Gold Core Zero III: Evidence-Bound Name Reconstruction
+
+- Added position-bound name proof states and complete reconstruction diagnostics.
+- Added `clear_gold_core_blocker_evidence_reconstructed_name`.
+- Equal source characters and verified screenshot-local ReOCR fragments are the only accepted position proofs.
+- Missing positions remain explicit; Ground Truth is never used as an unobserved fill source.
+- `UNKNOWN`, partial coverage, conflicting evidence, crop mismatch, alliance mismatch, and power mismatch remain blocked.
+- Failure Memory records evidence-bound reconstruction metadata.
+- Operational Truth remains unchanged.

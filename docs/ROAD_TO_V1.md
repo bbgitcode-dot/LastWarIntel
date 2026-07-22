@@ -78,3 +78,7 @@ Strike IV establishes the quality-intelligence layer required before Gold Core Z
 ### v0.9.5.146 — Gold Core Zero II
 
 Promotion Guard Rationalization converts the former aggregate blocker into an explainable guard matrix and safely removes low-coverage false negatives for evidence-complete vote-warning cases. Remaining work toward Gold Core Zero must be driven by the new per-condition diagnostics rather than by broad guard relaxation.
+
+### v0.9.5.147 — Gold Core Zero III
+
+Evidence-bound complete name reconstruction. Measure safe vote-warning elimination, then proceed to the next dominant root-cause lane without relaxing Operational Truth safeguards.

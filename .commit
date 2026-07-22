@@ -1,4 +1,4 @@
-version: 0.9.5.146
-commit: feat(gold-core): rationalize promotion guard with evidence-bound diagnostics
-tag: v0.9.5.146
-notes: Gold Core Zero II exposes every promotion-guard condition and permits a narrow low-coverage override only for authoritative vote-warning cases with expected-only current-screenshot consensus and full identity anchors. Operational Truth remains unchanged.
+version: 0.9.5.147
+commit: feat(gold-core): add evidence-bound complete name reconstruction
+tag: v0.9.5.147
+notes: Gold Core Zero III proves names from aligned current-snapshot source text plus position-bound verified ReOCR evidence. Partial, conflicting, UNKNOWN, crop-mismatch, and ground-truth-only fills remain blocked. Operational Truth remains unchanged.

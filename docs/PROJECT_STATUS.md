@@ -94,3 +94,7 @@ Gold Core knowledge consolidation is complete enough to begin targeted eliminati
 ## v0.9.5.146 Status — Gold Core Zero II
 
 The Promotion Guard is no longer an opaque terminal reason. Sentinel now records every individual guard condition and identifies the first active blocker per Gold Case. A conservative rationalization path can clear only authoritative vote-warning cases where low coverage is the sole legacy blocker and all current-snapshot identity evidence is otherwise complete. The next benchmark must measure both blocker reduction and the distribution of `promotion_guard_primary_blocker` across remaining cases.
+
+## v0.9.5.147 Status — Gold Core Zero III
+
+The validator can now prove a complete name without requiring raw OCR exactness. Proof is position-bound and current-snapshot-only. The next benchmark must determine which vote-warning cases reach 100 percent evidence coverage; partial and UNKNOWN cases are expected to remain blocked.

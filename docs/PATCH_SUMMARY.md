@@ -558,3 +558,7 @@ Make the Promotion Guard explainable and remove only proven low-coverage false n
 - Expected-only screenshot evidence, exact name, alliance, power, and accepted matching are mandatory.
 - Any context gap, observed counterevidence, unresolved vote, crop mismatch, or different failure class remains blocked.
 - Operational Truth is never modified.
+
+## v0.9.5.147 — Gold Core Zero III
+
+Implemented complete evidence-bound name reconstruction with position coverage, conflict and missing-position diagnostics, a new conservative clearance path, Failure Memory metadata, regression tests, and full report integration.

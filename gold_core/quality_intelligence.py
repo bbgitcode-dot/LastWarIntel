@@ -8,7 +8,7 @@ import json
 import re
 import pandas as pd
 
-PHASE = "v0.9.5.146_gold_core_zero_ii"
+PHASE = "v0.9.5.147_gold_core_zero_iii"
 
 
 def _b(v: Any) -> bool:
@@ -194,6 +194,9 @@ def build_gold_core_quality_intelligence(
             "blocker_after": after,
             "resolved": bool(before and not after),
             "case_status": "RESOLVED" if before and not after else "OPEN",
+            "name_proof_status": r.get("name_proof_status", ""),
+            "name_reconstruction_coverage": r.get("name_reconstruction_coverage", 0.0),
+            "name_reconstructed_value": r.get("name_reconstructed_value", ""),
             "operational_truth_modified": False,
         })
 
@@ -248,7 +251,9 @@ def build_gold_core_quality_intelligence(
             "last_seen": now,
             "times_seen": int(prev.get("times_seen", 0)) + 1,
             "resolved_at": resolved_at,
-            "solved_version": prev.get("solved_version") or ("0.9.5.146" if row["resolved"] else ""),
+            "solved_version": prev.get("solved_version") or ("0.9.5.147" if row["resolved"] else ""),
+            "resolution_method": prev.get("resolution_method") or ("evidence_bound_name_reconstruction" if row.get("elimination_action") == "clear_gold_core_blocker_evidence_reconstructed_name" else ""),
+            "reconstruction_coverage": row.get("name_reconstruction_coverage", prev.get("reconstruction_coverage", 0.0)),
             "regression_version": prev.get("regression_version", ""),
             "fix_owner": prev.get("fix_owner", "unassigned"),
             "regression_required": bool(row["resolved"]),

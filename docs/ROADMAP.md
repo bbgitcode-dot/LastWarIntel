@@ -255,3 +255,11 @@ Status: implemented. Adds conservative vote-warning elimination with explicit di
 - Rationalize only low-coverage vote-warning false negatives with complete current-snapshot identity evidence.
 - Preserve hard blocking for crop, script, observed-text, mixed, and context-gap cases.
 - Use benchmark output to select the next root-cause elimination sprint.
+
+## Gold Core Zero III — v0.9.5.147
+
+- Complete position-bound name proof
+- Explicit missing/conflicting position diagnostics
+- Safe clearance for fully evidenced reconstructed names
+- No Ground-Truth-only completion
+- Benchmark-driven transition to the next root-cause elimination sprint
