@@ -127,3 +127,10 @@ Display Reconstruction now preserves a read-only provenance object per character
 ## v0.9.5.153 – Provenance-Aware Character Alignment
 
 Sentinel now carries source provenance through explicit edit operations rather than assuming identical character indices. Exact matches and evidenced separator gaps may remain bridgeable; substitutions are counterevidence, deletions remain missing evidence, insertions remain unbound source observations, and ambiguous/UNKNOWN cases remain blocked. This layer is diagnostic and cannot modify Operational Truth or create Gold clearance.
+
+
+### Completed: v0.9.5.154 Identity Graph
+- Character-to-token provenance
+- Token-to-component hypotheses
+- UNKNOWN protection
+- No automatic Gold clearance

@@ -6,9 +6,9 @@ The bridge links existing evidence only; it never creates characters or changes 
 
 ## Binding summary
 
-- `AMBIGUOUS_POSITION_BINDING`: 3 positions across 3 cases
-- `BRIDGED_POSITION_EVIDENCE`: 71 positions across 14 cases
-- `CONFLICTING_POSITION_EVIDENCE`: 3 positions across 3 cases
+- `AMBIGUOUS_POSITION_BINDING`: 19 positions across 5 cases
+- `BRIDGED_POSITION_EVIDENCE`: 52 positions across 13 cases
+- `CONFLICTING_POSITION_EVIDENCE`: 16 positions across 8 cases
 - `DIRECT_POSITION_EVIDENCE`: 8 positions across 5 cases
-- `NO_POSITION_EVIDENCE`: 12 positions across 6 cases
-- `UNSAFE_BINDING_REJECTED`: 9 positions across 7 cases
+- `NO_POSITION_EVIDENCE`: 9 positions across 4 cases
+- `UNSAFE_BINDING_REJECTED`: 2 positions across 2 cases

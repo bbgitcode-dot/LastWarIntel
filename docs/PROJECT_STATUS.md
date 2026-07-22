@@ -1,3 +1,7 @@
+# Current release: v0.9.5.154
+
+Strike XI adds an observed, provenance-bound Player Identity Graph. The next benchmark must verify token/component distributions, UNKNOWN protection and zero Gold-Core regression.
+
 # Project Status
 
 ## v0.9.5.150 — Position-Bound Evidence Provenance

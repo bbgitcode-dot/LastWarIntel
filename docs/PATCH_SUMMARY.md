@@ -1,3 +1,22 @@
+# v0.9.5.154 — Strike XI: Player Identity Graph
+
+## Added
+- Read-only Player Identity Graph for Gold-Core cases.
+- Provenance-preserving Character -> Token -> Identity Component edges.
+- Conservative component hypotheses: NAME_TOKEN, TITLE_OR_PREFIX, SCRIPT_NAME_BLOCK, ALLIANCE_TAG_CANDIDATE, SEPARATOR, DECORATIVE_MARK, UNKNOWN_SENTINEL.
+- New identity_graph_report.json, identity_graph_report.xlsx and identity_graph_summary.md outputs.
+- Identity Graph sheets embedded in the main Ground Truth validation workbook.
+
+## Safety
+- Ground Truth is never used to create graph nodes or component identity.
+- Components are hypotheses and never Gold-authoritative.
+- No Gold-Core clearance is created.
+- UNKNOWN remains a protected sentinel and is not decomposed into identity evidence.
+- Operational Truth remains unchanged.
+
+## Robustness
+- Report aggregation now tolerates missing numeric fields in legacy/minimal fixtures.
+
 ## v0.9.5.153 – Strike X: Provenance-Aware Character Alignment
 
 - Replaces direct source-index binding with explicit `MATCH`, `SUBSTITUTE`, `INSERT`, `DELETE`, `SEPARATOR_GAP`, and `AMBIGUOUS` edit operations.

@@ -4146,6 +4146,8 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         if col in rows.columns:
             rows[col] = pd.to_numeric(rows[col], errors="coerce").fillna(0.0)
     report = rows[cols].copy()
+    for numeric_col in ["evidence_avg_fragment_confidence", "display_coverage_score", "display_name_coverage_score", "display_alliance_coverage_score"]:
+        report[numeric_col] = pd.to_numeric(report[numeric_col], errors="coerce").fillna(0.0)
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
         summary = pd.DataFrame([{
@@ -4204,6 +4206,8 @@ def _build_evidence_confidence_report(detail: pd.DataFrame) -> tuple[pd.DataFram
         if col not in rows.columns:
             rows[col] = ""
     report = rows[cols].copy()
+    for numeric_col in ["evidence_avg_fragment_confidence", "display_coverage_score", "display_name_coverage_score", "display_alliance_coverage_score"]:
+        report[numeric_col] = pd.to_numeric(report[numeric_col], errors="coerce").fillna(0.0)
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
         return pd.DataFrame([{"phase": "v0.9.5.147_gold_core_zero_iii", "rows": 0, "operational_truth_modified": False}]), report
@@ -4247,6 +4251,9 @@ def _build_evidence_budget_report(detail: pd.DataFrame) -> tuple[pd.DataFrame, p
         if col not in rows.columns:
             rows[col] = ""
     report = rows[cols].copy()
+    for numeric_col in ["evidence_priority_score", "evidence_avg_fragment_confidence", "display_coverage_score", "evidence_budget_expected_cost_ms"]:
+        report[numeric_col] = pd.to_numeric(report[numeric_col], errors="coerce").fillna(0.0)
+    report["display_promotion_eligible"] = report["display_promotion_eligible"].fillna(False).astype(bool)
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
         return pd.DataFrame([{"phase": "v0.9.5.147_gold_core_zero_iii", "rows": 0, "operational_truth_modified": False}]), report
@@ -4411,6 +4418,9 @@ def _build_evidence_scheduler_report(detail: pd.DataFrame) -> tuple[pd.DataFrame
         if col not in rows.columns:
             rows[col] = ""
     report = rows[cols].copy()
+    for numeric_col in ["evidence_priority_score", "scheduler_expected_runtime_ms", "scheduler_estimated_saved_ms", "evidence_budget_expected_cost_ms", "scheduler_queue_order"]:
+        report[numeric_col] = pd.to_numeric(report[numeric_col], errors="coerce").fillna(0.0)
+    report["display_promotion_eligible"] = report["display_promotion_eligible"].fillna(False).astype(bool)
     report = report[report["display_reconstruction_status"].astype(str).ne("not_reconstructed")].copy()
     if report.empty:
         return pd.DataFrame([{"phase": "v0.9.5.147_gold_core_zero_iii", "rows": 0, "operational_truth_modified": False}]), report
@@ -4815,6 +4825,153 @@ def _build_character_position_intelligence_report(
             detail_out[col] = detail_out[col].fillna(default)
     return summary, positions, row_actions, detail_out
 
+
+
+def _identity_script_class(character: str) -> str:
+    """Classify one observed character without using Ground Truth."""
+    if not character:
+        return "EMPTY"
+    if character.isspace():
+        return "SEPARATOR"
+    code = ord(character)
+    if "0" <= character <= "9":
+        return "DIGIT"
+    if ("A" <= character <= "Z") or ("a" <= character <= "z") or (0x00C0 <= code <= 0x024F):
+        return "LATIN"
+    if 0xAC00 <= code <= 0xD7AF or 0x1100 <= code <= 0x11FF:
+        return "HANGUL"
+    if 0x3040 <= code <= 0x30FF:
+        return "JAPANESE_KANA"
+    if 0x3400 <= code <= 0x9FFF:
+        return "CJK"
+    if character in "[](){}<>【】『』「」":
+        return "BRACKET"
+    if character in "-_·•|/\\.'’`~^":
+        return "DECORATIVE"
+    return "SYMBOL"
+
+
+def _tokenize_identity_observation(text: str, provenance: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """v0.9.5.154: create source-bound tokens from observed text only."""
+    value = normalize_text(text)
+    chars: list[dict[str, Any]] = []
+    for i, ch in enumerate(value):
+        source = provenance[i] if i < len(provenance) and isinstance(provenance[i], dict) else {}
+        chars.append({
+            "character_id": f"char:{i}", "character_index": i, "character": ch,
+            "script_class": _identity_script_class(ch),
+            "source_chain_status": source.get("source_chain_status", "DISPLAY_ONLY_NOT_EVIDENCE"),
+            "source_screenshot": source.get("source_screenshot", ""),
+            "source_observation_id": source.get("source_observation_id", ""),
+            "source_character_index": source.get("source_character_index", i),
+            "gold_authoritative": False,
+        })
+    if not value:
+        return chars, []
+    tokens: list[dict[str, Any]] = []
+    start = 0
+    current = _identity_script_class(value[0])
+    grouping = current
+    for i in range(1, len(value) + 1):
+        nxt = _identity_script_class(value[i]) if i < len(value) else None
+        # Latin and digits may form one lexical token. Everything else splits on
+        # script changes, separators, brackets and decorative symbols.
+        compatible = grouping in {"LATIN", "DIGIT"} and nxt in {"LATIN", "DIGIT"}
+        if i == len(value) or (nxt != current and not compatible) or current in {"SEPARATOR", "BRACKET", "DECORATIVE", "SYMBOL"}:
+            token_text = value[start:i]
+            token_classes = sorted({_identity_script_class(c) for c in token_text})
+            token_id = f"token:{len(tokens)}"
+            tokens.append({
+                "token_id": token_id, "token_index": len(tokens), "token_text": token_text,
+                "start": start, "end": i, "length": len(token_text),
+                "script_classes": token_classes,
+                "character_ids": [f"char:{j}" for j in range(start, i)],
+                "source_bound": all(chars[j]["source_chain_status"] != "DISPLAY_ONLY_NOT_EVIDENCE" for j in range(start, i)),
+                "gold_authoritative": False,
+            })
+            start = i
+            if i < len(value):
+                current = nxt
+                grouping = nxt
+        elif compatible:
+            current = grouping
+    return chars, tokens
+
+
+def _classify_identity_components(observed_name: str, observed_tag: str, tokens: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Classify observed tokens conservatively; classifications are hypotheses."""
+    components: list[dict[str, Any]] = []
+    unknown = normalize_text(observed_name).upper() == "UNKNOWN"
+    title_tokens = {"VIP", "KING", "QUEEN", "LORD", "DR", "MR", "MS"}
+    for token in tokens:
+        text = normalize_text(token.get("token_text", ""))
+        classes = set(token.get("script_classes", []))
+        kind = "NAME_TOKEN"
+        reason = "lexical_observed_token"
+        confidence = 0.65
+        if unknown:
+            kind, reason, confidence = "UNKNOWN_SENTINEL", "unknown_is_not_identity_character_evidence", 1.0
+        elif classes == {"SEPARATOR"}:
+            kind, reason, confidence = "SEPARATOR", "observed_whitespace_boundary", 1.0
+        elif classes <= {"BRACKET", "DECORATIVE", "SYMBOL"}:
+            kind, reason, confidence = "DECORATIVE_MARK", "nonlexical_observed_token", 0.9
+        elif text.upper() in title_tokens:
+            kind, reason, confidence = "TITLE_OR_PREFIX", "known_title_like_observed_token", 0.7
+        elif classes & {"HANGUL", "JAPANESE_KANA", "CJK"}:
+            kind, reason, confidence = "SCRIPT_NAME_BLOCK", "non_latin_observed_script_block", 0.8
+        elif text and text == normalize_text(observed_tag):
+            kind, reason, confidence = "ALLIANCE_TAG_CANDIDATE", "matches_observed_alliance_tag", 0.9
+        components.append({
+            "component_id": f"component:{len(components)}", "component_index": len(components),
+            "component_type": kind, "component_text": text,
+            "token_ids": [token.get("token_id")], "classification_reason": reason,
+            "classification_confidence": confidence,
+            "identity_authoritative": False, "gold_authoritative": False,
+        })
+    return components
+
+
+def _build_player_identity_graph(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """v0.9.5.154 Strike XI: observed character -> token -> identity component graph.
+
+    The graph is read-only. It uses current snapshot display/OCR provenance only.
+    Expected names remain benchmark context and never create graph nodes.
+    """
+    blocker_col = detail.get("gold_core_blocker_after_elimination", detail.get("gold_core_blocker", pd.Series(False, index=detail.index)))
+    blockers = detail[blocker_col.fillna(False).astype(bool)].copy()
+    case_rows, char_rows, token_rows, component_rows, edge_rows = [], [], [], [], []
+    for _, row in blockers.iterrows():
+        server, rank = row.get("server"), row.get("rank")
+        observed = normalize_text(row.get("display_reconstructed_name", "")) or normalize_text(row.get("ocr_name", ""))
+        observed_tag = normalize_text(row.get("display_reconstructed_alliance_tag", "")) or normalize_text(row.get("ocr_alliance_tag", ""))
+        provenance = _parse_json_list(row.get("display_character_provenance", "[]"))
+        chars, tokens = _tokenize_identity_observation(observed, provenance)
+        components = _classify_identity_components(observed, observed_tag, tokens)
+        for c in chars:
+            char_rows.append({"phase":"v0.9.5.154_identity_graph","server":server,"rank":rank,**c,"operational_truth_modified":False})
+        for t in tokens:
+            token_rows.append({"phase":"v0.9.5.154_identity_graph","server":server,"rank":rank,**t,"operational_truth_modified":False})
+            for cid in t["character_ids"]:
+                edge_rows.append({"server":server,"rank":rank,"source_id":cid,"target_id":t["token_id"],"edge_type":"CHARACTER_IN_TOKEN","gold_authoritative":False})
+        for comp in components:
+            component_rows.append({"phase":"v0.9.5.154_identity_graph","server":server,"rank":rank,**comp,"operational_truth_modified":False})
+            for tid in comp["token_ids"]:
+                edge_rows.append({"server":server,"rank":rank,"source_id":tid,"target_id":comp["component_id"],"edge_type":"TOKEN_IN_COMPONENT","gold_authoritative":False})
+        types = [c["component_type"] for c in components]
+        metadata = _authoritative_gold_core_metadata(row)
+        case_rows.append({
+            "phase":"v0.9.5.154_identity_graph","server":server,"rank":rank,
+            "observed_identity_text":observed,"observed_alliance_tag":observed_tag,
+            "characters":len(chars),"tokens":len(tokens),"components":len(components),
+            "component_types":json.dumps(types,ensure_ascii=False),
+            "unknown_protected": observed.upper()=="UNKNOWN",
+            "source_bound_characters":sum(1 for c in chars if c["source_chain_status"]!="DISPLAY_ONLY_NOT_EVIDENCE"),
+            "identity_resolution_status":"UNKNOWN_PROTECTED" if observed.upper()=="UNKNOWN" else ("TOKENIZED_OBSERVED_IDENTITY" if tokens else "NO_OBSERVED_IDENTITY"),
+            **metadata,"identity_authoritative":False,"gold_clearance_created":False,
+            "ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+        })
+    cases=pd.DataFrame(case_rows); chars=pd.DataFrame(char_rows); tokens=pd.DataFrame(token_rows); components=pd.DataFrame(component_rows); edges=pd.DataFrame(edge_rows)
+    return cases, chars, tokens, components, edges
 
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
@@ -5617,6 +5774,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     position_bridge_cases, position_bridge_positions, position_bridge_rejected, position_bridge_summary = _build_position_evidence_acquisition_bridge(
         detail, gold_core_character_positions, gold_core_blocker_report
     )
+    identity_graph_cases, identity_graph_characters, identity_graph_tokens, identity_graph_components, identity_graph_edges = _build_player_identity_graph(detail)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -5689,6 +5847,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "evidence_provenance_positions": evidence_provenance_positions.to_dict(orient="records"),
         "evidence_provenance_stages": evidence_provenance_stages.to_dict(orient="records"),
         "position_evidence_bridge_summary": position_bridge_summary.to_dict(orient="records"),
+        "identity_graph_cases": identity_graph_cases.to_dict(orient="records"),
+        "identity_graph_characters": identity_graph_characters.to_dict(orient="records"),
+        "identity_graph_tokens": identity_graph_tokens.to_dict(orient="records"),
+        "identity_graph_components": identity_graph_components.to_dict(orient="records"),
+        "identity_graph_edges": identity_graph_edges.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
         "position_evidence_bridge_rejected": position_bridge_rejected.to_dict(orient="records"),
@@ -5759,6 +5922,21 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     for item in position_bridge_summary.to_dict(orient="records"):
         bridge_md.append(f"- `{item.get('binding_status')}`: {item.get('positions', 0)} positions across {item.get('cases', 0)} cases")
     position_bridge_md_path.write_text("\n".join(bridge_md), encoding="utf-8")
+    identity_graph_json_path = output_dir / "identity_graph_report.json"
+    identity_graph_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.154_identity_graph",
+        "cases": identity_graph_cases.to_dict(orient="records"),
+        "characters": identity_graph_characters.to_dict(orient="records"),
+        "tokens": identity_graph_tokens.to_dict(orient="records"),
+        "components": identity_graph_components.to_dict(orient="records"),
+        "edges": identity_graph_edges.to_dict(orient="records"),
+        "safety": {"ground_truth_used_as_evidence": False, "identity_authoritative": False, "gold_clearance_created": False, "operational_truth_modified": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
+    identity_graph_md_path = output_dir / "identity_graph_summary.md"
+    identity_md = ["# Player Identity Graph", "", "Version: v0.9.5.154", "", "Read-only observed identity intelligence. No component is Gold-authoritative.", "", "## Cases", ""]
+    for item in identity_graph_cases.to_dict(orient="records"):
+        identity_md.extend([f"### Rank {item.get('rank')} — {item.get('observed_identity_text', '')}", "", f"- Status: `{item.get('identity_resolution_status', '')}`", f"- Tokens: {item.get('tokens', 0)}", f"- Components: {item.get('components', 0)}", f"- Types: {item.get('component_types', '[]')}", f"- UNKNOWN protected: {item.get('unknown_protected', False)}", ""])
+    identity_graph_md_path.write_text("\n".join(identity_md), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -5843,6 +6021,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_provenance_cases).to_excel(writer, sheet_name="evidence_prov_cases", index=False)
         _sanitize_frame(evidence_provenance_positions).to_excel(writer, sheet_name="evidence_prov_pos", index=False)
         _sanitize_frame(evidence_provenance_stages).to_excel(writer, sheet_name="evidence_prov_stages", index=False)
+        _sanitize_frame(identity_graph_cases).to_excel(writer, sheet_name="identity_cases", index=False)
+        _sanitize_frame(identity_graph_tokens).to_excel(writer, sheet_name="identity_tokens", index=False)
+        _sanitize_frame(identity_graph_components).to_excel(writer, sheet_name="identity_components", index=False)
+        _sanitize_frame(identity_graph_edges).to_excel(writer, sheet_name="identity_edges", index=False)
         _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
@@ -5890,6 +6072,14 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="positions", index=False)
         _sanitize_frame(position_bridge_rejected).to_excel(writer, sheet_name="rejected_bindings", index=False)
+
+    identity_graph_xlsx_path = output_dir / "identity_graph_report.xlsx"
+    with pd.ExcelWriter(identity_graph_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(identity_graph_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(identity_graph_characters).to_excel(writer, sheet_name="characters", index=False)
+        _sanitize_frame(identity_graph_tokens).to_excel(writer, sheet_name="tokens", index=False)
+        _sanitize_frame(identity_graph_components).to_excel(writer, sheet_name="components", index=False)
+        _sanitize_frame(identity_graph_edges).to_excel(writer, sheet_name="edges", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
