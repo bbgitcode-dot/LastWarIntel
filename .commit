@@ -1,4 +1,4 @@
-version: 0.9.5.148
-commit: docs(gold-core): consolidate v0.9.5.147 benchmark truth and V1 plan
-tag: v0.9.5.148
-notes: Documentation-only release. Records 15-to-14 Gold Core result, zero Evidence Reconstruction clearances, five remaining vote-warning cases, preserved UNKNOWN protection, and the evidence-acquisition strategy for the next implementation sprint. Operational Truth remains unchanged.
+version: 0.9.5.149
+commit: feat(gold-core): add position-bound evidence intelligence for blocker diagnosis
+tag: v0.9.5.149
+notes: Adds read-only Gold-Core Character Position Evidence Maps, per-case evidence reports, and position heatmaps. No Promotion Guard, clearance policy, Ground Truth, snapshot, export, or Operational Truth is changed.

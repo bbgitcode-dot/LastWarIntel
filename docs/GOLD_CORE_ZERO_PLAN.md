@@ -48,3 +48,7 @@ All decisions remain validator-side evidence assessments. OCR export, Ground Tru
 - Existing Gold Core regression suite remains green.
 - New policy stop-sign tests remain green.
 - Server 551 benchmark shows whether the vote-selection cluster decreases.
+
+## Observability Gate — v0.9.5.149
+
+Before any further clearance strategy, Sentinel must identify the exact blocking character positions and their evidence state. The next implementation may target evidence acquisition only where the .149 reports prove missing or unresolved coverage. Conflicts remain a separate non-clearable lane until stronger screenshot evidence resolves them.

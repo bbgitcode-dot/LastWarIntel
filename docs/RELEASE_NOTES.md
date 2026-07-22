@@ -1,3 +1,18 @@
+# Release Notes — v0.9.5.149
+
+## Strike VI — Position-Bound Evidence Intelligence
+
+- Added a Gold-Core-specific Character Position Evidence Map for every remaining blocker.
+- Records each expected character position as `CONFIRMED`, `MISSING`, `UNRESOLVED`, or `CONFLICT`.
+- Records proof source, selected glyphs, vote status, confidence, crop diagnostics, anchor status, screenshots, and conflicts per position.
+- Added `character_position_report.json`, `character_position_report.xlsx`, `character_position_summary.md`, and `position_heatmap.json`.
+- Added case-level blocking-position lists and targeted evidence recommendations.
+- Integrated Gold-Core character cases, positions, and heatmap into the main validation JSON and Excel reports.
+- Added smoke coverage for conflict visibility and strict UNKNOWN protection.
+- No Gold-Core clearance policy, Promotion Guard, Ground Truth, snapshot, export, or Operational Truth was changed.
+
+---
+
 # Release Notes — v0.9.5.148
 
 ## Documentation Sprint after Gold Core Zero III

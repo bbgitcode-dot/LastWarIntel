@@ -1,3 +1,33 @@
+# Patch Summary — v0.9.5.149
+
+## Purpose
+
+Convert the aggregate `name_exact` blocker into an explainable, position-bound evidence diagnosis. The release does not clear cases; it identifies exactly which character positions lack proof, contain unresolved votes, or carry conflicting screenshot evidence.
+
+## Runtime changes
+
+- New `_build_gold_core_character_evidence_map()` read-only report layer.
+- Per-case evidence coverage and blocking-position inventory.
+- Per-position evidence chain with crop and screenshot provenance.
+- Cross-case position heatmap for prioritizing targeted evidence acquisition.
+
+## Outputs
+
+- `character_position_report.json`
+- `character_position_report.xlsx`
+- `character_position_summary.md`
+- `position_heatmap.json`
+
+## Safety
+
+- Ground Truth remains comparison-only and is never used to fill missing characters.
+- UNKNOWN remains uncompleted.
+- Conflicting evidence remains blocking.
+- Promotion and elimination policies are unchanged.
+- Operational Truth remains unchanged.
+
+---
+
 # Patch Summary — v0.9.5.148
 
 Documentation-only release based on Sentinel v0.9.5.147 and its Server 551 benchmark. Adds `BENCHMARK_ANALYSIS_v0.9.5.147.md` and aligns all strategic documentation with measured results. No production code, validation policy, OCR output, snapshot, Ground Truth, or Operational Truth is modified.

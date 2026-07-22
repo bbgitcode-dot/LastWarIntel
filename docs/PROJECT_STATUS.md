@@ -131,3 +131,7 @@ The Promotion Guard is no longer an opaque terminal reason. Sentinel now records
 ## v0.9.5.147 Status — Gold Core Zero III
 
 The validator can now prove a complete name without requiring raw OCR exactness. Proof is position-bound and current-snapshot-only. The next benchmark must determine which vote-warning cases reach 100 percent evidence coverage; partial and UNKNOWN cases are expected to remain blocked.
+
+## v0.9.5.149 — Position-Bound Evidence Intelligence
+
+The current implementation sprint adds Gold-Core-specific observability at character-position level. Each remaining blocker now exposes confirmed, missing, unresolved, and conflicting positions together with screenshot and crop provenance. This sprint intentionally performs no clearance. Its purpose is to make the next evidence-acquisition change measurable and case-specific.

@@ -105,3 +105,7 @@ Key changes:
 - Added single-glyph Latin blocker clearance guard.
 - Updated Gold-Core elimination phase labels to `v0.9.5.140_gold_blocker_strike_i`.
 - Preserved context-gap read-only policy and DataGuard protections.
+
+## Position-Bound Gold-Core Evidence Intelligence (v0.9.5.149)
+
+After Evidence Reconstruction, a read-only diagnostics layer builds a Character Position Evidence Map for every remaining Gold-Core blocker. It consumes current-snapshot source alignment and Character ReOCR evidence, emits per-position provenance and a cross-case heatmap, and cannot modify Operational Truth or clearance decisions. Ground Truth is comparison context only.

@@ -4605,6 +4605,132 @@ def _build_character_position_intelligence_report(
             detail_out[col] = detail_out[col].fillna(default)
     return summary, positions, row_actions, detail_out
 
+
+def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """v0.9.5.149: expose the exact character positions blocking Gold Core.
+
+    This is a read-only observability layer. Ground Truth is used only as the
+    comparison target. Proof status, sources, crop diagnostics, conflicts and
+    unresolved positions are derived exclusively from current-snapshot text and
+    Character ReOCR evidence. No clearance or Operational Truth is changed.
+    """
+    blockers = detail[detail.get("gold_core_blocker_after_elimination", detail.get("gold_core_blocker", pd.Series(False, index=detail.index))).fillna(False).astype(bool)].copy()
+    position_rows: list[dict[str, Any]] = []
+    case_rows: list[dict[str, Any]] = []
+
+    for _, row in blockers.iterrows():
+        diag = _evidence_bound_name_reconstruction(row)
+        expected = normalize_text(row.get("expected_name", ""))
+        source = normalize_text(diag.get("name_reconstruction_source_value", ""))
+        try:
+            trace = json.loads(diag.get("name_reconstruction_trace", "[]") or "[]")
+        except Exception:
+            trace = []
+        try:
+            conflicts = json.loads(diag.get("name_reconstruction_conflicts", "[]") or "[]")
+        except Exception:
+            conflicts = []
+        evidence = [item for item in _parse_character_reocr_evidence(row.get("character_reocr_evidence", "")) if str(item.get("field", "") or "") == "player_name"]
+        trace_by_pos = {int(item.get("position")): item for item in trace if str(item.get("position", "")).lstrip("-").isdigit()}
+        conflict_by_pos: dict[int, list[dict[str, Any]]] = {}
+        for item in conflicts:
+            try:
+                conflict_by_pos.setdefault(int(item.get("position")), []).append(item)
+            except (TypeError, ValueError):
+                pass
+        evidence_by_pos: dict[int, list[dict[str, Any]]] = {}
+        for item in evidence:
+            try:
+                evidence_by_pos.setdefault(int(item.get("position")), []).append(item)
+            except (TypeError, ValueError):
+                pass
+
+        counts = {"CONFIRMED": 0, "MISSING": 0, "CONFLICT": 0, "UNRESOLVED": 0}
+        for pos, expected_char in enumerate(expected):
+            proof = trace_by_pos.get(pos, {})
+            pos_conflicts = conflict_by_pos.get(pos, [])
+            pos_evidence = evidence_by_pos.get(pos, [])
+            statuses = sorted(set(str(item.get("status", "") or "") for item in pos_evidence if str(item.get("status", "") or "")))
+            diagnostics = sorted(set(str(item.get("crop_diagnostic", "") or "") for item in pos_evidence if str(item.get("crop_diagnostic", "") or "")))
+            anchors = sorted(set(str(item.get("crop_anchor_status", "") or "") for item in pos_evidence if str(item.get("crop_anchor_status", "") or "")))
+            screenshots = sorted(set(str(item.get("screenshot", "") or "") for item in pos_evidence if str(item.get("screenshot", "") or "")))
+            selected = [normalize_text(item.get("selected", ""))[:1] for item in pos_evidence if normalize_text(item.get("selected", ""))]
+            confidences = [float(item.get("confidence", 0.0) or 0.0) for item in pos_evidence]
+            if pos_conflicts:
+                status = "CONFLICT"
+                reason = "observed_counterevidence"
+            elif proof:
+                status = "CONFIRMED"
+                reason = str(proof.get("proof", "position_proven"))
+            elif any(st in {"unresolved", "ambiguous_vote"} for st in statuses):
+                status = "UNRESOLVED"
+                reason = "unresolved_or_ambiguous_vote"
+            else:
+                status = "MISSING"
+                reason = "no_position_bound_evidence"
+            counts[status] += 1
+            observed_char = source[pos] if pos < len(source) else ""
+            position_rows.append({
+                "phase": "v0.9.5.149_position_evidence_intelligence",
+                "server": row.get("server"), "rank": row.get("rank"),
+                "failure_class": row.get("gold_core_failure_class", ""),
+                "promotion_guard_primary_blocker": row.get("promotion_guard_primary_blocker", ""),
+                "position": pos, "position_human": pos + 1,
+                "expected_char": expected_char, "observed_char": observed_char,
+                "position_status": status, "position_reason": reason,
+                "proof_source": proof.get("proof", ""),
+                "proof_char": proof.get("char", ""),
+                "evidence_count": len(pos_evidence),
+                "best_confidence": round(max(confidences), 4) if confidences else 0.0,
+                "selected_chars": json.dumps(selected, ensure_ascii=False),
+                "vote_statuses": json.dumps(statuses, ensure_ascii=False),
+                "crop_diagnostics": json.dumps(diagnostics, ensure_ascii=False),
+                "crop_anchor_statuses": json.dumps(anchors, ensure_ascii=False),
+                "screenshots": json.dumps(screenshots, ensure_ascii=False),
+                "conflicts": json.dumps(pos_conflicts, ensure_ascii=False),
+                "blocks_name_exact": status != "CONFIRMED",
+                "operational_truth_modified": False,
+            })
+
+        case_rows.append({
+            "phase": "v0.9.5.149_position_evidence_intelligence",
+            "server": row.get("server"), "rank": row.get("rank"),
+            "expected_name": expected, "observed_name": row.get("ocr_name", ""),
+            "failure_class": row.get("gold_core_failure_class", ""),
+            "fix_lane": row.get("gold_core_fix_lane", row.get("fix_lane", "")),
+            "promotion_guard_primary_blocker": row.get("promotion_guard_primary_blocker", ""),
+            "name_proof_status": diag.get("name_proof_status", ""),
+            "coverage": diag.get("name_reconstruction_coverage", 0.0),
+            "positions_total": len(expected),
+            "positions_confirmed": counts["CONFIRMED"],
+            "positions_missing": counts["MISSING"],
+            "positions_unresolved": counts["UNRESOLVED"],
+            "positions_conflicting": counts["CONFLICT"],
+            "blocking_positions": json.dumps([r["position_human"] for r in position_rows if r.get("rank") == row.get("rank") and r.get("server") == row.get("server") and r.get("position_status") != "CONFIRMED"], ensure_ascii=False),
+            "recommended_evidence_action": "resolve_conflict" if counts["CONFLICT"] else ("targeted_position_reocr" if counts["MISSING"] or counts["UNRESOLVED"] else "none"),
+            "operational_truth_modified": False,
+        })
+
+    positions = pd.DataFrame(position_rows)
+    cases = pd.DataFrame(case_rows)
+    if positions.empty:
+        heatmap = pd.DataFrame(columns=["position_human", "positions", "confirmed", "missing", "unresolved", "conflicting", "confirmation_rate", "blocker_rate", "recommended_action"])
+    else:
+        heatmap = positions.groupby("position_human", dropna=False).agg(
+            positions=("rank", "count"),
+            confirmed=("position_status", lambda v: int((pd.Series(v) == "CONFIRMED").sum())),
+            missing=("position_status", lambda v: int((pd.Series(v) == "MISSING").sum())),
+            unresolved=("position_status", lambda v: int((pd.Series(v) == "UNRESOLVED").sum())),
+            conflicting=("position_status", lambda v: int((pd.Series(v) == "CONFLICT").sum())),
+            avg_best_confidence=("best_confidence", "mean"),
+        ).reset_index()
+        heatmap["confirmation_rate"] = (heatmap["confirmed"] / heatmap["positions"].replace(0, 1)).round(4)
+        heatmap["blocker_rate"] = (1 - heatmap["confirmation_rate"]).round(4)
+        heatmap["recommended_action"] = heatmap.apply(lambda r: "resolve_conflicting_evidence" if int(r["conflicting"]) else ("targeted_position_reocr" if int(r["missing"] + r["unresolved"]) else "none"), axis=1)
+        heatmap.insert(0, "phase", "v0.9.5.149_position_evidence_intelligence")
+        heatmap["operational_truth_modified"] = False
+    return cases, positions, heatmap
+
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
     evidence_rows: list[dict[str, Any]] = []
@@ -4902,6 +5028,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     character_acquisition_summary, character_acquisition_rows, character_acquisition_heatmap, detail = _build_character_acquisition_report(detail, character_reocr_debug)
     character_position_summary, character_position_rows, character_position_rank_rows, detail = _build_character_position_intelligence_report(character_acquisition_rows, character_acquisition_heatmap, detail)
+    gold_core_character_cases, gold_core_character_positions, gold_core_position_heatmap = _build_gold_core_character_evidence_map(detail)
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
@@ -4969,6 +5096,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "character_position_summary": character_position_summary.to_dict(orient="records"),
         "character_position_rows": character_position_rows.to_dict(orient="records"),
         "character_position_rank_rows": character_position_rank_rows.to_dict(orient="records"),
+        "gold_core_character_evidence_cases": gold_core_character_cases.to_dict(orient="records"),
+        "gold_core_character_evidence_positions": gold_core_character_positions.to_dict(orient="records"),
+        "gold_core_position_heatmap": gold_core_position_heatmap.to_dict(orient="records"),
         "ocr_evidence_summary": ocr_evidence_payload.get("summary", {}),
         "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
         "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
@@ -4988,6 +5118,15 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     character_acquisition_json_path.write_text(json.dumps(_json_safe({"summary": character_acquisition_summary.to_dict(orient="records"), "details": character_acquisition_rows.to_dict(orient="records"), "heatmap": character_acquisition_heatmap.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
     character_position_json_path = output_dir / "character_position_intelligence_report.json"
     character_position_json_path.write_text(json.dumps(_json_safe({"summary": character_position_summary.to_dict(orient="records"), "positions": character_position_rows.to_dict(orient="records"), "rank_actions": character_position_rank_rows.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    character_evidence_json_path = output_dir / "character_position_report.json"
+    character_evidence_json_path.write_text(json.dumps(_json_safe({"phase": "v0.9.5.149_position_evidence_intelligence", "cases": gold_core_character_cases.to_dict(orient="records"), "positions": gold_core_character_positions.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    position_heatmap_json_path = output_dir / "position_heatmap.json"
+    position_heatmap_json_path.write_text(json.dumps(_json_safe({"phase": "v0.9.5.149_position_evidence_intelligence", "positions": gold_core_position_heatmap.to_dict(orient="records")}), ensure_ascii=False, indent=2), encoding="utf-8")
+    character_position_summary_md_path = output_dir / "character_position_summary.md"
+    md_lines = ["# Character Position Evidence Summary", "", "Version: v0.9.5.149", "", "This report is read-only. It does not modify Operational Truth or Gold-Core policy.", "", "## Gold-Core Cases", ""]
+    for item in gold_core_character_cases.to_dict(orient="records"):
+        md_lines.extend([f"### Rank {item.get('rank')} — {item.get('expected_name', '')}", "", f"- Failure class: `{item.get('failure_class', '')}`", f"- Name proof: `{item.get('name_proof_status', '')}`", f"- Coverage: {float(item.get('coverage', 0) or 0):.2%}", f"- Blocking positions: {item.get('blocking_positions', '[]')}", f"- Evidence action: `{item.get('recommended_evidence_action', '')}`", ""])
+    character_position_summary_md_path.write_text("\n".join(md_lines), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -5065,6 +5204,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_position_summary).to_excel(writer, sheet_name="char_pos_summary", index=False)
         _sanitize_frame(character_position_rows).to_excel(writer, sheet_name="char_pos_positions", index=False)
         _sanitize_frame(character_position_rank_rows).to_excel(writer, sheet_name="char_pos_rank", index=False)
+        _sanitize_frame(gold_core_character_cases).to_excel(writer, sheet_name="gc_char_cases", index=False)
+        _sanitize_frame(gold_core_character_positions).to_excel(writer, sheet_name="gc_char_positions", index=False)
+        _sanitize_frame(gold_core_position_heatmap).to_excel(writer, sheet_name="gc_pos_heatmap", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="ocr_evidence_status", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="ocr_evidence_rows", index=False)
@@ -5088,6 +5230,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(character_position_summary).to_excel(writer, sheet_name="summary", index=False)
         _sanitize_frame(character_position_rows).to_excel(writer, sheet_name="positions", index=False)
         _sanitize_frame(character_position_rank_rows).to_excel(writer, sheet_name="rank_actions", index=False)
+
+    character_evidence_xlsx_path = output_dir / "character_position_report.xlsx"
+    with pd.ExcelWriter(character_evidence_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(gold_core_character_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(gold_core_character_positions).to_excel(writer, sheet_name="positions", index=False)
+        _sanitize_frame(gold_core_position_heatmap).to_excel(writer, sheet_name="heatmap", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -5168,6 +5316,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Character Acquisition Excel:  {character_acquisition_xlsx_path}")
     print(f"Character Position JSON:      {character_position_json_path}")
     print(f"Character Position Excel:     {character_position_xlsx_path}")
+    print(f"Gold-Core Character Evidence JSON: {character_evidence_json_path}")
+    print(f"Gold-Core Character Evidence Excel: {character_evidence_xlsx_path}")
+    print(f"Gold-Core Position Heatmap JSON: {position_heatmap_json_path}")
+    print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
     print(f"Evidence Confidence JSON:      {evidence_confidence_json_path}")
