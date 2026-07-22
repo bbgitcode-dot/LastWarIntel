@@ -169,3 +169,7 @@ Sentinel now models Gold Core identity blockers above the character level. The I
 ## Update v0.9.5.156 – Gold-Core-Bound Review Orchestration
 
 The Identity Composition layer is now operationally connected to the authoritative Gold Core. Manual Review Queue entries no longer inherit generic match metadata. Queue coverage, case binding, metadata completeness, action mapping, confidence calibration, and zero-clearance safety are validated explicitly. The next benchmark must confirm 14 open Gold-Core cases, 14 queue entries, 100% binding, zero `matched` failure classes, and differentiated review actions.
+
+## v0.9.5.158 — Classification Stability established
+
+Strike XV protects Gold-Core diagnosis from silent cross-run drift. Each open case now carries deterministic evidence, classification, and decision fingerprints. The validator persists a comparison state, reports unexplained changes as CRITICAL, calculates evidence coverage against action-specific requirements, and exposes score-factor decompositions and qualitative labels. Resolution execution remains out of scope until stability history is proven across repeated identical benchmark runs.

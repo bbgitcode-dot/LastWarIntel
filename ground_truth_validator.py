@@ -17,6 +17,7 @@ Outputs:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import unicodedata
@@ -5518,6 +5519,150 @@ def _build_resolution_readiness_intelligence(
     }])
     return cases, readiness_summary, validation, summary
 
+
+def _stable_hash(payload: dict[str, Any]) -> str:
+    """Return a deterministic SHA-256 fingerprint for diagnostic state."""
+    canonical = json.dumps(_json_safe(payload), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _confidence_label(value: float) -> str:
+    value = float(value or 0.0)
+    if value >= 0.90:
+        return "VERY_HIGH"
+    if value >= 0.80:
+        return "HIGH"
+    if value >= 0.65:
+        return "MODERATE"
+    if value > 0.0:
+        return "LOW"
+    return "INSUFFICIENT"
+
+
+def _evidence_requirements_for_action(action: str) -> list[str]:
+    return {
+        "REVIEW_CROP_GEOMETRY": ["original_screenshot", "crop_bbox", "row_context", "crop_anchor_diagnostics", "field_bleed_diagnostics"],
+        "REVIEW_MISSING_IDENTITY": ["full_row_screenshot", "alternate_crop", "ocr_observation_set", "position_binding"],
+        "REVIEW_EVIDENCE_CONFLICT": ["observed_evidence", "expected_comparison", "alignment_trace", "position_evidence"],
+        "REVIEW_VOTE_SELECTION": ["ocr_candidates", "vote_confidence", "vote_rationale", "source_crops"],
+        "REVIEW_SCRIPT_POLICY": ["script_segmentation", "token_provenance", "display_policy", "display_reconstruction"],
+        "REVIEW_MIXED_SCRIPT": ["script_segmentation", "token_provenance", "local_nonlocal_split", "display_policy"],
+        "REVIEW_LOCAL_GLYPH": ["source_crop", "character_positions", "alternate_ocr", "glyph_provenance"],
+        "REVIEW_CASE_BINDING": ["case_id", "server_rank", "gold_core_record", "binding_trace"],
+    }.get(action, ["source_observation", "provenance_chain", "review_rationale"])
+
+
+def _evidence_presence(row: dict[str, Any], item: str) -> bool:
+    text = lambda key: str(row.get(key, "") or "").strip()
+    num = lambda key: float(row.get(key, 0.0) or 0.0)
+    mapping = {
+        "original_screenshot": bool(text("source_screenshots") or text("screenshot") or text("screenshot_path")),
+        "full_row_screenshot": bool(text("source_screenshots") or text("screenshot") or text("screenshot_path")),
+        "source_crop": bool(text("source_screenshots") or text("source_observations")),
+        "source_crops": bool(text("source_screenshots") or text("source_observations")),
+        "alternate_crop": bool(text("alternate_crop") or text("reocr_crop") or text("crop_variants")),
+        "crop_bbox": bool(text("crop_bbox") or text("bounding_box") or text("bbox")),
+        "row_context": bool(text("row_context") or text("neighboring_rows") or text("source_observations")),
+        "crop_anchor_diagnostics": "crop" in text("failure_domain").lower() or bool(text("crop_anchor_diagnostics")),
+        "field_bleed_diagnostics": "bleed" in text("failure_domain").lower() or bool(text("field_bleed_diagnostics")),
+        "ocr_observation_set": bool(text("source_observations") or text("observed_identity_text")),
+        "position_binding": text("case_binding_status") == "BOUND" and num("binding_confidence") > 0,
+        "observed_evidence": bool(text("observed_identity_text") and text("observed_identity_text").upper() != "UNKNOWN"),
+        "expected_comparison": bool(text("expected_name") or text("expected_identity") or text("root_cause")),
+        "alignment_trace": bool(text("alignment_operations") or text("alignment_trace") or "evidence" in text("failure_domain").lower()),
+        "position_evidence": num("provenance_confidence") > 0 or bool(text("source_characters")),
+        "ocr_candidates": bool(text("ocr_candidates") or text("source_observations")),
+        "vote_confidence": num("observation_confidence") > 0,
+        "vote_rationale": bool(text("recommendation") or text("resolution_rationale")),
+        "script_segmentation": bool(text("script_profile") or text("component_types") or text("identity_slots")),
+        "token_provenance": num("provenance_confidence") > 0 and bool(text("source_tokens") or text("component_provenance") or text("observed_identity_text")),
+        "display_policy": bool(text("recommendation") and ("policy" in text("review_action").lower() or "script" in text("failure_class").lower() or "script" in text("failure_domain").lower())),
+        "display_reconstruction": bool(text("display_reconstruction") or text("observed_identity_text")),
+        "local_nonlocal_split": text("review_action") == "REVIEW_MIXED_SCRIPT",
+        "character_positions": bool(text("source_characters") or text("component_provenance") or num("provenance_confidence") > 0),
+        "alternate_ocr": bool(text("alternate_ocr") or text("ocr_candidates") or num("observation_confidence") >= 0.9),
+        "glyph_provenance": num("provenance_confidence") > 0,
+        "case_id": bool(text("case_id")), "server_rank": bool(text("server") and text("rank")),
+        "gold_core_record": bool(text("classification_source")), "binding_trace": text("case_binding_status") == "BOUND",
+        "source_observation": bool(text("observed_identity_text")), "provenance_chain": num("provenance_confidence") > 0,
+        "review_rationale": bool(text("resolution_rationale") or text("recommendation")),
+    }
+    return bool(mapping.get(item, False))
+
+
+def _build_classification_stability_and_coverage(
+    readiness_cases: pd.DataFrame, output_dir: Path | None = None
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XV: deterministic classification audit and action-specific evidence coverage."""
+    if readiness_cases.empty:
+        empty = pd.DataFrame()
+        return empty, empty, empty, empty, pd.DataFrame([{"phase":"v0.9.5.158_classification_stability","cases":0}])
+    previous: dict[str, dict[str, Any]] = {}
+    history_path = Path(output_dir) / "classification_stability_state.json" if output_dir else None
+    if history_path and history_path.exists():
+        try:
+            previous = {str(x.get("case_id", "")): x for x in json.loads(history_path.read_text(encoding="utf-8")).get("cases", [])}
+        except (OSError, ValueError, TypeError):
+            previous = {}
+    rows=[]; coverage_rows=[]; factor_rows=[]
+    for raw in readiness_cases.to_dict(orient="records"):
+        row=dict(raw); case_id=str(row.get("case_id", "")); action=str(row.get("review_action", ""))
+        requirements=_evidence_requirements_for_action(action)
+        present=[item for item in requirements if _evidence_presence(row,item)]
+        missing=[item for item in requirements if item not in present]
+        coverage=round(len(present)/len(requirements),4) if requirements else 0.0
+        row["required_evidence_coverage"]=coverage
+        row["required_evidence_items"]=";".join(requirements)
+        row["available_evidence_items"]=";".join(present)
+        row["missing_evidence_items"]=";".join(missing)
+        evidence_payload={k:row.get(k,"") for k in ["case_id","server","rank","observed_identity_text","identity_composition_status","case_binding_status","binding_confidence","provenance_confidence","observation_confidence","semantic_identity_confidence","source_screenshots","source_observations","source_characters","failure_domain"]}
+        evidence_payload["evidence_presence"]={item:_evidence_presence(row,item) for item in requirements}
+        evidence_fp=_stable_hash(evidence_payload)
+        classification_payload={"evidence_fingerprint":evidence_fp,"failure_class":row.get("failure_class",""),"failure_domain":row.get("failure_domain",""),"fix_lane":row.get("fix_lane",""),"review_action":action}
+        classification_fp=_stable_hash(classification_payload)
+        decision_payload={**classification_payload,"resolution_readiness":row.get("resolution_readiness",""),"resolution_strategy":row.get("resolution_strategy","")}
+        decision_hash=_stable_hash(decision_payload)
+        prev=previous.get(case_id,{})
+        evidence_changed=bool(prev) and prev.get("evidence_fingerprint") != evidence_fp
+        classification_changed=bool(prev) and prev.get("classification_fingerprint") != classification_fp
+        decision_changed=bool(prev) and prev.get("decision_hash") != decision_hash
+        if not prev: reason="NO_PREVIOUS_BASELINE"
+        elif classification_changed and not evidence_changed: reason="UNEXPLAINED_CLASSIFICATION_CHANGE"
+        elif classification_changed: reason="EVIDENCE_CHANGED"
+        elif decision_changed and not evidence_changed: reason="UNEXPLAINED_DECISION_CHANGE"
+        elif decision_changed: reason="EVIDENCE_CHANGED"
+        else: reason="STABLE"
+        severity="CRITICAL" if "UNEXPLAINED" in reason else ("INFO" if reason in {"STABLE","NO_PREVIOUS_BASELINE"} else "MAJOR")
+        # Explicit score decompositions: explanatory indicators, not probabilities.
+        root_factors={"binding":round(float(row.get("binding_confidence",0) or 0)*0.25,4),"classification_specificity":0.2375 if str(row.get("failure_class","")).lower() not in {"","matched","case_binding_error"} else 0.0,"domain_specificity":0.18 if str(row.get("failure_domain","")).strip() else 0.05,"provenance":round(float(row.get("provenance_confidence",0) or 0)*0.15,4),"action_support":round(max(0.0,float(row.get("root_cause_confidence",0) or 0)-0.70),4)}
+        rec_factors={"root_cause":round(float(row.get("root_cause_confidence",0) or 0)*0.25,4),"evidence_coverage":round(coverage*0.25,4),"action_fit":round(float(row.get("recommendation_score",0) or 0)*0.30,4),"safety":0.20 if not bool(row.get("automatic_fix_executed",False)) else 0.0}
+        review_factors={"binding":round(float(row.get("binding_confidence",0) or 0)*0.20,4),"root_cause":round(float(row.get("root_cause_confidence",0) or 0)*0.25,4),"recommendation":round(float(row.get("recommendation_score",0) or 0)*0.25,4),"evidence_coverage":round(coverage*0.15,4),"semantic_identity":round(float(row.get("semantic_identity_confidence",0) or 0)*0.15,4)}
+        row.update({"phase":"v0.9.5.158_classification_stability","evidence_fingerprint":evidence_fp,"classification_fingerprint":classification_fp,"decision_hash":decision_hash,"previous_failure_class":prev.get("failure_class","") if prev else "","current_failure_class":row.get("failure_class",""),"evidence_changed":evidence_changed,"classification_changed":classification_changed,"decision_changed":decision_changed,"classification_change_reason":reason,"stability_severity":severity,"root_cause_confidence_label":_confidence_label(row.get("root_cause_confidence",0)),"recommendation_score_label":_confidence_label(row.get("recommendation_score",0)),"review_confidence_label":_confidence_label(row.get("review_confidence",0)),"root_cause_confidence_factors":json.dumps(root_factors,sort_keys=True),"recommendation_score_factors":json.dumps(rec_factors,sort_keys=True),"review_confidence_factors":json.dumps(review_factors,sort_keys=True)})
+        # Recalculate review confidence with real action-specific coverage.
+        row["review_confidence"]=round(max(0.0,min(1.0,sum(review_factors.values()))),4)
+        row["review_confidence_label"]=_confidence_label(row["review_confidence"])
+        rows.append(row)
+        for item in requirements:
+            coverage_rows.append({"case_id":case_id,"review_action":action,"evidence_item":item,"available":item in present,"coverage":coverage})
+        for score_name,factors in [("root_cause_confidence",root_factors),("recommendation_score",rec_factors),("review_confidence",review_factors)]:
+            for factor,contribution in factors.items(): factor_rows.append({"case_id":case_id,"score":score_name,"factor":factor,"contribution":contribution})
+    cases=pd.DataFrame(rows); coverage_df=pd.DataFrame(coverage_rows); factors_df=pd.DataFrame(factor_rows)
+    validation=pd.DataFrame([
+        {"guard":"no_unexplained_classification_change","expected":0,"actual":int(((cases["classification_changed"]==True)&(cases["evidence_changed"]==False)).sum()),"status":"PASS" if not ((cases["classification_changed"]==True)&(cases["evidence_changed"]==False)).any() else "FAIL"},
+        {"guard":"no_unexplained_decision_change","expected":0,"actual":int(((cases["decision_changed"]==True)&(cases["evidence_changed"]==False)).sum()),"status":"PASS" if not ((cases["decision_changed"]==True)&(cases["evidence_changed"]==False)).any() else "FAIL"},
+        {"guard":"evidence_fingerprint_complete","expected":len(cases),"actual":int(cases["evidence_fingerprint"].astype(str).str.len().eq(64).sum()),"status":"PASS" if cases["evidence_fingerprint"].astype(str).str.len().eq(64).all() else "FAIL"},
+        {"guard":"score_decomposition_complete","expected":len(cases)*3,"actual":len(cases)*3 if all(cases[x].astype(str).str.strip().ne("").all() for x in ["root_cause_confidence_factors","recommendation_score_factors","review_confidence_factors"]) else 0,"status":"PASS" if all(cases[x].astype(str).str.strip().ne("").all() for x in ["root_cause_confidence_factors","recommendation_score_factors","review_confidence_factors"]) else "FAIL"},
+        {"guard":"confidence_labels_complete","expected":len(cases)*3,"actual":sum(int(cases[x].astype(str).str.strip().ne("").sum()) for x in ["root_cause_confidence_label","recommendation_score_label","review_confidence_label"]),"status":"PASS" if all(cases[x].astype(str).str.strip().ne("").all() for x in ["root_cause_confidence_label","recommendation_score_label","review_confidence_label"]) else "FAIL"},
+        {"guard":"no_gold_clearance","expected":0,"actual":int(cases["gold_clearance_created"].fillna(False).astype(bool).sum()),"status":"PASS" if not cases["gold_clearance_created"].fillna(False).astype(bool).any() else "FAIL"},
+    ])
+    summary=pd.DataFrame([{"phase":"v0.9.5.158_classification_stability","cases":len(cases),"previous_baseline_cases":len(previous),"classification_changes":int(cases["classification_changed"].sum()),"unexplained_classification_changes":int(((cases["classification_changed"]==True)&(cases["evidence_changed"]==False)).sum()),"decision_changes":int(cases["decision_changed"].sum()),"distinct_evidence_coverage_values":int(cases["required_evidence_coverage"].nunique()),"average_evidence_coverage":round(float(cases["required_evidence_coverage"].mean()),4),"gold_clearance_created":0,"operational_truth_modified":False}])
+    if history_path:
+        try:
+            history_path.write_text(json.dumps({"version":"0.9.5.158","cases":[{k:r.get(k) for k in ["case_id","failure_class","evidence_fingerprint","classification_fingerprint","decision_hash"]} for r in rows]},ensure_ascii=False,indent=2),encoding="utf-8")
+        except OSError:
+            pass
+    return cases, coverage_df, factors_df, validation, summary
+
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
     def pick(*keys: str) -> str:
@@ -6329,8 +6474,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     resolution_readiness_cases, resolution_readiness_breakdown, resolution_readiness_validation, resolution_readiness_summary = _build_resolution_readiness_intelligence(
         manual_review_queue, review_case_bindings, review_confidence_calibration
     )
-    if not resolution_readiness_cases.empty:
-        manual_review_queue = resolution_readiness_cases.copy()
+    classification_stability_cases, evidence_coverage_rows, score_decomposition_rows, classification_stability_validation, classification_stability_summary = _build_classification_stability_and_coverage(
+        resolution_readiness_cases, output_dir
+    )
+    if not classification_stability_cases.empty:
+        resolution_readiness_cases = classification_stability_cases.copy()
+        manual_review_queue = classification_stability_cases.copy()
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6420,6 +6569,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "resolution_readiness_breakdown": resolution_readiness_breakdown.to_dict(orient="records"),
         "resolution_readiness_cases": resolution_readiness_cases.to_dict(orient="records"),
         "resolution_readiness_validation": resolution_readiness_validation.to_dict(orient="records"),
+        "classification_stability_summary": classification_stability_summary.to_dict(orient="records"),
+        "classification_stability_cases": classification_stability_cases.to_dict(orient="records"),
+        "classification_stability_validation": classification_stability_validation.to_dict(orient="records"),
+        "evidence_coverage_rows": evidence_coverage_rows.to_dict(orient="records"),
+        "score_decomposition_rows": score_decomposition_rows.to_dict(orient="records"),
         "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
@@ -6584,6 +6738,20 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         f"- Unsafe to resolve: {rr.get('unsafe_to_resolve', 0)}", "",
         "This intelligence is diagnostic only. It cannot execute fixes, clear Gold Core, or modify Operational Truth."]
     resolution_readiness_md_path.write_text("\n".join(lines), encoding="utf-8")
+    classification_stability_json_path = output_dir / "classification_stability_report.json"
+    classification_stability_json_path.write_text(json.dumps(_json_safe({
+        "phase":"v0.9.5.158_classification_stability","summary":classification_stability_summary.to_dict(orient="records"),
+        "cases":classification_stability_cases.to_dict(orient="records"),"validation":classification_stability_validation.to_dict(orient="records"),
+        "guardrails":{"classification_authoritative":False,"gold_clearance_created":False,"operational_truth_modified":False}
+    }),ensure_ascii=False,indent=2),encoding="utf-8")
+    classification_stability_md_path = output_dir / "classification_stability_summary.md"
+    cs = classification_stability_summary.iloc[0].to_dict() if not classification_stability_summary.empty else {}
+    classification_stability_md_path.write_text("\n".join(["# Classification Stability", "", "Version: v0.9.5.158", "", f"- Cases: {cs.get('cases',0)}", f"- Previous baseline cases: {cs.get('previous_baseline_cases',0)}", f"- Classification changes: {cs.get('classification_changes',0)}", f"- Unexplained changes: {cs.get('unexplained_classification_changes',0)}", f"- Distinct evidence coverage values: {cs.get('distinct_evidence_coverage_values',0)}", "", "No classification change is accepted silently. The layer is diagnostic and read-only."]),encoding="utf-8")
+    evidence_coverage_json_path = output_dir / "evidence_coverage_report.json"
+    evidence_coverage_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.158_evidence_coverage","cases":classification_stability_cases.to_dict(orient="records"),"requirements":evidence_coverage_rows.to_dict(orient="records"),"score_decomposition":score_decomposition_rows.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    evidence_coverage_md_path = output_dir / "evidence_coverage_summary.md"
+    evidence_coverage_md_path.write_text("\n".join(["# Resolution Evidence Coverage", "", "Version: v0.9.5.158", "", f"- Cases: {len(classification_stability_cases)}", f"- Distinct coverage values: {classification_stability_cases['required_evidence_coverage'].nunique() if not classification_stability_cases.empty else 0}", f"- Average coverage: {classification_stability_cases['required_evidence_coverage'].mean():.2%}" if not classification_stability_cases.empty else "- Average coverage: 0%", "", "Coverage is calculated against the evidence required by each concrete review action."]),encoding="utf-8")
+
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -6683,6 +6851,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(resolution_readiness_summary).to_excel(writer, sheet_name="resolution_ready_sum", index=False)
         _sanitize_frame(resolution_readiness_cases).to_excel(writer, sheet_name="resolution_ready", index=False)
         _sanitize_frame(resolution_readiness_validation).to_excel(writer, sheet_name="resolution_valid", index=False)
+        _sanitize_frame(classification_stability_summary).to_excel(writer, sheet_name="class_stability_sum", index=False)
+        _sanitize_frame(classification_stability_cases).to_excel(writer, sheet_name="class_stability", index=False)
+        _sanitize_frame(classification_stability_validation).to_excel(writer, sheet_name="class_stab_valid", index=False)
+        _sanitize_frame(evidence_coverage_rows).to_excel(writer, sheet_name="evidence_coverage", index=False)
+        _sanitize_frame(score_decomposition_rows).to_excel(writer, sheet_name="score_factors", index=False)
         _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
@@ -6772,6 +6945,17 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(resolution_readiness_breakdown).to_excel(writer, sheet_name="readiness", index=False)
         _sanitize_frame(resolution_readiness_cases).to_excel(writer, sheet_name="cases", index=False)
         _sanitize_frame(resolution_readiness_validation).to_excel(writer, sheet_name="validation", index=False)
+
+    classification_stability_xlsx_path = output_dir / "classification_stability_report.xlsx"
+    with pd.ExcelWriter(classification_stability_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(classification_stability_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(classification_stability_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(classification_stability_validation).to_excel(writer, sheet_name="validation", index=False)
+    evidence_coverage_xlsx_path = output_dir / "evidence_coverage_report.xlsx"
+    with pd.ExcelWriter(evidence_coverage_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(classification_stability_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(evidence_coverage_rows).to_excel(writer, sheet_name="requirements", index=False)
+        _sanitize_frame(score_decomposition_rows).to_excel(writer, sheet_name="score_factors", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -6873,6 +7057,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Resolution Readiness JSON: {resolution_readiness_json_path}")
     print(f"Resolution Readiness XLSX: {resolution_readiness_xlsx_path}")
     print(f"Resolution Readiness Summary: {resolution_readiness_md_path}")
+    print(f"Classification Stability JSON: {classification_stability_json_path}")
+    print(f"Classification Stability XLSX: {classification_stability_xlsx_path}")
+    print(f"Classification Stability Summary: {classification_stability_md_path}")
+    print(f"Evidence Coverage JSON: {evidence_coverage_json_path}")
+    print(f"Evidence Coverage XLSX: {evidence_coverage_xlsx_path}")
+    print(f"Evidence Coverage Summary: {evidence_coverage_md_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")

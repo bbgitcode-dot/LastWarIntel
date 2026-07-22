@@ -694,3 +694,7 @@ Strike XIII converts the v0.9.5.155 Identity Composition output into a Gold-Core
 - Integrated readiness summary, cases, breakdown, and validation into the main validation payload and workbook.
 - Added guards requiring scored causes/recommendations, complete readiness/strategy classification, no automatic fix, no Gold clearance, and immutable Operational Truth.
 - Preserved DataGuard invariants: Ground Truth is comparison only; the layer is non-authoritative and read-only.
+
+## v0.9.5.158
+
+Strike XV adds a deterministic Classification Stability Guard, persisted case fingerprints, change auditing, action-specific evidence coverage, score-factor decomposition, and confidence labels. No automatic fix, Gold-Core clearance, or Operational Truth mutation is permitted.

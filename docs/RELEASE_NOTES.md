@@ -2081,3 +2081,13 @@ Validation:
 - Integrated readiness summary, cases, breakdown, and validation into the main validation payload and workbook.
 - Added guards requiring scored causes/recommendations, complete readiness/strategy classification, no automatic fix, no Gold clearance, and immutable Operational Truth.
 - Preserved DataGuard invariants: Ground Truth is comparison only; the layer is non-authoritative and read-only.
+
+## v0.9.5.158 — Strike XV: Classification Stability & Evidence Coverage
+
+- Added deterministic evidence, classification, and decision fingerprints for every open Gold-Core case.
+- Added persisted cross-run classification state and explicit audit reasons for changed classifications or readiness decisions.
+- Unexplained changes with identical evidence are surfaced as CRITICAL and never silently accepted.
+- Replaced uniform evidence coverage with review-action-specific required-evidence coverage.
+- Added score decompositions and qualitative confidence labels.
+- Added classification stability and evidence coverage JSON, XLSX, and Markdown reports.
+- Preserved Ground Truth as comparison-only, Gold Core as immutable, and all resolution intelligence as non-authoritative/read-only.

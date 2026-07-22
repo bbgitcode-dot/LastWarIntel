@@ -152,3 +152,12 @@ Gold-Core-bound Review Orchestration closes the diagnostic loop from observed id
 ## v0.9.5.157 milestone completed
 
 Resolution Readiness Intelligence converts the validated review queue into explainable decision support. The next benchmark must verify differentiated confidence values and readiness distributions. After calibration, further work should target measured Gold-Core reduction through the highest-readiness remediation lane rather than adding another parallel diagnostic layer.
+
+### v0.9.5.158 — Classification Stability & Evidence Coverage
+
+- Deterministic evidence/classification/decision fingerprints
+- Cross-run classification audit state
+- CRITICAL guard for decision drift without evidence change
+- Review-action-specific evidence coverage
+- Explainable score contributions and confidence labels
+- No automated resolution or Gold-Core clearance
