@@ -670,3 +670,11 @@ Make the Promotion Guard explainable and remove only proven low-coverage false n
 ## v0.9.5.147 — Gold Core Zero III
 
 Implemented complete evidence-bound name reconstruction with position coverage, conflict and missing-position diagnostics, a new conservative clearance path, Failure Memory metadata, regression tests, and full report integration.
+
+## v0.9.5.155
+
+Strike XII closes the diagnostic identity chain from observed characters to reviewable player identity composition:
+
+`Character -> Token -> Identity Component -> Identity Slot -> Player Identity Composition -> Manual Review Queue`
+
+The implementation is strictly observational. It composes only already observed, provenance-bound components and never fills missing identity text from Ground Truth. UNKNOWN remains protected. Review recommendations and priorities are guidance only and cannot change Gold Core or Operational Truth.

@@ -134,3 +134,13 @@ Sentinel now carries source provenance through explicit edit operations rather t
 - Token-to-component hypotheses
 - UNKNOWN protection
 - No automatic Gold clearance
+
+## v0.9.5.155 milestone completed
+
+- Identity Composition Engine
+- Provenance-bound identity slots
+- Token, slot, and identity confidence
+- Manual Review Queue
+- Gold Core priority and root-cause aggregation
+
+Next recommended milestone: use the `.155` benchmark to select one concrete high-yield Gold Core remediation lane (crop geometry, vote conflict, mixed-script policy, or local glyph acquisition) and measure actual blocker reduction without weakening DataGuard.

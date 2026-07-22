@@ -2036,3 +2036,21 @@ Active resolution of recoverable validation gaps caused by screenshot/server buc
 - F1: 0.7347 → 0.8775
 - Usable identities: 26 → 32
 - Score: 53.69 → 63.45
+
+## v0.9.5.155 – Strike XII: Identity Composition Engine
+
+- Added a read-only Identity Composition Engine above the v0.9.5.154 Player Identity Graph.
+- Added diagnostic identity slots: `ALLIANCE_TAG`, `TITLE_OR_PREFIX`, `PLAYER_NAME`, `SCRIPT_BLOCK`, `DECORATION`, `SEPARATOR`, and `UNKNOWN_SEGMENT`.
+- Added provenance-bound confidence at token, slot/component, and composed identity level.
+- Added complete component provenance from identity slot back to source components, tokens, characters, observations, screenshots, and source-chain status.
+- Added `identity_composition_report.json`, `identity_composition_report.xlsx`, and `identity_composition_summary.md`.
+- Added a non-authoritative Manual Review Queue with priority, recommended action, required evidence, review complexity, failure metadata, and root-cause aggregation.
+- Added `manual_review_queue.json` and `manual_review_queue.xlsx`.
+- Integrated composition, slots, review queue, priority summary, and root-cause summary into the main validation JSON and workbook.
+- Preserved all DataGuard invariants: no Ground Truth as evidence, no Operational Truth mutation, no missing-name reconstruction, no automatic Gold Core clearance, and protected `UNKNOWN` semantics.
+- Added v0.9.5.155 smoke tests for protected UNKNOWN handling, identity slots, provenance, confidence, and review recommendations.
+
+Validation:
+- 127 relevant regression tests passed.
+- 1 pre-existing alignment-guard assertion remains reproducible in the unmodified v0.9.5.154 baseline.
+- Repository-wide collection still contains pre-existing shell-command files stored as `.py` and obsolete multilingual OCR configuration imports.

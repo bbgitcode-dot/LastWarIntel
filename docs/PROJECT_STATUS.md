@@ -161,3 +161,7 @@ Display Reconstruction now preserves a read-only provenance object per character
 ## v0.9.5.153 – Provenance-Aware Character Alignment
 
 Sentinel now carries source provenance through explicit edit operations rather than assuming identical character indices. Exact matches and evidenced separator gaps may remain bridgeable; substitutions are counterevidence, deletions remain missing evidence, insertions remain unbound source observations, and ambiguous/UNKNOWN cases remain blocked. This layer is diagnostic and cannot modify Operational Truth or create Gold clearance.
+
+## Update v0.9.5.155 – Identity Composition
+
+Sentinel now models Gold Core identity blockers above the character level. The Identity Composition Engine assigns observed components to diagnostic slots, aggregates confidence, carries provenance to screenshots and OCR observations, and produces a prioritized manual review queue. This is an explainability and review-orchestration milestone, not a Gold clearance sprint. The remaining Gold Core reduction work must now target the actual acquisition/policy lanes identified by the queue rather than add further generic identity infrastructure.

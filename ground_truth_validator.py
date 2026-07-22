@@ -4887,6 +4887,7 @@ def _tokenize_identity_observation(text: str, provenance: list[dict[str, Any]]) 
                 "script_classes": token_classes,
                 "character_ids": [f"char:{j}" for j in range(start, i)],
                 "source_bound": all(chars[j]["source_chain_status"] != "DISPLAY_ONLY_NOT_EVIDENCE" for j in range(start, i)),
+                "token_confidence": round(sum(0.9 if chars[j]["source_chain_status"] != "DISPLAY_ONLY_NOT_EVIDENCE" else 0.45 for j in range(start, i)) / max(1, i - start), 4),
                 "gold_authoritative": False,
             })
             start = i
@@ -4972,6 +4973,193 @@ def _build_player_identity_graph(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd
         })
     cases=pd.DataFrame(case_rows); chars=pd.DataFrame(char_rows); tokens=pd.DataFrame(token_rows); components=pd.DataFrame(component_rows); edges=pd.DataFrame(edge_rows)
     return cases, chars, tokens, components, edges
+
+
+def _identity_slot_for_component(component_type: str) -> str:
+    """Map a diagnostic component hypothesis to a non-authoritative identity slot."""
+    return {
+        "ALLIANCE_TAG_CANDIDATE": "ALLIANCE_TAG",
+        "TITLE_OR_PREFIX": "TITLE_OR_PREFIX",
+        "NAME_TOKEN": "PLAYER_NAME",
+        "SCRIPT_NAME_BLOCK": "SCRIPT_BLOCK",
+        "DECORATIVE_MARK": "DECORATION",
+        "SEPARATOR": "SEPARATOR",
+        "UNKNOWN_SENTINEL": "UNKNOWN_SEGMENT",
+    }.get(normalize_text(component_type).upper(), "UNKNOWN_SEGMENT")
+
+
+def _identity_review_guidance(metadata: dict[str, str], composition_status: str) -> tuple[str, str, str, str]:
+    """Return priority, action, required evidence and complexity without using Ground Truth."""
+    failure_class = normalize_text(metadata.get("failure_class", "")).lower()
+    domain = normalize_text(metadata.get("failure_domain", "")).lower()
+    root = normalize_text(metadata.get("root_cause", "")).lower()
+    text = " ".join([failure_class, domain, root, normalize_text(composition_status).lower()])
+    if "crop" in text or "geometry" in text:
+        return "CRITICAL", "REVIEW_CROP_GEOMETRY", "source screenshot, crop bounds, row alignment", "HIGH"
+    if "mixed" in text or "nonlocal" in text or "script" in text:
+        return "MAJOR", "REVIEW_SCRIPT_IDENTITY", "source glyphs, script blocks, OCR alternatives", "MEDIUM"
+    if "vote" in text or "conflict" in text or "observed_text_confirmed" in text:
+        return "MAJOR", "REVIEW_EVIDENCE_CONFLICT", "character votes, aligned substitutions, source crops", "MEDIUM"
+    if "unknown" in text or composition_status == "UNKNOWN_PROTECTED":
+        return "CRITICAL", "REVIEW_MISSING_IDENTITY", "full row screenshot and independent OCR observation", "HIGH"
+    if "glyph" in text or "local" in text:
+        return "MAJOR", "REVIEW_LOCAL_GLYPH", "character crop, OCR candidates, provenance chain", "LOW"
+    return "MINOR", "REVIEW_IDENTITY_COMPOSITION", "identity graph and source provenance", "LOW"
+
+
+def _build_identity_composition_engine(
+    identity_cases: pd.DataFrame,
+    identity_characters: pd.DataFrame,
+    identity_tokens: pd.DataFrame,
+    identity_components: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """v0.9.5.155 Strike XII: compose diagnostic identity slots and review guidance.
+
+    This layer is read-only and evidence-bound. It never reconstructs missing text,
+    never consults expected identity fields, and never creates Gold clearance.
+    """
+    slot_rows: list[dict[str, Any]] = []
+    composition_rows: list[dict[str, Any]] = []
+    review_rows: list[dict[str, Any]] = []
+
+    case_records = identity_cases.to_dict(orient="records") if not identity_cases.empty else []
+    for case in case_records:
+        server, rank = case.get("server"), case.get("rank")
+        comps = identity_components[
+            (identity_components.get("server", pd.Series(dtype=object)) == server)
+            & (identity_components.get("rank", pd.Series(dtype=object)) == rank)
+        ].copy() if not identity_components.empty else pd.DataFrame()
+        tokens = identity_tokens[
+            (identity_tokens.get("server", pd.Series(dtype=object)) == server)
+            & (identity_tokens.get("rank", pd.Series(dtype=object)) == rank)
+        ].copy() if not identity_tokens.empty else pd.DataFrame()
+        chars = identity_characters[
+            (identity_characters.get("server", pd.Series(dtype=object)) == server)
+            & (identity_characters.get("rank", pd.Series(dtype=object)) == rank)
+        ].copy() if not identity_characters.empty else pd.DataFrame()
+
+        slot_texts: dict[str, list[str]] = {}
+        slot_confidences: dict[str, list[float]] = {}
+        source_component_ids: dict[str, list[str]] = {}
+        source_token_ids: dict[str, list[str]] = {}
+        source_character_ids: dict[str, list[str]] = {}
+        source_screenshots: dict[str, set[str]] = {}
+        source_observations: dict[str, set[str]] = {}
+
+        for comp in comps.to_dict(orient="records"):
+            slot = _identity_slot_for_component(comp.get("component_type", ""))
+            comp_text = normalize_text(comp.get("component_text", ""))
+            token_ids = comp.get("token_ids", [])
+            if isinstance(token_ids, str):
+                token_ids = _parse_json_list(token_ids)
+            token_ids = [str(x) for x in token_ids]
+            related_tokens = tokens[tokens.get("token_id", pd.Series(dtype=str)).astype(str).isin(token_ids)] if not tokens.empty else pd.DataFrame()
+            character_ids: list[str] = []
+            for token in related_tokens.to_dict(orient="records"):
+                ids = token.get("character_ids", [])
+                if isinstance(ids, str):
+                    ids = _parse_json_list(ids)
+                character_ids.extend(str(x) for x in ids)
+            related_chars = chars[chars.get("character_id", pd.Series(dtype=str)).astype(str).isin(character_ids)] if not chars.empty else pd.DataFrame()
+            source_bound_ratio = 0.0
+            if not related_chars.empty:
+                source_bound_ratio = float((related_chars["source_chain_status"].astype(str) != "DISPLAY_ONLY_NOT_EVIDENCE").mean())
+            classification_confidence = float(pd.to_numeric(pd.Series([comp.get("classification_confidence", 0.0)]), errors="coerce").fillna(0.0).iloc[0])
+            token_conf_values = pd.to_numeric(related_tokens.get("token_confidence", pd.Series(dtype=float)), errors="coerce").dropna().tolist() if not related_tokens.empty else []
+            token_confidence = float(sum(token_conf_values) / len(token_conf_values)) if token_conf_values else (0.9 if source_bound_ratio == 1.0 else 0.45)
+            component_confidence = round(max(0.0, min(1.0, classification_confidence * 0.55 + token_confidence * 0.30 + source_bound_ratio * 0.15)), 4)
+            screenshots = sorted({normalize_text(x) for x in related_chars.get("source_screenshot", pd.Series(dtype=str)).tolist() if normalize_text(x)})
+            observations = sorted({normalize_text(x) for x in related_chars.get("source_observation_id", pd.Series(dtype=str)).tolist() if normalize_text(x)})
+
+            slot_texts.setdefault(slot, []).append(comp_text)
+            slot_confidences.setdefault(slot, []).append(component_confidence)
+            source_component_ids.setdefault(slot, []).append(str(comp.get("component_id", "")))
+            source_token_ids.setdefault(slot, []).extend(token_ids)
+            source_character_ids.setdefault(slot, []).extend(character_ids)
+            source_screenshots.setdefault(slot, set()).update(screenshots)
+            source_observations.setdefault(slot, set()).update(observations)
+
+        for slot, texts in slot_texts.items():
+            confidences = slot_confidences.get(slot, [])
+            slot_conf = round(sum(confidences) / len(confidences), 4) if confidences else 0.0
+            if slot == "SEPARATOR":
+                slot_value = " "
+            else:
+                slot_value = " ".join(t for t in texts if t).strip()
+            slot_rows.append({
+                "phase": "v0.9.5.155_identity_composition",
+                "server": server, "rank": rank, "identity_slot": slot,
+                "slot_value": slot_value, "slot_confidence": slot_conf,
+                "source_component_ids": json.dumps(source_component_ids.get(slot, []), ensure_ascii=False),
+                "source_token_ids": json.dumps(sorted(set(source_token_ids.get(slot, []))), ensure_ascii=False),
+                "source_character_ids": json.dumps(sorted(set(source_character_ids.get(slot, []))), ensure_ascii=False),
+                "source_screenshots": json.dumps(sorted(source_screenshots.get(slot, set())), ensure_ascii=False),
+                "source_observation_ids": json.dumps(sorted(source_observations.get(slot, set())), ensure_ascii=False),
+                "token_confidence": round(sum(pd.to_numeric(tokens[tokens.get("token_id", pd.Series(dtype=str)).astype(str).isin(set(source_token_ids.get(slot, [])))].get("token_confidence", pd.Series(dtype=float)), errors="coerce").dropna().tolist()) / max(1, len(pd.to_numeric(tokens[tokens.get("token_id", pd.Series(dtype=str)).astype(str).isin(set(source_token_ids.get(slot, [])))].get("token_confidence", pd.Series(dtype=float)), errors="coerce").dropna().tolist())), 4) if not tokens.empty else 0.0,
+                "component_provenance_complete": bool(source_component_ids.get(slot)) and bool(source_character_ids.get(slot)),
+                "identity_authoritative": False, "gold_authoritative": False,
+                "ground_truth_used_as_evidence": False, "operational_truth_modified": False,
+            })
+
+        unknown = bool(case.get("unknown_protected", False)) or "UNKNOWN_SEGMENT" in slot_texts
+        player_values = [x for slot in ("PLAYER_NAME", "SCRIPT_BLOCK") for x in slot_texts.get(slot, []) if x]
+        title_values = [x for x in slot_texts.get("TITLE_OR_PREFIX", []) if x]
+        tag_values = [x for x in slot_texts.get("ALLIANCE_TAG", []) if x]
+        identity_conf_values = [c for slot in ("PLAYER_NAME", "SCRIPT_BLOCK") for c in slot_confidences.get(slot, [])]
+        identity_confidence = round(sum(identity_conf_values) / len(identity_conf_values), 4) if identity_conf_values else 0.0
+        if unknown:
+            status = "UNKNOWN_PROTECTED"
+        elif player_values:
+            status = "OBSERVED_IDENTITY_COMPOSED"
+        elif slot_texts:
+            status = "COMPONENTS_WITHOUT_PLAYER_NAME"
+        else:
+            status = "NO_OBSERVED_IDENTITY"
+        metadata = {key: normalize_text(case.get(key, "")) for key in ("failure_class", "failure_domain", "fix_lane", "root_cause", "recommendation")}
+        priority, action, required, complexity = _identity_review_guidance(metadata, status)
+        composition_rows.append({
+            "phase": "v0.9.5.155_identity_composition", "server": server, "rank": rank,
+            "observed_identity_text": case.get("observed_identity_text", ""),
+            "alliance_tag_slots": json.dumps(tag_values, ensure_ascii=False),
+            "title_or_prefix_slots": json.dumps(title_values, ensure_ascii=False),
+            "player_name_slots": json.dumps(player_values, ensure_ascii=False),
+            "identity_composition_status": status,
+            "identity_confidence": identity_confidence,
+            "slot_count": len(slot_texts),
+            "component_count": int(case.get("components", 0) or 0),
+            "unknown_protected": unknown,
+            **metadata,
+            "identity_authoritative": False, "gold_clearance_created": False,
+            "ground_truth_used_as_evidence": False, "operational_truth_modified": False,
+        })
+        review_rows.append({
+            "phase": "v0.9.5.155_manual_review_queue", "server": server, "rank": rank,
+            "priority": priority, "recommended_action": action,
+            "required_evidence": required, "estimated_review_complexity": complexity,
+            "identity_composition_status": status, "identity_confidence": identity_confidence,
+            "observed_identity_text": case.get("observed_identity_text", ""),
+            **metadata,
+            "review_queue_authoritative": False, "gold_clearance_created": False,
+            "ground_truth_used_as_evidence": False, "operational_truth_modified": False,
+        })
+
+    slots = pd.DataFrame(slot_rows)
+    compositions = pd.DataFrame(composition_rows)
+    review = pd.DataFrame(review_rows)
+    if not review.empty:
+        order = {"CRITICAL": 0, "MAJOR": 1, "MINOR": 2}
+        review["priority_order"] = review["priority"].map(order).fillna(9)
+        review = review.sort_values(["priority_order", "server", "rank"], kind="stable").drop(columns=["priority_order"]).reset_index(drop=True)
+        root_summary = review.groupby(["failure_class", "root_cause", "recommended_action"], dropna=False).agg(
+            cases=("rank", "count"), critical=("priority", lambda x: int((x == "CRITICAL").sum())),
+            major=("priority", lambda x: int((x == "MAJOR").sum())),
+        ).reset_index().sort_values(["cases", "critical"], ascending=[False, False], kind="stable")
+        priority_summary = review.groupby(["priority", "recommended_action"], dropna=False).agg(cases=("rank", "count")).reset_index()
+    else:
+        root_summary = pd.DataFrame(columns=["failure_class", "root_cause", "recommended_action", "cases", "critical", "major"])
+        priority_summary = pd.DataFrame(columns=["priority", "recommended_action", "cases"])
+    return compositions, slots, review, root_summary, priority_summary
+
 
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
@@ -5775,6 +5963,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         detail, gold_core_character_positions, gold_core_blocker_report
     )
     identity_graph_cases, identity_graph_characters, identity_graph_tokens, identity_graph_components, identity_graph_edges = _build_player_identity_graph(detail)
+    identity_compositions, identity_slots, manual_review_queue, identity_root_cause_summary, identity_priority_summary = _build_identity_composition_engine(
+        identity_graph_cases, identity_graph_characters, identity_graph_tokens, identity_graph_components
+    )
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -5852,6 +6043,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "identity_graph_tokens": identity_graph_tokens.to_dict(orient="records"),
         "identity_graph_components": identity_graph_components.to_dict(orient="records"),
         "identity_graph_edges": identity_graph_edges.to_dict(orient="records"),
+        "identity_compositions": identity_compositions.to_dict(orient="records"),
+        "identity_slots": identity_slots.to_dict(orient="records"),
+        "manual_review_queue": manual_review_queue.to_dict(orient="records"),
+        "identity_root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
+        "identity_priority_summary": identity_priority_summary.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
         "position_evidence_bridge_rejected": position_bridge_rejected.to_dict(orient="records"),
@@ -5937,6 +6133,34 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     for item in identity_graph_cases.to_dict(orient="records"):
         identity_md.extend([f"### Rank {item.get('rank')} — {item.get('observed_identity_text', '')}", "", f"- Status: `{item.get('identity_resolution_status', '')}`", f"- Tokens: {item.get('tokens', 0)}", f"- Components: {item.get('components', 0)}", f"- Types: {item.get('component_types', '[]')}", f"- UNKNOWN protected: {item.get('unknown_protected', False)}", ""])
     identity_graph_md_path.write_text("\n".join(identity_md), encoding="utf-8")
+
+
+    identity_composition_json_path = output_dir / "identity_composition_report.json"
+    identity_composition_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.155_identity_composition",
+        "compositions": identity_compositions.to_dict(orient="records"),
+        "slots": identity_slots.to_dict(orient="records"),
+        "root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
+        "priority_summary": identity_priority_summary.to_dict(orient="records"),
+        "guardrails": {"identity_authoritative": False, "gold_clearance_created": False, "ground_truth_used_as_evidence": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
+    identity_composition_md_path = output_dir / "identity_composition_summary.md"
+    comp_md = ["# Identity Composition Summary", "", "Strike XII is diagnostic and non-authoritative.", "",
+               f"- Cases: {len(identity_compositions)}", f"- Slots: {len(identity_slots)}", f"- Manual review items: {len(manual_review_queue)}", ""]
+    if not identity_priority_summary.empty:
+        comp_md += ["## Review priorities", ""]
+        for item in identity_priority_summary.to_dict(orient="records"):
+            comp_md.append(f"- {item.get('priority')}: {item.get('recommended_action')} = {item.get('cases')}")
+    identity_composition_md_path.write_text("\n".join(comp_md), encoding="utf-8")
+
+    manual_review_json_path = output_dir / "manual_review_queue.json"
+    manual_review_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.155_manual_review_queue",
+        "queue": manual_review_queue.to_dict(orient="records"),
+        "priority_summary": identity_priority_summary.to_dict(orient="records"),
+        "root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
+        "guardrails": {"review_queue_authoritative": False, "gold_clearance_created": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -6025,6 +6249,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(identity_graph_tokens).to_excel(writer, sheet_name="identity_tokens", index=False)
         _sanitize_frame(identity_graph_components).to_excel(writer, sheet_name="identity_components", index=False)
         _sanitize_frame(identity_graph_edges).to_excel(writer, sheet_name="identity_edges", index=False)
+        _sanitize_frame(identity_compositions).to_excel(writer, sheet_name="identity_composition", index=False)
+        _sanitize_frame(identity_slots).to_excel(writer, sheet_name="identity_slots", index=False)
+        _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="manual_review_queue", index=False)
+        _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="identity_root_causes", index=False)
         _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
@@ -6080,6 +6308,20 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(identity_graph_tokens).to_excel(writer, sheet_name="tokens", index=False)
         _sanitize_frame(identity_graph_components).to_excel(writer, sheet_name="components", index=False)
         _sanitize_frame(identity_graph_edges).to_excel(writer, sheet_name="edges", index=False)
+
+
+    identity_composition_xlsx_path = output_dir / "identity_composition_report.xlsx"
+    with pd.ExcelWriter(identity_composition_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(identity_compositions).to_excel(writer, sheet_name="compositions", index=False)
+        _sanitize_frame(identity_slots).to_excel(writer, sheet_name="slots", index=False)
+        _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="root_causes", index=False)
+        _sanitize_frame(identity_priority_summary).to_excel(writer, sheet_name="priorities", index=False)
+
+    manual_review_xlsx_path = output_dir / "manual_review_queue.xlsx"
+    with pd.ExcelWriter(manual_review_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="queue", index=False)
+        _sanitize_frame(identity_priority_summary).to_excel(writer, sheet_name="priorities", index=False)
+        _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="root_causes", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -6169,6 +6411,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Position Evidence Bridge JSON: {position_bridge_json_path}")
     print(f"Position Evidence Bridge XLSX: {position_bridge_xlsx_path}")
     print(f"Position Evidence Bridge Summary: {position_bridge_md_path}")
+    print(f"Identity Composition JSON: {identity_composition_json_path}")
+    print(f"Identity Composition XLSX: {identity_composition_xlsx_path}")
+    print(f"Identity Composition Summary: {identity_composition_md_path}")
+    print(f"Manual Review Queue JSON: {manual_review_json_path}")
+    print(f"Manual Review Queue XLSX: {manual_review_xlsx_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
