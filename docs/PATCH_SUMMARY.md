@@ -1,3 +1,14 @@
+## v0.9.5.153 – Strike X: Provenance-Aware Character Alignment
+
+- Replaces direct source-index binding with explicit `MATCH`, `SUBSTITUTE`, `INSERT`, `DELETE`, `SEPARATOR_GAP`, and `AMBIGUOUS` edit operations.
+- Preserves screenshot, OCR character offset, crop, and observation provenance through every alignment operation.
+- Treats source-bound substitutions as counterevidence instead of safe position bindings.
+- Prevents non-whitespace glyphs from proving separator positions.
+- Protects `UNKNOWN` by refusing character-level alignment against expected names.
+- Adds alignment traces and operation counts to Display Reconstruction and Position Evidence Bridge reports.
+- Keeps Ground Truth comparison-only, creates no characters, grants no clearance, and leaves Operational Truth unchanged.
+- Gold-Core regression suite: 57 passed.
+
 ## v0.9.5.152 – Strike IX: Source-Bound Display Reconstruction
 
 - Preserves per-character source provenance from base OCR and Character ReOCR through Display Reconstruction.

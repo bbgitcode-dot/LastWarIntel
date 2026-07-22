@@ -39,7 +39,8 @@ def test_bridge_uses_source_bound_offset_without_promoting_truth():
     _, bridged, _, _ = _build_position_evidence_acquisition_bridge(detail, positions)
     first = bridged[bridged["position"] == 0].iloc[0]
     assert first["binding_status"] == "BRIDGED_POSITION_EVIDENCE"
-    assert first["binding_method"] == "source_bound_row_ocr_offset"
+    assert first["binding_method"] == "provenance_aware_alignment"
+    assert first["alignment_operation"] == "MATCH"
     assert first["display_source_screenshot"] == "thp_03.png"
     assert first["display_source_character_index"] == 0
     assert first["display_source_gold_authoritative"] == False

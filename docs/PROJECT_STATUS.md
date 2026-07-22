@@ -152,3 +152,8 @@ The current Gold-Core phase now distinguishes missing evidence from existing but
 ## v0.9.5.152 – Source-Bound Display Reconstruction
 
 Display Reconstruction now preserves a read-only provenance object per character. Base OCR characters retain screenshot/source-row and character-offset provenance; crop-bound Character ReOCR evidence retains its stronger crop chain. These links improve explainability and acquisition diagnostics but never become Gold-authoritative by themselves. Authoritative Gold-Core root-cause metadata is joined through the blocker report rather than the generic validation match status.
+
+
+## v0.9.5.153 – Provenance-Aware Character Alignment
+
+Sentinel now carries source provenance through explicit edit operations rather than assuming identical character indices. Exact matches and evidenced separator gaps may remain bridgeable; substitutions are counterevidence, deletions remain missing evidence, insertions remain unbound source observations, and ambiguous/UNKNOWN cases remain blocked. This layer is diagnostic and cannot modify Operational Truth or create Gold clearance.

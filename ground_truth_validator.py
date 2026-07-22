@@ -28,6 +28,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
+import difflib
 import pandas as pd
 
 from parser.alliance_normalization import build_alliance_vocabulary, normalize_alliance_tag as normalize_alliance_against_vocabulary
@@ -2890,6 +2891,113 @@ def _display_confidence_from_items(items: list[dict[str, Any]]) -> float:
     return round(sum(values) / max(len(values), 1), 4)
 
 
+def _provenance_aware_character_alignment(
+    expected_name: str,
+    observed_name: str,
+    source_records: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """v0.9.5.153: align observed source characters to logical display positions.
+
+    Expected text is used only as a benchmark alignment target, never as an
+    evidence source. The result preserves source provenance through explicit
+    MATCH/SUBSTITUTE/INSERT/DELETE/SEPARATOR_GAP/AMBIGUOUS operations.
+    """
+    expected = normalize_text(expected_name)
+    observed = normalize_text(observed_name)
+    target_rows: list[dict[str, Any]] = []
+    insert_rows: list[dict[str, Any]] = []
+
+    # UNKNOWN is a sentinel value, not character evidence. Never align its
+    # letters to an expected player name.
+    if observed.upper() == "UNKNOWN" and expected.upper() != "UNKNOWN":
+        for target_index, target_char in enumerate(expected):
+            target_rows.append({
+                "target_position": target_index, "expected_character": target_char,
+                "observed_character": "", "alignment_operation": "AMBIGUOUS",
+                "alignment_reason": "unknown_base_not_character_evidence",
+                "alignment_confidence": 0.0, "source_character_index": None,
+                "source_record": {}, "gold_authoritative": False,
+            })
+        return target_rows, insert_rows
+
+    matcher = difflib.SequenceMatcher(a=expected, b=observed, autojunk=False)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            for offset in range(i2 - i1):
+                ti, sj = i1 + offset, j1 + offset
+                target_char, source_char = expected[ti], observed[sj]
+                source = source_records[sj] if 0 <= sj < len(source_records) else {}
+                is_separator = target_char.isspace()
+                operation = "SEPARATOR_GAP" if is_separator and source_char.isspace() else "MATCH"
+                target_rows.append({
+                    "target_position": ti, "expected_character": target_char,
+                    "observed_character": source_char, "alignment_operation": operation,
+                    "alignment_reason": "exact_character_alignment",
+                    "alignment_confidence": 1.0, "source_character_index": sj,
+                    "source_record": source, "gold_authoritative": False,
+                })
+        elif tag == "replace":
+            target_len, source_len = i2 - i1, j2 - j1
+            paired = min(target_len, source_len)
+            for offset in range(paired):
+                ti, sj = i1 + offset, j1 + offset
+                target_char, source_char = expected[ti], observed[sj]
+                source = source_records[sj] if 0 <= sj < len(source_records) else {}
+                if target_char.isspace():
+                    operation = "AMBIGUOUS"
+                    reason = "non_separator_glyph_cannot_prove_separator"
+                    confidence = 0.0
+                else:
+                    operation = "SUBSTITUTE"
+                    reason = "source_character_differs_from_target"
+                    confidence = 0.75 if target_len == source_len else 0.5
+                target_rows.append({
+                    "target_position": ti, "expected_character": target_char,
+                    "observed_character": source_char, "alignment_operation": operation,
+                    "alignment_reason": reason, "alignment_confidence": confidence,
+                    "source_character_index": sj, "source_record": source,
+                    "gold_authoritative": False,
+                })
+            for ti in range(i1 + paired, i2):
+                target_rows.append({
+                    "target_position": ti, "expected_character": expected[ti],
+                    "observed_character": "", "alignment_operation": "DELETE",
+                    "alignment_reason": "target_position_has_no_source_character",
+                    "alignment_confidence": 0.0, "source_character_index": None,
+                    "source_record": {}, "gold_authoritative": False,
+                })
+            for sj in range(j1 + paired, j2):
+                source = source_records[sj] if 0 <= sj < len(source_records) else {}
+                insert_rows.append({
+                    "target_position": None, "expected_character": "",
+                    "observed_character": observed[sj], "alignment_operation": "INSERT",
+                    "alignment_reason": "source_character_has_no_target_position",
+                    "alignment_confidence": 0.0, "source_character_index": sj,
+                    "source_record": source, "gold_authoritative": False,
+                })
+        elif tag == "delete":
+            for ti in range(i1, i2):
+                target_rows.append({
+                    "target_position": ti, "expected_character": expected[ti],
+                    "observed_character": "", "alignment_operation": "DELETE",
+                    "alignment_reason": "target_position_has_no_source_character",
+                    "alignment_confidence": 0.0, "source_character_index": None,
+                    "source_record": {}, "gold_authoritative": False,
+                })
+        elif tag == "insert":
+            for sj in range(j1, j2):
+                source = source_records[sj] if 0 <= sj < len(source_records) else {}
+                insert_rows.append({
+                    "target_position": None, "expected_character": "",
+                    "observed_character": observed[sj], "alignment_operation": "INSERT",
+                    "alignment_reason": "source_character_has_no_target_position",
+                    "alignment_confidence": 0.0, "source_character_index": sj,
+                    "source_record": source, "gold_authoritative": False,
+                })
+    target_rows.sort(key=lambda item: int(item["target_position"]))
+    return target_rows, insert_rows
+
+
 def _source_bound_display_characters(row: pd.Series, observed_name: str, evidence_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """v0.9.5.152: preserve current-snapshot provenance for each display character.
 
@@ -2987,6 +3095,9 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
     evidence_items = _parse_json_list(row.get("character_reocr_evidence", "[]"))
     read_only_items = _parse_json_list(row.get("read_only_reocr_evidence", "[]"))
     display_character_provenance = _source_bound_display_characters(row, observed_name, evidence_items)
+    display_character_alignment, display_character_insertions = _provenance_aware_character_alignment(
+        expected_name, observed_name, display_character_provenance
+    )
 
     name = observed_name
     tag = observed_tag
@@ -3143,6 +3254,13 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         "display_reconstruction_observed_votes": observed_votes,
         "display_reconstruction_notes": ";".join(dict.fromkeys(notes)),
         "display_character_provenance": json.dumps(display_character_provenance, ensure_ascii=False),
+        "display_character_alignment": json.dumps(display_character_alignment, ensure_ascii=False),
+        "display_character_insertions": json.dumps(display_character_insertions, ensure_ascii=False),
+        "display_alignment_matches": int(sum(1 for item in display_character_alignment if item.get("alignment_operation") in {"MATCH", "SEPARATOR_GAP"})),
+        "display_alignment_substitutions": int(sum(1 for item in display_character_alignment if item.get("alignment_operation") == "SUBSTITUTE")),
+        "display_alignment_deletions": int(sum(1 for item in display_character_alignment if item.get("alignment_operation") == "DELETE")),
+        "display_alignment_ambiguous": int(sum(1 for item in display_character_alignment if item.get("alignment_operation") == "AMBIGUOUS")),
+        "display_alignment_insertions": len(display_character_insertions),
         "display_source_bound_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") in {"ROW_OCR_SOURCE_BOUND", "CROP_CHARACTER_SOURCE_BOUND"})),
         "display_crop_bound_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") == "CROP_CHARACTER_SOURCE_BOUND")),
         "display_only_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") == "DISPLAY_ONLY_NOT_EVIDENCE")),
@@ -3991,7 +4109,9 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
         "display_reconstruction_observed_votes", "display_reconstruction_notes",
-        "display_character_provenance", "display_source_bound_characters",
+        "display_character_provenance", "display_character_alignment", "display_character_insertions",
+        "display_alignment_matches", "display_alignment_substitutions", "display_alignment_deletions",
+        "display_alignment_ambiguous", "display_alignment_insertions", "display_source_bound_characters",
         "display_crop_bound_characters", "display_only_characters",
         "display_promotion_eligible", "display_promotion_block_reason",
         "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
@@ -4009,7 +4129,9 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
     numeric_cols = {
         "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
-        "display_reconstruction_observed_votes", "display_source_bound_characters",
+        "display_reconstruction_observed_votes", "display_alignment_matches",
+        "display_alignment_substitutions", "display_alignment_deletions", "display_alignment_ambiguous",
+        "display_alignment_insertions", "display_source_bound_characters",
         "display_crop_bound_characters", "display_only_characters", "evidence_fragments_total",
         "evidence_confirmed_fragments", "evidence_observed_fragments", "evidence_unresolved_fragments",
         "evidence_avg_fragment_confidence", "display_name_coverage_score",
@@ -5061,6 +5183,16 @@ def _build_position_evidence_acquisition_bridge(
                         break
                 except (TypeError, ValueError):
                     continue
+            alignment_record: dict[str, Any] = {}
+            for item in _parse_json_list(src.get("display_character_alignment", "[]")):
+                try:
+                    if int(item.get("target_position")) == int(pos.get("position", -1)):
+                        alignment_record = item
+                        break
+                except (TypeError, ValueError):
+                    continue
+        else:
+            alignment_record = {}
         statuses=sorted({str(e.get("status", "") or "") for e in evidence if str(e.get("status", "") or "")})
         screenshots=sorted({str(e.get("screenshot", "") or "") for e in evidence if str(e.get("screenshot", "") or "")})
         crop_boxes=[e.get("crop_box") for e in evidence if e.get("crop_box") not in (None, "")]
@@ -5083,26 +5215,38 @@ def _build_position_evidence_acquisition_bridge(
         elif evidence:
             binding="AMBIGUOUS_POSITION_BINDING"; method="insufficient_source_chain"; reason="evidence_exists_but_unique_position_chain_is_incomplete"
         else:
-            # v0.9.5.152: a display character can be source-bound to the current
-            # screenshot and OCR offset without becoming Gold-authoritative.
+            # v0.9.5.153: source provenance must be carried by an explicit
+            # edit operation. Direct character-index binding is forbidden when
+            # strings differ, and non-space glyphs can never prove separators.
+            operation = str(alignment_record.get("alignment_operation", "") or "")
+            alignment_reason = str(alignment_record.get("alignment_reason", "") or "")
+            aligned_source = alignment_record.get("source_record", {}) if isinstance(alignment_record.get("source_record", {}), dict) else {}
+            if aligned_source:
+                display_provenance = aligned_source
             chain_status = str(display_provenance.get("source_chain_status", "") or "")
-            source_character = normalize_text(display_provenance.get("character", ""))[:1]
-            if chain_status == "CROP_CHARACTER_SOURCE_BOUND":
-                binding="BRIDGED_POSITION_EVIDENCE"; method="source_bound_display_crop"; reason="display_character_preserves_crop_and_screenshot_provenance"
-            elif chain_status == "ROW_OCR_SOURCE_BOUND" and source_character:
-                binding="BRIDGED_POSITION_EVIDENCE"; method="source_bound_row_ocr_offset"; reason="display_character_preserves_screenshot_and_character_offset"
+            source_character = normalize_text(alignment_record.get("observed_character", display_provenance.get("character", "")))[:1]
+            if operation in {"MATCH", "SEPARATOR_GAP"} and chain_status in {"ROW_OCR_SOURCE_BOUND", "CROP_CHARACTER_SOURCE_BOUND"}:
+                binding="BRIDGED_POSITION_EVIDENCE"; method="provenance_aware_alignment"; reason="source_chain_preserved_by_exact_alignment_operation"
+            elif operation == "SUBSTITUTE" and source_character:
+                binding="CONFLICTING_POSITION_EVIDENCE"; method="provenance_aware_substitution"; reason="source_bound_character_differs_from_target_position"
+            elif operation == "AMBIGUOUS":
+                binding="AMBIGUOUS_POSITION_BINDING"; method="provenance_aware_alignment"; reason=alignment_reason or "alignment_is_ambiguous"
+            elif operation == "DELETE":
+                binding="NO_POSITION_EVIDENCE"; method="provenance_aware_delete"; reason="target_position_has_no_source_character"
             else:
                 ocr_name=normalize_text(src.get("ocr_name", "")) if src is not None else ""
                 idx=int(pos.get("position", -1))
                 observed=ocr_name[idx:idx+1] if 0 <= idx < len(ocr_name) else ""
-                if observed:
+                if observed and not operation:
                     binding="UNSAFE_BINDING_REJECTED"; method="display_only_binding_rejected"; reason="display_character_has_no_screenshot_provenance"
+                elif observed:
+                    binding="UNSAFE_BINDING_REJECTED"; method="unaligned_source_binding_rejected"; reason="source_character_has_no_safe_target_alignment"
                 else:
-                    binding="NO_POSITION_EVIDENCE"; method="none"; reason="no_current_snapshot_position_evidence"
+                    binding="NO_POSITION_EVIDENCE"; method="provenance_aware_delete"; reason="target_position_has_no_source_character"
         authoritative = authoritative_lookup.get(key, {})
         metadata = _authoritative_gold_core_metadata(authoritative if authoritative else pos)
         record={
-            "phase":"v0.9.5.152_source_bound_display_reconstruction",
+            "phase":"v0.9.5.153_provenance_aware_character_alignment",
             "server":pos.get("server"), "rank":pos.get("rank"),
             "failure_class":metadata["failure_class"], "failure_domain":metadata["failure_domain"],
             "fix_lane":metadata["fix_lane"], "root_cause":metadata["root_cause"],
@@ -5125,6 +5269,10 @@ def _build_position_evidence_acquisition_bridge(
             "display_source_bbox":json.dumps(display_provenance.get("source_bbox"), ensure_ascii=False),
             "display_source_crop_box":json.dumps(display_provenance.get("source_crop_box"), ensure_ascii=False),
             "display_source_character":str(display_provenance.get("character", "") or ""),
+            "alignment_operation":str(alignment_record.get("alignment_operation", "") or ""),
+            "alignment_reason":str(alignment_record.get("alignment_reason", "") or ""),
+            "alignment_confidence":float(alignment_record.get("alignment_confidence", 0.0) or 0.0),
+            "alignment_source_character_index":alignment_record.get("source_character_index", ""),
             "display_source_gold_authoritative":False,
             "evidence_count":len(evidence),
             "ground_truth_used_as_evidence":False,
@@ -5151,12 +5299,12 @@ def _build_position_evidence_acquisition_bridge(
             rejected=("binding_status", lambda v: int((pd.Series(v)=="UNSAFE_BINDING_REJECTED").sum())),
             missing=("binding_status", lambda v: int((pd.Series(v)=="NO_POSITION_EVIDENCE").sum())),
         ).reset_index()
-        cases.insert(0,"phase","v0.9.5.152_source_bound_display_reconstruction")
+        cases.insert(0,"phase","v0.9.5.153_provenance_aware_character_alignment")
         cases["operational_truth_modified"]=False
         summary=positions.groupby("binding_status", dropna=False).agg(
             positions=("position_human","count"), cases=("rank","nunique"), evidence_records=("evidence_count","sum")
         ).reset_index()
-        summary.insert(0,"phase","v0.9.5.152_source_bound_display_reconstruction")
+        summary.insert(0,"phase","v0.9.5.153_provenance_aware_character_alignment")
         summary["ground_truth_used_as_evidence"]=False
         summary["operational_truth_modified"]=False
     return cases, positions, rejected_df, summary
@@ -5599,7 +5747,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_provenance_md_path.write_text("\n".join(provenance_md), encoding="utf-8")
     position_bridge_json_path = output_dir / "position_evidence_bridge_report.json"
     position_bridge_json_path.write_text(json.dumps(_json_safe({
-        "phase": "v0.9.5.152_source_bound_display_reconstruction",
+        "phase": "v0.9.5.153_provenance_aware_character_alignment",
         "summary": position_bridge_summary.to_dict(orient="records"),
         "cases": position_bridge_cases.to_dict(orient="records"),
         "positions": position_bridge_positions.to_dict(orient="records"),
