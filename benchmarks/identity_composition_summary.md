@@ -8,5 +8,10 @@ Strike XII is diagnostic and non-authoritative.
 
 ## Review priorities
 
-- CRITICAL: REVIEW_MISSING_IDENTITY = 2
-- MINOR: REVIEW_IDENTITY_COMPOSITION = 12
+- CRITICAL: None = 3
+- CRITICAL: None = 2
+- MAJOR: None = 3
+- MAJOR: None = 1
+- MAJOR: None = 1
+- MAJOR: None = 1
+- MAJOR: None = 3

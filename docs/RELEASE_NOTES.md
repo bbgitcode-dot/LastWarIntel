@@ -2069,3 +2069,15 @@ Validation:
 
 Validation:
 - Strike `.151–.156` targeted regression suite passed.
+
+## v0.9.5.157 – Strike XIV: Resolution Readiness Intelligence
+
+- Added a read-only Resolution Readiness Engine above the v0.9.5.156 Gold-Core-bound Review Orchestration.
+- Replaced zero-valued root-cause confidence and recommendation scores with evidence-derived values based on binding quality, failure specificity, provenance, observation support, required-evidence coverage, and action risk.
+- Recalibrated review confidence dynamically per case using binding, root-cause, recommendation, evidence coverage, and semantic identity confidence.
+- Added diagnostic readiness classes: `READY_FOR_TARGETED_REOCR`, `READY_FOR_MANUAL_REVIEW`, `WAITING_FOR_EVIDENCE`, `POLICY_DECISION_REQUIRED`, and `UNSAFE_TO_RESOLVE`.
+- Added concrete resolution strategies and rationales without executing fixes.
+- Added `resolution_readiness_report.json`, `resolution_readiness_report.xlsx`, and `resolution_readiness_summary.md`.
+- Integrated readiness summary, cases, breakdown, and validation into the main validation payload and workbook.
+- Added guards requiring scored causes/recommendations, complete readiness/strategy classification, no automatic fix, no Gold clearance, and immutable Operational Truth.
+- Preserved DataGuard invariants: Ground Truth is comparison only; the layer is non-authoritative and read-only.

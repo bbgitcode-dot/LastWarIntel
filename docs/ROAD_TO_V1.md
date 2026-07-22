@@ -148,3 +148,7 @@ Next recommended milestone: use the `.155` benchmark to select one concrete high
 ## v0.9.5.156 milestone completed
 
 Gold-Core-bound Review Orchestration closes the diagnostic loop from observed identity to actionable human review. Remaining work should focus on benchmark calibration and actual blocker elimination rather than adding parallel diagnostic layers.
+
+## v0.9.5.157 milestone completed
+
+Resolution Readiness Intelligence converts the validated review queue into explainable decision support. The next benchmark must verify differentiated confidence values and readiness distributions. After calibration, further work should target measured Gold-Core reduction through the highest-readiness remediation lane rather than adding another parallel diagnostic layer.

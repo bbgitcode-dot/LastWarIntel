@@ -1,6 +1,6 @@
-# Current release: v0.9.5.154
+# Current release: v0.9.5.157
 
-Strike XI adds an observed, provenance-bound Player Identity Graph. The next benchmark must verify token/component distributions, UNKNOWN protection and zero Gold-Core regression.
+Strike XIV adds evidence-based Resolution Readiness Intelligence above the completed Gold-Core-bound Review Orchestration. Every open review case now receives non-authoritative root-cause confidence, recommendation score, dynamic review confidence, readiness class, strategy, and rationale. The layer remains diagnostic only and cannot execute fixes, clear Gold Core, use Ground Truth as evidence, or modify Operational Truth.
 
 # Project Status
 

@@ -5347,6 +5347,177 @@ def _build_gold_core_bound_review_orchestration(
     }])
     return enriched_comp, queue, root_summary, priority_summary, bindings, confidence, validation, orchestration_summary
 
+
+def _resolution_readiness_for_case(row: dict[str, Any]) -> tuple[str, str, str]:
+    """Return diagnostic readiness, strategy, and rationale for one review case."""
+    action = str(row.get("review_action", "") or "")
+    failure_class = str(row.get("failure_class", "") or "").lower()
+    binding = str(row.get("case_binding_status", "") or "")
+    status = str(row.get("identity_composition_status", "") or "")
+    evidence_coverage = float(row.get("required_evidence_coverage", 0.0) or 0.0)
+    review_conf = float(row.get("review_confidence", 0.0) or 0.0)
+
+    if binding != "BOUND" or action == "REVIEW_CASE_BINDING":
+        return "UNSAFE_TO_RESOLVE", "REPAIR_CASE_BINDING", "Authoritative case binding is missing or ambiguous."
+    if status == "UNKNOWN_PROTECTED" or action == "REVIEW_MISSING_IDENTITY":
+        return "WAITING_FOR_EVIDENCE", "COLLECT_IDENTITY_EVIDENCE", "Observed identity is unavailable or protected as UNKNOWN."
+    if action == "REVIEW_CROP_GEOMETRY":
+        if evidence_coverage >= 0.75 and review_conf >= 0.72:
+            return "READY_FOR_TARGETED_REOCR", "RECROP_AND_TARGETED_REOCR", "Crop diagnostics and provenance support a targeted acquisition attempt."
+        return "WAITING_FOR_EVIDENCE", "COLLECT_CROP_DIAGNOSTICS", "Crop repair requires stronger source-row and geometry evidence."
+    if action in {"REVIEW_SCRIPT_POLICY", "REVIEW_MIXED_SCRIPT"}:
+        return "POLICY_DECISION_REQUIRED", "MANUAL_SCRIPT_POLICY_REVIEW", "Resolution depends on multilingual display policy rather than OCR confidence alone."
+    if action == "REVIEW_EVIDENCE_CONFLICT":
+        return "READY_FOR_MANUAL_REVIEW", "MANUAL_EVIDENCE_ADJUDICATION", "Observed evidence conflicts with the expected comparison target and must remain human-reviewed."
+    if action == "REVIEW_VOTE_SELECTION":
+        if evidence_coverage >= 0.75 and review_conf >= 0.72:
+            return "READY_FOR_TARGETED_REOCR", "REPLAY_VOTE_SELECTION_WITH_TARGETED_REOCR", "Vote evidence is sufficiently complete for a constrained re-evaluation."
+        return "READY_FOR_MANUAL_REVIEW", "MANUAL_VOTE_ADJUDICATION", "Vote candidates are present but not safe for automated resolution."
+    if action == "REVIEW_LOCAL_GLYPH" or failure_class == "local_glyph_solvable":
+        if evidence_coverage >= 0.75 and review_conf >= 0.78:
+            return "READY_FOR_TARGETED_REOCR", "TARGETED_LOCAL_GLYPH_REOCR", "Local glyph evidence is narrow enough for targeted reacquisition."
+        return "READY_FOR_MANUAL_REVIEW", "MANUAL_LOCAL_GLYPH_REVIEW", "Local glyph remains solvable but current confidence is insufficient for automation."
+    return "UNSAFE_TO_RESOLVE", "KEEP_BLOCKED", "No evidence-safe resolution strategy is available."
+
+
+def _build_resolution_readiness_intelligence(
+    manual_review_queue: pd.DataFrame,
+    review_case_bindings: pd.DataFrame,
+    review_confidence_calibration: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XIV: evidence-based confidence and diagnostic resolution readiness.
+
+    This layer is strictly read-only. It does not execute fixes, clear Gold Core,
+    reconstruct identity from Ground Truth, or mutate Operational Truth.
+    """
+    queue = manual_review_queue.copy()
+    bindings = review_case_bindings.copy()
+    confidence = review_confidence_calibration.copy()
+    if queue.empty:
+        empty = pd.DataFrame()
+        return empty, empty, empty, pd.DataFrame([{
+            "phase": "v0.9.5.157_resolution_readiness", "cases": 0,
+            "scored_root_causes": 0, "scored_recommendations": 0,
+            "dynamic_review_confidence_cases": 0, "readiness_classified_cases": 0,
+            "gold_clearance_created": 0, "ground_truth_used_as_evidence": False,
+            "operational_truth_modified": False,
+        }])
+
+    bind_map = {str(r.get("case_id", "")): r for r in bindings.to_dict(orient="records")}
+    conf_map = {str(r.get("case_id", "")): r for r in confidence.to_dict(orient="records")}
+    rows: list[dict[str, Any]] = []
+    for row in queue.to_dict(orient="records"):
+        case_id = str(row.get("case_id", ""))
+        b = bind_map.get(case_id, {})
+        c = conf_map.get(case_id, {})
+        binding_conf = float(b.get("binding_confidence", 0.0) or 0.0)
+        provenance_conf = float(c.get("provenance_confidence", 0.0) or 0.0)
+        observation_conf = float(c.get("observation_confidence", 0.0) or 0.0)
+        semantic_conf = float(c.get("semantic_identity_confidence", 0.0) or 0.0)
+        failure_class = str(row.get("failure_class", "") or "").lower()
+        failure_domain = str(row.get("failure_domain", "") or "").lower()
+        action = str(row.get("review_action", "") or "")
+        status = str(row.get("identity_composition_status", "") or "")
+
+        required = [x.strip() for x in str(row.get("required_evidence", "") or "").split(";") if x.strip()]
+        evidence_coverage = round(min(1.0, (provenance_conf * 0.45) + (observation_conf * 0.35) + (0.20 if required else 0.0)), 4)
+
+        class_specificity = 0.95 if failure_class and failure_class not in {"matched", "case_binding_error"} else 0.0
+        domain_specificity = 0.90 if failure_domain and failure_domain not in {"review_orchestration", ""} else 0.25
+        action_support = {
+            "REVIEW_CROP_GEOMETRY": 0.92,
+            "REVIEW_EVIDENCE_CONFLICT": 0.94,
+            "REVIEW_LOCAL_GLYPH": 0.88,
+            "REVIEW_VOTE_SELECTION": 0.84,
+            "REVIEW_MIXED_SCRIPT": 0.82,
+            "REVIEW_SCRIPT_POLICY": 0.80,
+            "REVIEW_MISSING_IDENTITY": 0.72,
+            "REVIEW_CASE_BINDING": 0.0,
+        }.get(action, 0.45)
+        root_conf = round(max(0.0, min(1.0,
+            binding_conf * 0.25 + class_specificity * 0.25 + domain_specificity * 0.20
+            + provenance_conf * 0.15 + action_support * 0.15
+        )), 4)
+        if status == "UNKNOWN_PROTECTED":
+            root_conf = round(max(0.0, root_conf - 0.12), 4)
+
+        risk_factor = {
+            "REVIEW_EVIDENCE_CONFLICT": 0.55,
+            "REVIEW_MIXED_SCRIPT": 0.65,
+            "REVIEW_SCRIPT_POLICY": 0.62,
+            "REVIEW_MISSING_IDENTITY": 0.45,
+            "REVIEW_CROP_GEOMETRY": 0.82,
+            "REVIEW_VOTE_SELECTION": 0.76,
+            "REVIEW_LOCAL_GLYPH": 0.88,
+            "REVIEW_CASE_BINDING": 0.0,
+        }.get(action, 0.40)
+        recommendation_score = round(max(0.0, min(1.0,
+            action_support * 0.30 + evidence_coverage * 0.25 + root_conf * 0.25
+            + risk_factor * 0.20
+        )), 4)
+
+        review_conf = round(max(0.0, min(1.0,
+            binding_conf * 0.20 + root_conf * 0.25 + recommendation_score * 0.25
+            + evidence_coverage * 0.15 + semantic_conf * 0.15
+        )), 4)
+        enriched = {**row,
+            "phase": "v0.9.5.157_resolution_readiness",
+            "binding_confidence": round(binding_conf, 4),
+            "provenance_confidence": round(provenance_conf, 4),
+            "observation_confidence": round(observation_conf, 4),
+            "semantic_identity_confidence": round(semantic_conf, 4),
+            "required_evidence_coverage": evidence_coverage,
+            "root_cause_confidence": root_conf,
+            "recommendation_score": recommendation_score,
+            "review_confidence": review_conf,
+        }
+        readiness, strategy, rationale = _resolution_readiness_for_case(enriched)
+        enriched.update({
+            "resolution_readiness": readiness,
+            "resolution_strategy": strategy,
+            "resolution_rationale": rationale,
+            "resolution_readiness_authoritative": False,
+            "automatic_fix_executed": False,
+            "gold_clearance_created": False,
+            "ground_truth_used_as_evidence": False,
+            "operational_truth_modified": False,
+        })
+        rows.append(enriched)
+
+    cases = pd.DataFrame(rows)
+    readiness_summary = cases.groupby(["resolution_readiness", "resolution_strategy"], dropna=False).agg(
+        cases=("case_id", "count"),
+        avg_root_cause_confidence=("root_cause_confidence", "mean"),
+        avg_recommendation_score=("recommendation_score", "mean"),
+        avg_review_confidence=("review_confidence", "mean"),
+    ).reset_index()
+    validation = pd.DataFrame([
+        {"guard":"root_cause_confidence_scored","expected":len(cases),"actual":int((pd.to_numeric(cases["root_cause_confidence"],errors="coerce")>0).sum()),"status":"PASS" if (pd.to_numeric(cases["root_cause_confidence"],errors="coerce")>0).all() else "FAIL"},
+        {"guard":"recommendation_score_scored","expected":len(cases),"actual":int((pd.to_numeric(cases["recommendation_score"],errors="coerce")>0).sum()),"status":"PASS" if (pd.to_numeric(cases["recommendation_score"],errors="coerce")>0).all() else "FAIL"},
+        {"guard":"resolution_readiness_complete","expected":len(cases),"actual":int(cases["resolution_readiness"].astype(str).str.strip().ne("").sum()),"status":"PASS" if cases["resolution_readiness"].astype(str).str.strip().ne("").all() else "FAIL"},
+        {"guard":"resolution_strategy_complete","expected":len(cases),"actual":int(cases["resolution_strategy"].astype(str).str.strip().ne("").sum()),"status":"PASS" if cases["resolution_strategy"].astype(str).str.strip().ne("").all() else "FAIL"},
+        {"guard":"no_automatic_fix","expected":0,"actual":int(cases["automatic_fix_executed"].fillna(False).astype(bool).sum()),"status":"PASS" if not cases["automatic_fix_executed"].fillna(False).astype(bool).any() else "FAIL"},
+        {"guard":"no_gold_clearance","expected":0,"actual":int(cases["gold_clearance_created"].fillna(False).astype(bool).sum()),"status":"PASS" if not cases["gold_clearance_created"].fillna(False).astype(bool).any() else "FAIL"},
+        {"guard":"operational_truth_immutable","expected":0,"actual":int(cases["operational_truth_modified"].fillna(False).astype(bool).sum()),"status":"PASS" if not cases["operational_truth_modified"].fillna(False).astype(bool).any() else "FAIL"},
+    ])
+    summary = pd.DataFrame([{
+        "phase":"v0.9.5.157_resolution_readiness",
+        "cases":len(cases),
+        "scored_root_causes":int((pd.to_numeric(cases["root_cause_confidence"],errors="coerce")>0).sum()),
+        "scored_recommendations":int((pd.to_numeric(cases["recommendation_score"],errors="coerce")>0).sum()),
+        "dynamic_review_confidence_cases":int(cases["review_confidence"].nunique(dropna=True)),
+        "readiness_classified_cases":int(cases["resolution_readiness"].astype(str).str.strip().ne("").sum()),
+        "ready_for_targeted_reocr":int((cases["resolution_readiness"]=="READY_FOR_TARGETED_REOCR").sum()),
+        "ready_for_manual_review":int((cases["resolution_readiness"]=="READY_FOR_MANUAL_REVIEW").sum()),
+        "waiting_for_evidence":int((cases["resolution_readiness"]=="WAITING_FOR_EVIDENCE").sum()),
+        "policy_decision_required":int((cases["resolution_readiness"]=="POLICY_DECISION_REQUIRED").sum()),
+        "unsafe_to_resolve":int((cases["resolution_readiness"]=="UNSAFE_TO_RESOLVE").sum()),
+        "gold_clearance_created":0,
+        "ground_truth_used_as_evidence":False,
+        "operational_truth_modified":False,
+    }])
+    return cases, readiness_summary, validation, summary
+
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
     def pick(*keys: str) -> str:
@@ -6155,6 +6326,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     identity_compositions, manual_review_queue, identity_root_cause_summary, identity_priority_summary, review_case_bindings, review_confidence_calibration, review_validation, review_orchestration_summary = _build_gold_core_bound_review_orchestration(
         identity_compositions, identity_slots, manual_review_queue, gold_core_blocker_report, gold_core_resolution_plan
     )
+    resolution_readiness_cases, resolution_readiness_breakdown, resolution_readiness_validation, resolution_readiness_summary = _build_resolution_readiness_intelligence(
+        manual_review_queue, review_case_bindings, review_confidence_calibration
+    )
+    if not resolution_readiness_cases.empty:
+        manual_review_queue = resolution_readiness_cases.copy()
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6240,6 +6416,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "review_orchestration_summary": review_orchestration_summary.to_dict(orient="records"),
         "review_case_bindings": review_case_bindings.to_dict(orient="records"),
         "review_confidence_calibration": review_confidence_calibration.to_dict(orient="records"),
+        "resolution_readiness_summary": resolution_readiness_summary.to_dict(orient="records"),
+        "resolution_readiness_breakdown": resolution_readiness_breakdown.to_dict(orient="records"),
+        "resolution_readiness_cases": resolution_readiness_cases.to_dict(orient="records"),
+        "resolution_readiness_validation": resolution_readiness_validation.to_dict(orient="records"),
         "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
@@ -6381,6 +6561,29 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     for item in identity_priority_summary.to_dict(orient="records"):
         qlines.append(f"- `{item.get('priority')}` / `{item.get('review_action')}`: {item.get('cases')} cases")
     manual_review_md_path.write_text("\n".join(qlines), encoding="utf-8")
+    resolution_readiness_json_path = output_dir / "resolution_readiness_report.json"
+    resolution_readiness_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.157_resolution_readiness",
+        "summary": resolution_readiness_summary.to_dict(orient="records"),
+        "breakdown": resolution_readiness_breakdown.to_dict(orient="records"),
+        "cases": resolution_readiness_cases.to_dict(orient="records"),
+        "validation": resolution_readiness_validation.to_dict(orient="records"),
+        "guardrails": {"resolution_readiness_authoritative": False, "automatic_fix_executed": False, "gold_clearance_created": False, "ground_truth_used_as_evidence": False, "operational_truth_modified": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
+    resolution_readiness_md_path = output_dir / "resolution_readiness_summary.md"
+    rr = resolution_readiness_summary.iloc[0].to_dict() if not resolution_readiness_summary.empty else {}
+    lines = ["# Resolution Readiness Intelligence", "", "Version: v0.9.5.157", "",
+        f"- Cases: {rr.get('cases', 0)}",
+        f"- Scored root causes: {rr.get('scored_root_causes', 0)}",
+        f"- Scored recommendations: {rr.get('scored_recommendations', 0)}",
+        f"- Distinct review-confidence values: {rr.get('dynamic_review_confidence_cases', 0)}",
+        f"- Ready for targeted ReOCR: {rr.get('ready_for_targeted_reocr', 0)}",
+        f"- Ready for manual review: {rr.get('ready_for_manual_review', 0)}",
+        f"- Waiting for evidence: {rr.get('waiting_for_evidence', 0)}",
+        f"- Policy decision required: {rr.get('policy_decision_required', 0)}",
+        f"- Unsafe to resolve: {rr.get('unsafe_to_resolve', 0)}", "",
+        "This intelligence is diagnostic only. It cannot execute fixes, clear Gold Core, or modify Operational Truth."]
+    resolution_readiness_md_path.write_text("\n".join(lines), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -6477,6 +6680,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(review_case_bindings).to_excel(writer, sheet_name="review_case_binding", index=False)
         _sanitize_frame(review_confidence_calibration).to_excel(writer, sheet_name="review_confidence", index=False)
         _sanitize_frame(review_validation).to_excel(writer, sheet_name="review_validation", index=False)
+        _sanitize_frame(resolution_readiness_summary).to_excel(writer, sheet_name="resolution_ready_sum", index=False)
+        _sanitize_frame(resolution_readiness_cases).to_excel(writer, sheet_name="resolution_ready", index=False)
+        _sanitize_frame(resolution_readiness_validation).to_excel(writer, sheet_name="resolution_valid", index=False)
         _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
@@ -6559,6 +6765,13 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="root_causes", index=False)
         _sanitize_frame(identity_priority_summary).to_excel(writer, sheet_name="priorities", index=False)
         _sanitize_frame(review_validation).to_excel(writer, sheet_name="validation", index=False)
+
+    resolution_readiness_xlsx_path = output_dir / "resolution_readiness_report.xlsx"
+    with pd.ExcelWriter(resolution_readiness_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(resolution_readiness_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(resolution_readiness_breakdown).to_excel(writer, sheet_name="readiness", index=False)
+        _sanitize_frame(resolution_readiness_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(resolution_readiness_validation).to_excel(writer, sheet_name="validation", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -6657,6 +6870,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Review Orchestration JSON: {review_orchestration_json_path}")
     print(f"Review Orchestration XLSX: {review_orchestration_xlsx_path}")
     print(f"Review Orchestration Summary: {review_orchestration_md_path}")
+    print(f"Resolution Readiness JSON: {resolution_readiness_json_path}")
+    print(f"Resolution Readiness XLSX: {resolution_readiness_xlsx_path}")
+    print(f"Resolution Readiness Summary: {resolution_readiness_md_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
