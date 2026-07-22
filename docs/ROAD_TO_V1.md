@@ -118,3 +118,7 @@ Evidence-bound complete name reconstruction. Measure safe vote-warning eliminati
 ## Strike VIII — Position Evidence Acquisition Bridge
 
 This milestone converts generic `no_position_bound_evidence` blockers into evidence-binding truth: direct, bridged, ambiguous, conflicting, absent, or rejected. Gold Fidelity completion still requires benchmark-proven reductions without weakening evidence standards.
+
+## v0.9.5.152 – Source-Bound Display Reconstruction
+
+Display Reconstruction now preserves a read-only provenance object per character. Base OCR characters retain screenshot/source-row and character-offset provenance; crop-bound Character ReOCR evidence retains its stronger crop chain. These links improve explainability and acquisition diagnostics but never become Gold-authoritative by themselves. Authoritative Gold-Core root-cause metadata is joined through the blocker report rather than the generic validation match status.

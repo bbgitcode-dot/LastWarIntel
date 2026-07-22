@@ -20,16 +20,9 @@ This report is read-only. Ground Truth is comparison context only and Operationa
 - Average best confidence: 100.00%
 - Recommended action: `repair_position_crop`
 
-### ocr_observation
-
-- Blocking positions: 2
-- Affected cases: 1
-- Average best confidence: 100.00%
-- Recommended action: `targeted_position_reocr`
-
 ### vote_resolution
 
-- Blocking positions: 8
-- Affected cases: 7
-- Average best confidence: 62.14%
+- Blocking positions: 6
+- Affected cases: 6
+- Average best confidence: 49.52%
 - Recommended action: `collect_independent_vote_evidence`

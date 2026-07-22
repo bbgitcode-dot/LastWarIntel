@@ -1,3 +1,13 @@
+## v0.9.5.152 – Strike IX: Source-Bound Display Reconstruction
+
+- Preserves per-character source provenance from base OCR and Character ReOCR through Display Reconstruction.
+- Adds screenshot, source file, sheet, row slot, character offset, crop and observation identifiers to display-character provenance.
+- Adds source-aware bridge binding without making row-level OCR offsets Gold-authoritative.
+- Repairs authoritative Gold-Core metadata wiring by joining bridge output to the Gold-Core blocker report.
+- Keeps Ground Truth out of the evidence chain and leaves Operational Truth unchanged.
+- Adds regression tests for source-bound display characters, non-authoritative bridge behavior and authoritative metadata propagation.
+- Replay against the v0.9.5.151 benchmark reduces `display_character_has_no_screenshot_provenance` from 31 blocking acquisition positions to 7 while creating no clearance.
+
 # Patch Summary
 
 ## v0.9.5.151

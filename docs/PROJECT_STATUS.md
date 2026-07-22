@@ -148,3 +148,7 @@ The current implementation sprint adds Gold-Core-specific observability at chara
 ## v0.9.5.151 — Position Evidence Acquisition Bridge
 
 The current Gold-Core phase now distinguishes missing evidence from existing but unbound, ambiguous, conflicting, or unsafe evidence. The bridge is diagnostic-only and establishes no new clearance. Separator handling and authoritative Root Cause metadata propagation are now explicit. The next benchmark must measure how many of the prior 38 acquisition failures are reclassified into actionable binding states.
+
+## v0.9.5.152 – Source-Bound Display Reconstruction
+
+Display Reconstruction now preserves a read-only provenance object per character. Base OCR characters retain screenshot/source-row and character-offset provenance; crop-bound Character ReOCR evidence retains its stronger crop chain. These links improve explainability and acquisition diagnostics but never become Gold-authoritative by themselves. Authoritative Gold-Core root-cause metadata is joined through the blocker report rather than the generic validation match status.

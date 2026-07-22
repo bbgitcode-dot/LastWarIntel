@@ -1,4 +1,3 @@
-version: 0.9.5.151
-commit: feat(gold-core): bridge existing evidence into position-bound acquisition diagnostics
- tag: v0.9.5.151
-scope: Strike VIII - Position Evidence Acquisition Bridge
+version: 0.9.5.152
+commit: feat(display): preserve source-bound character provenance through reconstruction
+tag: v0.9.5.152

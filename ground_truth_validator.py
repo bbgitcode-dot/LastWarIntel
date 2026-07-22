@@ -2890,6 +2890,82 @@ def _display_confidence_from_items(items: list[dict[str, Any]]) -> float:
     return round(sum(values) / max(len(values), 1), 4)
 
 
+def _source_bound_display_characters(row: pd.Series, observed_name: str, evidence_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """v0.9.5.152: preserve current-snapshot provenance for each display character.
+
+    Base OCR characters are linked to their row-level screenshot/source and exact
+    character offset. Character ReOCR evidence can replace that provenance with a
+    stronger crop-bound chain. This function never creates or corrects text.
+    """
+    screenshot = normalize_text(row.get("ground_truth_screenshot", "")) or normalize_text(row.get("screenshot", ""))
+    source_file = normalize_text(row.get("ocr_source_file", ""))
+    source_sheet = normalize_text(row.get("ocr_sheet", ""))
+    row_slot = row.get("ground_truth_row_slot", row.get("row_slot", ""))
+    records: list[dict[str, Any]] = []
+    for position, character in enumerate(observed_name):
+        records.append({
+            "position": position,
+            "character": character,
+            "source_chain_status": "ROW_OCR_SOURCE_BOUND" if screenshot or source_file else "DISPLAY_ONLY_NOT_EVIDENCE",
+            "source_type": "base_row_ocr",
+            "source_screenshot": screenshot,
+            "source_file": source_file,
+            "source_sheet": source_sheet,
+            "source_row_slot": row_slot,
+            "source_observation_id": f"row:{source_file or screenshot}:{row_slot}:name",
+            "source_character_index": position,
+            "source_bbox": None,
+            "source_crop_box": None,
+            "source_confidence": float(row.get("ocr_name_confidence", 0.0) or 0.0),
+            "alignment_operation": "identity_offset",
+            "alignment_confidence": 1.0,
+            "gold_authoritative": False,
+        })
+    for item in evidence_items:
+        if not isinstance(item, dict) or str(item.get("field", "") or "") != "player_name":
+            continue
+        try:
+            position = int(item.get("position"))
+        except (TypeError, ValueError):
+            continue
+        if position < 0:
+            continue
+        selected = normalize_text(item.get("selected", ""))[:1]
+        status = str(item.get("status", "") or "")
+        if not selected or status not in {"verified_expected", "verified_observed"}:
+            continue
+        while len(records) <= position:
+            records.append({
+                "position": len(records), "character": "",
+                "source_chain_status": "DISPLAY_ONLY_NOT_EVIDENCE",
+                "source_type": "none", "gold_authoritative": False,
+            })
+        crop_box = item.get("crop_box")
+        item_screenshot = normalize_text(item.get("screenshot", "")) or screenshot
+        records[position] = {
+            "position": position,
+            "character": selected,
+            "source_chain_status": "CROP_CHARACTER_SOURCE_BOUND" if item_screenshot and crop_box not in (None, "") else "ROW_OCR_SOURCE_BOUND",
+            "source_type": "character_reocr_evidence",
+            "source_screenshot": item_screenshot,
+            "source_file": source_file,
+            "source_sheet": source_sheet,
+            "source_row_slot": row_slot,
+            "source_observation_id": str(item.get("observation_id", "") or f"reocr:{item_screenshot}:{position}"),
+            "source_character_index": position,
+            "source_bbox": item.get("character_bbox"),
+            "source_crop_box": crop_box,
+            "source_confidence": float(item.get("confidence", 0.0) or 0.0),
+            "alignment_operation": "verified_position_vote",
+            "alignment_confidence": float(item.get("confidence", 0.0) or 0.0),
+            "vote_status": status,
+            "crop_anchor_status": str(item.get("crop_anchor_status", "") or ""),
+            "crop_diagnostic": str(item.get("crop_diagnostic", "") or ""),
+            "gold_authoritative": False,
+        }
+    return records
+
+
 def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
     """Build a read-only reconstructed display proposal from character evidence.
 
@@ -2910,6 +2986,7 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
 
     evidence_items = _parse_json_list(row.get("character_reocr_evidence", "[]"))
     read_only_items = _parse_json_list(row.get("read_only_reocr_evidence", "[]"))
+    display_character_provenance = _source_bound_display_characters(row, observed_name, evidence_items)
 
     name = observed_name
     tag = observed_tag
@@ -2943,6 +3020,10 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
             if applied:
                 name_applied += 1
                 useful_items.append(item)
+                selected = normalize_text(item.get("selected", ""))[:1] or expected_char[:1]
+                if 0 <= position_int < len(display_character_provenance):
+                    display_character_provenance[position_int]["character"] = selected
+                    display_character_provenance[position_int]["alignment_operation"] = "verified_position_vote"
             else:
                 unresolved += 1
         elif field == "alliance_tag":
@@ -3061,6 +3142,10 @@ def _reconstruct_display_row(row: pd.Series) -> dict[str, Any]:
         "display_reconstruction_unresolved_targets": unresolved,
         "display_reconstruction_observed_votes": observed_votes,
         "display_reconstruction_notes": ";".join(dict.fromkeys(notes)),
+        "display_character_provenance": json.dumps(display_character_provenance, ensure_ascii=False),
+        "display_source_bound_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") in {"ROW_OCR_SOURCE_BOUND", "CROP_CHARACTER_SOURCE_BOUND"})),
+        "display_crop_bound_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") == "CROP_CHARACTER_SOURCE_BOUND")),
+        "display_only_characters": int(sum(1 for item in display_character_provenance if item.get("source_chain_status") == "DISPLAY_ONLY_NOT_EVIDENCE")),
         "display_promotion_eligible": display_promotion_eligible,
         "display_promotion_block_reason": display_promotion_block_reason,
         **evidence_confidence,
@@ -3906,6 +3991,8 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
         "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
         "display_reconstruction_observed_votes", "display_reconstruction_notes",
+        "display_character_provenance", "display_source_bound_characters",
+        "display_crop_bound_characters", "display_only_characters",
         "display_promotion_eligible", "display_promotion_block_reason",
         "evidence_fragments_total", "evidence_confirmed_fragments", "evidence_observed_fragments",
         "evidence_unresolved_fragments", "evidence_avg_fragment_confidence",
@@ -3922,7 +4009,8 @@ def _build_display_reconstruction_report(detail: pd.DataFrame) -> tuple[pd.DataF
     numeric_cols = {
         "display_reconstruction_confidence", "display_reconstruction_name_targets_applied",
         "display_reconstruction_alliance_targets_applied", "display_reconstruction_unresolved_targets",
-        "display_reconstruction_observed_votes", "evidence_fragments_total",
+        "display_reconstruction_observed_votes", "display_source_bound_characters",
+        "display_crop_bound_characters", "display_only_characters", "evidence_fragments_total",
         "evidence_confirmed_fragments", "evidence_observed_fragments", "evidence_unresolved_fragments",
         "evidence_avg_fragment_confidence", "display_name_coverage_score",
         "display_alliance_coverage_score", "display_coverage_score", "evidence_priority_score",
@@ -4940,6 +5028,7 @@ def _build_gold_core_evidence_provenance(
 def _build_position_evidence_acquisition_bridge(
     detail: pd.DataFrame,
     position_rows: pd.DataFrame,
+    authoritative_cases: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """v0.9.5.151: bind existing screenshot evidence to positions without creating text.
 
@@ -4949,17 +5038,29 @@ def _build_position_evidence_acquisition_bridge(
     rejected by a safety invariant.
     """
     lookup = {(r.get("server"), r.get("rank")): r for _, r in detail.iterrows()}
+    authoritative_lookup: dict[tuple[Any, Any], dict[str, Any]] = {}
+    if authoritative_cases is not None and not authoritative_cases.empty:
+        for _, case in authoritative_cases.iterrows():
+            authoritative_lookup[(case.get("server"), case.get("rank"))] = case.to_dict()
     rows: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     for _, pos in position_rows.iterrows():
         key=(pos.get("server"), pos.get("rank"))
         src=lookup.get(key)
         evidence=[]
+        display_provenance: dict[str, Any] = {}
         if src is not None:
             evidence=[e for e in _parse_character_reocr_evidence(src.get("character_reocr_evidence", ""))
                       if str(e.get("field", "") or "") == "player_name"
                       and str(e.get("position", "")).lstrip("-").isdigit()
                       and int(e.get("position")) == int(pos.get("position", -1))]
+            for item in _parse_json_list(src.get("display_character_provenance", "[]")):
+                try:
+                    if int(item.get("position")) == int(pos.get("position", -1)):
+                        display_provenance = item
+                        break
+                except (TypeError, ValueError):
+                    continue
         statuses=sorted({str(e.get("status", "") or "") for e in evidence if str(e.get("status", "") or "")})
         screenshots=sorted({str(e.get("screenshot", "") or "") for e in evidence if str(e.get("screenshot", "") or "")})
         crop_boxes=[e.get("crop_box") for e in evidence if e.get("crop_box") not in (None, "")]
@@ -4982,20 +5083,30 @@ def _build_position_evidence_acquisition_bridge(
         elif evidence:
             binding="AMBIGUOUS_POSITION_BINDING"; method="insufficient_source_chain"; reason="evidence_exists_but_unique_position_chain_is_incomplete"
         else:
-            # Display equality alone is deliberately rejected as proof.
-            ocr_name=normalize_text(src.get("ocr_name", "")) if src is not None else ""
-            idx=int(pos.get("position", -1))
-            observed=ocr_name[idx:idx+1] if 0 <= idx < len(ocr_name) else ""
-            if observed:
-                binding="UNSAFE_BINDING_REJECTED"; method="display_only_binding_rejected"; reason="display_character_has_no_screenshot_provenance"
+            # v0.9.5.152: a display character can be source-bound to the current
+            # screenshot and OCR offset without becoming Gold-authoritative.
+            chain_status = str(display_provenance.get("source_chain_status", "") or "")
+            source_character = normalize_text(display_provenance.get("character", ""))[:1]
+            if chain_status == "CROP_CHARACTER_SOURCE_BOUND":
+                binding="BRIDGED_POSITION_EVIDENCE"; method="source_bound_display_crop"; reason="display_character_preserves_crop_and_screenshot_provenance"
+            elif chain_status == "ROW_OCR_SOURCE_BOUND" and source_character:
+                binding="BRIDGED_POSITION_EVIDENCE"; method="source_bound_row_ocr_offset"; reason="display_character_preserves_screenshot_and_character_offset"
             else:
-                binding="NO_POSITION_EVIDENCE"; method="none"; reason="no_current_snapshot_position_evidence"
+                ocr_name=normalize_text(src.get("ocr_name", "")) if src is not None else ""
+                idx=int(pos.get("position", -1))
+                observed=ocr_name[idx:idx+1] if 0 <= idx < len(ocr_name) else ""
+                if observed:
+                    binding="UNSAFE_BINDING_REJECTED"; method="display_only_binding_rejected"; reason="display_character_has_no_screenshot_provenance"
+                else:
+                    binding="NO_POSITION_EVIDENCE"; method="none"; reason="no_current_snapshot_position_evidence"
+        authoritative = authoritative_lookup.get(key, {})
+        metadata = _authoritative_gold_core_metadata(authoritative if authoritative else pos)
         record={
-            "phase":"v0.9.5.151_position_evidence_acquisition_bridge",
+            "phase":"v0.9.5.152_source_bound_display_reconstruction",
             "server":pos.get("server"), "rank":pos.get("rank"),
-            "failure_class":pos.get("failure_class", ""), "failure_domain":pos.get("failure_domain", ""),
-            "fix_lane":pos.get("fix_lane", ""), "root_cause":pos.get("root_cause", ""),
-            "recommendation":pos.get("recommendation", ""),
+            "failure_class":metadata["failure_class"], "failure_domain":metadata["failure_domain"],
+            "fix_lane":metadata["fix_lane"], "root_cause":metadata["root_cause"],
+            "recommendation":metadata["recommendation"],
             "position":pos.get("position"), "position_human":pos.get("position_human"),
             "position_type":position_type, "previous_status":status,
             "binding_status":binding, "binding_method":method, "binding_reason":reason,
@@ -5005,6 +5116,16 @@ def _build_position_evidence_acquisition_bridge(
             "source_vote_statuses":json.dumps(statuses, ensure_ascii=False),
             "source_crop_diagnostics":json.dumps(diagnostics, ensure_ascii=False),
             "source_anchor_statuses":json.dumps(anchors, ensure_ascii=False),
+            "display_source_chain_status":str(display_provenance.get("source_chain_status", "") or ""),
+            "display_source_screenshot":str(display_provenance.get("source_screenshot", "") or ""),
+            "display_source_file":str(display_provenance.get("source_file", "") or ""),
+            "display_source_row_slot":display_provenance.get("source_row_slot", ""),
+            "display_source_observation_id":str(display_provenance.get("source_observation_id", "") or ""),
+            "display_source_character_index":display_provenance.get("source_character_index", ""),
+            "display_source_bbox":json.dumps(display_provenance.get("source_bbox"), ensure_ascii=False),
+            "display_source_crop_box":json.dumps(display_provenance.get("source_crop_box"), ensure_ascii=False),
+            "display_source_character":str(display_provenance.get("character", "") or ""),
+            "display_source_gold_authoritative":False,
             "evidence_count":len(evidence),
             "ground_truth_used_as_evidence":False,
             "character_created_by_bridge":False,
@@ -5030,12 +5151,12 @@ def _build_position_evidence_acquisition_bridge(
             rejected=("binding_status", lambda v: int((pd.Series(v)=="UNSAFE_BINDING_REJECTED").sum())),
             missing=("binding_status", lambda v: int((pd.Series(v)=="NO_POSITION_EVIDENCE").sum())),
         ).reset_index()
-        cases.insert(0,"phase","v0.9.5.151_position_evidence_acquisition_bridge")
+        cases.insert(0,"phase","v0.9.5.152_source_bound_display_reconstruction")
         cases["operational_truth_modified"]=False
         summary=positions.groupby("binding_status", dropna=False).agg(
             positions=("position_human","count"), cases=("rank","nunique"), evidence_records=("evidence_count","sum")
         ).reset_index()
-        summary.insert(0,"phase","v0.9.5.151_position_evidence_acquisition_bridge")
+        summary.insert(0,"phase","v0.9.5.152_source_bound_display_reconstruction")
         summary["ground_truth_used_as_evidence"]=False
         summary["operational_truth_modified"]=False
     return cases, positions, rejected_df, summary
@@ -5338,22 +5459,22 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     character_acquisition_summary, character_acquisition_rows, character_acquisition_heatmap, detail = _build_character_acquisition_report(detail, character_reocr_debug)
     character_position_summary, character_position_rows, character_position_rank_rows, detail = _build_character_position_intelligence_report(character_acquisition_rows, character_acquisition_heatmap, detail)
+    ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
+    gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
+    gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
     gold_core_character_cases, gold_core_character_positions, gold_core_position_heatmap = _build_gold_core_character_evidence_map(detail)
     evidence_provenance_cases, evidence_provenance_positions, evidence_provenance_stages, evidence_provenance_summary = _build_gold_core_evidence_provenance(
         detail, gold_core_character_cases, gold_core_character_positions
     )
     position_bridge_cases, position_bridge_positions, position_bridge_rejected, position_bridge_summary = _build_position_evidence_acquisition_bridge(
-        detail, gold_core_character_positions
+        detail, gold_core_character_positions, gold_core_blocker_report
     )
-    ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
     evidence_budget_summary, evidence_budget_rows = _build_evidence_budget_report(detail)
     evidence_scheduler_summary, evidence_scheduler_rows = _build_evidence_scheduler_report(detail)
     gold_core_elimination_summary, gold_core_elimination_rows = _build_gold_core_elimination_report(detail)
-    gold_core_blocker_report, gold_core_blocker_summary = _build_gold_core_blocker_report(gold_blocker_triage, ocr_evidence_rows)
-    gold_core_resolution_plan, gold_core_resolution_summary = _build_gold_core_resolution_plan_report(gold_core_blocker_report)
     from gold_core.quality_intelligence import build_gold_core_quality_intelligence, build_gold_core_case_explorer
     gold_core_analytics_summary, gold_core_analytics_rows, gold_core_failure_memory = build_gold_core_quality_intelligence(
         detail, output_dir, gold_core_blocker_report, gold_core_resolution_plan
@@ -5478,7 +5599,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_provenance_md_path.write_text("\n".join(provenance_md), encoding="utf-8")
     position_bridge_json_path = output_dir / "position_evidence_bridge_report.json"
     position_bridge_json_path.write_text(json.dumps(_json_safe({
-        "phase": "v0.9.5.151_position_evidence_acquisition_bridge",
+        "phase": "v0.9.5.152_source_bound_display_reconstruction",
         "summary": position_bridge_summary.to_dict(orient="records"),
         "cases": position_bridge_cases.to_dict(orient="records"),
         "positions": position_bridge_positions.to_dict(orient="records"),
