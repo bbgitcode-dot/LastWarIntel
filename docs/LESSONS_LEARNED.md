@@ -1,3 +1,23 @@
+# Lessons Added after v0.9.5.147
+
+## Evidence architecture can be correct while the strike fails
+
+`.147` preserved every safety boundary but produced no exact reconstructed name. A safe implementation is not automatically an effective implementation. Benchmark impact must be attributed to the actual clearance action.
+
+## Partial reconstruction is diagnostic evidence, not identity proof
+
+Coverage below 100%, even 87.5%, cannot prove exact display identity. Missing positions must remain explicit unknowns.
+
+## Do not credit an old strike to a new feature
+
+The only reduction, rank 47, came from `clear_gold_core_blocker_strike_i`. It must not be reported as success for Evidence Reconstruction.
+
+## The circular guard problem is solved only when evidence is complete
+
+Adding a reconstruction path does not remove the circle if the path cannot supply all characters. The next work belongs in targeted evidence acquisition.
+
+---
+
 # Lessons Learned – Sentinel
 
 ## 1. Data stability beats OCR optimism

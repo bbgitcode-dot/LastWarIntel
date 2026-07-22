@@ -1,3 +1,35 @@
+# Road to V1 — Authoritative Plan at v0.9.5.148
+
+## 1. Gold Core Zero
+
+Eliminate every Gold-Core blocker through evidence-backed, class-specific lanes. Current state: 14 blockers remain after the `.147` benchmark. The immediate target is evidence completeness for five vote-warning cases, not guard relaxation.
+
+## 2. Gold Fidelity Complete
+
+After Gold Core reaches zero:
+
+- freeze exact-display policies;
+- run permanent regressions across the benchmark corpus;
+- confirm Recall 100%, Missing 0, Bad Matches 0;
+- confirm no mutation of Operational Truth;
+- document every clearance path and stop sign.
+
+## 3. Strategic Intelligence
+
+Build explainable assessments only on the stabilized Gold Core:
+
+- alliance and player strength assessment;
+- server composition and transfer intelligence;
+- trend and anomaly detection;
+- decision support with explicit evidence chains;
+- no strategic conclusion without traceable source evidence.
+
+## 4. V1.0.0
+
+V1 requires a stable evidence pipeline, Gold Fidelity Complete, permanent regression coverage, documented operational procedures, reproducible releases, and explainable strategic outputs. Runtime optimization remains secondary until fidelity is frozen.
+
+---
+
 # Road to V1 – Sentinel
 
 **Current release:** v0.9.5.142  

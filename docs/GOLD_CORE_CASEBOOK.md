@@ -1,3 +1,11 @@
+# Gold Core Casebook — Benchmark State v0.9.5.147
+
+The authoritative benchmark contains 14 unresolved cases after elimination. The complete report is documented in `BENCHMARK_ANALYSIS_v0.9.5.147.md`.
+
+Current distribution: 5 vote-warning, 3 crop geometry, 3 observed-text-confirmed, 1 nonlocal script policy, 1 local glyph, and 1 mixed local/nonlocal case. Rank 47 was cleared by the earlier Strike-I single-glyph rule, not by Evidence Reconstruction.
+
+---
+
 # GOLD CORE CASEBOOK
 
 Version: v0.9.5.144

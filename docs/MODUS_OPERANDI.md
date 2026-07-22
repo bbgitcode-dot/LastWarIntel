@@ -1,3 +1,15 @@
+# Modus Operandi — Confirmed for v0.9.5.148
+
+- Releases are delivered only as complete ZIP packages.
+- Every release includes a consistent version bump and root `.commit`.
+- `RELEASE_NOTES.md`, `PATCH_SUMMARY.md`, and affected status documents are updated in the same package.
+- Chat snippets are never the release artifact.
+- Benchmarks are the authoritative truth for outcome claims.
+- No feature receives credit for a clearance produced by another lane.
+- Operational Truth, Ground Truth, snapshots, and exports are never silently corrected.
+
+---
+
 # Modus Operandi – Sentinel
 
 ## Roles

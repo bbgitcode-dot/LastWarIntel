@@ -1,3 +1,37 @@
+# Sentinel Architecture — v0.9.5.148
+
+```text
+Screenshot
+  ↓
+OCR
+  ↓
+Evidence
+  ↓
+Character Acquisition
+  ↓
+Character Position Intelligence
+  ↓
+Display Reconstruction
+  ↓
+Inference
+  ↓
+Ground Truth Validation
+  ↓
+Gold Core
+  ↓
+Strategic Intelligence
+```
+
+## Name proof states
+
+- `SOURCE_EXACT`: the current source display itself proves the exact name.
+- `EVIDENCE_RECONSTRUCTED_EXACT`: every name position is proven from current-screenshot evidence with no conflicts or missing positions.
+- Partial, conflicting, insufficient, UNKNOWN, or Ground-Truth-filled states are not exact proof.
+
+Display Reconstruction is evidence assembly, not correction. Ground Truth is used to validate outcomes, never to supply characters. Promotion Guard remains the final safety gate before any Gold-Core clearance.
+
+---
+
 # v0.9.5.141 – Character Position Intelligence Phase I
 
 - Implements functional Character Position Intelligence in the validator, not just report scaffolding.

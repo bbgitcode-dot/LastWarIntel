@@ -1,4 +1,4 @@
-version: 0.9.5.147
-commit: feat(gold-core): add evidence-bound complete name reconstruction
-tag: v0.9.5.147
-notes: Gold Core Zero III proves names from aligned current-snapshot source text plus position-bound verified ReOCR evidence. Partial, conflicting, UNKNOWN, crop-mismatch, and ground-truth-only fills remain blocked. Operational Truth remains unchanged.
+version: 0.9.5.148
+commit: docs(gold-core): consolidate v0.9.5.147 benchmark truth and V1 plan
+tag: v0.9.5.148
+notes: Documentation-only release. Records 15-to-14 Gold Core result, zero Evidence Reconstruction clearances, five remaining vote-warning cases, preserved UNKNOWN protection, and the evidence-acquisition strategy for the next implementation sprint. Operational Truth remains unchanged.

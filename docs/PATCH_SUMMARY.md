@@ -1,3 +1,9 @@
+# Patch Summary — v0.9.5.148
+
+Documentation-only release based on Sentinel v0.9.5.147 and its Server 551 benchmark. Adds `BENCHMARK_ANALYSIS_v0.9.5.147.md` and aligns all strategic documentation with measured results. No production code, validation policy, OCR output, snapshot, Ground Truth, or Operational Truth is modified.
+
+---
+
 # v0.9.5.142 – Gold Core Strike III
 
 ## Functional changes

@@ -1,3 +1,36 @@
+# Project Status — Sentinel v0.9.5.148
+
+**Release type:** Documentation consolidation after the v0.9.5.147 benchmark.
+
+## Current truth
+
+- Recall: 100%.
+- Missing: 0.
+- Bad Matches: 0.
+- Operational Truth modified: no.
+- Gold Core: 15 before elimination, 14 after elimination.
+- `.147` Evidence Reconstruction eliminations: 0.
+- Remaining `vote_warning_gate_review`: 5 of 5.
+
+## Assessment
+
+Gold Core Zero III was safe but ineffective against its intended target. It proved that evidence-bound reconstruction can preserve all stop signs, but the current screenshot evidence does not provide complete positional coverage for any target case. The dominant remaining blocker is still `name_exact`; this is now an evidence-acquisition problem, not a justification to weaken the guard.
+
+## Open technical risks
+
+- incomplete per-position name evidence;
+- crop contamination and field bleed;
+- unresolved or conflicting vote fragments;
+- multilingual display policy;
+- UNKNOWN rows without a trustworthy base string;
+- one separate power-proof failure at rank 39.
+
+## Next elimination strategy
+
+The next code sprint should acquire missing current-screenshot character evidence for the five vote-warning cases, position by position. It must not infer missing characters from Ground Truth, historical identity, or expected strings. Exact reconstruction is acceptable only at 100% evidence coverage with no conflicts, field mismatch, unresolved votes, or UNKNOWN base.
+
+---
+
 # v0.9.5.142 – Gold Core Strike III
 
 ## Functional changes

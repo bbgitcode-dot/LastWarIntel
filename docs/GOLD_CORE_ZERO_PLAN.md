@@ -1,3 +1,30 @@
+# Gold Core Zero Plan — v0.9.5.148
+
+## Benchmark decision
+
+Gold Core Zero III did not clear any `vote_warning_gate_review` case. The planned distinction between `SOURCE_EXACT` and `EVIDENCE_RECONSTRUCTED_EXACT` remains valid conceptually, but the benchmark generated no complete evidence reconstruction.
+
+## Next lane: Position Evidence Completion
+
+1. Enumerate missing positions for ranks 8, 11, 41, 48 and 50, the five vote-warning cases.
+2. Acquire narrowly targeted crops for those positions from current screenshots.
+3. Reject field bleed before character voting.
+4. Require full position coverage and zero conflicts.
+5. Never fill from Ground Truth or historical names.
+6. Preserve UNKNOWN until a complete screenshot-derived base exists.
+
+## Stop signs
+
+- UNKNOWN base;
+- incomplete position coverage;
+- conflicting evidence;
+- unresolved votes;
+- observed counterevidence;
+- crop-field mismatch;
+- missing alliance or power proof.
+
+---
+
 # Gold Core Zero Plan
 
 ## Current phase: v0.9.5.145 — Gold Core Zero I
