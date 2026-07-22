@@ -44,3 +44,7 @@ display text may change during correction; such display changes must not split F
 
 All Strike V outputs are read-only quality intelligence. They do not modify OCR exports,
 snapshots, Ground Truth, DataGuard decisions, or Operational Truth.
+
+## v0.9.5.151 Evidence Binding Fields
+
+Each blocked position now carries authoritative failure metadata plus a binding status, method, reason, source screenshots, crop boxes, selected OCR characters, vote statuses, diagnostics, and explicit safety flags. Display reconstruction alone remains non-authoritative.

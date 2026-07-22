@@ -144,3 +144,7 @@ The validator can now prove a complete name without requiring raw OCR exactness.
 ## v0.9.5.149 — Position-Bound Evidence Intelligence
 
 The current implementation sprint adds Gold-Core-specific observability at character-position level. Each remaining blocker now exposes confirmed, missing, unresolved, and conflicting positions together with screenshot and crop provenance. This sprint intentionally performs no clearance. Its purpose is to make the next evidence-acquisition change measurable and case-specific.
+
+## v0.9.5.151 — Position Evidence Acquisition Bridge
+
+The current Gold-Core phase now distinguishes missing evidence from existing but unbound, ambiguous, conflicting, or unsafe evidence. The bridge is diagnostic-only and establishes no new clearance. Separator handling and authoritative Root Cause metadata propagation are now explicit. The next benchmark must measure how many of the prior 38 acquisition failures are reclassified into actionable binding states.

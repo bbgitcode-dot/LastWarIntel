@@ -114,3 +114,7 @@ Promotion Guard Rationalization converts the former aggregate blocker into an ex
 ### v0.9.5.147 — Gold Core Zero III
 
 Evidence-bound complete name reconstruction. Measure safe vote-warning elimination, then proceed to the next dominant root-cause lane without relaxing Operational Truth safeguards.
+
+## Strike VIII — Position Evidence Acquisition Bridge
+
+This milestone converts generic `no_position_bound_evidence` blockers into evidence-binding truth: direct, bridged, ambiguous, conflicting, absent, or rejected. Gold Fidelity completion still requires benchmark-proven reductions without weakening evidence standards.

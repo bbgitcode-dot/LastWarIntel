@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.9.5.151 — Strike VIII: Position Evidence Acquisition Bridge
+
+- Added a read-only Position Evidence Acquisition Bridge for Gold-Core blocker positions.
+- Added authoritative Root Cause metadata wiring into Character Position and Evidence Provenance reports.
+- Added explicit binding states: `DIRECT_POSITION_EVIDENCE`, `BRIDGED_POSITION_EVIDENCE`, `AMBIGUOUS_POSITION_BINDING`, `CONFLICTING_POSITION_EVIDENCE`, `NO_POSITION_EVIDENCE`, and `UNSAFE_BINDING_REJECTED`.
+- Added Separator Intelligence so confirmed whitespace separators are no longer treated as unresolved glyphs.
+- Added `position_evidence_bridge_report.json`, `position_evidence_bridge_report.xlsx`, and `position_evidence_bridge_summary.md`.
+- Display equality without screenshot provenance is explicitly rejected as evidence.
+- No Gold-Core clearance, guard relaxation, Ground-Truth fill, or Operational-Truth mutation was introduced.
+
 ## v0.9.5.150 — Strike VII: Position-Bound Evidence Provenance
 
 - Added a complete read-only provenance chain for every blocked Gold-Core character position.

@@ -1,5 +1,16 @@
 # Patch Summary
 
+## v0.9.5.151
+
+### Strike VIII — Position Evidence Acquisition Bridge
+
+- Safely links existing screenshot, crop, OCR, and vote records to character positions.
+- Preserves authoritative failure class, domain, fix lane, root cause, and recommendation metadata.
+- Separates structural separators from visible glyphs.
+- Rejects display-only and unsafe crop bindings.
+- Produces dedicated JSON, XLSX, and Markdown bridge reports.
+- Safety invariants: no character creation, no Ground Truth as evidence, no Operational Truth modification.
+
 ## v0.9.5.150
 
 ### Strike VII — Position-Bound Evidence Provenance

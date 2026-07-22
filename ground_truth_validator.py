@@ -4606,6 +4606,26 @@ def _build_character_position_intelligence_report(
     return summary, positions, row_actions, detail_out
 
 
+def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
+    """Return the already-authoritative Gold Core classification without recomputation."""
+    def pick(*keys: str) -> str:
+        for key in keys:
+            value = row.get(key, "")
+            if value is None or (isinstance(value, float) and pd.isna(value)):
+                continue
+            text = str(value).strip()
+            if text and text.lower() != "nan":
+                return text
+        return ""
+    return {
+        "failure_class": pick("gold_core_failure_class", "failure_class"),
+        "failure_domain": pick("gold_core_failure_domain", "failure_domain"),
+        "fix_lane": pick("gold_core_fix_lane", "fix_lane"),
+        "root_cause": pick("gold_core_root_cause", "root_cause"),
+        "recommendation": pick("gold_core_recommendation", "recommendation", "gold_core_resolution_action"),
+    }
+
+
 def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """v0.9.5.149: expose the exact character positions blocking Gold Core.
 
@@ -4619,6 +4639,7 @@ def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.Da
     case_rows: list[dict[str, Any]] = []
 
     for _, row in blockers.iterrows():
+        metadata = _authoritative_gold_core_metadata(row)
         diag = _evidence_bound_name_reconstruction(row)
         expected = normalize_text(row.get("expected_name", ""))
         source = normalize_text(diag.get("name_reconstruction_source_value", ""))
@@ -4656,9 +4677,14 @@ def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.Da
             screenshots = sorted(set(str(item.get("screenshot", "") or "") for item in pos_evidence if str(item.get("screenshot", "") or "")))
             selected = [normalize_text(item.get("selected", ""))[:1] for item in pos_evidence if normalize_text(item.get("selected", ""))]
             confidences = [float(item.get("confidence", 0.0) or 0.0) for item in pos_evidence]
+            position_type = "SEPARATOR" if expected_char.isspace() else "GLYPH"
+            separator_verified = position_type == "SEPARATOR" and any(st == "verified_expected" for st in statuses)
             if pos_conflicts:
                 status = "CONFLICT"
                 reason = "observed_counterevidence"
+            elif separator_verified:
+                status = "CONFIRMED"
+                reason = "separator_confirmed_by_position_evidence"
             elif proof:
                 status = "CONFIRMED"
                 reason = str(proof.get("proof", "position_proven"))
@@ -4673,9 +4699,14 @@ def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.Da
             position_rows.append({
                 "phase": "v0.9.5.149_position_evidence_intelligence",
                 "server": row.get("server"), "rank": row.get("rank"),
-                "failure_class": row.get("gold_core_failure_class", ""),
+                "failure_class": metadata["failure_class"],
+                "failure_domain": metadata["failure_domain"],
+                "fix_lane": metadata["fix_lane"],
+                "root_cause": metadata["root_cause"],
+                "recommendation": metadata["recommendation"],
                 "promotion_guard_primary_blocker": row.get("promotion_guard_primary_blocker", ""),
                 "position": pos, "position_human": pos + 1,
+                "position_type": position_type,
                 "expected_char": expected_char, "observed_char": observed_char,
                 "position_status": status, "position_reason": reason,
                 "proof_source": proof.get("proof", ""),
@@ -4696,8 +4727,11 @@ def _build_gold_core_character_evidence_map(detail: pd.DataFrame) -> tuple[pd.Da
             "phase": "v0.9.5.149_position_evidence_intelligence",
             "server": row.get("server"), "rank": row.get("rank"),
             "expected_name": expected, "observed_name": row.get("ocr_name", ""),
-            "failure_class": row.get("gold_core_failure_class", ""),
-            "fix_lane": row.get("gold_core_fix_lane", row.get("fix_lane", "")),
+            "failure_class": metadata["failure_class"],
+            "failure_domain": metadata["failure_domain"],
+            "fix_lane": metadata["fix_lane"],
+            "root_cause": metadata["root_cause"],
+            "recommendation": metadata["recommendation"],
             "promotion_guard_primary_blocker": row.get("promotion_guard_primary_blocker", ""),
             "name_proof_status": diag.get("name_proof_status", ""),
             "coverage": diag.get("name_reconstruction_coverage", 0.0),
@@ -4902,6 +4936,110 @@ def _build_gold_core_evidence_provenance(
     summary["ground_truth_used_as_evidence"] = False
     summary["operational_truth_modified"] = False
     return cases, positions, stages, summary
+
+def _build_position_evidence_acquisition_bridge(
+    detail: pd.DataFrame,
+    position_rows: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """v0.9.5.151: bind existing screenshot evidence to positions without creating text.
+
+    The bridge is read-only. It never derives a character from Ground Truth and
+    never upgrades Operational Truth. It only describes whether current evidence
+    is directly bound, safely bridgeable, ambiguous, conflicting, missing, or
+    rejected by a safety invariant.
+    """
+    lookup = {(r.get("server"), r.get("rank")): r for _, r in detail.iterrows()}
+    rows: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
+    for _, pos in position_rows.iterrows():
+        key=(pos.get("server"), pos.get("rank"))
+        src=lookup.get(key)
+        evidence=[]
+        if src is not None:
+            evidence=[e for e in _parse_character_reocr_evidence(src.get("character_reocr_evidence", ""))
+                      if str(e.get("field", "") or "") == "player_name"
+                      and str(e.get("position", "")).lstrip("-").isdigit()
+                      and int(e.get("position")) == int(pos.get("position", -1))]
+        statuses=sorted({str(e.get("status", "") or "") for e in evidence if str(e.get("status", "") or "")})
+        screenshots=sorted({str(e.get("screenshot", "") or "") for e in evidence if str(e.get("screenshot", "") or "")})
+        crop_boxes=[e.get("crop_box") for e in evidence if e.get("crop_box") not in (None, "")]
+        selected=[normalize_text(e.get("selected", ""))[:1] for e in evidence if normalize_text(e.get("selected", ""))]
+        diagnostics=sorted({str(e.get("crop_diagnostic", "") or "") for e in evidence if str(e.get("crop_diagnostic", "") or "")})
+        anchors=sorted({str(e.get("crop_anchor_status", "") or "") for e in evidence if str(e.get("crop_anchor_status", "") or "")})
+        position_type=str(pos.get("position_type", "GLYPH") or "GLYPH")
+        status=str(pos.get("position_status", "") or "")
+        crop_unsafe=bool(set(anchors) & {"field_mismatch", "anchor_missing", "anchor_ambiguous"}) or bool(set(diagnostics) & {"field_mismatch", "crop_clipped", "crop_empty", "crop_contaminated", "anchor_missing", "crop_power_column_bleed"})
+        if status == "CONFLICT" or any(st == "verified_observed" for st in statuses):
+            binding="CONFLICTING_POSITION_EVIDENCE"; method="existing_counterevidence"; reason="conflicting_current_snapshot_evidence"
+        elif crop_unsafe:
+            binding="UNSAFE_BINDING_REJECTED"; method="rejected_crop_binding"; reason=",".join(diagnostics or anchors) or "unsafe_crop_geometry"
+        elif evidence and screenshots and crop_boxes and selected:
+            binding="DIRECT_POSITION_EVIDENCE"; method="existing_position_record"; reason="complete_existing_source_chain"
+        elif evidence and (screenshots or crop_boxes) and selected:
+            binding="BRIDGED_POSITION_EVIDENCE"; method="existing_partial_source_chain"; reason="position_record_linkable_without_text_creation"
+        elif position_type == "SEPARATOR" and any(st == "verified_expected" for st in statuses):
+            binding="BRIDGED_POSITION_EVIDENCE"; method="separator_evidence"; reason="separator_confirmed_by_existing_position_vote"
+        elif evidence:
+            binding="AMBIGUOUS_POSITION_BINDING"; method="insufficient_source_chain"; reason="evidence_exists_but_unique_position_chain_is_incomplete"
+        else:
+            # Display equality alone is deliberately rejected as proof.
+            ocr_name=normalize_text(src.get("ocr_name", "")) if src is not None else ""
+            idx=int(pos.get("position", -1))
+            observed=ocr_name[idx:idx+1] if 0 <= idx < len(ocr_name) else ""
+            if observed:
+                binding="UNSAFE_BINDING_REJECTED"; method="display_only_binding_rejected"; reason="display_character_has_no_screenshot_provenance"
+            else:
+                binding="NO_POSITION_EVIDENCE"; method="none"; reason="no_current_snapshot_position_evidence"
+        record={
+            "phase":"v0.9.5.151_position_evidence_acquisition_bridge",
+            "server":pos.get("server"), "rank":pos.get("rank"),
+            "failure_class":pos.get("failure_class", ""), "failure_domain":pos.get("failure_domain", ""),
+            "fix_lane":pos.get("fix_lane", ""), "root_cause":pos.get("root_cause", ""),
+            "recommendation":pos.get("recommendation", ""),
+            "position":pos.get("position"), "position_human":pos.get("position_human"),
+            "position_type":position_type, "previous_status":status,
+            "binding_status":binding, "binding_method":method, "binding_reason":reason,
+            "source_screenshot_ids":json.dumps(screenshots, ensure_ascii=False),
+            "source_crop_boxes":json.dumps(crop_boxes, ensure_ascii=False),
+            "source_selected_chars":json.dumps(selected, ensure_ascii=False),
+            "source_vote_statuses":json.dumps(statuses, ensure_ascii=False),
+            "source_crop_diagnostics":json.dumps(diagnostics, ensure_ascii=False),
+            "source_anchor_statuses":json.dumps(anchors, ensure_ascii=False),
+            "evidence_count":len(evidence),
+            "ground_truth_used_as_evidence":False,
+            "character_created_by_bridge":False,
+            "operational_truth_modified":False,
+        }
+        rows.append(record)
+        if binding in {"UNSAFE_BINDING_REJECTED", "AMBIGUOUS_POSITION_BINDING"}:
+            rejected.append(record.copy())
+    positions=pd.DataFrame(rows)
+    rejected_df=pd.DataFrame(rejected)
+    if positions.empty:
+        cases=pd.DataFrame(); summary=pd.DataFrame()
+    else:
+        cases=positions.groupby(["server","rank"], dropna=False).agg(
+            failure_class=("failure_class","first"), failure_domain=("failure_domain","first"),
+            fix_lane=("fix_lane","first"), root_cause=("root_cause","first"),
+            positions=("position_human","count"),
+            binding_statuses=("binding_status", lambda v: json.dumps(sorted(set(map(str,v))), ensure_ascii=False)),
+            direct=("binding_status", lambda v: int((pd.Series(v)=="DIRECT_POSITION_EVIDENCE").sum())),
+            bridged=("binding_status", lambda v: int((pd.Series(v)=="BRIDGED_POSITION_EVIDENCE").sum())),
+            ambiguous=("binding_status", lambda v: int((pd.Series(v)=="AMBIGUOUS_POSITION_BINDING").sum())),
+            conflicts=("binding_status", lambda v: int((pd.Series(v)=="CONFLICTING_POSITION_EVIDENCE").sum())),
+            rejected=("binding_status", lambda v: int((pd.Series(v)=="UNSAFE_BINDING_REJECTED").sum())),
+            missing=("binding_status", lambda v: int((pd.Series(v)=="NO_POSITION_EVIDENCE").sum())),
+        ).reset_index()
+        cases.insert(0,"phase","v0.9.5.151_position_evidence_acquisition_bridge")
+        cases["operational_truth_modified"]=False
+        summary=positions.groupby("binding_status", dropna=False).agg(
+            positions=("position_human","count"), cases=("rank","nunique"), evidence_records=("evidence_count","sum")
+        ).reset_index()
+        summary.insert(0,"phase","v0.9.5.151_position_evidence_acquisition_bridge")
+        summary["ground_truth_used_as_evidence"]=False
+        summary["operational_truth_modified"]=False
+    return cases, positions, rejected_df, summary
+
 
 def _build_ocr_evidence_report(detail: pd.DataFrame, character_reocr_debug: pd.DataFrame) -> tuple[dict[str, Any], pd.DataFrame, pd.DataFrame]:
     """Build row/fragment provenance diagnostics for OCR evidence inspection."""
@@ -5204,6 +5342,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_provenance_cases, evidence_provenance_positions, evidence_provenance_stages, evidence_provenance_summary = _build_gold_core_evidence_provenance(
         detail, gold_core_character_cases, gold_core_character_positions
     )
+    position_bridge_cases, position_bridge_positions, position_bridge_rejected, position_bridge_summary = _build_position_evidence_acquisition_bridge(
+        detail, gold_core_character_positions
+    )
     ocr_evidence_payload, ocr_evidence_rows, ocr_evidence_fragments = _build_ocr_evidence_report(detail, character_reocr_debug)
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
@@ -5278,6 +5419,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "evidence_provenance_cases": evidence_provenance_cases.to_dict(orient="records"),
         "evidence_provenance_positions": evidence_provenance_positions.to_dict(orient="records"),
         "evidence_provenance_stages": evidence_provenance_stages.to_dict(orient="records"),
+        "position_evidence_bridge_summary": position_bridge_summary.to_dict(orient="records"),
+        "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
+        "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
+        "position_evidence_bridge_rejected": position_bridge_rejected.to_dict(orient="records"),
         "ocr_evidence_summary": ocr_evidence_payload.get("summary", {}),
         "ocr_evidence_status_summary": ocr_evidence_payload.get("status_summary", []),
         "ocr_evidence_rows": ocr_evidence_rows.to_dict(orient="records"),
@@ -5331,6 +5476,20 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
             f"- Recommended action: `{item.get('recommended_action', '')}`", "",
         ])
     evidence_provenance_md_path.write_text("\n".join(provenance_md), encoding="utf-8")
+    position_bridge_json_path = output_dir / "position_evidence_bridge_report.json"
+    position_bridge_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.151_position_evidence_acquisition_bridge",
+        "summary": position_bridge_summary.to_dict(orient="records"),
+        "cases": position_bridge_cases.to_dict(orient="records"),
+        "positions": position_bridge_positions.to_dict(orient="records"),
+        "rejected_bindings": position_bridge_rejected.to_dict(orient="records"),
+        "safety": {"ground_truth_used_as_evidence": False, "character_created_by_bridge": False, "operational_truth_modified": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
+    position_bridge_md_path = output_dir / "position_evidence_bridge_summary.md"
+    bridge_md = ["# Position Evidence Acquisition Bridge", "", "Version: v0.9.5.151", "", "The bridge links existing evidence only; it never creates characters or changes Operational Truth.", "", "## Binding summary", ""]
+    for item in position_bridge_summary.to_dict(orient="records"):
+        bridge_md.append(f"- `{item.get('binding_status')}`: {item.get('positions', 0)} positions across {item.get('cases', 0)} cases")
+    position_bridge_md_path.write_text("\n".join(bridge_md), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -5415,6 +5574,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_provenance_cases).to_excel(writer, sheet_name="evidence_prov_cases", index=False)
         _sanitize_frame(evidence_provenance_positions).to_excel(writer, sheet_name="evidence_prov_pos", index=False)
         _sanitize_frame(evidence_provenance_stages).to_excel(writer, sheet_name="evidence_prov_stages", index=False)
+        _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
+        _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
+        _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
+        _sanitize_frame(position_bridge_rejected).to_excel(writer, sheet_name="position_bridge_rej", index=False)
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="ocr_evidence_summary", index=False)
         _sanitize_frame(pd.DataFrame(ocr_evidence_payload.get("status_summary", []))).to_excel(writer, sheet_name="ocr_evidence_status", index=False)
         _sanitize_frame(ocr_evidence_rows).to_excel(writer, sheet_name="ocr_evidence_rows", index=False)
@@ -5451,6 +5614,13 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_provenance_cases).to_excel(writer, sheet_name="cases", index=False)
         _sanitize_frame(evidence_provenance_positions).to_excel(writer, sheet_name="positions", index=False)
         _sanitize_frame(evidence_provenance_stages).to_excel(writer, sheet_name="stages", index=False)
+
+    position_bridge_xlsx_path = output_dir / "position_evidence_bridge_report.xlsx"
+    with pd.ExcelWriter(position_bridge_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="positions", index=False)
+        _sanitize_frame(position_bridge_rejected).to_excel(writer, sheet_name="rejected_bindings", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -5537,6 +5707,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Evidence Provenance JSON: {evidence_provenance_json_path}")
     print(f"Evidence Provenance XLSX: {evidence_provenance_xlsx_path}")
     print(f"Evidence Provenance Summary: {evidence_provenance_md_path}")
+    print(f"Position Evidence Bridge JSON: {position_bridge_json_path}")
+    print(f"Position Evidence Bridge XLSX: {position_bridge_xlsx_path}")
+    print(f"Position Evidence Bridge Summary: {position_bridge_md_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
