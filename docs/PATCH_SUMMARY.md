@@ -678,3 +678,7 @@ Strike XII closes the diagnostic identity chain from observed characters to revi
 `Character -> Token -> Identity Component -> Identity Slot -> Player Identity Composition -> Manual Review Queue`
 
 The implementation is strictly observational. It composes only already observed, provenance-bound components and never fills missing identity text from Ground Truth. UNKNOWN remains protected. Review recommendations and priorities are guidance only and cannot change Gold Core or Operational Truth.
+
+## v0.9.5.156
+
+Strike XIII converts the v0.9.5.155 Identity Composition output into a Gold-Core-bound review workflow. Each open blocker receives one uniquely bound queue item with authoritative failure intelligence, concrete action, required evidence, calibrated confidence, and explicit validation status. Missing or ambiguous joins are blocked visibly. The layer remains read-only and cannot clear Gold Core or change Operational Truth.

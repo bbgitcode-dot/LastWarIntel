@@ -165,3 +165,7 @@ Sentinel now carries source provenance through explicit edit operations rather t
 ## Update v0.9.5.155 – Identity Composition
 
 Sentinel now models Gold Core identity blockers above the character level. The Identity Composition Engine assigns observed components to diagnostic slots, aggregates confidence, carries provenance to screenshots and OCR observations, and produces a prioritized manual review queue. This is an explainability and review-orchestration milestone, not a Gold clearance sprint. The remaining Gold Core reduction work must now target the actual acquisition/policy lanes identified by the queue rather than add further generic identity infrastructure.
+
+## Update v0.9.5.156 – Gold-Core-Bound Review Orchestration
+
+The Identity Composition layer is now operationally connected to the authoritative Gold Core. Manual Review Queue entries no longer inherit generic match metadata. Queue coverage, case binding, metadata completeness, action mapping, confidence calibration, and zero-clearance safety are validated explicitly. The next benchmark must confirm 14 open Gold-Core cases, 14 queue entries, 100% binding, zero `matched` failure classes, and differentiated review actions.

@@ -5161,6 +5161,192 @@ def _build_identity_composition_engine(
     return compositions, slots, review, root_summary, priority_summary
 
 
+
+def _review_action_for_gold_case(failure_class: str, failure_domain: str, composition_status: str) -> tuple[str, str, str, str]:
+    """v0.9.5.156: map an authoritative Gold-Core class to one concrete review action."""
+    fc = normalize_text(failure_class).lower()
+    fd = normalize_text(failure_domain).lower()
+    status = normalize_text(composition_status).upper()
+    if status in {"UNKNOWN_PROTECTED", "NO_OBSERVED_IDENTITY"}:
+        return "CRITICAL", "REVIEW_MISSING_IDENTITY", "complete screenshot; uncropped row; OCR observation set; alternate crop or re-OCR", "HIGH"
+    if fc == "observed_text_confirmed" or "evidence" in fd and "conflict" in fd:
+        return "CRITICAL", "REVIEW_EVIDENCE_CONFLICT", "observed source characters; alignment operations; conflicting position evidence; source crops", "HIGH"
+    if fc == "crop_geometry_problem" or "crop" in fd or "geometry" in fd:
+        return "MAJOR", "REVIEW_CROP_GEOMETRY", "original screenshot; crop bounding box; neighboring row context; crop anchor diagnostics", "HIGH"
+    if fc == "vote_warning_gate_review" or "vote" in fd:
+        return "MAJOR", "REVIEW_VOTE_SELECTION", "candidate OCR votes; engine confidence; vote-selection rationale; source crops", "MEDIUM"
+    if fc == "mixed_local_and_nonlocal_blocker" or "mixed" in fd or "split" in fd:
+        return "MAJOR", "REVIEW_MIXED_SCRIPT", "script segmentation; token provenance; local/nonlocal split policy; display reconstruction", "MEDIUM"
+    if fc == "policy_nonlocal_script_display" or "script" in fd:
+        return "MAJOR", "REVIEW_SCRIPT_POLICY", "script segmentation; token provenance; policy decision; display reconstruction", "MEDIUM"
+    if fc == "local_glyph_solvable" or "glyph" in fd:
+        return "MAJOR", "REVIEW_LOCAL_GLYPH", "character crop; OCR candidates; vote consensus; provenance chain", "LOW"
+    return "BLOCKED", "REVIEW_CASE_BINDING", "authoritative Gold-Core case metadata and unique case binding", "HIGH"
+
+
+def _build_gold_core_bound_review_orchestration(
+    compositions: pd.DataFrame,
+    slots: pd.DataFrame,
+    legacy_review: pd.DataFrame,
+    gold_core_blockers: pd.DataFrame,
+    gold_core_resolution_plan: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XIII: bind Identity Composition to authoritative Gold-Core intelligence.
+
+    The orchestration layer is read-only. It cannot clear Gold Core, reconstruct
+    identity from Ground Truth, or mutate Operational Truth.
+    """
+    comp = compositions.copy()
+    slot_frame = slots.copy()
+    blockers = gold_core_blockers.copy()
+    resolution = gold_core_resolution_plan.copy()
+
+    def key_frame(df: pd.DataFrame) -> pd.DataFrame:
+        out = df.copy()
+        if out.empty:
+            return out
+        out["server"] = pd.to_numeric(out.get("server"), errors="coerce")
+        out["rank"] = pd.to_numeric(out.get("rank"), errors="coerce")
+        out["case_id"] = out.apply(lambda r: f"S{int(r['server'])}-R{int(r['rank'])}" if pd.notna(r.get('server')) and pd.notna(r.get('rank')) else "", axis=1)
+        return out
+
+    comp = key_frame(comp)
+    blockers = key_frame(blockers)
+    resolution = key_frame(resolution)
+
+    # Build one authoritative record per open blocker. Resolution-plan fields win;
+    # blocker fields fill classification gaps. Never use generic `matched` metadata.
+    auth_rows: list[dict[str, Any]] = []
+    for row in blockers.to_dict(orient="records"):
+        case_id = row.get("case_id", "")
+        candidates = resolution[resolution.get("case_id", pd.Series(dtype=str)).astype(str) == str(case_id)] if not resolution.empty else pd.DataFrame()
+        rr = candidates.iloc[0].to_dict() if len(candidates) == 1 else {}
+        def pick(*keys: str) -> Any:
+            for source in (rr, row):
+                for key in keys:
+                    value = source.get(key, "")
+                    if value is None or (isinstance(value, float) and pd.isna(value)):
+                        continue
+                    text = str(value).strip()
+                    if text and text.lower() != "nan" and text.lower() != "matched":
+                        return value
+            return ""
+        auth_rows.append({
+            "case_id": case_id, "server": row.get("server"), "rank": row.get("rank"),
+            "failure_class": pick("gold_core_failure_class", "failure_class"),
+            "failure_domain": pick("gold_core_failure_domain", "failure_domain"),
+            "fix_lane": pick("gold_core_fix_lane", "fix_lane", "gold_core_resolution_lane"),
+            "root_cause": pick("gold_core_resolution_root_cause", "root_cause", "gold_core_failure_domain"),
+            "root_cause_confidence": float(pd.to_numeric(pd.Series([pick("root_cause_confidence")]), errors="coerce").fillna(0.0).iloc[0]),
+            "recommendation": pick("gold_core_resolution_recommendation", "recommendation", "gold_core_next_safe_action"),
+            "recommendation_score": float(pd.to_numeric(pd.Series([pick("recommendation_score")]), errors="coerce").fillna(0.0).iloc[0]),
+            "resolution_action": pick("gold_core_resolution_action", "resolution_action"),
+            "elimination_action": pick("gold_core_elimination_action", "elimination_action"),
+            "case_status": pick("case_status") or "OPEN",
+            "blocker_status": "OPEN" if _bool_cell(row.get("gold_core_blocker", True)) else "CLOSED",
+            "classification_source": pick("classification_source") or "gold_core_blocker_report",
+        })
+    auth = pd.DataFrame(auth_rows)
+
+    binding_rows: list[dict[str, Any]] = []
+    queue_rows: list[dict[str, Any]] = []
+    confidence_rows: list[dict[str, Any]] = []
+    enriched_rows: list[dict[str, Any]] = []
+    for record in comp.to_dict(orient="records"):
+        case_id = record.get("case_id", "")
+        candidates = auth[auth.get("case_id", pd.Series(dtype=str)).astype(str) == str(case_id)] if not auth.empty else pd.DataFrame()
+        join_method = "case_id"
+        if len(candidates) != 1:
+            candidates = auth[(auth.get("server", pd.Series(dtype=float)) == record.get("server")) & (auth.get("rank", pd.Series(dtype=float)) == record.get("rank"))] if not auth.empty else pd.DataFrame()
+            join_method = "server_rank_fallback"
+        join_status = "BOUND" if len(candidates) == 1 else ("AMBIGUOUS" if len(candidates) > 1 else "MISSING")
+        binding_confidence = 1.0 if join_status == "BOUND" and join_method == "case_id" else (0.9 if join_status == "BOUND" else 0.0)
+        binding_rows.append({
+            "phase": "v0.9.5.156_gold_core_bound_review", "case_id": case_id,
+            "server": record.get("server"), "rank": record.get("rank"), "join_method": join_method,
+            "join_status": join_status, "candidate_count": len(candidates), "binding_confidence": binding_confidence,
+            "binding_error": "" if join_status == "BOUND" else f"CASE_BINDING_{join_status}",
+            "operational_truth_modified": False,
+        })
+        meta = candidates.iloc[0].to_dict() if len(candidates) == 1 else {
+            "failure_class": "CASE_BINDING_ERROR", "failure_domain": "review_orchestration",
+            "fix_lane": "case_binding", "root_cause": f"case_binding_{join_status.lower()}",
+            "root_cause_confidence": 0.0, "recommendation": "Repair unique Gold-Core case binding before review.",
+            "recommendation_score": 0.0, "resolution_action": "REVIEW_CASE_BINDING",
+            "elimination_action": "keep_blocked", "case_status": "OPEN", "blocker_status": "OPEN",
+            "classification_source": "binding_guard",
+        }
+        status = record.get("identity_composition_status", "")
+        priority, action, required, complexity = _review_action_for_gold_case(meta.get("failure_class", ""), meta.get("failure_domain", ""), status)
+
+        case_slots = slot_frame[(pd.to_numeric(slot_frame.get("server"), errors="coerce") == record.get("server")) & (pd.to_numeric(slot_frame.get("rank"), errors="coerce") == record.get("rank"))] if not slot_frame.empty else pd.DataFrame()
+        prov_conf = float(case_slots.get("component_provenance_complete", pd.Series(dtype=bool)).fillna(False).astype(bool).mean()) if not case_slots.empty else 0.0
+        token_conf = float(pd.to_numeric(case_slots.get("token_confidence", pd.Series(dtype=float)), errors="coerce").dropna().mean()) if not case_slots.empty and pd.to_numeric(case_slots.get("token_confidence", pd.Series(dtype=float)), errors="coerce").notna().any() else 0.0
+        unknown_penalty = 1.0 if status == "UNKNOWN_PROTECTED" else 0.0
+        script_penalty = 0.15 if not case_slots.empty and (case_slots.get("identity_slot", pd.Series(dtype=str)).astype(str) == "SCRIPT_BLOCK").any() else 0.0
+        fragmentation_penalty = min(0.25, max(0, int(record.get("slot_count", 0) or 0) - 2) * 0.04)
+        semantic_conf = round(max(0.0, min(1.0, float(record.get("identity_confidence", 0.0) or 0.0) - unknown_penalty - script_penalty - fragmentation_penalty)), 4)
+        observation_conf = round(max(0.0, min(1.0, token_conf)), 4)
+        review_conf = round(max(0.0, min(1.0, binding_confidence * 0.45 + float(meta.get("root_cause_confidence", 0.0) or 0.0) * 0.35 + (1.0 if action != "REVIEW_CASE_BINDING" else 0.0) * 0.20)), 4)
+        aggregate = round(prov_conf * 0.25 + observation_conf * 0.25 + semantic_conf * 0.30 + review_conf * 0.20, 4)
+        confidence_rows.append({
+            "phase": "v0.9.5.156_confidence_calibration", "case_id": case_id, "server": record.get("server"), "rank": record.get("rank"),
+            "provenance_confidence": round(prov_conf,4), "observation_confidence": observation_conf,
+            "semantic_identity_confidence": semantic_conf, "review_confidence": review_conf,
+            "identity_confidence": aggregate, "ground_truth_used_as_evidence": False,
+            "operational_truth_modified": False,
+        })
+        enriched = {**record, **{k: meta.get(k, "") for k in ["failure_class","failure_domain","fix_lane","root_cause","root_cause_confidence","recommendation","recommendation_score","resolution_action","elimination_action","case_status","blocker_status","classification_source"]}}
+        enriched.update({"phase":"v0.9.5.156_gold_core_bound_review","case_binding_status":join_status,"case_binding_method":join_method,"identity_confidence":aggregate,"review_confidence":review_conf})
+        enriched_rows.append(enriched)
+        queue_rows.append({
+            "phase":"v0.9.5.156_manual_review_queue", "case_id":case_id, "server":record.get("server"), "rank":record.get("rank"),
+            "priority":priority, "review_action":action, "recommended_action":action,
+            "required_evidence":required, "estimated_review_complexity":complexity,
+            "identity_composition_status":status, "identity_confidence":aggregate, "review_confidence":review_conf,
+            "observed_identity_text":record.get("observed_identity_text", ""), "case_binding_status":join_status,
+            **{k: meta.get(k, "") for k in ["failure_class","failure_domain","fix_lane","root_cause","root_cause_confidence","recommendation","recommendation_score","resolution_action","elimination_action","case_status","blocker_status","classification_source"]},
+            "review_queue_authoritative":False,"gold_clearance_created":False,"ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+        })
+
+    enriched_comp = pd.DataFrame(enriched_rows)
+    queue = pd.DataFrame(queue_rows)
+    bindings = pd.DataFrame(binding_rows)
+    confidence = pd.DataFrame(confidence_rows)
+    if not queue.empty:
+        order={"CRITICAL":0,"MAJOR":1,"MINOR":2,"BLOCKED":9}
+        queue["_order"] = queue["priority"].map(order).fillna(9)
+        queue=queue.sort_values(["_order","server","rank"],kind="stable").drop(columns="_order").reset_index(drop=True)
+        priority_summary=queue.groupby(["priority","review_action"],dropna=False).agg(cases=("case_id","count")).reset_index()
+        root_summary=queue.groupby(["failure_class","failure_domain","fix_lane","root_cause","review_action"],dropna=False).agg(cases=("case_id","count"),avg_review_confidence=("review_confidence","mean")).reset_index()
+    else:
+        priority_summary=pd.DataFrame(columns=["priority","review_action","cases"])
+        root_summary=pd.DataFrame(columns=["failure_class","failure_domain","fix_lane","root_cause","review_action","cases","avg_review_confidence"])
+
+    open_cases=len(auth)
+    validation_rows=[
+        {"guard":"queue_coverage","expected":open_cases,"actual":len(queue),"status":"PASS" if len(queue)==open_cases else "FAIL"},
+        {"guard":"unique_case_binding","expected":open_cases,"actual":int((bindings.get('join_status',pd.Series(dtype=str))=='BOUND').sum()),"status":"PASS" if not bindings.empty and (bindings['join_status']=='BOUND').all() else "FAIL"},
+        {"guard":"failure_class_not_matched","expected":0,"actual":int(queue.get('failure_class',pd.Series(dtype=str)).astype(str).str.lower().eq('matched').sum()),"status":"PASS" if queue.empty or not queue['failure_class'].astype(str).str.lower().eq('matched').any() else "FAIL"},
+        {"guard":"root_cause_complete","expected":open_cases,"actual":int(queue.get('root_cause',pd.Series(dtype=str)).astype(str).str.strip().ne('').sum()),"status":"PASS" if queue.empty or queue['root_cause'].astype(str).str.strip().ne('').all() else "FAIL"},
+        {"guard":"recommendation_complete","expected":open_cases,"actual":int(queue.get('recommendation',pd.Series(dtype=str)).astype(str).str.strip().ne('').sum()),"status":"PASS" if queue.empty or queue['recommendation'].astype(str).str.strip().ne('').all() else "FAIL"},
+        {"guard":"concrete_review_action","expected":open_cases,"actual":int(queue.get('review_action',pd.Series(dtype=str)).astype(str).ne('REVIEW_IDENTITY_COMPOSITION').sum()) if not queue.empty else 0,"status":"PASS" if queue.empty or not queue['review_action'].astype(str).eq('REVIEW_IDENTITY_COMPOSITION').any() else "FAIL"},
+        {"guard":"gold_clearance_created","expected":0,"actual":int(queue.get('gold_clearance_created',pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),"status":"PASS" if queue.empty or not queue['gold_clearance_created'].fillna(False).astype(bool).any() else "FAIL"},
+    ]
+    validation=pd.DataFrame(validation_rows)
+    orchestration_summary=pd.DataFrame([{
+        "phase":"v0.9.5.156_gold_core_bound_review", "open_gold_core_cases":open_cases,"review_queue_cases":len(queue),
+        "queue_coverage_percent":round((len(queue)/open_cases*100) if open_cases else 100.0,2),
+        "case_binding_success_percent":round(((bindings['join_status']=='BOUND').mean()*100) if not bindings.empty else 100.0,2),
+        "metadata_complete_cases":int((queue.get('root_cause',pd.Series(dtype=str)).astype(str).str.strip().ne('') & queue.get('recommendation',pd.Series(dtype=str)).astype(str).str.strip().ne('')).sum()) if not queue.empty else 0,
+        "critical_review_cases":int((queue.get('priority',pd.Series(dtype=str))=='CRITICAL').sum()),
+        "major_review_cases":int((queue.get('priority',pd.Series(dtype=str))=='MAJOR').sum()),
+        "minor_review_cases":int((queue.get('priority',pd.Series(dtype=str))=='MINOR').sum()),
+        "unclassified_review_cases":int((queue.get('priority',pd.Series(dtype=str))=='BLOCKED').sum()),
+        "review_authoritative":False,"gold_authoritative":False,"ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+    }])
+    return enriched_comp, queue, root_summary, priority_summary, bindings, confidence, validation, orchestration_summary
+
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
     def pick(*keys: str) -> str:
@@ -5966,6 +6152,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     identity_compositions, identity_slots, manual_review_queue, identity_root_cause_summary, identity_priority_summary = _build_identity_composition_engine(
         identity_graph_cases, identity_graph_characters, identity_graph_tokens, identity_graph_components
     )
+    identity_compositions, manual_review_queue, identity_root_cause_summary, identity_priority_summary, review_case_bindings, review_confidence_calibration, review_validation, review_orchestration_summary = _build_gold_core_bound_review_orchestration(
+        identity_compositions, identity_slots, manual_review_queue, gold_core_blocker_report, gold_core_resolution_plan
+    )
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6048,6 +6237,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "manual_review_queue": manual_review_queue.to_dict(orient="records"),
         "identity_root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
         "identity_priority_summary": identity_priority_summary.to_dict(orient="records"),
+        "review_orchestration_summary": review_orchestration_summary.to_dict(orient="records"),
+        "review_case_bindings": review_case_bindings.to_dict(orient="records"),
+        "review_confidence_calibration": review_confidence_calibration.to_dict(orient="records"),
+        "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
         "position_evidence_bridge_rejected": position_bridge_rejected.to_dict(orient="records"),
@@ -6161,6 +6354,33 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
         "guardrails": {"review_queue_authoritative": False, "gold_clearance_created": False},
     }), ensure_ascii=False, indent=2), encoding="utf-8")
+    review_orchestration_json_path = output_dir / "review_orchestration_report.json"
+    review_orchestration_json_path.write_text(json.dumps(_json_safe({
+        "phase": "v0.9.5.156_gold_core_bound_review",
+        "summary": review_orchestration_summary.to_dict(orient="records"),
+        "case_binding": review_case_bindings.to_dict(orient="records"),
+        "confidence": review_confidence_calibration.to_dict(orient="records"),
+        "validation": review_validation.to_dict(orient="records"),
+        "priority_summary": identity_priority_summary.to_dict(orient="records"),
+        "root_cause_summary": identity_root_cause_summary.to_dict(orient="records"),
+        "guardrails": {"review_authoritative": False, "gold_clearance_created": False, "ground_truth_used_as_evidence": False, "operational_truth_modified": False},
+    }), ensure_ascii=False, indent=2), encoding="utf-8")
+    review_orchestration_md_path = output_dir / "review_orchestration_summary.md"
+    orch = review_orchestration_summary.iloc[0].to_dict() if not review_orchestration_summary.empty else {}
+    review_orchestration_md_path.write_text("\n".join([
+        "# Gold-Core-Bound Review Orchestration", "", "Version: v0.9.5.156", "",
+        f"- Open Gold Core cases: {orch.get('open_gold_core_cases', 0)}",
+        f"- Review queue cases: {orch.get('review_queue_cases', 0)}",
+        f"- Queue coverage: {orch.get('queue_coverage_percent', 0)}%",
+        f"- Case-binding success: {orch.get('case_binding_success_percent', 0)}%",
+        f"- Metadata-complete cases: {orch.get('metadata_complete_cases', 0)}", "",
+        "The orchestration layer is read-only and cannot clear Gold Core or modify Operational Truth.",
+    ]), encoding="utf-8")
+    manual_review_md_path = output_dir / "manual_review_queue_summary.md"
+    qlines=["# Manual Review Queue", "", "Version: v0.9.5.156", ""]
+    for item in identity_priority_summary.to_dict(orient="records"):
+        qlines.append(f"- `{item.get('priority')}` / `{item.get('review_action')}`: {item.get('cases')} cases")
+    manual_review_md_path.write_text("\n".join(qlines), encoding="utf-8")
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
     gold_core_json_path = output_dir / "gold_core_blocker_report.json"
@@ -6253,6 +6473,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(identity_slots).to_excel(writer, sheet_name="identity_slots", index=False)
         _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="manual_review_queue", index=False)
         _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="identity_root_causes", index=False)
+        _sanitize_frame(review_orchestration_summary).to_excel(writer, sheet_name="review_orch_summary", index=False)
+        _sanitize_frame(review_case_bindings).to_excel(writer, sheet_name="review_case_binding", index=False)
+        _sanitize_frame(review_confidence_calibration).to_excel(writer, sheet_name="review_confidence", index=False)
+        _sanitize_frame(review_validation).to_excel(writer, sheet_name="review_validation", index=False)
         _sanitize_frame(position_bridge_summary).to_excel(writer, sheet_name="position_bridge_sum", index=False)
         _sanitize_frame(position_bridge_cases).to_excel(writer, sheet_name="position_bridge_cases", index=False)
         _sanitize_frame(position_bridge_positions).to_excel(writer, sheet_name="position_bridge_pos", index=False)
@@ -6322,6 +6546,19 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="queue", index=False)
         _sanitize_frame(identity_priority_summary).to_excel(writer, sheet_name="priorities", index=False)
         _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="root_causes", index=False)
+        _sanitize_frame(review_case_bindings).to_excel(writer, sheet_name="case_binding", index=False)
+        _sanitize_frame(review_confidence_calibration).to_excel(writer, sheet_name="confidence", index=False)
+        _sanitize_frame(review_validation).to_excel(writer, sheet_name="validation", index=False)
+
+    review_orchestration_xlsx_path = output_dir / "review_orchestration_report.xlsx"
+    with pd.ExcelWriter(review_orchestration_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(review_orchestration_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="queue", index=False)
+        _sanitize_frame(review_case_bindings).to_excel(writer, sheet_name="case_binding", index=False)
+        _sanitize_frame(review_confidence_calibration).to_excel(writer, sheet_name="confidence", index=False)
+        _sanitize_frame(identity_root_cause_summary).to_excel(writer, sheet_name="root_causes", index=False)
+        _sanitize_frame(identity_priority_summary).to_excel(writer, sheet_name="priorities", index=False)
+        _sanitize_frame(review_validation).to_excel(writer, sheet_name="validation", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -6416,6 +6653,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Identity Composition Summary: {identity_composition_md_path}")
     print(f"Manual Review Queue JSON: {manual_review_json_path}")
     print(f"Manual Review Queue XLSX: {manual_review_xlsx_path}")
+    print(f"Manual Review Queue Summary: {manual_review_md_path}")
+    print(f"Review Orchestration JSON: {review_orchestration_json_path}")
+    print(f"Review Orchestration XLSX: {review_orchestration_xlsx_path}")
+    print(f"Review Orchestration Summary: {review_orchestration_md_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")

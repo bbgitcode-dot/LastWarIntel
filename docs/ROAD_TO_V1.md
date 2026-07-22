@@ -144,3 +144,7 @@ Sentinel now carries source provenance through explicit edit operations rather t
 - Gold Core priority and root-cause aggregation
 
 Next recommended milestone: use the `.155` benchmark to select one concrete high-yield Gold Core remediation lane (crop geometry, vote conflict, mixed-script policy, or local glyph acquisition) and measure actual blocker reduction without weakening DataGuard.
+
+## v0.9.5.156 milestone completed
+
+Gold-Core-bound Review Orchestration closes the diagnostic loop from observed identity to actionable human review. Remaining work should focus on benchmark calibration and actual blocker elimination rather than adding parallel diagnostic layers.

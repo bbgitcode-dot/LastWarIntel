@@ -2054,3 +2054,18 @@ Validation:
 - 127 relevant regression tests passed.
 - 1 pre-existing alignment-guard assertion remains reproducible in the unmodified v0.9.5.154 baseline.
 - Repository-wide collection still contains pre-existing shell-command files stored as `.py` and obsolete multilingual OCR configuration imports.
+
+## v0.9.5.156 – Strike XIII: Gold-Core-Bound Review Orchestration
+
+- Bound every Identity Composition case to exactly one authoritative open Gold-Core case using stable `case_id`, with a guarded `server + rank` fallback.
+- Added visible `CASE_BINDING_ERROR` handling for missing or ambiguous joins; no silent best-effort binding is allowed.
+- Replaced generic `matched` metadata in the Manual Review Queue with authoritative Gold-Core failure class, domain, fix lane, root cause, recommendation, resolution action, and blocker status.
+- Added concrete review actions: `REVIEW_MISSING_IDENTITY`, `REVIEW_EVIDENCE_CONFLICT`, `REVIEW_CROP_GEOMETRY`, `REVIEW_VOTE_SELECTION`, `REVIEW_MIXED_SCRIPT`, `REVIEW_SCRIPT_POLICY`, `REVIEW_LOCAL_GLYPH`, and `REVIEW_CASE_BINDING`.
+- Added provenance, observation, semantic identity, review, and aggregate confidence dimensions.
+- Added validation guards for queue coverage, unique case binding, metadata completeness, concrete actions, and zero Gold clearance.
+- Added `review_orchestration_report.json/xlsx`, `review_orchestration_summary.md`, and `manual_review_queue_summary.md`.
+- Extended the main validation report and workbooks with orchestration summary, case binding, confidence calibration, and validation sheets.
+- Preserved all DataGuard invariants: no Ground Truth as evidence, no Operational Truth mutation, no automatic Gold-Core clearance.
+
+Validation:
+- Strike `.151–.156` targeted regression suite passed.

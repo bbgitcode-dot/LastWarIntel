@@ -1,3 +1,1 @@
-version: 0.9.5.155
-commit: feat(identity): compose provenance-bound player identity and review queue
-tag: v0.9.5.155
+feat(review): bind identity composition to authoritative gold-core orchestration
