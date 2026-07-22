@@ -1,4 +1,19 @@
-# Gold Core Zero Plan — v0.9.5.148
+# Gold Core Zero Plan
+
+## Current phase: Evidence Provenance
+
+v0.9.5.150 adds the evidence chain required to select the next elimination strike from measured root causes rather than assumptions.
+
+Decision sequence:
+
+1. Run the authoritative benchmark.
+2. Count blocked positions by first failed stage.
+3. Isolate the five `vote_warning_gate_review` cases.
+4. Select one narrow technical lane with measurable elimination potential.
+5. Preserve Recall 100%, Missing 0, Bad Matches 0, UNKNOWN protection, and unchanged Operational Truth.
+
+Gold Core Zero may proceed only through screenshot-bound proof. Ground Truth must never become an acquisition source.
+
 
 ## Benchmark decision
 

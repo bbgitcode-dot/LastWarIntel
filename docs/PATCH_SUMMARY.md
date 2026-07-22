@@ -1,4 +1,25 @@
-# Patch Summary — v0.9.5.149
+# Patch Summary
+
+## v0.9.5.150
+
+### Strike VII — Position-Bound Evidence Provenance
+
+This sprint extends v0.9.5.149 from position status to a full processing-chain diagnosis. For every non-confirmed character position Sentinel records the available screenshot and crop provenance, OCR output, vote state, reconstruction result, Promotion Guard consequence, the first failed stage, and the next evidence action.
+
+New artifacts:
+
+- `evidence_provenance_report.json`
+- `evidence_provenance_report.xlsx`
+- `evidence_provenance_summary.md`
+
+Safety boundaries:
+
+- no policy relaxation;
+- no automatic clearance;
+- no Ground Truth character acquisition;
+- no UNKNOWN completion;
+- no Operational Truth modification.
+
 
 ## Purpose
 

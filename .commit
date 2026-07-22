@@ -1,4 +1,4 @@
-version: 0.9.5.149
-commit: feat(gold-core): add position-bound evidence intelligence for blocker diagnosis
-tag: v0.9.5.149
-notes: Adds read-only Gold-Core Character Position Evidence Maps, per-case evidence reports, and position heatmaps. No Promotion Guard, clearance policy, Ground Truth, snapshot, export, or Operational Truth is changed.
+version: 0.9.5.150
+commit: feat(gold-core): add position-bound evidence provenance and failure-stage diagnostics
+tag: v0.9.5.150
+notes: Adds read-only Gold-Core evidence provenance from screenshot and crop through OCR, vote, reconstruction, and Promotion Guard. No clearance policy, Ground Truth, snapshot, export, or Operational Truth is changed.

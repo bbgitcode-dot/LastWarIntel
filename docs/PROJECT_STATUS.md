@@ -1,4 +1,13 @@
-# Project Status — Sentinel v0.9.5.148
+# Project Status
+
+## v0.9.5.150 — Position-Bound Evidence Provenance
+
+The Gold-Core phase remains focused on eliminating the final blockers without reducing Gold Fidelity. v0.9.5.149 established which character positions block exact name proof. v0.9.5.150 now establishes where each position loses evidence in the processing chain.
+
+For every blocked position Sentinel can distinguish the first failed stage among character acquisition, crop geometry, OCR observation, vote resolution, and evidence reconstruction. The downstream Promotion Guard remains visible as the final consumer of incomplete proof, not as the assumed root cause.
+
+The sprint is diagnostic only. Benchmark truth must determine whether the dominant next lane is crop repair, targeted acquisition, vote evidence, or conflict resolution.
+
 
 **Release type:** Documentation consolidation after the v0.9.5.147 benchmark.
 

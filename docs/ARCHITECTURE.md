@@ -1,3 +1,13 @@
+# Architecture
+
+## v0.9.5.150 evidence-provenance layer
+
+After the Gold-Core Character Position Evidence Map, Sentinel builds a read-only provenance graph for every blocked character position:
+
+Screenshot reference → Crop geometry → OCR observation → Vote resolution → Evidence reconstruction → Promotion Guard
+
+The layer identifies the first failed stage while preserving the full downstream consequence chain. It emits diagnostic reports only and cannot alter source rows, reconstructed display values, clearance decisions, Ground Truth, or Operational Truth.
+
 # Sentinel Architecture — v0.9.5.148
 
 ```text

@@ -1,4 +1,14 @@
-# Release Notes — v0.9.5.149
+# Release Notes
+
+## v0.9.5.150 — Strike VII: Position-Bound Evidence Provenance
+
+- Added a complete read-only provenance chain for every blocked Gold-Core character position.
+- Traces screenshot reference, crop geometry, OCR observation, vote resolution, evidence reconstruction, and Promotion Guard outcome.
+- Identifies the first failed stage and a concrete evidence-acquisition action per position.
+- Added `evidence_provenance_report.json`, `evidence_provenance_report.xlsx`, and `evidence_provenance_summary.md`.
+- Ground Truth remains comparison context only; UNKNOWN, conflicts, and incomplete evidence remain protected.
+- No Gold-Core clearance or Operational Truth behavior changed.
+
 
 ## Strike VI — Position-Bound Evidence Intelligence
 
