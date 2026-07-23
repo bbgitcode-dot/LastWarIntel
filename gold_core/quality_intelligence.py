@@ -230,7 +230,9 @@ def build_gold_core_quality_intelligence(
             ["priority", "avg_recommendation_score", "cases"], ascending=[True, False, False]
         ).reset_index(drop=True)
 
-    mem_path = output_dir / "gold_core_failure_memory.json"
+    state_dir = output_dir / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    mem_path = state_dir / "gold_core_failure_memory.json"
     old: dict[str, dict[str, Any]] = {}
     if mem_path.exists():
         try:
@@ -259,12 +261,17 @@ def build_gold_core_quality_intelligence(
             "regression_required": bool(row["resolved"]),
         })
     memory_df = pd.DataFrame(memory)
-    mem_path.write_text(json.dumps({
+    memory_payload = json.dumps({
         "phase": PHASE,
         "updated_at": now,
         "operational_truth_modified": False,
         "cases": memory,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }, ensure_ascii=False, indent=2)
+    mem_path.write_text(memory_payload, encoding="utf-8")
+    # Backward-compatible transient copy for direct library consumers. The .161
+    # report publisher removes this root copy after consolidating normal runs.
+    legacy_mem_path = output_dir / "gold_core_failure_memory.json"
+    legacy_mem_path.write_text(memory_payload, encoding="utf-8")
     return summary, details, memory_df
 
 
@@ -298,7 +305,7 @@ def build_gold_core_case_explorer(
         "ocr_evidence": "ocr_evidence_report.json",
         "display_reconstruction": "display_reconstruction_report.json",
         "analytics": "gold_core_analytics_report.json",
-        "failure_memory": "gold_core_failure_memory.json",
+        "failure_memory": "../state/gold_core_failure_memory.json",
     }
     for key, filename in report_links.items():
         cases[f"report_{key}"] = filename

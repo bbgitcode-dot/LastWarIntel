@@ -188,3 +188,7 @@ The Identity Composition layer is now operationally connected to the authoritati
 ## v0.9.5.158 — Classification Stability established
 
 Strike XV protects Gold-Core diagnosis from silent cross-run drift. Each open case now carries deterministic evidence, classification, and decision fingerprints. The validator persists a comparison state, reports unexplained changes as CRITICAL, calculates evidence coverage against action-specific requirements, and exposes score-factor decompositions and qualitative labels. Resolution execution remains out of scope until stability history is proven across repeated identical benchmark runs.
+
+## Current Sprint — v0.9.5.161
+
+Reporting Architecture Consolidation is implemented. Sentinel now treats benchmark folders as input/runtime territory and publishes consolidated outputs beneath the root `/reports` tree. Stability history remains durable through state migration. Resolution simulation now distinguishes primary strategy from prerequisite action.

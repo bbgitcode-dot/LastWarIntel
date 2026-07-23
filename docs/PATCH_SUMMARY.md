@@ -729,3 +729,7 @@ Strike XIII converts the v0.9.5.155 Identity Composition output into a Gold-Core
 ## v0.9.5.158
 
 Strike XV adds a deterministic Classification Stability Guard, persisted case fingerprints, change auditing, action-specific evidence coverage, score-factor decomposition, and confidence labels. No automatic fix, Gold-Core clearance, or Operational Truth mutation is permitted.
+
+## v0.9.5.161
+
+Strike XVIII restructures Sentinel reporting around the root `/reports` directory. The benchmark directory is now reserved for benchmark inputs, runtime data and logs. Durable state is migrated to `/reports/state`, report duplication is reduced through consolidated workbooks, and the rank-19 simulator result is represented as a prerequisite action under the existing primary strategy rather than as a conflicting strategy.

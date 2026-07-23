@@ -10,8 +10,9 @@ Usage:
         --ocr-output output/lastwar_export.xlsx
 
 Outputs:
-    benchmarks/ground_truth_validation_report.xlsx
-    benchmarks/ground_truth_validation_report.json
+    reports/executive/SENTINEL_EXECUTIVE_REPORT.xlsx
+    reports/operations/SENTINEL_RESOLUTION_WORKBENCH.xlsx
+    reports/intelligence/SENTINEL_INTELLIGENCE_REPORT.xlsx
 """
 
 from __future__ import annotations
@@ -45,7 +46,8 @@ from parser.evidence_resolver import find_same_server_evidence_candidate
 from inference.context_engine import apply_contextual_inference
 
 
-DEFAULT_OUTPUT_DIR = Path("benchmarks")
+DEFAULT_OUTPUT_DIR = Path("reports")
+RELEASE_VERSION = "0.9.5.161"
 
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 ILLEGAL_EXCEL_CHARS_RE = re.compile(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]")
@@ -5885,7 +5887,7 @@ def _build_resolution_simulator(
             {"guard":"simulation_cases_covered","expected":0,"actual":0,"status":"PASS"},
             {"guard":"simulation_is_read_only","expected":0,"actual":0,"status":"PASS"},
         ])
-        summary=pd.DataFrame([{"phase":"v0.9.5.160_resolution_simulator","cases":0,"options":0,"recommended_options":0,"automatic_fix_executed":0,"gold_clearance_created":0}])
+        summary=pd.DataFrame([{"phase":"v0.9.5.161_resolution_simulator","cases":0,"options":0,"recommended_options":0,"automatic_fix_executed":0,"gold_clearance_created":0}])
         return empty, empty, validation, summary
 
     option_rows=[]
@@ -5909,7 +5911,7 @@ def _build_resolution_simulator(
             )),4)
             safety="LOW" if risk<0.15 else ("MODERATE" if risk<0.30 else "HIGH")
             rec={
-                "phase":"v0.9.5.160_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+                "phase":"v0.9.5.161_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
                 "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
                 "candidate_strategy":opt["option"],"simulation_lane":opt["lane"],
                 "expected_resolution_gain":round(resolution_gain,4),"expected_information_gain":round(information_gain,4),
@@ -5926,10 +5928,13 @@ def _build_resolution_simulator(
             option_rows.append(rec)
         best=local[0]
         case_rows.append({
-            "phase":"v0.9.5.160_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+            "phase":"v0.9.5.161_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
             "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
             "current_readiness":row.get("resolution_readiness", ""),"current_strategy":row.get("resolution_strategy", ""),
             "recommended_simulated_strategy":best["candidate_strategy"],"recommended_lane":best["simulation_lane"],
+            "primary_strategy":row.get("resolution_strategy", ""),
+            "prerequisite_action":best["candidate_strategy"] if best["candidate_strategy"] != str(row.get("resolution_strategy", "")) else "",
+            "strategy_relationship":"PREREQUISITE" if best["candidate_strategy"] != str(row.get("resolution_strategy", "")) else "ALIGNED",
             "expected_resolution_gain":best["expected_resolution_gain"],"expected_information_gain":best["expected_information_gain"],
             "expected_risk":best["expected_risk"],"risk_label":best["risk_label"],
             "expected_utility":best["expected_utility"],"strategy_alignment":best["candidate_strategy"]==str(row.get("resolution_strategy", "")),
@@ -5947,7 +5952,7 @@ def _build_resolution_simulator(
         {"guard":"ground_truth_not_evidence","expected":0,"actual":int(options_df["ground_truth_used_as_evidence"].astype(bool).sum()),"status":"PASS"},
     ])
     summary=pd.DataFrame([{
-        "phase":"v0.9.5.160_resolution_simulator","cases":len(cases_df),"options":len(options_df),
+        "phase":"v0.9.5.161_resolution_simulator","cases":len(cases_df),"options":len(options_df),
         "recommended_options":int(options_df["recommended_option"].sum()),
         "strategy_alignment_cases":int(cases_df["strategy_alignment"].sum()),
         "average_expected_resolution_gain":round(float(cases_df["expected_resolution_gain"].mean()),4),
@@ -6769,14 +6774,16 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     resolution_readiness_cases, resolution_readiness_breakdown, resolution_readiness_validation, resolution_readiness_summary = _build_resolution_readiness_intelligence(
         manual_review_queue, review_case_bindings, review_confidence_calibration
     )
+    state_dir = output_dir / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
     classification_stability_cases, evidence_coverage_rows, score_decomposition_rows, classification_stability_validation, classification_stability_summary = _build_classification_stability_and_coverage(
-        resolution_readiness_cases, output_dir
+        resolution_readiness_cases, state_dir
     )
     if not classification_stability_cases.empty:
         resolution_readiness_cases = classification_stability_cases.copy()
         manual_review_queue = classification_stability_cases.copy()
     decision_history_rows, stability_timeline_rows, drift_analysis_rows, regression_dashboard_rows, stability_history_validation, stability_history_summary = _build_stability_verification_history(
-        classification_stability_cases, output_dir
+        classification_stability_cases, state_dir
     )
     resolution_simulation_cases, resolution_simulation_options, resolution_simulation_validation, resolution_simulation_summary = _build_resolution_simulator(
         resolution_readiness_cases
@@ -6796,6 +6803,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     )
 
     json_payload = {
+        "release_version": RELEASE_VERSION,
+        "component_version": "v0.9.5.161_report_architecture",
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
         "failure_summary": failure_summary.to_dict(orient="records"),
@@ -7068,7 +7077,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     sh = stability_history_summary.iloc[0].to_dict() if not stability_history_summary.empty else {}
     decision_history_md_path.write_text("\n".join(["# Decision History", "", "Release version: v0.9.5.159", "", f"- Run ID: {sh.get('run_id','')}", f"- Current cases: {sh.get('cases',0)}", f"- History entries: {sh.get('history_entries',0)}", f"- Recorded runs: {sh.get('runs',0)}", f"- Unexplained drifts: {sh.get('unexplained_drifts',0)}", "", "History is diagnostic, append-only and does not modify Operational Truth."]),encoding="utf-8")
     resolution_simulator_json_path = output_dir / "resolution_simulator_report.json"
-    resolution_simulator_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.160_resolution_simulator","summary":resolution_simulation_summary.to_dict(orient="records"),"cases":resolution_simulation_cases.to_dict(orient="records"),"options":resolution_simulation_options.to_dict(orient="records"),"validation":resolution_simulation_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    resolution_simulator_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.161_resolution_simulator","summary":resolution_simulation_summary.to_dict(orient="records"),"cases":resolution_simulation_cases.to_dict(orient="records"),"options":resolution_simulation_options.to_dict(orient="records"),"validation":resolution_simulation_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
     resolution_simulator_md_path = output_dir / "resolution_simulator_summary.md"
     rs = resolution_simulation_summary.iloc[0].to_dict() if not resolution_simulation_summary.empty else {}
     resolution_simulator_md_path.write_text("\n".join(["# Resolution Simulator", "", "Release version: v0.9.5.160", "", f"- Cases: {rs.get('cases',0)}", f"- Simulated options: {rs.get('options',0)}", f"- Recommended options: {rs.get('recommended_options',0)}", f"- Strategy alignment cases: {rs.get('strategy_alignment_cases',0)}", f"- Average expected resolution gain: {rs.get('average_expected_resolution_gain',0)}", f"- Average expected information gain: {rs.get('average_expected_information_gain',0)}", f"- Average expected risk: {rs.get('average_expected_risk',0)}", "", "All outcomes are simulated. No fix, clearance, Ground Truth substitution, or Operational Truth mutation is executed."]),encoding="utf-8")
@@ -7376,6 +7385,35 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(runtime_phase_df).to_excel(writer, sheet_name="phases", index=False)
         _sanitize_frame(pd.DataFrame(runtime_payload.get("character_reocr_groups", []))).to_excel(writer, sheet_name="reocr_groups", index=False)
 
+    if output_dir.resolve() == DEFAULT_OUTPUT_DIR.resolve():
+        _publish_report_architecture(
+            output_dir, json_payload=json_payload, summary_rows=summary_rows,
+            regression_dashboard_rows=regression_dashboard_rows,
+            resolution_readiness_summary=resolution_readiness_summary,
+            resolution_readiness_cases=resolution_readiness_cases,
+            resolution_simulation_summary=resolution_simulation_summary,
+            resolution_simulation_cases=resolution_simulation_cases,
+            resolution_simulation_options=resolution_simulation_options,
+            resolution_simulation_validation=resolution_simulation_validation,
+            manual_review_queue=manual_review_queue,
+            gold_core_case_explorer=gold_core_case_explorer,
+            gold_core_prioritized_actions=gold_core_prioritized_actions,
+            classification_stability_cases=classification_stability_cases,
+            decision_history_rows=decision_history_rows,
+            stability_timeline_rows=stability_timeline_rows,
+            drift_analysis_rows=drift_analysis_rows,
+            evidence_coverage_rows=evidence_coverage_rows,
+            score_decomposition_rows=score_decomposition_rows,
+            review_case_bindings=review_case_bindings,
+            review_confidence_calibration=review_confidence_calibration,
+            identity_compositions=identity_compositions,
+            identity_slots=identity_slots,
+            identity_graph_cases=identity_graph_cases,
+            evidence_provenance_cases=evidence_provenance_cases,
+            position_bridge_cases=position_bridge_cases,
+            runtime_payload=runtime_payload, runtime_phase_df=runtime_phase_df,
+        )
+
     print("\n===== GROUND TRUTH VALIDATION SUMMARY =====")
     print(pd.DataFrame(summary_rows).to_string(index=False))
     print("\nCategory summary:")
@@ -7486,6 +7524,180 @@ def _discover_screenshots_dir(explicit_value: str | None, ocr_output_path: Path)
             return Path(temp_dir.name), temp_dir, "zip"
     return None, None, "not_found"
 
+
+def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, Any],
+                                 summary_rows: list[dict[str, Any]],
+                                 regression_dashboard_rows: pd.DataFrame,
+                                 resolution_readiness_summary: pd.DataFrame,
+                                 resolution_readiness_cases: pd.DataFrame,
+                                 resolution_simulation_summary: pd.DataFrame,
+                                 resolution_simulation_cases: pd.DataFrame,
+                                 resolution_simulation_options: pd.DataFrame,
+                                 resolution_simulation_validation: pd.DataFrame,
+                                 manual_review_queue: pd.DataFrame,
+                                 gold_core_case_explorer: pd.DataFrame,
+                                 gold_core_prioritized_actions: pd.DataFrame,
+                                 classification_stability_cases: pd.DataFrame,
+                                 decision_history_rows: pd.DataFrame,
+                                 stability_timeline_rows: pd.DataFrame,
+                                 drift_analysis_rows: pd.DataFrame,
+                                 evidence_coverage_rows: pd.DataFrame,
+                                 score_decomposition_rows: pd.DataFrame,
+                                 review_case_bindings: pd.DataFrame,
+                                 review_confidence_calibration: pd.DataFrame,
+                                 identity_compositions: pd.DataFrame,
+                                 identity_slots: pd.DataFrame,
+                                 identity_graph_cases: pd.DataFrame,
+                                 evidence_provenance_cases: pd.DataFrame,
+                                 position_bridge_cases: pd.DataFrame,
+                                 runtime_payload: dict[str, Any],
+                                 runtime_phase_df: pd.DataFrame) -> None:
+    """Strike XVIII: publish a compact root-level report architecture.
+
+    Benchmark folders remain input/runtime territory. All report output is owned by
+    the repository root /reports tree. Detailed intelligence is retained as workbook
+    tabs and JSON sections rather than duplicated into dozens of peer files.
+    """
+    import shutil
+    output_dir = Path(output_dir)
+    executive = output_dir / "executive"
+    operations = output_dir / "operations"
+    intelligence = output_dir / "intelligence"
+    diagnostics = output_dir / "diagnostics"
+    state = output_dir / "state"
+    for folder in (executive, operations, intelligence, diagnostics, state):
+        folder.mkdir(parents=True, exist_ok=True)
+
+    metadata = pd.DataFrame([{
+        "release_version": RELEASE_VERSION,
+        "component_version": "v0.9.5.161_report_architecture",
+        "report_root": str(output_dir),
+        "benchmark_reports_allowed": False,
+        "operational_truth_modified": False,
+    }])
+
+    with pd.ExcelWriter(executive / "SENTINEL_EXECUTIVE_REPORT.xlsx", engine="openpyxl") as writer:
+        metadata.to_excel(writer, sheet_name="metadata", index=False)
+        pd.DataFrame(summary_rows).to_excel(writer, sheet_name="validation_summary", index=False)
+        _sanitize_frame(regression_dashboard_rows).to_excel(writer, sheet_name="regression", index=False)
+        _sanitize_frame(resolution_readiness_summary).to_excel(writer, sheet_name="readiness", index=False)
+        _sanitize_frame(resolution_simulation_summary).to_excel(writer, sheet_name="simulation", index=False)
+
+    with pd.ExcelWriter(operations / "SENTINEL_RESOLUTION_WORKBENCH.xlsx", engine="openpyxl") as writer:
+        metadata.to_excel(writer, sheet_name="metadata", index=False)
+        _sanitize_frame(manual_review_queue).to_excel(writer, sheet_name="review_queue", index=False)
+        _sanitize_frame(gold_core_case_explorer).to_excel(writer, sheet_name="gold_core_cases", index=False)
+        _sanitize_frame(gold_core_prioritized_actions).to_excel(writer, sheet_name="prioritized_actions", index=False)
+        _sanitize_frame(resolution_readiness_cases).to_excel(writer, sheet_name="readiness_cases", index=False)
+        _sanitize_frame(resolution_simulation_cases).to_excel(writer, sheet_name="simulated_cases", index=False)
+        _sanitize_frame(resolution_simulation_options).to_excel(writer, sheet_name="simulation_options", index=False)
+        _sanitize_frame(resolution_simulation_validation).to_excel(writer, sheet_name="validation", index=False)
+
+    intelligence_sheets = {
+        "metadata": metadata,
+        "classification": classification_stability_cases,
+        "decision_history": decision_history_rows,
+        "stability_timeline": stability_timeline_rows,
+        "drift_analysis": drift_analysis_rows,
+        "evidence_coverage": evidence_coverage_rows,
+        "score_factors": score_decomposition_rows,
+        "review_bindings": review_case_bindings,
+        "confidence": review_confidence_calibration,
+        "identity_composition": identity_compositions,
+        "identity_slots": identity_slots,
+        "identity_graph": identity_graph_cases,
+        "provenance": evidence_provenance_cases,
+        "position_bridge": position_bridge_cases,
+    }
+    with pd.ExcelWriter(intelligence / "SENTINEL_INTELLIGENCE_REPORT.xlsx", engine="openpyxl") as writer:
+        for name, frame in intelligence_sheets.items():
+            _sanitize_frame(frame).to_excel(writer, sheet_name=name[:31], index=False)
+    (intelligence / "SENTINEL_INTELLIGENCE_REPORT.json").write_text(
+        json.dumps(_json_safe(json_payload), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    with pd.ExcelWriter(diagnostics / "SENTINEL_RUNTIME_DIAGNOSTICS.xlsx", engine="openpyxl") as writer:
+        metadata.to_excel(writer, sheet_name="metadata", index=False)
+        pd.DataFrame([runtime_payload.get("summary", {})]).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(runtime_phase_df).to_excel(writer, sheet_name="phases", index=False)
+        _sanitize_frame(pd.DataFrame(runtime_payload.get("character_reocr_groups", []))).to_excel(writer, sheet_name="reocr_groups", index=False)
+    (diagnostics / "SENTINEL_RUNTIME_DIAGNOSTICS.json").write_text(
+        json.dumps(_json_safe({"release_version": RELEASE_VERSION, **runtime_payload}), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+    summary_text = [
+        "# SENTINEL Executive Summary", "",
+        f"- Release: {RELEASE_VERSION}",
+        "- Reporting architecture: consolidated", "- Benchmark reports allowed: no",
+        f"- Gold Core cases: {int(resolution_simulation_summary.iloc[0].get('cases', 0)) if not resolution_simulation_summary.empty else 0}",
+        f"- Simulated options: {int(resolution_simulation_summary.iloc[0].get('options', 0)) if not resolution_simulation_summary.empty else 0}",
+        "- Operational Truth modified: no", "",
+    ]
+    (executive / "SENTINEL_EXECUTIVE_SUMMARY.md").write_text("\n".join(summary_text), encoding="utf-8")
+
+    casebook = output_dir / "GOLD_CORE_CASEBOOK.md"
+    if casebook.exists():
+        shutil.move(str(casebook), str(operations / casebook.name))
+
+    keep_roots = {"executive", "operations", "intelligence", "diagnostics", "state"}
+    for child in list(output_dir.iterdir()):
+        if child.name in keep_roots or child.is_dir():
+            continue
+        if child.suffix.lower() in {".json", ".xlsx", ".md"}:
+            child.unlink()
+
+
+
+def _migrate_and_clean_legacy_benchmark_reports(reports_root: Path, ocr_output_path: Path) -> dict[str, int]:
+    """Move durable state out of legacy benchmark folders and remove report artifacts.
+
+    Only known report/state files in candidate benchmark roots are touched. Input,
+    screenshots, OCR exports, caches and logs remain untouched.
+    """
+    import shutil
+    reports_root = Path(reports_root)
+    state_dir = reports_root / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    candidates = [Path("benchmarks"), ocr_output_path.parent, ocr_output_path.parent.parent]
+    state_names = {
+        "classification_stability_state.json",
+        "decision_history_state.json",
+        "gold_core_failure_memory.json",
+    }
+    report_markers = (
+        "_report.json", "_report.xlsx", "_summary.md", "_dashboard.xlsx",
+        "manual_review_queue.json", "manual_review_queue.xlsx",
+        "ground_truth_validation_report.json", "ground_truth_validation_report.xlsx",
+        "gold_core_case_explorer.json", "gold_core_case_explorer.xlsx",
+        "position_heatmap.json", "GOLD_CORE_CASEBOOK.md",
+    )
+    migrated = removed = 0
+    seen: set[Path] = set()
+    for candidate in candidates:
+        try:
+            root = candidate.resolve()
+        except Exception:
+            continue
+        if root in seen or not root.is_dir() or root == reports_root.resolve():
+            continue
+        seen.add(root)
+        for path in list(root.iterdir()):
+            if not path.is_file():
+                continue
+            if path.name in state_names:
+                target = state_dir / path.name
+                if not target.exists():
+                    shutil.copy2(path, target)
+                    migrated += 1
+                path.unlink()
+                removed += 1
+                continue
+            if any(path.name == marker or path.name.endswith(marker) for marker in report_markers):
+                path.unlink()
+                removed += 1
+    return {"migrated_state_files": migrated, "removed_legacy_report_files": removed}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate Sentinel OCR output against a Ground Truth Excel file.")
     parser.add_argument("--ground-truth", default="ground_truth/S6/server_551/top50_THP.xlsx", help="Path to manually curated ground truth Excel file.")
@@ -7499,6 +7711,9 @@ def main() -> None:
     ground_truth_path = Path(args.ground_truth)
     ocr_output_path = Path(args.ocr_output)
     output_dir = Path(args.output_dir)
+    migration_result = _migrate_and_clean_legacy_benchmark_reports(output_dir, ocr_output_path)
+    if migration_result["migrated_state_files"] or migration_result["removed_legacy_report_files"]:
+        print(f"Report migration: {migration_result}")
 
     runtime_metrics: dict[str, float] = {}
     total_start = time.perf_counter()

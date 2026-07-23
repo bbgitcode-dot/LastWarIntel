@@ -1,1 +1,1 @@
-feat(resolution): add diagnostic resolution simulator and option ranking
+feat(reporting): consolidate reports into root report architecture

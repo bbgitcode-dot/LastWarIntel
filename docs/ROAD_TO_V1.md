@@ -180,3 +180,11 @@ Resolution Readiness Intelligence converts the validated review queue into expla
 - Review-action-specific evidence coverage
 - Explainable score contributions and confidence labels
 - No automated resolution or Gold-Core clearance
+
+### v0.9.5.161 — Reporting Architecture Consolidation
+
+- Root-level report ownership
+- Benchmark/report separation
+- Consolidated Executive, Operations, Intelligence and Diagnostics artifacts
+- Persistent state migration
+- Prerequisite-aware resolution recommendations

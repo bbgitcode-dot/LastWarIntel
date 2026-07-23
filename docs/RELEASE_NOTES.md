@@ -2122,3 +2122,15 @@ Validation:
 - Added score decompositions and qualitative confidence labels.
 - Added classification stability and evidence coverage JSON, XLSX, and Markdown reports.
 - Preserved Ground Truth as comparison-only, Gold Core as immutable, and all resolution intelligence as non-authoritative/read-only.
+
+## v0.9.5.161 — Strike XVIII: Report Architecture Consolidation
+
+- Removed validation report output from benchmark folders.
+- Changed the default report destination to the repository root `/reports`.
+- Added consolidated Executive, Operations, Intelligence, Diagnostics and State areas.
+- Replaced dozens of duplicate peer reports with consolidated workbooks and JSON payloads.
+- Added safe migration of persistent decision/classification/failure memory from legacy benchmark folders.
+- Added cleanup of known legacy report artifacts while preserving benchmark inputs, logs, screenshots, OCR exports and caches.
+- Added release/component metadata to consolidated reports.
+- Added `primary_strategy`, `prerequisite_action` and `strategy_relationship` to the Resolution Simulator so evidence-collection prerequisites no longer appear as strategy contradictions.
+- Operational Truth remains unchanged; all intelligence remains read-only.
