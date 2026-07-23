@@ -1,3 +1,14 @@
+# PROJECT STATUS — v0.9.5.160
+
+## Current sprint
+Strike XVII adds a read-only Resolution Simulator above Resolution Readiness and Stability Verification. Every open Gold-Core case receives multiple bounded action alternatives scored for expected resolution gain, information gain, risk, effort, and utility.
+
+## Safety position
+The simulator performs no OCR, crop, vote, policy, binding, clearance, or Operational Truth action. Recommendations are diagnostic decision support only. Evidence before Inference remains mandatory.
+
+## Next validation
+Run the benchmark and confirm full case coverage, multiple alternatives per case, exactly one recommendation per case, plausible lane-specific rankings, zero automatic fixes, zero Gold clearances, and unchanged core metrics.
+
 # Current release: v0.9.5.159
 
 Strike XVI operationalizes the v0.9.5.158 fingerprints as persistent cross-run history. Sentinel now retains an idempotent decision timeline per Gold-Core case and attributes classification, decision, confidence, and evidence-coverage drift. Unexplained drift is a release-blocking diagnostic failure; the layer remains read-only and cannot alter Operational Truth or clear Gold Core.

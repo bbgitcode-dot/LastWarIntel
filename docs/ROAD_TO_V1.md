@@ -1,3 +1,7 @@
+# v0.9.5.160 milestone
+
+Resolution simulation now compares safe alternatives without execution. The next milestones should validate simulated utility against observed manual outcomes, then introduce a dry-run executor with mandatory rollback and no Operational Truth promotion.
+
 # Road to V1 — Authoritative Plan at v0.9.5.159
 
 ## Immediate milestone: reproducible stability proof

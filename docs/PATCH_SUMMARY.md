@@ -1,3 +1,18 @@
+# v0.9.5.160 — Strike XVII: Resolution Simulator
+
+## Added
+- Diagnostic-only resolution simulator for every open Gold-Core review case.
+- Multiple ranked options per case, including safe no-action alternatives.
+- Expected resolution gain, information gain, risk, effort and utility scoring.
+- Explicit comparison between the current readiness strategy and the highest-ranked simulated strategy.
+- New `resolution_simulator_report.json`, `resolution_simulator_report.xlsx`, and `resolution_simulator_summary.md`.
+
+## Guards
+- Simulation is read-only and may not execute OCR, crop, vote, policy, or binding actions.
+- Exactly one recommended simulated option is produced per covered case.
+- Ground Truth is not used as evidence.
+- No Gold-Core clearance or Operational Truth mutation is permitted.
+
 # v0.9.5.159 — Strike XVI: Stability Verification & Decision History
 
 ## Added

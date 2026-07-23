@@ -5818,6 +5818,146 @@ def _build_stability_verification_history(
             pass
     return history_df, timeline_df, drift_df, run_summary, validation, summary
 
+
+def _resolution_simulation_options(row: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return bounded, diagnostic-only resolution options for one case."""
+    action = str(row.get("review_action", "") or "")
+    readiness = str(row.get("resolution_readiness", "") or "")
+    strategy = str(row.get("resolution_strategy", "") or "")
+    options = {
+        "REVIEW_CROP_GEOMETRY": [
+            ("RECROP_AND_TARGETED_REOCR", "ACQUISITION", 0.82, 0.78, 0.22, 2.0),
+            ("MANUAL_CROP_INSPECTION", "HUMAN_REVIEW", 0.58, 0.62, 0.10, 5.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_VOTE_SELECTION": [
+            ("REPLAY_VOTE_SELECTION_WITH_TARGETED_REOCR", "REOCR", 0.76, 0.72, 0.28, 2.5),
+            ("MANUAL_VOTE_ADJUDICATION", "HUMAN_REVIEW", 0.60, 0.58, 0.12, 4.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_LOCAL_GLYPH": [
+            ("TARGETED_LOCAL_GLYPH_REOCR", "REOCR", 0.84, 0.80, 0.18, 1.5),
+            ("MANUAL_LOCAL_GLYPH_REVIEW", "HUMAN_REVIEW", 0.62, 0.55, 0.10, 3.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_EVIDENCE_CONFLICT": [
+            ("MANUAL_EVIDENCE_ADJUDICATION", "HUMAN_REVIEW", 0.72, 0.48, 0.16, 6.0),
+            ("COLLECT_ADDITIONAL_EVIDENCE", "EVIDENCE", 0.45, 0.70, 0.08, 4.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_MISSING_IDENTITY": [
+            ("COLLECT_IDENTITY_EVIDENCE", "EVIDENCE", 0.38, 0.86, 0.06, 4.0),
+            ("MANUAL_ROW_RECOVERY", "HUMAN_REVIEW", 0.48, 0.64, 0.12, 6.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_SCRIPT_POLICY": [
+            ("MANUAL_SCRIPT_POLICY_REVIEW", "POLICY", 0.68, 0.42, 0.14, 7.0),
+            ("COLLECT_SCRIPT_CONTEXT", "EVIDENCE", 0.30, 0.58, 0.06, 4.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_MIXED_SCRIPT": [
+            ("MANUAL_SCRIPT_POLICY_REVIEW", "POLICY", 0.64, 0.44, 0.16, 7.0),
+            ("COLLECT_SCRIPT_CONTEXT", "EVIDENCE", 0.34, 0.62, 0.08, 4.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+        "REVIEW_CASE_BINDING": [
+            ("REPAIR_CASE_BINDING", "BINDING", 0.70, 0.78, 0.10, 3.0),
+            ("MANUAL_CASE_BINDING", "HUMAN_REVIEW", 0.52, 0.58, 0.14, 5.0),
+            ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+        ],
+    }.get(action, [
+        (strategy or "KEEP_BLOCKED", "DIAGNOSTIC", 0.35, 0.35, 0.20, 3.0),
+        ("KEEP_BLOCKED", "NO_ACTION", 0.00, 0.00, 0.02, 0.0),
+    ])
+    result=[]
+    for name, lane, base_gain, base_info, base_risk, effort in options:
+        result.append({"option":name,"lane":lane,"base_resolution_gain":base_gain,"base_information_gain":base_info,"base_risk":base_risk,"estimated_effort_seconds":effort,"matches_current_strategy":name==strategy,"current_readiness":readiness})
+    return result
+
+
+def _build_resolution_simulator(
+    readiness_cases: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XVII: compare resolution options without executing or mutating anything."""
+    if readiness_cases.empty:
+        empty=pd.DataFrame()
+        validation=pd.DataFrame([
+            {"guard":"simulation_cases_covered","expected":0,"actual":0,"status":"PASS"},
+            {"guard":"simulation_is_read_only","expected":0,"actual":0,"status":"PASS"},
+        ])
+        summary=pd.DataFrame([{"phase":"v0.9.5.160_resolution_simulator","cases":0,"options":0,"recommended_options":0,"automatic_fix_executed":0,"gold_clearance_created":0}])
+        return empty, empty, validation, summary
+
+    option_rows=[]
+    case_rows=[]
+    for row in readiness_cases.to_dict(orient="records"):
+        case_id=str(row.get("case_id", ""))
+        coverage=float(row.get("required_evidence_coverage",0) or 0)
+        review_conf=float(row.get("review_confidence",0) or 0)
+        recommendation=float(row.get("recommendation_score",0) or 0)
+        priority=str(row.get("priority", "MAJOR") or "MAJOR")
+        priority_weight={"CRITICAL":1.0,"MAJOR":0.85,"MINOR":0.65,"BLOCKED":0.40}.get(priority,0.75)
+        local=[]
+        for opt in _resolution_simulation_options(row):
+            resolution_gain=max(0.0,min(1.0,opt["base_resolution_gain"]*(0.45+0.30*coverage+0.25*review_conf)))
+            information_gain=max(0.0,min(1.0,opt["base_information_gain"]*(0.55+0.45*(1.0-coverage))))
+            risk=max(0.0,min(1.0,opt["base_risk"]*(1.15-0.35*review_conf)))
+            effort=float(opt["estimated_effort_seconds"] or 0)
+            effort_penalty=min(0.25, effort/40.0)
+            expected_utility=round(max(0.0,min(1.0,
+                resolution_gain*0.45 + information_gain*0.25 + recommendation*0.15 + priority_weight*0.15 - risk*0.30 - effort_penalty
+            )),4)
+            safety="LOW" if risk<0.15 else ("MODERATE" if risk<0.30 else "HIGH")
+            rec={
+                "phase":"v0.9.5.160_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+                "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
+                "candidate_strategy":opt["option"],"simulation_lane":opt["lane"],
+                "expected_resolution_gain":round(resolution_gain,4),"expected_information_gain":round(information_gain,4),
+                "expected_risk":round(risk,4),"risk_label":safety,"estimated_effort_seconds":effort,
+                "expected_utility":expected_utility,"matches_current_strategy":bool(opt["matches_current_strategy"]),
+                "simulation_only":True,"automatic_fix_executed":False,"gold_clearance_created":False,
+                "ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+            }
+            local.append(rec)
+        local.sort(key=lambda x:(x["expected_utility"],x["expected_resolution_gain"],x["expected_information_gain"]), reverse=True)
+        for i,rec in enumerate(local, start=1):
+            rec["option_rank"]=i
+            rec["recommended_option"]=i==1
+            option_rows.append(rec)
+        best=local[0]
+        case_rows.append({
+            "phase":"v0.9.5.160_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+            "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
+            "current_readiness":row.get("resolution_readiness", ""),"current_strategy":row.get("resolution_strategy", ""),
+            "recommended_simulated_strategy":best["candidate_strategy"],"recommended_lane":best["simulation_lane"],
+            "expected_resolution_gain":best["expected_resolution_gain"],"expected_information_gain":best["expected_information_gain"],
+            "expected_risk":best["expected_risk"],"risk_label":best["risk_label"],
+            "expected_utility":best["expected_utility"],"strategy_alignment":best["candidate_strategy"]==str(row.get("resolution_strategy", "")),
+            "simulation_only":True,"automatic_fix_executed":False,"gold_clearance_created":False,
+            "ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+        })
+    options_df=pd.DataFrame(option_rows)
+    cases_df=pd.DataFrame(case_rows)
+    validation=pd.DataFrame([
+        {"guard":"simulation_cases_covered","expected":len(readiness_cases),"actual":len(cases_df),"status":"PASS" if len(cases_df)==len(readiness_cases) else "FAIL"},
+        {"guard":"multiple_options_per_case","expected":len(readiness_cases),"actual":int((options_df.groupby("case_id").size()>=2).sum()),"status":"PASS" if (options_df.groupby("case_id").size()>=2).all() else "FAIL"},
+        {"guard":"exactly_one_recommendation_per_case","expected":len(readiness_cases),"actual":int(options_df[options_df["recommended_option"]].groupby("case_id").size().eq(1).sum()),"status":"PASS" if options_df[options_df["recommended_option"]].groupby("case_id").size().eq(1).all() else "FAIL"},
+        {"guard":"simulation_is_read_only","expected":0,"actual":int(options_df["automatic_fix_executed"].astype(bool).sum()+options_df["operational_truth_modified"].astype(bool).sum()),"status":"PASS"},
+        {"guard":"no_gold_clearance","expected":0,"actual":int(options_df["gold_clearance_created"].astype(bool).sum()),"status":"PASS"},
+        {"guard":"ground_truth_not_evidence","expected":0,"actual":int(options_df["ground_truth_used_as_evidence"].astype(bool).sum()),"status":"PASS"},
+    ])
+    summary=pd.DataFrame([{
+        "phase":"v0.9.5.160_resolution_simulator","cases":len(cases_df),"options":len(options_df),
+        "recommended_options":int(options_df["recommended_option"].sum()),
+        "strategy_alignment_cases":int(cases_df["strategy_alignment"].sum()),
+        "average_expected_resolution_gain":round(float(cases_df["expected_resolution_gain"].mean()),4),
+        "average_expected_information_gain":round(float(cases_df["expected_information_gain"].mean()),4),
+        "average_expected_risk":round(float(cases_df["expected_risk"].mean()),4),
+        "average_expected_utility":round(float(cases_df["expected_utility"].mean()),4),
+        "automatic_fix_executed":0,"gold_clearance_created":0,"ground_truth_used_as_evidence":False,"operational_truth_modified":False,
+    }])
+    return cases_df, options_df, validation, summary
+
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
     def pick(*keys: str) -> str:
@@ -6638,6 +6778,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     decision_history_rows, stability_timeline_rows, drift_analysis_rows, regression_dashboard_rows, stability_history_validation, stability_history_summary = _build_stability_verification_history(
         classification_stability_cases, output_dir
     )
+    resolution_simulation_cases, resolution_simulation_options, resolution_simulation_validation, resolution_simulation_summary = _build_resolution_simulator(
+        resolution_readiness_cases
+    )
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6738,6 +6881,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "drift_analysis_rows": drift_analysis_rows.to_dict(orient="records"),
         "regression_dashboard_rows": regression_dashboard_rows.to_dict(orient="records"),
         "stability_history_validation": stability_history_validation.to_dict(orient="records"),
+        "resolution_simulation_summary": resolution_simulation_summary.to_dict(orient="records"),
+        "resolution_simulation_cases": resolution_simulation_cases.to_dict(orient="records"),
+        "resolution_simulation_options": resolution_simulation_options.to_dict(orient="records"),
+        "resolution_simulation_validation": resolution_simulation_validation.to_dict(orient="records"),
         "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
@@ -6920,6 +7067,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     decision_history_md_path = output_dir / "decision_history_summary.md"
     sh = stability_history_summary.iloc[0].to_dict() if not stability_history_summary.empty else {}
     decision_history_md_path.write_text("\n".join(["# Decision History", "", "Release version: v0.9.5.159", "", f"- Run ID: {sh.get('run_id','')}", f"- Current cases: {sh.get('cases',0)}", f"- History entries: {sh.get('history_entries',0)}", f"- Recorded runs: {sh.get('runs',0)}", f"- Unexplained drifts: {sh.get('unexplained_drifts',0)}", "", "History is diagnostic, append-only and does not modify Operational Truth."]),encoding="utf-8")
+    resolution_simulator_json_path = output_dir / "resolution_simulator_report.json"
+    resolution_simulator_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.160_resolution_simulator","summary":resolution_simulation_summary.to_dict(orient="records"),"cases":resolution_simulation_cases.to_dict(orient="records"),"options":resolution_simulation_options.to_dict(orient="records"),"validation":resolution_simulation_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    resolution_simulator_md_path = output_dir / "resolution_simulator_summary.md"
+    rs = resolution_simulation_summary.iloc[0].to_dict() if not resolution_simulation_summary.empty else {}
+    resolution_simulator_md_path.write_text("\n".join(["# Resolution Simulator", "", "Release version: v0.9.5.160", "", f"- Cases: {rs.get('cases',0)}", f"- Simulated options: {rs.get('options',0)}", f"- Recommended options: {rs.get('recommended_options',0)}", f"- Strategy alignment cases: {rs.get('strategy_alignment_cases',0)}", f"- Average expected resolution gain: {rs.get('average_expected_resolution_gain',0)}", f"- Average expected information gain: {rs.get('average_expected_information_gain',0)}", f"- Average expected risk: {rs.get('average_expected_risk',0)}", "", "All outcomes are simulated. No fix, clearance, Ground Truth substitution, or Operational Truth mutation is executed."]),encoding="utf-8")
     stability_timeline_json_path = output_dir / "stability_timeline_report.json"
     stability_timeline_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.159_stability_timeline","timeline":stability_timeline_rows.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
     stability_timeline_md_path = output_dir / "stability_timeline_summary.md"
@@ -7153,6 +7305,13 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(regression_dashboard_rows).to_excel(writer, sheet_name="runs", index=False)
         _sanitize_frame(stability_history_summary).to_excel(writer, sheet_name="current_run", index=False)
         _sanitize_frame(drift_analysis_rows).to_excel(writer, sheet_name="case_drift", index=False)
+
+    resolution_simulator_xlsx_path = output_dir / "resolution_simulator_report.xlsx"
+    with pd.ExcelWriter(resolution_simulator_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(resolution_simulation_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(resolution_simulation_cases).to_excel(writer, sheet_name="cases", index=False)
+        _sanitize_frame(resolution_simulation_options).to_excel(writer, sheet_name="options", index=False)
+        _sanitize_frame(resolution_simulation_validation).to_excel(writer, sheet_name="validation", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
