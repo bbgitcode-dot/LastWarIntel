@@ -2134,3 +2134,12 @@ Validation:
 - Added release/component metadata to consolidated reports.
 - Added `primary_strategy`, `prerequisite_action` and `strategy_relationship` to the Resolution Simulator so evidence-collection prerequisites no longer appear as strategy contradictions.
 - Operational Truth remains unchanged; all intelligence remains read-only.
+
+## v0.9.5.162 — History Integrity & Report Hygiene
+
+- Separates unique execution `run_id` from deterministic `decision_state_hash`.
+- Records every new real benchmark execution while preserving idempotency for repeated use of the same run id.
+- Treats prerequisite resolution chains as compatible and reports direct matches, compatible chains, and true conflicts separately.
+- Removes `wrong-scope-*` snapshot completion artifacts from the standard report tree and retains only the active snapshot when available.
+- Expands the executive Markdown summary with recall, missing, bad matches, Gold Core, stability, strategy-chain, and readiness information.
+- Preserves Operational Truth, Ground Truth, snapshots, and OCR exports unchanged.

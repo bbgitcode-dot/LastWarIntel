@@ -1,0 +1,103 @@
+{
+  "version": "0.9.5.158",
+  "cases": [
+    {
+      "case_id": "S551-R8",
+      "failure_class": "vote_warning_gate_review",
+      "evidence_fingerprint": "5acceabcf643472eaef64d76ed11f85a582b31b7c6d539d242196672393029f9",
+      "classification_fingerprint": "8868cf8a3e6bebf240a83f5f44f7a798972c6c9b480cac9f0300311e775a546c",
+      "decision_hash": "86fe604128ceb41e297236ca2c4dc57a419f4c6d5a222b797c6ffa2d7165eaae"
+    },
+    {
+      "case_id": "S551-R23",
+      "failure_class": "observed_text_confirmed",
+      "evidence_fingerprint": "9a2f1519bb3f9bcb3b2261cf6bf23b271bf5ff316aae6726943ae66f04d6cbba",
+      "classification_fingerprint": "3399af3bb97193e4d2682dba3627b1a253b0454044eca7fd35469f26fa54dc5e",
+      "decision_hash": "795d559a292ccfe15c88adc33797399e455aaf999d603d53b41106269defb8c4"
+    },
+    {
+      "case_id": "S551-R36",
+      "failure_class": "vote_warning_gate_review",
+      "evidence_fingerprint": "7203c523cf562dbbe1b4c5d6aae34af90a14b928cd15279e0e662ceb6100b7fe",
+      "classification_fingerprint": "3b1342916ffdb941301914c7a90bdb8d85908389c69513360f76806303cff7b9",
+      "decision_hash": "df0b9d39ab3768c6a48a831102fd73b54cb01f1ea240ea17b921b45b25ed39b4"
+    },
+    {
+      "case_id": "S551-R42",
+      "failure_class": "observed_text_confirmed",
+      "evidence_fingerprint": "011cbc60117e26595a99151cb2c338794d62121e8cd0ca2bfef8c735ff95de0f",
+      "classification_fingerprint": "02886785576ae20c1ab9c1cdd1e1779dd1699a357ba75fd3f4440d7daf232f42",
+      "decision_hash": "0300280b5491d1f005e20ea8e5574ad071aadf99f8c066733464d9253761d5ae"
+    },
+    {
+      "case_id": "S551-R43",
+      "failure_class": "observed_text_confirmed",
+      "evidence_fingerprint": "d26f5d1c0b875fa73b86618bfa122fdf215c9d3a5609e6400b3ccf3c3962e2f8",
+      "classification_fingerprint": "d391bb0656e00029eae637775e65cdf41ef026fa56b5183962f09319a70a51f0",
+      "decision_hash": "93cfcada77adc7e35561219184bc1cf51a69c5f21d29d65fbf41417e07db4e37"
+    },
+    {
+      "case_id": "S551-R2",
+      "failure_class": "policy_nonlocal_script_display",
+      "evidence_fingerprint": "cbd14c7ec754dc019e448baf2d632eb945a70458ec1bec4d58318e7ff2af958e",
+      "classification_fingerprint": "98d5b33da66b0750469edfb671f2badf086342a7a343e08bf430536654e5ee17",
+      "decision_hash": "8fd04f368adb55e0017cd3e2609d48116e0a36ec3aa962791e860e030a55378f"
+    },
+    {
+      "case_id": "S551-R11",
+      "failure_class": "vote_warning_gate_review",
+      "evidence_fingerprint": "9ae6970f9e4482bedd9611bea4ec4f58d1d5b3d50b8296521064daee0e6a7358",
+      "classification_fingerprint": "d14fed49c6ecd517484cee3a85bad0a66371ea44b15b4328f387cfeefd45f20a",
+      "decision_hash": "a2ef5428927563d80a1e069b4c6e1fec19bd355cde79d1fbccbcf7aaceb2e6ed"
+    },
+    {
+      "case_id": "S551-R19",
+      "failure_class": "mixed_local_and_nonlocal_blocker",
+      "evidence_fingerprint": "81d63d7d83a0edc0fa665fe3b18ec49b5515893e85dba56e71b14851c6427815",
+      "classification_fingerprint": "be802cf4271573574c801192467192dd1c13f8c962b2c6606004823258cbbfaf",
+      "decision_hash": "52ce9ff2d8459b248f547508563f4671a6ca99d570d1e5d29920a30492aea056"
+    },
+    {
+      "case_id": "S551-R20",
+      "failure_class": "local_glyph_solvable",
+      "evidence_fingerprint": "192ccaa6a36d82fda93eb630b61f542c16a85604b953938c2bfa3d56126488b2",
+      "classification_fingerprint": "9a18f97821e28b909fc7ecd842d4d3106a8a89da7ae37fc357ec6fd90d53640e",
+      "decision_hash": "171829300429c6563c1cca01c4229d068aadb0a1815215cce090a4916b81e694"
+    },
+    {
+      "case_id": "S551-R39",
+      "failure_class": "crop_geometry_problem",
+      "evidence_fingerprint": "a1924c3ce2899c2605b9b84c2af60961355eb4b6fb1df9048234931ae0a41e47",
+      "classification_fingerprint": "1017166f0b90b927a0e86e6c9a32f7abb0c27ae3a85afd5ffe418337e99d7910",
+      "decision_hash": "0ef8cbc12becd20ea80baa755721d4feb6b2606ceac15ec4eae505d9de9a2373"
+    },
+    {
+      "case_id": "S551-R41",
+      "failure_class": "crop_geometry_problem",
+      "evidence_fingerprint": "bdbc3cab4a35fbbf30c7076c72e9718064a47c053ad0c3df43b675e00c6e5450",
+      "classification_fingerprint": "c0c9a367d94cfeadeb1242e79fb1db81013c2bd4ed33d0d0bfee8f7e5642dcf4",
+      "decision_hash": "aac8ae098c0465ab9c9c57d45f890335c0812c4d62afa673d680895bc7329372"
+    },
+    {
+      "case_id": "S551-R45",
+      "failure_class": "crop_geometry_problem",
+      "evidence_fingerprint": "65d17618a0cdce3be811f121a5edffc558ca1e1419903cc9652908c45045d17c",
+      "classification_fingerprint": "c6182801e53fabc3b81388f666a8d513064fbf2c938082c6e1fb38d1c88e286c",
+      "decision_hash": "17b8cadfbbca8bec465ebe1130d0c90777a65811440a16db20131e912136e27a"
+    },
+    {
+      "case_id": "S551-R48",
+      "failure_class": "vote_warning_gate_review",
+      "evidence_fingerprint": "e9af5cb87696aa1db78a0d7767366136ac06f7665d88e06bea9b677c8d5513c3",
+      "classification_fingerprint": "dba156898a83335d9f1091b861101761b49f213ac5382ba3a0976fc4f9a8d594",
+      "decision_hash": "0c56cc5231a75e9a5969efef5df2a36c52e7aed1f3dc37b40f251a6bef3ef8df"
+    },
+    {
+      "case_id": "S551-R50",
+      "failure_class": "vote_warning_gate_review",
+      "evidence_fingerprint": "5e6695a610a743d97e155fca6a6b4cae8aaf59af225b43bc713e3101889e7cbd",
+      "classification_fingerprint": "5b82c5730a355562faae480ff413578e9f5553f2e73a22372e4e80d1a33fb948",
+      "decision_hash": "d0f6b08a685e04c7f03f1843935c5d77cf30758eae9f8d0073d51bd8f34b9aa1"
+    }
+  ]
+}

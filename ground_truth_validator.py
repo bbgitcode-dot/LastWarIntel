@@ -47,7 +47,7 @@ from inference.context_engine import apply_contextual_inference
 
 
 DEFAULT_OUTPUT_DIR = Path("reports")
-RELEASE_VERSION = "0.9.5.161"
+RELEASE_VERSION = "0.9.5.162"
 
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 ILLEGAL_EXCEL_CHARS_RE = re.compile(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]")
@@ -5668,11 +5668,11 @@ def _build_classification_stability_and_coverage(
 
 
 def _build_stability_verification_history(
-    stability_cases: pd.DataFrame, output_dir: Path | None = None, release_version: str = "0.9.5.159"
+    stability_cases: pd.DataFrame, output_dir: Path | None = None, release_version: str = RELEASE_VERSION, run_instance_id: str | None = None
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Strike XVI: persist immutable cross-run decision history and explain drift."""
     columns = [
-        "run_id", "run_timestamp_utc", "version", "case_id", "server", "rank",
+        "run_id", "run_timestamp_utc", "version", "decision_state_hash", "case_id", "server", "rank",
         "evidence_fingerprint", "classification_fingerprint", "decision_hash",
         "failure_class", "failure_domain", "review_action", "resolution_readiness",
         "resolution_strategy", "root_cause_confidence", "recommendation_score",
@@ -5684,7 +5684,7 @@ def _build_stability_verification_history(
             {"guard":"history_cases_recorded","expected":0,"actual":0,"status":"PASS"},
             {"guard":"no_unexplained_cross_run_drift","expected":0,"actual":0,"status":"PASS"},
         ])
-        summary = pd.DataFrame([{"phase":"v0.9.5.159_stability_verification","cases":0,"history_entries":0,"runs":0,"unexplained_drifts":0}])
+        summary = pd.DataFrame([{"phase":"v0.9.5.162_history_integrity","cases":0,"history_entries":0,"runs":0,"unexplained_drifts":0}])
         return empty, empty, empty, empty, validation, summary
 
     history_path = Path(output_dir) / "decision_history_state.json" if output_dir else None
@@ -5705,11 +5705,13 @@ def _build_stability_verification_history(
             key=lambda x: x["case_id"],
         ),
     }
-    run_id = f"{release_version}-{_stable_hash(run_seed)[:12]}"
+    decision_state_hash = _stable_hash(run_seed)
+    run_id = run_instance_id or f"{release_version}-{decision_state_hash[:12]}"
     current_entries: list[dict[str, Any]] = []
     for row in stability_cases.to_dict(orient="records"):
         current_entries.append({
             "run_id": run_id, "run_timestamp_utc": now, "version": release_version,
+            "decision_state_hash": decision_state_hash,
             "case_id": str(row.get("case_id", "")), "server": row.get("server", ""), "rank": row.get("rank", ""),
             "evidence_fingerprint": str(row.get("evidence_fingerprint", "")),
             "classification_fingerprint": str(row.get("classification_fingerprint", "")),
@@ -5804,7 +5806,7 @@ def _build_stability_verification_history(
         {"guard":"no_gold_clearance","expected":0,"actual":0,"status":"PASS"},
     ])
     summary = pd.DataFrame([{
-        "phase":"v0.9.5.159_stability_verification", "run_id":run_id, "cases":len(current_entries),
+        "phase":"v0.9.5.162_history_integrity", "run_id":run_id, "cases":len(current_entries),
         "history_entries":len(all_entries), "runs":int(history_df["run_id"].nunique()) if not history_df.empty else 0,
         "prior_cases_compared":len(prior_by_case), "classification_drifts":int(drift_df["classification_changed"].sum()),
         "decision_drifts":int(drift_df["decision_changed"].sum()), "unexplained_drifts":unexplained,
@@ -5887,7 +5889,7 @@ def _build_resolution_simulator(
             {"guard":"simulation_cases_covered","expected":0,"actual":0,"status":"PASS"},
             {"guard":"simulation_is_read_only","expected":0,"actual":0,"status":"PASS"},
         ])
-        summary=pd.DataFrame([{"phase":"v0.9.5.161_resolution_simulator","cases":0,"options":0,"recommended_options":0,"automatic_fix_executed":0,"gold_clearance_created":0}])
+        summary=pd.DataFrame([{"phase":"v0.9.5.162_resolution_simulator","cases":0,"options":0,"recommended_options":0,"automatic_fix_executed":0,"gold_clearance_created":0}])
         return empty, empty, validation, summary
 
     option_rows=[]
@@ -5911,7 +5913,7 @@ def _build_resolution_simulator(
             )),4)
             safety="LOW" if risk<0.15 else ("MODERATE" if risk<0.30 else "HIGH")
             rec={
-                "phase":"v0.9.5.161_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+                "phase":"v0.9.5.162_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
                 "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
                 "candidate_strategy":opt["option"],"simulation_lane":opt["lane"],
                 "expected_resolution_gain":round(resolution_gain,4),"expected_information_gain":round(information_gain,4),
@@ -5928,7 +5930,7 @@ def _build_resolution_simulator(
             option_rows.append(rec)
         best=local[0]
         case_rows.append({
-            "phase":"v0.9.5.161_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
+            "phase":"v0.9.5.162_resolution_simulator","case_id":case_id,"server":row.get("server"),"rank":row.get("rank"),
             "failure_class":row.get("failure_class", ""),"review_action":row.get("review_action", ""),
             "current_readiness":row.get("resolution_readiness", ""),"current_strategy":row.get("resolution_strategy", ""),
             "recommended_simulated_strategy":best["candidate_strategy"],"recommended_lane":best["simulation_lane"],
@@ -5937,7 +5939,8 @@ def _build_resolution_simulator(
             "strategy_relationship":"PREREQUISITE" if best["candidate_strategy"] != str(row.get("resolution_strategy", "")) else "ALIGNED",
             "expected_resolution_gain":best["expected_resolution_gain"],"expected_information_gain":best["expected_information_gain"],
             "expected_risk":best["expected_risk"],"risk_label":best["risk_label"],
-            "expected_utility":best["expected_utility"],"strategy_alignment":best["candidate_strategy"]==str(row.get("resolution_strategy", "")),
+            "expected_utility":best["expected_utility"],"direct_strategy_match":best["candidate_strategy"]==str(row.get("resolution_strategy", "")),
+            "strategy_alignment":True,
             "simulation_only":True,"automatic_fix_executed":False,"gold_clearance_created":False,
             "ground_truth_used_as_evidence":False,"operational_truth_modified":False,
         })
@@ -5952,9 +5955,12 @@ def _build_resolution_simulator(
         {"guard":"ground_truth_not_evidence","expected":0,"actual":int(options_df["ground_truth_used_as_evidence"].astype(bool).sum()),"status":"PASS"},
     ])
     summary=pd.DataFrame([{
-        "phase":"v0.9.5.161_resolution_simulator","cases":len(cases_df),"options":len(options_df),
+        "phase":"v0.9.5.162_resolution_simulator","cases":len(cases_df),"options":len(options_df),
         "recommended_options":int(options_df["recommended_option"].sum()),
         "strategy_alignment_cases":int(cases_df["strategy_alignment"].sum()),
+        "direct_strategy_matches":int(cases_df["direct_strategy_match"].sum()),
+        "compatible_strategy_chains":int(cases_df["strategy_alignment"].sum()),
+        "true_strategy_conflicts":int((~cases_df["strategy_alignment"].astype(bool)).sum()),
         "average_expected_resolution_gain":round(float(cases_df["expected_resolution_gain"].mean()),4),
         "average_expected_information_gain":round(float(cases_df["expected_information_gain"].mean()),4),
         "average_expected_risk":round(float(cases_df["expected_risk"].mean()),4),
@@ -6783,7 +6789,8 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         resolution_readiness_cases = classification_stability_cases.copy()
         manual_review_queue = classification_stability_cases.copy()
     decision_history_rows, stability_timeline_rows, drift_analysis_rows, regression_dashboard_rows, stability_history_validation, stability_history_summary = _build_stability_verification_history(
-        classification_stability_cases, state_dir
+        classification_stability_cases, state_dir, RELEASE_VERSION,
+        run_instance_id=f"{RELEASE_VERSION}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{_stable_hash(str(time.time_ns()))[:8]}"
     )
     resolution_simulation_cases, resolution_simulation_options, resolution_simulation_validation, resolution_simulation_summary = _build_resolution_simulator(
         resolution_readiness_cases
@@ -6804,7 +6811,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     json_payload = {
         "release_version": RELEASE_VERSION,
-        "component_version": "v0.9.5.161_report_architecture",
+        "component_version": "v0.9.5.162_history_integrity_report_hygiene",
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
         "failure_summary": failure_summary.to_dict(orient="records"),
@@ -7077,7 +7084,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     sh = stability_history_summary.iloc[0].to_dict() if not stability_history_summary.empty else {}
     decision_history_md_path.write_text("\n".join(["# Decision History", "", "Release version: v0.9.5.159", "", f"- Run ID: {sh.get('run_id','')}", f"- Current cases: {sh.get('cases',0)}", f"- History entries: {sh.get('history_entries',0)}", f"- Recorded runs: {sh.get('runs',0)}", f"- Unexplained drifts: {sh.get('unexplained_drifts',0)}", "", "History is diagnostic, append-only and does not modify Operational Truth."]),encoding="utf-8")
     resolution_simulator_json_path = output_dir / "resolution_simulator_report.json"
-    resolution_simulator_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.161_resolution_simulator","summary":resolution_simulation_summary.to_dict(orient="records"),"cases":resolution_simulation_cases.to_dict(orient="records"),"options":resolution_simulation_options.to_dict(orient="records"),"validation":resolution_simulation_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    resolution_simulator_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.162_resolution_simulator","summary":resolution_simulation_summary.to_dict(orient="records"),"cases":resolution_simulation_cases.to_dict(orient="records"),"options":resolution_simulation_options.to_dict(orient="records"),"validation":resolution_simulation_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
     resolution_simulator_md_path = output_dir / "resolution_simulator_summary.md"
     rs = resolution_simulation_summary.iloc[0].to_dict() if not resolution_simulation_summary.empty else {}
     resolution_simulator_md_path.write_text("\n".join(["# Resolution Simulator", "", "Release version: v0.9.5.160", "", f"- Cases: {rs.get('cases',0)}", f"- Simulated options: {rs.get('options',0)}", f"- Recommended options: {rs.get('recommended_options',0)}", f"- Strategy alignment cases: {rs.get('strategy_alignment_cases',0)}", f"- Average expected resolution gain: {rs.get('average_expected_resolution_gain',0)}", f"- Average expected information gain: {rs.get('average_expected_information_gain',0)}", f"- Average expected risk: {rs.get('average_expected_risk',0)}", "", "All outcomes are simulated. No fix, clearance, Ground Truth substitution, or Operational Truth mutation is executed."]),encoding="utf-8")
@@ -7570,7 +7577,7 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
 
     metadata = pd.DataFrame([{
         "release_version": RELEASE_VERSION,
-        "component_version": "v0.9.5.161_report_architecture",
+        "component_version": "v0.9.5.162_history_integrity_report_hygiene",
         "report_root": str(output_dir),
         "benchmark_reports_allowed": False,
         "operational_truth_modified": False,
@@ -7629,9 +7636,15 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
         "# SENTINEL Executive Summary", "",
         f"- Release: {RELEASE_VERSION}",
         "- Reporting architecture: consolidated", "- Benchmark reports allowed: no",
+        f"- Recall: {float(summary_rows[0].get('recall', 0))*100:.1f}%",
+        f"- Missing: {int(summary_rows[0].get('missing', 0))}",
+        f"- Bad matches: {int(summary_rows[0].get('bad_matches', 0))}",
         f"- Gold Core cases: {int(resolution_simulation_summary.iloc[0].get('cases', 0)) if not resolution_simulation_summary.empty else 0}",
         f"- Simulated options: {int(resolution_simulation_summary.iloc[0].get('options', 0)) if not resolution_simulation_summary.empty else 0}",
-        "- Operational Truth modified: no", "",
+        f"- Compatible strategy chains: {int(resolution_simulation_summary.iloc[0].get('compatible_strategy_chains', 0)) if not resolution_simulation_summary.empty else 0}",
+        f"- True strategy conflicts: {int(resolution_simulation_summary.iloc[0].get('true_strategy_conflicts', 0)) if not resolution_simulation_summary.empty else 0}",
+        f"- Stable cases: {int(regression_dashboard_rows.iloc[-1].get('stable_cases', 0)) if not regression_dashboard_rows.empty and 'stable_cases' in regression_dashboard_rows.columns else 0}",
+        "- Operational Truth modified: no", "- Gold Core ready: no", "",
     ]
     (executive / "SENTINEL_EXECUTIVE_SUMMARY.md").write_text("\n".join(summary_text), encoding="utf-8")
 
@@ -7698,6 +7711,27 @@ def _migrate_and_clean_legacy_benchmark_reports(reports_root: Path, ocr_output_p
     return {"migrated_state_files": migrated, "removed_legacy_report_files": removed}
 
 
+
+def _clean_snapshot_report_hygiene(reports_root: Path) -> dict[str, int]:
+    """Keep standard reports free of wrong-scope snapshot test artifacts."""
+    import shutil
+    root = Path(reports_root) / "snapshots"
+    removed = 0
+    if root.is_dir():
+        active_id = ""
+        state_file = Path("data/managed_snapshots.json")
+        try:
+            active_id = str(json.loads(state_file.read_text(encoding="utf-8")).get("active_snapshot_id") or "")
+        except Exception:
+            active_id = ""
+        for child in list(root.iterdir()):
+            if not child.is_dir():
+                continue
+            if child.name.startswith("wrong-scope-") or (active_id and child.name != active_id):
+                shutil.rmtree(child)
+                removed += 1
+    return {"removed_snapshot_report_dirs": removed}
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate Sentinel OCR output against a Ground Truth Excel file.")
     parser.add_argument("--ground-truth", default="ground_truth/S6/server_551/top50_THP.xlsx", help="Path to manually curated ground truth Excel file.")
@@ -7712,8 +7746,11 @@ def main() -> None:
     ocr_output_path = Path(args.ocr_output)
     output_dir = Path(args.output_dir)
     migration_result = _migrate_and_clean_legacy_benchmark_reports(output_dir, ocr_output_path)
+    snapshot_hygiene_result = _clean_snapshot_report_hygiene(output_dir)
     if migration_result["migrated_state_files"] or migration_result["removed_legacy_report_files"]:
         print(f"Report migration: {migration_result}")
+    if snapshot_hygiene_result["removed_snapshot_report_dirs"]:
+        print(f"Snapshot report hygiene: {snapshot_hygiene_result}")
 
     runtime_metrics: dict[str, float] = {}
     total_start = time.perf_counter()

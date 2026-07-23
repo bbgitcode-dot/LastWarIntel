@@ -192,3 +192,7 @@ Strike XV protects Gold-Core diagnosis from silent cross-run drift. Each open ca
 ## Current Sprint — v0.9.5.161
 
 Reporting Architecture Consolidation is implemented. Sentinel now treats benchmark folders as input/runtime territory and publishes consolidated outputs beneath the root `/reports` tree. Stability history remains durable through state migration. Resolution simulation now distinguishes primary strategy from prerequisite action.
+
+## v0.9.5.162 — History Integrity & Report Hygiene
+
+The consolidated reporting architecture now preserves actual run history. `run_id` identifies a concrete execution; `decision_state_hash` identifies the unchanged decision state. A new run with the same state is recorded as STABLE, while rerunning the same run id remains idempotent. The simulator distinguishes direct strategy matches from compatible prerequisite chains and true conflicts. Wrong-scope snapshot reports are removed from standard output.

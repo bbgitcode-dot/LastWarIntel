@@ -188,3 +188,10 @@ Resolution Readiness Intelligence converts the validated review queue into expla
 - Consolidated Executive, Operations, Intelligence and Diagnostics artifacts
 - Persistent state migration
 - Prerequisite-aware resolution recommendations
+
+### Completed: v0.9.5.162 History Integrity & Report Hygiene
+
+- Real run history and deterministic decision state separated.
+- Compatible prerequisite chains no longer reported as conflicts.
+- Standard report tree protected from wrong-scope snapshot test artifacts.
+- Executive summary expanded for standalone operational review.

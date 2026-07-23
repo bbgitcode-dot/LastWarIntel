@@ -733,3 +733,7 @@ Strike XV adds a deterministic Classification Stability Guard, persisted case fi
 ## v0.9.5.161
 
 Strike XVIII restructures Sentinel reporting around the root `/reports` directory. The benchmark directory is now reserved for benchmark inputs, runtime data and logs. Durable state is migrated to `/reports/state`, report duplication is reduced through consolidated workbooks, and the rank-19 simulator result is represented as a prerequisite action under the existing primary strategy rather than as a conflicting strategy.
+
+## v0.9.5.162
+
+Strike XIX hardens report history and output hygiene. Real executions now receive unique run identities independent from the deterministic decision-state hash. Stable repeated observations are therefore historized instead of silently collapsed. Resolution prerequisite chains are no longer counted as strategy conflicts. Standard reports remove wrong-scope snapshot test artifacts and the executive summary becomes independently decision-capable.

@@ -1,0 +1,199 @@
+{
+  "release_version": "0.9.5.161",
+  "summary": {
+    "load_ground_truth_ms": 330.196,
+    "load_ocr_export_ms": 294.105,
+    "load_quarantine_ms": 239.907,
+    "ocr_reader_init_ms": 28863.444,
+    "validation_ms": 558495.291,
+    "total_runtime_ms": 588228.889,
+    "report_write_ms": 13597.145,
+    "character_reocr": {
+      "target_rows": 84,
+      "target_total_ms": 305410.742,
+      "crop_generation_ms": 3.525,
+      "variant_build_ms": 225.05,
+      "ocr_read_ms": 202772.592,
+      "vote_selection_ms": 7.262,
+      "avg_target_total_ms": 3635.842,
+      "slowest_target_ms": 16261.772,
+      "slowest_target_rank": 23,
+      "slowest_target_field": "player_name",
+      "slowest_target_position": 0
+    }
+  },
+  "phases": [
+    {
+      "scope": "validator",
+      "phase": "load_ground_truth",
+      "duration_ms": 330.196
+    },
+    {
+      "scope": "validator",
+      "phase": "load_ocr_export",
+      "duration_ms": 294.105
+    },
+    {
+      "scope": "validator",
+      "phase": "load_quarantine",
+      "duration_ms": 239.907
+    },
+    {
+      "scope": "validator",
+      "phase": "ocr_reader_init",
+      "duration_ms": 28863.444
+    },
+    {
+      "scope": "validator",
+      "phase": "report_write",
+      "duration_ms": 13597.145
+    },
+    {
+      "scope": "validator",
+      "phase": "total_runtime",
+      "duration_ms": 588228.889
+    },
+    {
+      "scope": "validator",
+      "phase": "validation",
+      "duration_ms": 558495.291
+    },
+    {
+      "scope": "character_reocr",
+      "phase": "target_total",
+      "duration_ms": 305410.742
+    },
+    {
+      "scope": "character_reocr",
+      "phase": "crop_generation",
+      "duration_ms": 3.525
+    },
+    {
+      "scope": "character_reocr",
+      "phase": "variant_build",
+      "duration_ms": 225.05
+    },
+    {
+      "scope": "character_reocr",
+      "phase": "ocr_read",
+      "duration_ms": 202772.592
+    },
+    {
+      "scope": "character_reocr",
+      "phase": "vote_selection",
+      "duration_ms": 7.262
+    }
+  ],
+  "character_reocr_groups": [
+    {
+      "target_field": "alliance_tag",
+      "target_status": "unresolved",
+      "debug_read": "crop_field_mismatch",
+      "rows": 2,
+      "target_total_ms": 5703.146,
+      "ocr_read_ms": 5691.156,
+      "avg_target_total_ms": 2851.573,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "alliance_tag",
+      "target_status": "unresolved",
+      "debug_read": "vote_outside_allowed_set",
+      "rows": 2,
+      "target_total_ms": 11852.886,
+      "ocr_read_ms": 6333.179,
+      "avg_target_total_ms": 5926.443,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "alliance_tag",
+      "target_status": "verified_expected",
+      "debug_read": "crop_field_mismatch",
+      "rows": 3,
+      "target_total_ms": 11925.347,
+      "ocr_read_ms": 11903.177,
+      "avg_target_total_ms": 3975.116,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "alliance_tag",
+      "target_status": "verified_expected",
+      "debug_read": "no_votes",
+      "rows": 24,
+      "target_total_ms": 0.0,
+      "ocr_read_ms": 0.0,
+      "avg_target_total_ms": 0.0,
+      "avg_vote_count": 0.0
+    },
+    {
+      "target_field": "alliance_tag",
+      "target_status": "verified_expected",
+      "debug_read": "verified_expected",
+      "rows": 8,
+      "target_total_ms": 27631.169,
+      "ocr_read_ms": 27573.755,
+      "avg_target_total_ms": 3453.896,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "ambiguous_vote",
+      "debug_read": "vote_outside_allowed_set",
+      "rows": 2,
+      "target_total_ms": 3443.629,
+      "ocr_read_ms": 3422.958,
+      "avg_target_total_ms": 1721.814,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "unresolved",
+      "debug_read": "vote_outside_allowed_set",
+      "rows": 8,
+      "target_total_ms": 30197.915,
+      "ocr_read_ms": 15765.29,
+      "avg_target_total_ms": 3774.739,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "verified_expected",
+      "debug_read": "no_votes",
+      "rows": 2,
+      "target_total_ms": 0.084,
+      "ocr_read_ms": 0.0,
+      "avg_target_total_ms": 0.042,
+      "avg_vote_count": 0.0
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "verified_expected",
+      "debug_read": "verified_expected",
+      "rows": 15,
+      "target_total_ms": 81283.788,
+      "ocr_read_ms": 63786.397,
+      "avg_target_total_ms": 5418.919,
+      "avg_vote_count": 4.0
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "verified_expected",
+      "debug_read": "vote_outside_allowed_set",
+      "rows": 14,
+      "target_total_ms": 98588.233,
+      "ocr_read_ms": 44923.168,
+      "avg_target_total_ms": 7042.017,
+      "avg_vote_count": 4.571
+    },
+    {
+      "target_field": "player_name",
+      "target_status": "verified_observed",
+      "debug_read": "vote_outside_allowed_set",
+      "rows": 4,
+      "target_total_ms": 34784.545,
+      "ocr_read_ms": 23373.512,
+      "avg_target_total_ms": 8696.136,
+      "avg_vote_count": 5.0
+    }
+  ]
+}

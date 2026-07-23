@@ -1,1 +1,1 @@
-feat(reporting): consolidate reports into root report architecture
+fix(reporting): preserve real run history and clean report artifacts
