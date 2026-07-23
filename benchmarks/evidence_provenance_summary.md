@@ -22,7 +22,7 @@ This report is read-only. Ground Truth is comparison context only and Operationa
 
 ### vote_resolution
 
-- Blocking positions: 7
-- Affected cases: 7
-- Average best confidence: 56.73%
+- Blocking positions: 6
+- Affected cases: 6
+- Average best confidence: 49.52%
 - Recommended action: `collect_independent_vote_evidence`

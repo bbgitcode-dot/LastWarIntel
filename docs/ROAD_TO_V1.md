@@ -1,3 +1,18 @@
+# Road to V1 — Authoritative Plan at v0.9.5.159
+
+## Immediate milestone: reproducible stability proof
+
+- Preserve cross-run history for identical benchmark inputs.
+- Require zero unexplained classification, decision, confidence, and coverage drift.
+- Establish a stable timeline for every Gold-Core case, especially S551-R11.
+- Keep Resolution Intelligence diagnostic until determinism is demonstrated across repeated runs.
+
+## Next milestone
+
+After stability is proven, introduce a read-only Resolution Simulator before any executor. No automated fix or Gold-Core clearance is allowed until simulated outcomes are evidence-bound, reversible, and regression-tested.
+
+---
+
 # Road to V1 — Authoritative Plan at v0.9.5.148
 
 ## 1. Gold Core Zero

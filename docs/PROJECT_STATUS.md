@@ -1,6 +1,10 @@
-# Current release: v0.9.5.157
+# Current release: v0.9.5.159
 
-Strike XIV adds evidence-based Resolution Readiness Intelligence above the completed Gold-Core-bound Review Orchestration. Every open review case now receives non-authoritative root-cause confidence, recommendation score, dynamic review confidence, readiness class, strategy, and rationale. The layer remains diagnostic only and cannot execute fixes, clear Gold Core, use Ground Truth as evidence, or modify Operational Truth.
+Strike XVI operationalizes the v0.9.5.158 fingerprints as persistent cross-run history. Sentinel now retains an idempotent decision timeline per Gold-Core case and attributes classification, decision, confidence, and evidence-coverage drift. Unexplained drift is a release-blocking diagnostic failure; the layer remains read-only and cannot alter Operational Truth or clear Gold Core.
+
+## Immediate benchmark objective
+
+Run the same benchmark repeatedly with the same output directory or preserved `decision_history_state.json`. The expected result is `STABLE` for every unchanged case, with zero unexplained drift. Rank 11 must remain traceable across runs and may only change classification when its evidence fingerprint changes.
 
 # Project Status
 

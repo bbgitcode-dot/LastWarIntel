@@ -25,10 +25,10 @@ This report is read-only. It does not modify Operational Truth or Gold-Core poli
 ### Rank 11 — Drpeek
 
 - Failure class: `matched`
-- Name proof: `CONFLICTING_EVIDENCE`
-- Coverage: 50.00%
-- Blocking positions: [1, 2, 3]
-- Evidence action: `resolve_conflict`
+- Name proof: `PARTIAL_RECONSTRUCTION`
+- Coverage: 66.67%
+- Blocking positions: [2, 3]
+- Evidence action: `targeted_position_reocr`
 
 ### Rank 19 — S I G I
 

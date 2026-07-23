@@ -1,3 +1,19 @@
+# v0.9.5.159 — Strike XVI: Stability Verification & Decision History
+
+## Added
+- Persistent, append-only cross-run decision history keyed by `case_id`.
+- Stable run identifiers derived from release version and case fingerprints.
+- Case timelines for evidence, classification, readiness and resolution strategy.
+- Cross-run drift attribution for classification, decision, confidence and evidence coverage.
+- Regression dashboard covering run-level case counts, confidence and coverage.
+- New reports: `decision_history_report`, `stability_timeline_report`, `drift_analysis_report`, and `regression_dashboard.xlsx`.
+
+## Guards
+- Identical evidence may not produce unexplained classification or decision drift.
+- Confidence and coverage drift without evidence change is explicit and critical.
+- Exact reruns are idempotent and do not duplicate history entries.
+- No Gold-Core clearance, automatic fix, Ground Truth evidence, or Operational Truth mutation is permitted.
+
 # v0.9.5.154 — Strike XI: Player Identity Graph
 
 ## Added

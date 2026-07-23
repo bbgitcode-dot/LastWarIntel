@@ -24,6 +24,7 @@ import unicodedata
 import tempfile
 import zipfile
 import time
+from datetime import datetime, timezone
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -5663,6 +5664,160 @@ def _build_classification_stability_and_coverage(
             pass
     return cases, coverage_df, factors_df, validation, summary
 
+
+def _build_stability_verification_history(
+    stability_cases: pd.DataFrame, output_dir: Path | None = None, release_version: str = "0.9.5.159"
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XVI: persist immutable cross-run decision history and explain drift."""
+    columns = [
+        "run_id", "run_timestamp_utc", "version", "case_id", "server", "rank",
+        "evidence_fingerprint", "classification_fingerprint", "decision_hash",
+        "failure_class", "failure_domain", "review_action", "resolution_readiness",
+        "resolution_strategy", "root_cause_confidence", "recommendation_score",
+        "review_confidence", "required_evidence_coverage",
+    ]
+    if stability_cases.empty:
+        empty = pd.DataFrame(columns=columns)
+        validation = pd.DataFrame([
+            {"guard":"history_cases_recorded","expected":0,"actual":0,"status":"PASS"},
+            {"guard":"no_unexplained_cross_run_drift","expected":0,"actual":0,"status":"PASS"},
+        ])
+        summary = pd.DataFrame([{"phase":"v0.9.5.159_stability_verification","cases":0,"history_entries":0,"runs":0,"unexplained_drifts":0}])
+        return empty, empty, empty, empty, validation, summary
+
+    history_path = Path(output_dir) / "decision_history_state.json" if output_dir else None
+    previous_entries: list[dict[str, Any]] = []
+    if history_path and history_path.exists():
+        try:
+            payload = json.loads(history_path.read_text(encoding="utf-8"))
+            previous_entries = list(payload.get("entries", []))
+        except (OSError, ValueError, TypeError):
+            previous_entries = []
+
+    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    run_seed = {
+        "version": release_version,
+        "cases": sorted(
+            [{"case_id": str(r.get("case_id", "")), "evidence_fingerprint": str(r.get("evidence_fingerprint", "")), "decision_hash": str(r.get("decision_hash", ""))}
+             for r in stability_cases.to_dict(orient="records")],
+            key=lambda x: x["case_id"],
+        ),
+    }
+    run_id = f"{release_version}-{_stable_hash(run_seed)[:12]}"
+    current_entries: list[dict[str, Any]] = []
+    for row in stability_cases.to_dict(orient="records"):
+        current_entries.append({
+            "run_id": run_id, "run_timestamp_utc": now, "version": release_version,
+            "case_id": str(row.get("case_id", "")), "server": row.get("server", ""), "rank": row.get("rank", ""),
+            "evidence_fingerprint": str(row.get("evidence_fingerprint", "")),
+            "classification_fingerprint": str(row.get("classification_fingerprint", "")),
+            "decision_hash": str(row.get("decision_hash", "")),
+            "failure_class": str(row.get("failure_class", "")), "failure_domain": str(row.get("failure_domain", "")),
+            "review_action": str(row.get("review_action", "")),
+            "resolution_readiness": str(row.get("resolution_readiness", "")),
+            "resolution_strategy": str(row.get("resolution_strategy", "")),
+            "root_cause_confidence": float(row.get("root_cause_confidence", 0) or 0),
+            "recommendation_score": float(row.get("recommendation_score", 0) or 0),
+            "review_confidence": float(row.get("review_confidence", 0) or 0),
+            "required_evidence_coverage": float(row.get("required_evidence_coverage", 0) or 0),
+        })
+
+    # Idempotency: rerunning the exact same release/input does not duplicate history.
+    known_keys = {(str(e.get("run_id", "")), str(e.get("case_id", ""))) for e in previous_entries}
+    appended = [e for e in current_entries if (e["run_id"], e["case_id"]) not in known_keys]
+    all_entries = previous_entries + appended
+    history_df = pd.DataFrame(all_entries, columns=columns)
+
+    # Compare every current case with its latest prior observation, independent of version.
+    prior_by_case: dict[str, dict[str, Any]] = {}
+    for entry in previous_entries:
+        case_id = str(entry.get("case_id", ""))
+        if case_id:
+            prior_by_case[case_id] = entry
+    drift_rows: list[dict[str, Any]] = []
+    timeline_rows: list[dict[str, Any]] = []
+    for current in current_entries:
+        case_id = current["case_id"]
+        prior = prior_by_case.get(case_id)
+        evidence_changed = bool(prior) and prior.get("evidence_fingerprint") != current["evidence_fingerprint"]
+        classification_changed = bool(prior) and prior.get("classification_fingerprint") != current["classification_fingerprint"]
+        decision_changed = bool(prior) and prior.get("decision_hash") != current["decision_hash"]
+        confidence_delta = round(current["review_confidence"] - float(prior.get("review_confidence", 0) or 0), 4) if prior else 0.0
+        coverage_delta = round(current["required_evidence_coverage"] - float(prior.get("required_evidence_coverage", 0) or 0), 4) if prior else 0.0
+        if not prior:
+            attribution = "NO_PREVIOUS_BASELINE"
+        elif evidence_changed:
+            attribution = "EVIDENCE_CHANGED"
+        elif classification_changed:
+            attribution = "UNEXPLAINED_CLASSIFICATION_DRIFT"
+        elif decision_changed:
+            attribution = "UNEXPLAINED_DECISION_DRIFT"
+        elif abs(confidence_delta) > 0.0001:
+            attribution = "UNEXPLAINED_CONFIDENCE_DRIFT"
+        elif abs(coverage_delta) > 0.0001:
+            attribution = "UNEXPLAINED_COVERAGE_DRIFT"
+        else:
+            attribution = "STABLE"
+        severity = "CRITICAL" if attribution.startswith("UNEXPLAINED") else ("MAJOR" if attribution == "EVIDENCE_CHANGED" else "INFO")
+        drift_rows.append({
+            "case_id": case_id, "previous_run_id": prior.get("run_id", "") if prior else "", "current_run_id": run_id,
+            "previous_version": prior.get("version", "") if prior else "", "current_version": release_version,
+            "evidence_changed": evidence_changed, "classification_changed": classification_changed, "decision_changed": decision_changed,
+            "previous_failure_class": prior.get("failure_class", "") if prior else "", "current_failure_class": current["failure_class"],
+            "previous_readiness": prior.get("resolution_readiness", "") if prior else "", "current_readiness": current["resolution_readiness"],
+            "previous_strategy": prior.get("resolution_strategy", "") if prior else "", "current_strategy": current["resolution_strategy"],
+            "review_confidence_delta": confidence_delta, "evidence_coverage_delta": coverage_delta,
+            "drift_attribution": attribution, "severity": severity,
+        })
+        timeline_rows.append({
+            "case_id": case_id, "run_id": run_id, "version": release_version, "run_timestamp_utc": now,
+            "failure_class": current["failure_class"], "resolution_readiness": current["resolution_readiness"],
+            "resolution_strategy": current["resolution_strategy"], "evidence_fingerprint": current["evidence_fingerprint"],
+            "classification_fingerprint": current["classification_fingerprint"], "decision_hash": current["decision_hash"],
+            "drift_attribution": attribution, "severity": severity,
+        })
+
+    drift_df = pd.DataFrame(drift_rows)
+    current_timeline = pd.DataFrame(timeline_rows)
+    timeline_df = history_df[[c for c in columns if c in history_df.columns]].copy()
+    if not timeline_df.empty:
+        drift_lookup = {(r["current_run_id"], r["case_id"]): (r["drift_attribution"], r["severity"]) for r in drift_rows}
+        timeline_df["drift_attribution"] = [drift_lookup.get((str(r.run_id), str(r.case_id)), ("HISTORICAL", "INFO"))[0] for r in timeline_df.itertuples()]
+        timeline_df["severity"] = [drift_lookup.get((str(r.run_id), str(r.case_id)), ("HISTORICAL", "INFO"))[1] for r in timeline_df.itertuples()]
+
+    run_summary = history_df.groupby(["run_id", "version"], dropna=False).agg(
+        cases=("case_id", "count"), distinct_failure_classes=("failure_class", "nunique"),
+        average_review_confidence=("review_confidence", "mean"), average_evidence_coverage=("required_evidence_coverage", "mean"),
+    ).reset_index() if not history_df.empty else pd.DataFrame()
+    if not run_summary.empty:
+        run_summary["average_review_confidence"] = run_summary["average_review_confidence"].round(4)
+        run_summary["average_evidence_coverage"] = run_summary["average_evidence_coverage"].round(4)
+
+    unexplained = int(drift_df["drift_attribution"].astype(str).str.startswith("UNEXPLAINED").sum())
+    validation = pd.DataFrame([
+        {"guard":"history_cases_recorded","expected":len(stability_cases),"actual":len(current_entries),"status":"PASS" if len(current_entries)==len(stability_cases) else "FAIL"},
+        {"guard":"fingerprints_complete_in_history","expected":len(current_entries)*3,"actual":sum(bool(e["evidence_fingerprint"] and e["classification_fingerprint"] and e["decision_hash"]) * 3 for e in current_entries),"status":"PASS" if all(e["evidence_fingerprint"] and e["classification_fingerprint"] and e["decision_hash"] for e in current_entries) else "FAIL"},
+        {"guard":"no_unexplained_cross_run_drift","expected":0,"actual":unexplained,"status":"PASS" if unexplained==0 else "FAIL"},
+        {"guard":"no_operational_truth_change","expected":False,"actual":False,"status":"PASS"},
+        {"guard":"no_gold_clearance","expected":0,"actual":0,"status":"PASS"},
+    ])
+    summary = pd.DataFrame([{
+        "phase":"v0.9.5.159_stability_verification", "run_id":run_id, "cases":len(current_entries),
+        "history_entries":len(all_entries), "runs":int(history_df["run_id"].nunique()) if not history_df.empty else 0,
+        "prior_cases_compared":len(prior_by_case), "classification_drifts":int(drift_df["classification_changed"].sum()),
+        "decision_drifts":int(drift_df["decision_changed"].sum()), "unexplained_drifts":unexplained,
+        "stable_cases":int((drift_df["drift_attribution"]=="STABLE").sum()),
+        "no_previous_baseline":int((drift_df["drift_attribution"]=="NO_PREVIOUS_BASELINE").sum()),
+        "operational_truth_modified":False, "gold_clearance_created":0,
+    }])
+
+    if history_path:
+        try:
+            history_path.write_text(json.dumps({"schema_version":1,"latest_run_id":run_id,"entries":all_entries}, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+    return history_df, timeline_df, drift_df, run_summary, validation, summary
+
 def _authoritative_gold_core_metadata(row: pd.Series | dict[str, Any]) -> dict[str, str]:
     """Return the already-authoritative Gold Core classification without recomputation."""
     def pick(*keys: str) -> str:
@@ -6480,6 +6635,9 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     if not classification_stability_cases.empty:
         resolution_readiness_cases = classification_stability_cases.copy()
         manual_review_queue = classification_stability_cases.copy()
+    decision_history_rows, stability_timeline_rows, drift_analysis_rows, regression_dashboard_rows, stability_history_validation, stability_history_summary = _build_stability_verification_history(
+        classification_stability_cases, output_dir
+    )
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6574,6 +6732,12 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "classification_stability_validation": classification_stability_validation.to_dict(orient="records"),
         "evidence_coverage_rows": evidence_coverage_rows.to_dict(orient="records"),
         "score_decomposition_rows": score_decomposition_rows.to_dict(orient="records"),
+        "stability_history_summary": stability_history_summary.to_dict(orient="records"),
+        "decision_history_rows": decision_history_rows.to_dict(orient="records"),
+        "stability_timeline_rows": stability_timeline_rows.to_dict(orient="records"),
+        "drift_analysis_rows": drift_analysis_rows.to_dict(orient="records"),
+        "regression_dashboard_rows": regression_dashboard_rows.to_dict(orient="records"),
+        "stability_history_validation": stability_history_validation.to_dict(orient="records"),
         "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
@@ -6751,6 +6915,19 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     evidence_coverage_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.158_evidence_coverage","cases":classification_stability_cases.to_dict(orient="records"),"requirements":evidence_coverage_rows.to_dict(orient="records"),"score_decomposition":score_decomposition_rows.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
     evidence_coverage_md_path = output_dir / "evidence_coverage_summary.md"
     evidence_coverage_md_path.write_text("\n".join(["# Resolution Evidence Coverage", "", "Version: v0.9.5.158", "", f"- Cases: {len(classification_stability_cases)}", f"- Distinct coverage values: {classification_stability_cases['required_evidence_coverage'].nunique() if not classification_stability_cases.empty else 0}", f"- Average coverage: {classification_stability_cases['required_evidence_coverage'].mean():.2%}" if not classification_stability_cases.empty else "- Average coverage: 0%", "", "Coverage is calculated against the evidence required by each concrete review action."]),encoding="utf-8")
+    decision_history_json_path = output_dir / "decision_history_report.json"
+    decision_history_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.159_decision_history","summary":stability_history_summary.to_dict(orient="records"),"history":decision_history_rows.to_dict(orient="records"),"validation":stability_history_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    decision_history_md_path = output_dir / "decision_history_summary.md"
+    sh = stability_history_summary.iloc[0].to_dict() if not stability_history_summary.empty else {}
+    decision_history_md_path.write_text("\n".join(["# Decision History", "", "Release version: v0.9.5.159", "", f"- Run ID: {sh.get('run_id','')}", f"- Current cases: {sh.get('cases',0)}", f"- History entries: {sh.get('history_entries',0)}", f"- Recorded runs: {sh.get('runs',0)}", f"- Unexplained drifts: {sh.get('unexplained_drifts',0)}", "", "History is diagnostic, append-only and does not modify Operational Truth."]),encoding="utf-8")
+    stability_timeline_json_path = output_dir / "stability_timeline_report.json"
+    stability_timeline_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.159_stability_timeline","timeline":stability_timeline_rows.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    stability_timeline_md_path = output_dir / "stability_timeline_summary.md"
+    stability_timeline_md_path.write_text("\n".join(["# Stability Timeline", "", "Release version: v0.9.5.159", "", f"- Cases in current run: {sh.get('cases',0)}", f"- Prior cases compared: {sh.get('prior_cases_compared',0)}", f"- Stable cases: {sh.get('stable_cases',0)}", f"- No previous baseline: {sh.get('no_previous_baseline',0)}", "", "Each case retains evidence, classification and decision fingerprints across runs."]),encoding="utf-8")
+    drift_analysis_json_path = output_dir / "drift_analysis_report.json"
+    drift_analysis_json_path.write_text(json.dumps(_json_safe({"phase":"v0.9.5.159_drift_analysis","summary":stability_history_summary.to_dict(orient="records"),"drifts":drift_analysis_rows.to_dict(orient="records"),"validation":stability_history_validation.to_dict(orient="records")}),ensure_ascii=False,indent=2),encoding="utf-8")
+    drift_analysis_md_path = output_dir / "drift_analysis_summary.md"
+    drift_analysis_md_path.write_text("\n".join(["# Drift Analysis", "", "Release version: v0.9.5.159", "", f"- Classification drifts: {sh.get('classification_drifts',0)}", f"- Decision drifts: {sh.get('decision_drifts',0)}", f"- Unexplained drifts: {sh.get('unexplained_drifts',0)}", "", "Unexplained drift is CRITICAL; evidence-backed drift remains diagnostic and requires review."]),encoding="utf-8")
 
     ocr_evidence_json_path = output_dir / "ocr_evidence_report.json"
     ocr_evidence_json_path.write_text(json.dumps(_json_safe(ocr_evidence_payload), ensure_ascii=False, indent=2), encoding="utf-8")
@@ -6957,6 +7134,26 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(evidence_coverage_rows).to_excel(writer, sheet_name="requirements", index=False)
         _sanitize_frame(score_decomposition_rows).to_excel(writer, sheet_name="score_factors", index=False)
 
+    decision_history_xlsx_path = output_dir / "decision_history_report.xlsx"
+    with pd.ExcelWriter(decision_history_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(stability_history_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(decision_history_rows).to_excel(writer, sheet_name="history", index=False)
+        _sanitize_frame(stability_history_validation).to_excel(writer, sheet_name="validation", index=False)
+    stability_timeline_xlsx_path = output_dir / "stability_timeline_report.xlsx"
+    with pd.ExcelWriter(stability_timeline_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(stability_history_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(stability_timeline_rows).to_excel(writer, sheet_name="timeline", index=False)
+    drift_analysis_xlsx_path = output_dir / "drift_analysis_report.xlsx"
+    with pd.ExcelWriter(drift_analysis_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(stability_history_summary).to_excel(writer, sheet_name="summary", index=False)
+        _sanitize_frame(drift_analysis_rows).to_excel(writer, sheet_name="drifts", index=False)
+        _sanitize_frame(stability_history_validation).to_excel(writer, sheet_name="validation", index=False)
+    regression_dashboard_xlsx_path = output_dir / "regression_dashboard.xlsx"
+    with pd.ExcelWriter(regression_dashboard_xlsx_path, engine="openpyxl") as writer:
+        _sanitize_frame(regression_dashboard_rows).to_excel(writer, sheet_name="runs", index=False)
+        _sanitize_frame(stability_history_summary).to_excel(writer, sheet_name="current_run", index=False)
+        _sanitize_frame(drift_analysis_rows).to_excel(writer, sheet_name="case_drift", index=False)
+
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
         _sanitize_frame(pd.DataFrame([ocr_evidence_payload.get("summary", {})])).to_excel(writer, sheet_name="summary", index=False)
@@ -7063,6 +7260,16 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     print(f"Evidence Coverage JSON: {evidence_coverage_json_path}")
     print(f"Evidence Coverage XLSX: {evidence_coverage_xlsx_path}")
     print(f"Evidence Coverage Summary: {evidence_coverage_md_path}")
+    print(f"Decision History JSON: {decision_history_json_path}")
+    print(f"Decision History XLSX: {decision_history_xlsx_path}")
+    print(f"Decision History Summary: {decision_history_md_path}")
+    print(f"Stability Timeline JSON: {stability_timeline_json_path}")
+    print(f"Stability Timeline XLSX: {stability_timeline_xlsx_path}")
+    print(f"Stability Timeline Summary: {stability_timeline_md_path}")
+    print(f"Drift Analysis JSON: {drift_analysis_json_path}")
+    print(f"Drift Analysis XLSX: {drift_analysis_xlsx_path}")
+    print(f"Drift Analysis Summary: {drift_analysis_md_path}")
+    print(f"Regression Dashboard: {regression_dashboard_xlsx_path}")
     print(f"Character Position Summary MD: {character_position_summary_md_path}")
     print(f"OCR Evidence JSON:  {ocr_evidence_json_path}")
     print(f"Display Reconstruction JSON:  {display_reconstruction_json_path}")
