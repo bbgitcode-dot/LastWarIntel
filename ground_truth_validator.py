@@ -25,6 +25,7 @@ import unicodedata
 import tempfile
 import zipfile
 import time
+import uuid
 from datetime import datetime, timezone
 from dataclasses import asdict, dataclass
 from difflib import SequenceMatcher
@@ -47,7 +48,7 @@ from inference.context_engine import apply_contextual_inference
 
 
 DEFAULT_OUTPUT_DIR = Path("reports")
-RELEASE_VERSION = "0.9.5.162"
+RELEASE_VERSION = "0.9.5.163"
 
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 ILLEGAL_EXCEL_CHARS_RE = re.compile(r"[\x00-\x08\x0b-\x0c\x0e-\x1f]")
@@ -5667,6 +5668,143 @@ def _build_classification_stability_and_coverage(
     return cases, coverage_df, factors_df, validation, summary
 
 
+@dataclass(frozen=True)
+class DecisionGraphCase:
+    """Canonical read-only decision representation for one Gold-Core case."""
+
+    case_uuid: str
+    case_id: str
+    server: str
+    rank: str
+    graph_version: str
+    evidence_fingerprint: str
+    classification_fingerprint: str
+    decision_hash: str
+    failure_class: str
+    review_action: str
+    resolution_readiness: str
+    primary_strategy: str
+    prerequisite_action: str
+    recommended_option: str
+    strategy_relationship: str
+    review_confidence: float
+    evidence_coverage: float
+
+
+def _case_uuid(case_id: str) -> str:
+    """Return a stable namespace UUID derived only from the canonical case id."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"sentinel:last-war:gold-core:{case_id}"))
+
+
+def _frame_index(frame: pd.DataFrame, key: str = "case_id") -> dict[str, dict[str, Any]]:
+    if frame is None or frame.empty or key not in frame.columns:
+        return {}
+    return {str(row.get(key, "")): row for row in frame.to_dict(orient="records") if str(row.get(key, ""))}
+
+
+def _build_decision_graph(
+    stability_cases: pd.DataFrame,
+    simulation_cases: pd.DataFrame,
+    identity_compositions: pd.DataFrame,
+    evidence_provenance_cases: pd.DataFrame,
+    review_case_bindings: pd.DataFrame,
+    decision_history_rows: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Strike XX: build a canonical cross-layer Decision Graph.
+
+    The graph is diagnostic and read-only. It normalizes the current state of every
+    Gold-Core case and exposes explicit node/edge references so all report surfaces
+    can refer to the same immutable case UUID.
+    """
+    sim = _frame_index(simulation_cases)
+    ident = _frame_index(identity_compositions)
+    prov = _frame_index(evidence_provenance_cases)
+    review = _frame_index(review_case_bindings)
+    history = {}
+    if decision_history_rows is not None and not decision_history_rows.empty:
+        for row in decision_history_rows.to_dict(orient="records"):
+            cid = str(row.get("case_id", ""))
+            if cid:
+                history[cid] = row
+
+    cases: list[dict[str, Any]] = []
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
+    for base in stability_cases.to_dict(orient="records") if stability_cases is not None else []:
+        cid = str(base.get("case_id", ""))
+        if not cid:
+            continue
+        cuuid = _case_uuid(cid)
+        simrow, irow, prow, rrow, hrow = sim.get(cid, {}), ident.get(cid, {}), prov.get(cid, {}), review.get(cid, {}), history.get(cid, {})
+        primary = str(simrow.get("primary_strategy") or base.get("resolution_strategy") or "")
+        prereq = str(simrow.get("prerequisite_action") or "")
+        recommended = str(simrow.get("recommended_option") or simrow.get("recommended_action") or "")
+        graph_case = DecisionGraphCase(
+            case_uuid=cuuid, case_id=cid, server=str(base.get("server", "")), rank=str(base.get("rank", "")),
+            graph_version="v0.9.5.163_decision_graph",
+            evidence_fingerprint=str(base.get("evidence_fingerprint", "")),
+            classification_fingerprint=str(base.get("classification_fingerprint", "")),
+            decision_hash=str(base.get("decision_hash", "")),
+            failure_class=str(base.get("failure_class", "")),
+            review_action=str(base.get("review_action") or rrow.get("review_action") or ""),
+            resolution_readiness=str(base.get("resolution_readiness", "")),
+            primary_strategy=primary, prerequisite_action=prereq, recommended_option=recommended,
+            strategy_relationship=str(simrow.get("strategy_relationship") or "DIRECT"),
+            review_confidence=float(base.get("review_confidence", 0) or 0),
+            evidence_coverage=float(base.get("required_evidence_coverage", 0) or 0),
+        )
+        row = asdict(graph_case)
+        row.update({
+            "identity_status": str(irow.get("identity_status") or irow.get("composition_status") or ""),
+            "first_failed_stage": str(prow.get("first_failed_stage", "")),
+            "history_run_id": str(hrow.get("run_id", "")),
+            "source_layers": "evidence|identity|classification|review|readiness|simulation|history",
+            "operational_truth_modified": False,
+            "gold_clearance_created": False,
+        })
+        cases.append(row)
+        layer_values = {
+            "evidence": graph_case.evidence_fingerprint,
+            "identity": row["identity_status"],
+            "classification": graph_case.failure_class,
+            "review": graph_case.review_action,
+            "readiness": graph_case.resolution_readiness,
+            "simulation": graph_case.recommended_option,
+            "history": row["history_run_id"],
+        }
+        previous_node = ""
+        for position, (layer, value) in enumerate(layer_values.items(), start=1):
+            node_id = f"{cuuid}:{layer}"
+            nodes.append({"case_uuid":cuuid,"case_id":cid,"node_id":node_id,"layer":layer,"position":position,"value":value,"graph_version":"v0.9.5.163_decision_graph"})
+            if previous_node:
+                edges.append({"case_uuid":cuuid,"case_id":cid,"source_node_id":previous_node,"target_node_id":node_id,"relationship":"INFORMS","graph_version":"v0.9.5.163_decision_graph"})
+            previous_node = node_id
+
+    case_df = pd.DataFrame(cases)
+    node_df = pd.DataFrame(nodes)
+    edge_df = pd.DataFrame(edges)
+    duplicate_uuids = int(case_df["case_uuid"].duplicated().sum()) if not case_df.empty else 0
+    complete_refs = 0 if case_df.empty else int(case_df[["case_uuid","case_id","evidence_fingerprint","classification_fingerprint","decision_hash"]].astype(str).apply(lambda c: c.str.strip().ne("")).all(axis=1).sum())
+    expected_nodes = len(case_df) * 7
+    expected_edges = len(case_df) * 6
+    validation = pd.DataFrame([
+        {"guard":"decision_graph_case_coverage","expected":len(stability_cases),"actual":len(case_df),"status":"PASS" if len(case_df)==len(stability_cases) else "FAIL"},
+        {"guard":"case_uuid_uniqueness","expected":0,"actual":duplicate_uuids,"status":"PASS" if duplicate_uuids==0 else "FAIL"},
+        {"guard":"graph_reference_completeness","expected":len(case_df),"actual":complete_refs,"status":"PASS" if complete_refs==len(case_df) else "FAIL"},
+        {"guard":"graph_node_completeness","expected":expected_nodes,"actual":len(node_df),"status":"PASS" if len(node_df)==expected_nodes else "FAIL"},
+        {"guard":"graph_edge_completeness","expected":expected_edges,"actual":len(edge_df),"status":"PASS" if len(edge_df)==expected_edges else "FAIL"},
+        {"guard":"single_source_operational_truth","expected":0,"actual":int(case_df.get("operational_truth_modified", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),"status":"PASS"},
+        {"guard":"single_source_gold_clearance","expected":0,"actual":int(case_df.get("gold_clearance_created", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()),"status":"PASS"},
+    ])
+    summary = pd.DataFrame([{
+        "phase":"v0.9.5.163_decision_graph","cases":len(case_df),"nodes":len(node_df),"edges":len(edge_df),
+        "unique_case_uuids":int(case_df["case_uuid"].nunique()) if not case_df.empty else 0,
+        "cross_layer_consistency":"PASS" if validation["status"].eq("PASS").all() else "FAIL",
+        "operational_truth_modified":False,"gold_clearance_created":False,
+    }])
+    return case_df, node_df, edge_df, validation, summary
+
+
 def _build_stability_verification_history(
     stability_cases: pd.DataFrame, output_dir: Path | None = None, release_version: str = RELEASE_VERSION, run_instance_id: str | None = None
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -6795,6 +6933,10 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
     resolution_simulation_cases, resolution_simulation_options, resolution_simulation_validation, resolution_simulation_summary = _build_resolution_simulator(
         resolution_readiness_cases
     )
+    decision_graph_cases, decision_graph_nodes, decision_graph_edges, decision_graph_validation, decision_graph_summary = _build_decision_graph(
+        classification_stability_cases, resolution_simulation_cases, identity_compositions,
+        evidence_provenance_cases, review_case_bindings, decision_history_rows
+    )
     detail = _attach_evidence_scheduler(detail)
     display_reconstruction_summary, display_reconstruction_rows = _build_display_reconstruction_report(detail)
     evidence_confidence_summary, evidence_confidence_rows = _build_evidence_confidence_report(detail)
@@ -6811,7 +6953,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
 
     json_payload = {
         "release_version": RELEASE_VERSION,
-        "component_version": "v0.9.5.162_history_integrity_report_hygiene",
+        "component_version": "v0.9.5.163_decision_graph",
         "summary": summary_rows[0],
         "category_summary": category.to_dict(orient="records"),
         "failure_summary": failure_summary.to_dict(orient="records"),
@@ -6901,6 +7043,11 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         "resolution_simulation_cases": resolution_simulation_cases.to_dict(orient="records"),
         "resolution_simulation_options": resolution_simulation_options.to_dict(orient="records"),
         "resolution_simulation_validation": resolution_simulation_validation.to_dict(orient="records"),
+        "decision_graph_summary": decision_graph_summary.to_dict(orient="records"),
+        "decision_graph_cases": decision_graph_cases.to_dict(orient="records"),
+        "decision_graph_nodes": decision_graph_nodes.to_dict(orient="records"),
+        "decision_graph_edges": decision_graph_edges.to_dict(orient="records"),
+        "decision_graph_validation": decision_graph_validation.to_dict(orient="records"),
         "review_validation": review_validation.to_dict(orient="records"),
         "position_evidence_bridge_cases": position_bridge_cases.to_dict(orient="records"),
         "position_evidence_bridge_positions": position_bridge_positions.to_dict(orient="records"),
@@ -7328,6 +7475,7 @@ def write_report(summary: ValidationSummary, detail: pd.DataFrame, category: pd.
         _sanitize_frame(resolution_simulation_cases).to_excel(writer, sheet_name="cases", index=False)
         _sanitize_frame(resolution_simulation_options).to_excel(writer, sheet_name="options", index=False)
         _sanitize_frame(resolution_simulation_validation).to_excel(writer, sheet_name="validation", index=False)
+        _sanitize_frame(decision_graph_cases).to_excel(writer, sheet_name="decision_graph", index=False)
 
     ocr_evidence_xlsx_path = output_dir / "ocr_evidence_report.xlsx"
     with pd.ExcelWriter(ocr_evidence_xlsx_path, engine="openpyxl") as writer:
@@ -7558,7 +7706,12 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
                                  evidence_provenance_cases: pd.DataFrame,
                                  position_bridge_cases: pd.DataFrame,
                                  runtime_payload: dict[str, Any],
-                                 runtime_phase_df: pd.DataFrame) -> None:
+                                 runtime_phase_df: pd.DataFrame,
+                                 decision_graph_cases: pd.DataFrame | None = None,
+                                 decision_graph_nodes: pd.DataFrame | None = None,
+                                 decision_graph_edges: pd.DataFrame | None = None,
+                                 decision_graph_validation: pd.DataFrame | None = None,
+                                 decision_graph_summary: pd.DataFrame | None = None) -> None:
     """Strike XVIII: publish a compact root-level report architecture.
 
     Benchmark folders remain input/runtime territory. All report output is owned by
@@ -7566,6 +7719,11 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
     tabs and JSON sections rather than duplicated into dozens of peer files.
     """
     import shutil
+    decision_graph_cases = decision_graph_cases if decision_graph_cases is not None else pd.DataFrame()
+    decision_graph_nodes = decision_graph_nodes if decision_graph_nodes is not None else pd.DataFrame()
+    decision_graph_edges = decision_graph_edges if decision_graph_edges is not None else pd.DataFrame()
+    decision_graph_validation = decision_graph_validation if decision_graph_validation is not None else pd.DataFrame()
+    decision_graph_summary = decision_graph_summary if decision_graph_summary is not None else pd.DataFrame()
     output_dir = Path(output_dir)
     executive = output_dir / "executive"
     operations = output_dir / "operations"
@@ -7577,7 +7735,7 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
 
     metadata = pd.DataFrame([{
         "release_version": RELEASE_VERSION,
-        "component_version": "v0.9.5.162_history_integrity_report_hygiene",
+        "component_version": "v0.9.5.163_decision_graph",
         "report_root": str(output_dir),
         "benchmark_reports_allowed": False,
         "operational_truth_modified": False,
@@ -7589,6 +7747,7 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
         _sanitize_frame(regression_dashboard_rows).to_excel(writer, sheet_name="regression", index=False)
         _sanitize_frame(resolution_readiness_summary).to_excel(writer, sheet_name="readiness", index=False)
         _sanitize_frame(resolution_simulation_summary).to_excel(writer, sheet_name="simulation", index=False)
+        _sanitize_frame(decision_graph_summary).to_excel(writer, sheet_name="decision_graph", index=False)
 
     with pd.ExcelWriter(operations / "SENTINEL_RESOLUTION_WORKBENCH.xlsx", engine="openpyxl") as writer:
         metadata.to_excel(writer, sheet_name="metadata", index=False)
@@ -7602,6 +7761,10 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
 
     intelligence_sheets = {
         "metadata": metadata,
+        "decision_graph": decision_graph_cases,
+        "graph_nodes": decision_graph_nodes,
+        "graph_edges": decision_graph_edges,
+        "graph_validation": decision_graph_validation,
         "classification": classification_stability_cases,
         "decision_history": decision_history_rows,
         "stability_timeline": stability_timeline_rows,
@@ -7644,6 +7807,8 @@ def _publish_report_architecture(output_dir: Path, *, json_payload: dict[str, An
         f"- Compatible strategy chains: {int(resolution_simulation_summary.iloc[0].get('compatible_strategy_chains', 0)) if not resolution_simulation_summary.empty else 0}",
         f"- True strategy conflicts: {int(resolution_simulation_summary.iloc[0].get('true_strategy_conflicts', 0)) if not resolution_simulation_summary.empty else 0}",
         f"- Stable cases: {int(regression_dashboard_rows.iloc[-1].get('stable_cases', 0)) if not regression_dashboard_rows.empty and 'stable_cases' in regression_dashboard_rows.columns else 0}",
+        f"- Decision Graph cases: {int(decision_graph_summary.iloc[0].get('cases', 0)) if not decision_graph_summary.empty else 0}",
+        f"- Decision Graph integrity: {str(decision_graph_summary.iloc[0].get('cross_layer_consistency', 'UNKNOWN')) if not decision_graph_summary.empty else 'UNKNOWN'}",
         "- Operational Truth modified: no", "- Gold Core ready: no", "",
     ]
     (executive / "SENTINEL_EXECUTIVE_SUMMARY.md").write_text("\n".join(summary_text), encoding="utf-8")

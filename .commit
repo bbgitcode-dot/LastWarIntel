@@ -1,1 +1,1 @@
-fix(reporting): preserve real run history and clean report artifacts
+feat(decision-graph): unify gold-core decisions across intelligence layers

@@ -1,87 +1,87 @@
 {
-  "release_version": "0.9.5.161",
+  "release_version": "0.9.5.162",
   "summary": {
-    "load_ground_truth_ms": 330.196,
-    "load_ocr_export_ms": 294.105,
-    "load_quarantine_ms": 239.907,
-    "ocr_reader_init_ms": 28863.444,
-    "validation_ms": 558495.291,
-    "total_runtime_ms": 588228.889,
-    "report_write_ms": 13597.145,
+    "load_ground_truth_ms": 234.262,
+    "load_ocr_export_ms": 214.913,
+    "load_quarantine_ms": 174.003,
+    "ocr_reader_init_ms": 21771.874,
+    "validation_ms": 449946.406,
+    "total_runtime_ms": 472345.044,
+    "report_write_ms": 9554.918,
     "character_reocr": {
       "target_rows": 84,
-      "target_total_ms": 305410.742,
-      "crop_generation_ms": 3.525,
-      "variant_build_ms": 225.05,
-      "ocr_read_ms": 202772.592,
-      "vote_selection_ms": 7.262,
-      "avg_target_total_ms": 3635.842,
-      "slowest_target_ms": 16261.772,
-      "slowest_target_rank": 23,
+      "target_total_ms": 222189.853,
+      "crop_generation_ms": 2.904,
+      "variant_build_ms": 182.829,
+      "ocr_read_ms": 148126.082,
+      "vote_selection_ms": 4.977,
+      "avg_target_total_ms": 2645.117,
+      "slowest_target_ms": 12088.911,
+      "slowest_target_rank": 43,
       "slowest_target_field": "player_name",
-      "slowest_target_position": 0
+      "slowest_target_position": 1
     }
   },
   "phases": [
     {
       "scope": "validator",
       "phase": "load_ground_truth",
-      "duration_ms": 330.196
+      "duration_ms": 234.262
     },
     {
       "scope": "validator",
       "phase": "load_ocr_export",
-      "duration_ms": 294.105
+      "duration_ms": 214.913
     },
     {
       "scope": "validator",
       "phase": "load_quarantine",
-      "duration_ms": 239.907
+      "duration_ms": 174.003
     },
     {
       "scope": "validator",
       "phase": "ocr_reader_init",
-      "duration_ms": 28863.444
+      "duration_ms": 21771.874
     },
     {
       "scope": "validator",
       "phase": "report_write",
-      "duration_ms": 13597.145
+      "duration_ms": 9554.918
     },
     {
       "scope": "validator",
       "phase": "total_runtime",
-      "duration_ms": 588228.889
+      "duration_ms": 472345.044
     },
     {
       "scope": "validator",
       "phase": "validation",
-      "duration_ms": 558495.291
+      "duration_ms": 449946.406
     },
     {
       "scope": "character_reocr",
       "phase": "target_total",
-      "duration_ms": 305410.742
+      "duration_ms": 222189.853
     },
     {
       "scope": "character_reocr",
       "phase": "crop_generation",
-      "duration_ms": 3.525
+      "duration_ms": 2.904
     },
     {
       "scope": "character_reocr",
       "phase": "variant_build",
-      "duration_ms": 225.05
+      "duration_ms": 182.829
     },
     {
       "scope": "character_reocr",
       "phase": "ocr_read",
-      "duration_ms": 202772.592
+      "duration_ms": 148126.082
     },
     {
       "scope": "character_reocr",
       "phase": "vote_selection",
-      "duration_ms": 7.262
+      "duration_ms": 4.977
     }
   ],
   "character_reocr_groups": [
@@ -90,9 +90,9 @@
       "target_status": "unresolved",
       "debug_read": "crop_field_mismatch",
       "rows": 2,
-      "target_total_ms": 5703.146,
-      "ocr_read_ms": 5691.156,
-      "avg_target_total_ms": 2851.573,
+      "target_total_ms": 6034.577,
+      "ocr_read_ms": 6017.197,
+      "avg_target_total_ms": 3017.288,
       "avg_vote_count": 4.0
     },
     {
@@ -100,9 +100,9 @@
       "target_status": "unresolved",
       "debug_read": "vote_outside_allowed_set",
       "rows": 2,
-      "target_total_ms": 11852.886,
-      "ocr_read_ms": 6333.179,
-      "avg_target_total_ms": 5926.443,
+      "target_total_ms": 11520.395,
+      "ocr_read_ms": 6199.076,
+      "avg_target_total_ms": 5760.198,
       "avg_vote_count": 4.0
     },
     {
@@ -110,9 +110,9 @@
       "target_status": "verified_expected",
       "debug_read": "crop_field_mismatch",
       "rows": 3,
-      "target_total_ms": 11925.347,
-      "ocr_read_ms": 11903.177,
-      "avg_target_total_ms": 3975.116,
+      "target_total_ms": 8080.658,
+      "ocr_read_ms": 8061.709,
+      "avg_target_total_ms": 2693.553,
       "avg_vote_count": 4.0
     },
     {
@@ -130,9 +130,9 @@
       "target_status": "verified_expected",
       "debug_read": "verified_expected",
       "rows": 8,
-      "target_total_ms": 27631.169,
-      "ocr_read_ms": 27573.755,
-      "avg_target_total_ms": 3453.896,
+      "target_total_ms": 19500.769,
+      "ocr_read_ms": 19450.124,
+      "avg_target_total_ms": 2437.596,
       "avg_vote_count": 4.0
     },
     {
@@ -140,9 +140,9 @@
       "target_status": "ambiguous_vote",
       "debug_read": "vote_outside_allowed_set",
       "rows": 2,
-      "target_total_ms": 3443.629,
-      "ocr_read_ms": 3422.958,
-      "avg_target_total_ms": 1721.814,
+      "target_total_ms": 2591.022,
+      "ocr_read_ms": 2581.253,
+      "avg_target_total_ms": 1295.511,
       "avg_vote_count": 4.0
     },
     {
@@ -150,9 +150,9 @@
       "target_status": "unresolved",
       "debug_read": "vote_outside_allowed_set",
       "rows": 8,
-      "target_total_ms": 30197.915,
-      "ocr_read_ms": 15765.29,
-      "avg_target_total_ms": 3774.739,
+      "target_total_ms": 21853.684,
+      "ocr_read_ms": 11699.0,
+      "avg_target_total_ms": 2731.71,
       "avg_vote_count": 4.0
     },
     {
@@ -160,9 +160,9 @@
       "target_status": "verified_expected",
       "debug_read": "no_votes",
       "rows": 2,
-      "target_total_ms": 0.084,
+      "target_total_ms": 0.056,
       "ocr_read_ms": 0.0,
-      "avg_target_total_ms": 0.042,
+      "avg_target_total_ms": 0.028,
       "avg_vote_count": 0.0
     },
     {
@@ -170,9 +170,9 @@
       "target_status": "verified_expected",
       "debug_read": "verified_expected",
       "rows": 15,
-      "target_total_ms": 81283.788,
-      "ocr_read_ms": 63786.397,
-      "avg_target_total_ms": 5418.919,
+      "target_total_ms": 57585.597,
+      "ocr_read_ms": 44357.074,
+      "avg_target_total_ms": 3839.04,
       "avg_vote_count": 4.0
     },
     {
@@ -180,9 +180,9 @@
       "target_status": "verified_expected",
       "debug_read": "vote_outside_allowed_set",
       "rows": 14,
-      "target_total_ms": 98588.233,
-      "ocr_read_ms": 44923.168,
-      "avg_target_total_ms": 7042.017,
+      "target_total_ms": 64756.733,
+      "ocr_read_ms": 29649.028,
+      "avg_target_total_ms": 4625.481,
       "avg_vote_count": 4.571
     },
     {
@@ -190,9 +190,9 @@
       "target_status": "verified_observed",
       "debug_read": "vote_outside_allowed_set",
       "rows": 4,
-      "target_total_ms": 34784.545,
-      "ocr_read_ms": 23373.512,
-      "avg_target_total_ms": 8696.136,
+      "target_total_ms": 30266.362,
+      "ocr_read_ms": 20111.621,
+      "avg_target_total_ms": 7566.59,
       "avg_vote_count": 5.0
     }
   ]

@@ -2143,3 +2143,12 @@ Validation:
 - Removes `wrong-scope-*` snapshot completion artifacts from the standard report tree and retains only the active snapshot when available.
 - Expands the executive Markdown summary with recall, missing, bad matches, Gold Core, stability, strategy-chain, and readiness information.
 - Preserves Operational Truth, Ground Truth, snapshots, and OCR exports unchanged.
+
+## v0.9.5.163 — Strike XX: Decision Graph
+
+- Added a canonical read-only Decision Graph for every Gold-Core case.
+- Added stable UUIDv5 `case_uuid` identifiers derived from canonical case IDs.
+- Unified evidence, identity, classification, review, readiness, simulation and history references.
+- Added explicit graph nodes, graph edges and cross-layer integrity validation.
+- Added Decision Graph sheets to Executive, Operations and Intelligence workbooks.
+- Preserved Operational Truth, Ground Truth boundaries and Gold-Core blocking policy.

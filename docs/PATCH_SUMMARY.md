@@ -737,3 +737,7 @@ Strike XVIII restructures Sentinel reporting around the root `/reports` director
 ## v0.9.5.162
 
 Strike XIX hardens report history and output hygiene. Real executions now receive unique run identities independent from the deterministic decision-state hash. Stable repeated observations are therefore historized instead of silently collapsed. Resolution prerequisite chains are no longer counted as strategy conflicts. Standard reports remove wrong-scope snapshot test artifacts and the executive summary becomes independently decision-capable.
+
+## v0.9.5.163
+
+Strike XX introduces the Decision Graph as the canonical cross-layer representation of each Gold-Core case. Every case now has a stable `case_uuid`, seven ordered decision nodes, six `INFORMS` edges and guards for case coverage, UUID uniqueness, reference completeness, node/edge completeness and read-only safety.

@@ -195,3 +195,13 @@ Resolution Readiness Intelligence converts the validated review queue into expla
 - Compatible prerequisite chains no longer reported as conflicts.
 - Standard report tree protected from wrong-scope snapshot test artifacts.
 - Executive summary expanded for standalone operational review.
+
+### Completed: Strike XX — Decision Graph (v0.9.5.163)
+
+- Canonical cross-layer case representation
+- Stable case UUIDs
+- Explicit decision nodes and edges
+- Cross-layer consistency guards
+- Report integration for graph navigation
+
+Next logical milestone: controlled Resolution Executor dry-run planning on top of the graph, without write authority.

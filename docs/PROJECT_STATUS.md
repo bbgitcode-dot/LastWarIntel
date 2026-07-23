@@ -196,3 +196,7 @@ Reporting Architecture Consolidation is implemented. Sentinel now treats benchma
 ## v0.9.5.162 — History Integrity & Report Hygiene
 
 The consolidated reporting architecture now preserves actual run history. `run_id` identifies a concrete execution; `decision_state_hash` identifies the unchanged decision state. A new run with the same state is recorded as STABLE, while rerunning the same run id remains idempotent. The simulator distinguishes direct strategy matches from compatible prerequisite chains and true conflicts. Wrong-scope snapshot reports are removed from standard output.
+
+## v0.9.5.163 — Decision Graph
+
+The current Gold-Core intelligence stack is now connected through a canonical Decision Graph. Evidence, identity composition, classification, review orchestration, resolution readiness, simulation and decision history can be joined through the same stable `case_uuid`. The graph remains diagnostic and read-only; it cannot modify Operational Truth or create Gold clearance.
